@@ -64,6 +64,7 @@ export function LegalPage({
           <article
             key={s.id}
             id={s.id}
+            data-reveal
             className="grid min-w-0 scroll-mt-6 gap-x-6 border-t border-line py-9 md:grid-cols-[72px_1fr]"
           >
             <div className="heading text-[36px] leading-none text-accent-ink md:text-[44px]">{i + 1}</div>

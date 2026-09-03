@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { Eyebrow, Section, SectionHead } from "@/components/Brand";
@@ -22,7 +23,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-line">
         <HeroArt theme="blue" photo="saxophone" />
-        <div className="relative mx-auto flex min-h-[min(calc(100svh-82px),860px)] w-full max-w-[1120px] flex-col justify-center px-7 pb-12 pt-20">
+        <div className="hero-in relative mx-auto flex min-h-[min(calc(100svh-82px),860px)] w-full max-w-[1120px] flex-col justify-center px-7 pb-12 pt-20">
           <Eyebrow className="mb-9">{SITE.strap}</Eyebrow>
           <h1 className="display max-w-[11ch] text-[clamp(50px,8.4vw,108px)] leading-[0.96]">
             Put money behind the <em className="text-accent-ink">music.</em>
@@ -71,8 +72,8 @@ export default function HomePage() {
       <Section className="pool">
         <SectionHead eyebrow="What's for sale">Small placements, priced flat</SectionHead>
         <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((s) => (
-            <div key={s.key} className="flex flex-col bg-ground p-7">
+          {featured.map((s, i) => (
+            <div key={s.key} data-reveal style={{ "--i": i } as CSSProperties} className="lift flex flex-col bg-ground p-7">
               <div className="heading text-[24px] leading-[1.1]">{s.name}</div>
               <div className="caps mt-2 text-[14px] text-accent-ink">
                 from {formatMoney(s.defaultPriceCents)} a {s.period}
@@ -131,7 +132,7 @@ function Steps({ audience, steps }: { audience: string; steps: [string, string][
     <div>
       <div className="heading mb-2 text-[26px]">{audience}</div>
       {steps.map(([title, body], i) => (
-        <div key={title} className="grid grid-cols-[52px_1fr] gap-4 border-t border-line py-5">
+        <div key={title} data-reveal style={{ "--i": i } as CSSProperties} className="grid grid-cols-[52px_1fr] gap-4 border-t border-line py-5">
           <div className="heading text-[28px] leading-none text-accent-ink">{String(i + 1).padStart(2, "0")}</div>
           <div>
             <b className="block text-[16px] font-medium">{title}</b>

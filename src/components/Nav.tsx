@@ -6,7 +6,7 @@ import { Logo } from "@/components/Logo";
 export function Nav({ current }: { current?: string }) {
   const links = NAV.filter((n) => n.href !== "/list");
   return (
-    <header className="relative z-10 border-b border-line">
+    <header className="relative z-10 border-b border-line bg-ground shadow-[0_24px_48px_-30px_rgba(0,0,0,0.9)]">
       <a
         href="#main"
         className="caps sr-only bg-accent px-4 py-2 text-[14px] text-on-accent no-underline focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50"

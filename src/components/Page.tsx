@@ -37,7 +37,7 @@ export function Page({
       <main id="main" className="flex-1">
         <section className="relative overflow-hidden border-b border-line">
           <HeroArt theme={theme} />
-          <div className="relative mx-auto w-full max-w-[1120px] px-7 pb-[72px] pt-[88px]">
+          <div className="hero-in relative mx-auto w-full max-w-[1120px] px-7 pb-[72px] pt-[88px]">
             <Eyebrow className="mb-8">{eyebrow}</Eyebrow>
             <h1 className="display max-w-[12ch] text-[clamp(44px,7.4vw,96px)] leading-[0.98]">
               {title} {accent && <em className="text-accent-ink">{accent}</em>}

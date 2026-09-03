@@ -1,10 +1,10 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /** Small tracked-caps label with a short rule in front: the line above every headline. */
 export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <span className={`caps inline-flex items-center gap-3.5 text-[14px] text-accent-ink ${className}`}>
-      <i aria-hidden="true" className="inline-block h-px w-7 shrink-0 bg-accent" />
+      <i aria-hidden="true" className="rule inline-block h-px w-7 shrink-0 bg-accent" />
       <span>{children}</span>
     </span>
   );
@@ -41,7 +41,7 @@ export function SectionHead({ eyebrow, children }: { eyebrow: string; children: 
 export function Section({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
   return (
     <section id={id} className={`border-t border-line py-[84px] ${className}`}>
-      <div className="mx-auto max-w-[1120px] px-7">{children}</div>
+      <div data-reveal className="mx-auto max-w-[1120px] px-7">{children}</div>
     </section>
   );
 }
@@ -64,6 +64,8 @@ export function Steps({
       {steps.map(([title, body], i) => (
         <div
           key={title}
+          data-reveal
+          style={{ "--i": i } as CSSProperties}
           className={`grid border-t border-line ${ruleFirst ? "" : "first:border-t-0"} ${
             lg ? "grid-cols-[64px_1fr] gap-[18px] py-6" : "grid-cols-[52px_1fr] gap-4 py-5"
           }`}

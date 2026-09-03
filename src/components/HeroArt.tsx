@@ -17,6 +17,7 @@ export function HeroArt({ theme, photo }: { theme: ThemeName; photo?: string }) 
   return (
     <div aria-hidden="true" className={`hero-art ${file ? "has-photo" : ""}`}>
       {file && <Image src={`/${file}`} alt="" fill priority sizes="(max-width: 860px) 100vw, 72vw" />}
+      {file && <div className="tint" />}
       <div className="bloom" />
       <div className="flutes" />
       <div className="fade" />

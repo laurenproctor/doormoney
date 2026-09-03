@@ -75,7 +75,7 @@ export default async function BoardPage({ params }: Props) {
       <main id="main" className="flex-1">
         <section className="relative overflow-hidden">
           <HeroArt theme={theme} />
-          <div className="relative mx-auto max-w-[1120px] px-7 pb-10 pt-[72px]">
+          <div className="hero-in relative mx-auto max-w-[1120px] px-7 pb-10 pt-[72px]">
             <Eyebrow className="mb-7">Live board</Eyebrow>
             <h1 className={`display max-w-[14ch] leading-[0.98] ${act.name.length > 14 ? "text-[clamp(40px,7vw,92px)]" : "text-[clamp(48px,8.4vw,108px)]"}`}>{act.name}</h1>
             <p className="caps mt-6 text-[14.5px] leading-[2]">

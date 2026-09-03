@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { ThemeSync } from "@/components/ThemeSync";
+import { StageLights } from "@/components/StageLights";
+import { Reveal } from "@/components/Reveal";
 
 /** The colours of light a page can be lit with. Tokens for each live in globals.css. */
 export const THEMES = ["blue", "lime", "magenta", "amber", "teal", "violet", "red", "mono"] as const;
@@ -18,11 +20,14 @@ export function themeFor(seed: string): ThemeName {
 /**
  * Lights a page. Wraps the whole page so every token below it reads the right colour,
  * and mirrors the theme onto <html> so fixed elements outside the page (the cookie notice) match.
+ * `isolate` gives the stage lights a stacking context to sit in, behind the content and above the ground.
  */
 export function Theme({ name, children }: { name: ThemeName; children: ReactNode }) {
   return (
-    <div data-theme={name} className="flex min-h-full flex-1 flex-col bg-ground text-ink">
+    <div data-theme={name} className="relative isolate flex min-h-full flex-1 flex-col bg-ground text-ink">
       <ThemeSync name={name} />
+      <StageLights />
+      <Reveal />
       {children}
     </div>
   );

@@ -36,15 +36,15 @@ These are firm. They apply to page copy, button labels, emails, error messages, 
 
 Tokens live in `src/app/globals.css`. Use them; don't introduce new colors or fonts.
 
-Every page is a dark room with one colour of light in it. The room is the same on every page; the light changes per page.
+Every page is a dark room with one colour of light in it. The room is the same on every page; the light changes per page. Three stage lights (`StageLights`, mounted by `Theme`) throw the accent down the room from a truss above the page and swing as the reader scrolls; they hold still under reduced motion.
 
 - The room: `ground` (page background), `ink` `#F4F0E8` (text), `muted` (secondary text), `line` (1px rules and borders), `panel` (a lifted, translucent block).
 - The light: `accent` (fills, glows, rules, display type at 24px and up), `accent-ink` (the tint of the accent that clears 4.5:1 on the ground; use it for any accent text under 24px), `on-accent` (text on an accent fill).
 - Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, dashboard, the embed), lime (placements), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). Boards take a colour by slug through `themeFor`, so each act keeps the same light.
 - Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
 - Bodoni Moda for H1s only, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for everything else: headings below the H1 (the `heading` utility, medium weight), body, and tracked caps labels (the `caps` utility). Nothing else.
-- Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`).
-- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`. Reuse them.
+- Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`). The other themes carry public domain Gottlieb club photographs; credits in `public/hero/CREDITS.md`.
+- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`. Reuse them.
 
 ## Engineering rules
 

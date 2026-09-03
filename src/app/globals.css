@@ -140,16 +140,160 @@ select option { background: var(--ground); color: var(--ink); }
 @utility caps { font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 400; }
 /* One thin line around a block. */
 @utility edge { border: 1px solid var(--line); }
-/* A block that the page light catches: thin line plus a soft accent glow underneath. */
-@utility glow { border: 1px solid var(--line); box-shadow: 0 40px 90px -50px color-mix(in srgb, var(--accent) 60%, transparent); }
-/* Accent-coloured light spilling from behind a block. */
-@utility lit { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), 0 0 60px -10px color-mix(in srgb, var(--accent) 55%, transparent); }
+/*
+  A block that the page light catches: thin line, a glint along the top edge where the light lands,
+  a soft shadow pooling beneath it, and the accent spilling under it. Never a hard shadow.
+*/
+@utility glow {
+  border: 1px solid var(--line);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 14%, transparent),
+    0 34px 60px -34px rgba(0, 0, 0, 0.85),
+    0 40px 90px -50px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+/* Accent-coloured light spilling from behind a block, with the same shadow pooling beneath. */
+@utility lit {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 12%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent),
+    0 34px 60px -34px rgba(0, 0, 0, 0.85),
+    0 0 60px -10px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+/* A block that rises toward the light on hover. Cards and tiles; never text. */
+@utility lift {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease;
+  &:hover { transform: translateY(-3px); }
+}
+
+/*
+  Panels are lifted, translucent blocks. Light comes from above, so each one carries a one-pixel glint
+  along its top edge and a faint sheen that fades out a third of the way down. Colour stays the token.
+*/
+.bg-panel {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ink) 13%, transparent) 0,
+    color-mix(in srgb, var(--ink) 13%, transparent) 1px,
+    color-mix(in srgb, var(--ink) 4%, transparent) 1px,
+    transparent 36%
+  );
+}
+
+/*
+  Stage lights: three lamps on a truss above the page, each throwing a cone of the accent down the room,
+  and a pool of light on the floor. --p is scroll progress (0 at the top, 1 at the bottom), set by the
+  StageLights component; each lamp swings through its own arc as --p moves, and the pool drifts across.
+  On top of the scroll, each lamp sways on its own, its lens breathes, the beam flickers faintly and a
+  thin haze drifts through the room, so the rig is never quite still. The layer sits behind the page.
+*/
+.stage-lights {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  --p: 0;
+  contain: strict;
+}
+.stage-lights > .lamp {
+  position: absolute; top: -6vh; width: 56vw; height: 150vh; margin-left: -28vw;
+  transform-origin: 50% 0;
+  will-change: transform;
+}
+.stage-lights .swing {
+  position: absolute; inset: 0; transform-origin: 50% 0;
+  animation: sway var(--sway, 10s) ease-in-out infinite alternate;
+  will-change: transform;
+}
+.stage-lights .beam {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 9%, transparent) 30%,
+    color-mix(in srgb, var(--accent) 3%, transparent) 62%,
+    transparent 88%
+  );
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  filter: blur(22px);
+  animation: flicker var(--flicker, 9s) linear infinite;
+}
+.stage-lights .lens {
+  position: absolute; top: 3vh; left: 50%; width: 120px; height: 120px; margin-left: -60px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0, color-mix(in srgb, var(--accent) 80%, white) 12%, color-mix(in srgb, var(--accent) 45%, transparent) 30%, transparent 62%);
+  filter: blur(6px);
+  animation: lens-breathe var(--breathe, 4.5s) ease-in-out infinite;
+}
+/* Each lamp has its own place on the truss, its own arc, and its own rhythm. */
+.stage-lights > .lamp-1 { left: 16vw; transform: rotate(calc(9deg - var(--p) * 24deg)); --sway: 11s; --flicker: 9s; --breathe: 4.2s; }
+.stage-lights > .lamp-2 { left: 50vw; transform: rotate(calc(-7deg + var(--p) * 16deg)); opacity: 0.8; --sway: 8s; --flicker: 12s; --breathe: 5.1s; }
+.stage-lights > .lamp-3 { left: 84vw; transform: rotate(calc(-11deg + var(--p) * 26deg)); --sway: 13s; --flicker: 10.5s; --breathe: 3.7s; }
+.stage-lights > .lamp-2 .swing { animation-delay: -3s; }
+.stage-lights > .lamp-3 .swing { animation-delay: -7s; }
+.stage-lights > .lamp-2 .beam { animation-delay: -4s; }
+.stage-lights > .lamp-3 .beam { animation-delay: -2s; }
+/* The pool on the floor slides from the left of the room to the right over the length of the page, and breathes. */
+.stage-lights > .pool {
+  position: absolute; bottom: -30vh; left: 10vw; width: 70vw; height: 70vh;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 14%, transparent) 0%, color-mix(in srgb, var(--accent) 5%, transparent) 40%, transparent 70%);
+  transform: translateX(calc(var(--p) * 22vw));
+  animation: pool-breathe 7s ease-in-out infinite alternate;
+  will-change: transform;
+}
+/* A thin haze drifting through the room, so the beams have something to light. */
+.stage-lights > .haze {
+  position: absolute; inset: -12%;
+  background:
+    radial-gradient(ellipse 55% 45% at 28% 68%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 65%),
+    radial-gradient(ellipse 45% 40% at 74% 28%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
+  animation: haze-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+@keyframes lens-breathe { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.14); } }
+@keyframes flicker {
+  0%, 100% { opacity: 1; } 7% { opacity: 0.93; } 11% { opacity: 1; } 38% { opacity: 0.96; }
+  41% { opacity: 0.88; } 44% { opacity: 1; } 73% { opacity: 0.95; } 76% { opacity: 1; }
+}
+@keyframes pool-breathe { from { opacity: 0.75; } to { opacity: 1; } }
+@keyframes haze-drift { from { transform: translate3d(-4%, 1%, 0); } to { transform: translate3d(4%, -1%, 0); } }
+@media (max-width: 860px) {
+  .stage-lights > .lamp { width: 90vw; margin-left: -45vw; }
+  .stage-lights > .lamp-2 { display: none; }
+  .stage-lights > .lamp-1 { left: 14vw; }
+  .stage-lights > .lamp-3 { left: 86vw; }
+}
+
+/*
+  Motion for the page itself. Blocks marked data-reveal rise into place the first time they scroll
+  into view (Reveal sets data-in; --i staggers siblings). Heroes play their lines in on load. Both only
+  animate when JavaScript is running, so nothing is ever hidden without it. Reduced motion (top of
+  this file) collapses every animation and transition to nothing.
+*/
+html[data-js] [data-reveal] {
+  opacity: 0; transform: translateY(18px);
+  transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+html[data-js] [data-reveal][data-in] { opacity: 1; transform: none; }
+html[data-js] [data-reveal] .rule { transform: scaleX(0); transform-origin: left center; transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s; }
+html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
+.hero-in > * { animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-in > :nth-child(1) { animation-delay: 0.05s; }
+.hero-in > :nth-child(2) { animation-delay: 0.16s; }
+.hero-in > :nth-child(3) { animation-delay: 0.27s; }
+.hero-in > :nth-child(4) { animation-delay: 0.38s; }
+.hero-in > :nth-child(5) { animation-delay: 0.49s; }
+.hero-in > :nth-child(6) { animation-delay: 0.6s; }
+.hero-in > :nth-child(n + 7) { animation-delay: 0.7s; }
+@keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 
 /*
   Hero art: a stage light on the right of the hero. A white-hot bloom in the page's accent,
   fluted glass lines across it, and an optional photograph underneath (public/hero/<theme>.jpg).
 */
 .hero-art { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+/* The corners of the room fall away into shadow, so the light reads as a light in a space. */
+.hero-art::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 92% 85% at 46% 44%, transparent 52%, rgba(0, 0, 0, 0.6) 100%);
+}
 .hero-art > img {
   position: absolute; inset: 0 0 0 28%; height: 100%; width: 72%; object-fit: cover; object-position: 60% center;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 100%);
@@ -170,7 +314,14 @@ select option { background: var(--ground); color: var(--ink); }
   animation: breathe 11s ease-in-out infinite alternate;
   transform-origin: 66% 48%;
 }
-.hero-art.has-photo > .bloom { opacity: 0.55; mix-blend-mode: screen; }
+/*
+  A photograph is pulled into the room's colour rather than the other way round: the image goes to
+  greyscale and drops in brightness, a layer of the accent colours its tones, and the bloom keeps
+  nearly its full strength on top. The room stays the same colour whether or not a photo is there.
+*/
+.hero-art.has-photo > img { filter: grayscale(1) brightness(0.6) contrast(1.1); }
+.hero-art > .tint { position: absolute; inset: 0; background: color-mix(in srgb, var(--accent) 55%, var(--ground)); mix-blend-mode: color; }
+.hero-art.has-photo > .bloom { opacity: 0.85; mix-blend-mode: screen; }
 /* The light dies out before the bottom edge, so a hero never ends in a hard line. */
 .hero-art > .fade { position: absolute; inset: auto 0 0 0; height: 160px; background: linear-gradient(180deg, transparent, var(--ground)); }
 .hero-art > .flutes {
@@ -178,7 +329,9 @@ select option { background: var(--ground); color: var(--ink); }
   background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 1px, rgba(255, 255, 255, 0.07) 1px 2px, transparent 2px 7px);
   -webkit-mask-image: radial-gradient(ellipse 58% 78% at 66% 48%, #000 15%, transparent 85%);
   mask-image: radial-gradient(ellipse 58% 78% at 66% 48%, #000 15%, transparent 85%);
+  animation: flutes-drift 18s linear infinite alternate;
 }
+@keyframes flutes-drift { from { background-position: 0 0; } to { background-position: 28px 0; } }
 @keyframes breathe {
   from { transform: scale(1); filter: brightness(1); }
   to { transform: scale(1.06); filter: brightness(1.12); }

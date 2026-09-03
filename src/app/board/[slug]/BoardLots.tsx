@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Eyebrow } from "@/components/Brand";
 import { Countdown } from "@/components/Countdown";
 import { formatMoney } from "@/lib/money";
@@ -101,7 +101,7 @@ export function BoardLots({
         <Eyebrow className="mb-5">The spots</Eyebrow>
         <h2 className="heading mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
         <div className="grid gap-px bg-line">
-          {lots.map((l) => {
+          {lots.map((l, i) => {
             const v = live[l.id];
             const sold = v.sold;
             const amount = sold || l.mode === "fixed" ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? l.priceCents);
@@ -113,6 +113,8 @@ export function BoardLots({
             return (
               <div
                 key={l.id}
+                data-reveal
+                style={{ "--i": i } as CSSProperties}
                 className={`relative grid items-center gap-x-8 gap-y-3 px-7 py-6 max-md:px-5 min-[681px]:grid-cols-[1fr_auto] ${sold ? "bg-ground" : "bg-ground"}`}
               >
                 <div>

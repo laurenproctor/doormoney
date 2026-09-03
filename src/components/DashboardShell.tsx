@@ -57,7 +57,7 @@ export function DashboardShell({
       </div>
       <main id="main" className="flex-1">
         <div className="pool">
-          <div className="mx-auto w-full max-w-[1120px] px-7 pb-[40px] pt-[64px]">
+          <div className="hero-in mx-auto w-full max-w-[1120px] px-7 pb-[40px] pt-[64px]">
             <Eyebrow className="mb-7">{eyebrow}</Eyebrow>
             <h1 className="display text-[clamp(40px,7vw,88px)] leading-[0.98]">
               {title} {accent && <em className="text-accent-ink">{accent}</em>}
