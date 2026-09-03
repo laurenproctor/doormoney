@@ -24,7 +24,7 @@ export default function NotFound() {
     <Theme name="red">
       <Nav />
       <main id="main" className="relative flex-1 overflow-hidden">
-        <HeroArt theme="red" />
+        <HeroArt theme="red" photo="marquee" />
         <div className="relative mx-auto w-full max-w-[1120px] px-7 pb-[90px] pt-[88px]">
           <div className="grid items-start gap-12 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16">
             <div>

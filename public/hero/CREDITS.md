@@ -12,7 +12,9 @@ All hero photographs except `saxophone.jpg` are by William P. Gottlieb, from the
 
 - `violet.jpg`: Portrait of Duke Ellington, Aquarium, New York, N.Y., ca. Nov. 1946. https://www.loc.gov/item/2023867661/
 
-- `red.jpg`: Portrait of Art Tatum and Phil Moore, Downbeat, New York, N.Y., between 1946 and 1948. https://www.loc.gov/item/2023868308/
+- `red.jpg`: Portrait of Lionel Hampton, Aquarium, New York, N.Y., ca. June 1946. https://www.loc.gov/item/2023867814/
+
+- `marquee.jpg` (the 404 page): Art Tatum and Phil Moore, Downbeat, New York, N.Y., between 1946 and 1948. https://www.loc.gov/item/2023868308/
 
 - `blue.jpg`: Portrait of Billie Holiday, Downbeat, New York, N.Y., ca. Feb. 1947. https://www.loc.gov/item/2023867859/
 
