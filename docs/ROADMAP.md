@@ -50,14 +50,14 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 
 **Goal:** a musician can sign up, describe a run, price their surfaces, and get a public board page.
 
-- [ ] Auth: Supabase Auth with magic-link email. No passwords.
-- [ ] Act onboarding: name, slug, city, type (touring band, house act, soloist), photo
-- [ ] Stripe Connect onboarding: Express account, hosted onboarding flow, webhook to mark the act as payable
-- [ ] Runs: a tour, a season, or a residency month, with start and end dates and a show count
-- [ ] Lots: pick surfaces from the standard card, set a price, choose fixed or auction. Standard-card prices prefilled, editable.
-- [ ] Act dashboard: current run, lots, what's sold, what's pending
-- [ ] Public board at `/board/[slug]`, matching the sample board mockups
-- [ ] Approval flow: a patron's mark is uploaded, the act approves or declines, nothing publishes until approved
+- [x] Auth: Supabase Auth with magic-link email. No passwords. Sign-in at `/login`, callback at `/auth/callback`, session refresh in `src/proxy.ts`. Auth emails go out through Resend SMTP.
+- [x] Act onboarding: name, slug, city, type (touring band, house act, soloist), photo. One act per account. Photos land in the public `acts` bucket.
+- [ ] Stripe Connect onboarding: Express account, hosted onboarding flow, webhook to mark the act as payable. Built in `src/app/actions/payouts.ts` and the `account.updated` webhook branch; untested until a Stripe key is in `.env.local`.
+- [x] Runs: a tour, a season, or a residency month, with start and end dates and a show count
+- [x] Lots: pick surfaces from the standard card, set a price, choose fixed or auction. Standard-card prices prefilled, editable. Up to six spots per surface; sold spots are never touched.
+- [x] Act dashboard: current run, lots, what's sold, what's pending
+- [x] Public board at `/board/[slug]`, matching the sample board mockups. Draft runs stay private; publishing from the run page makes the board public.
+- [~] Approval flow: the act's side is on the dashboard (approve or decline a submitted mark). The patron's upload arrives with checkout in Phase 3.
 
 **Done when:** a real act can go from signup to a live board without anyone at Door Money touching it.
 

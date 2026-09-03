@@ -23,6 +23,9 @@ export function Footer({ note }: { note?: string }) {
               {n.label}
             </Link>
           ))}
+          <Link href="/login" className="typewriter text-[12.5px] text-[#9B968A] hover:text-paper">
+            Act sign-in
+          </Link>
         </div>
       </div>
     </footer>

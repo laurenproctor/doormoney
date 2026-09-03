@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Act photos come through a server action. Bucket cap is 5MB; leave room for multipart overhead.
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   async headers() {
     return [
       {

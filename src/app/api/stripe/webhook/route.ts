@@ -30,9 +30,14 @@ export async function POST(req: Request) {
     case "payment_intent.payment_failed":
       // TODO Phase 3: mark as failed, for auctions start the roll-to-next-bid clock
       break;
-    case "account.updated":
-      // TODO Phase 2: set acts.stripe_payouts_enabled from event.data.object.payouts_enabled
+    case "account.updated": {
+      // Express onboarding finished, or Stripe changed its mind. Mirror the flag on the act.
+      const account = event.data.object;
+      const enabled = Boolean(account.payouts_enabled);
+      const { error: e } = await sb.from("acts").update({ stripe_payouts_enabled: enabled }).eq("stripe_account_id", account.id);
+      if (e) console.error("account.updated: could not update act", account.id, e.message);
       break;
+    }
     case "transfer.created":
       // TODO Phase 3: mark payout_schedule row as paid
       break;
