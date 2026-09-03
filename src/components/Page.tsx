@@ -27,7 +27,7 @@ export function Page({
   return (
     <>
       <Nav current={current} />
-      <div className="relative mx-auto max-w-[1020px] px-7 pb-[76px] pt-[88px]">
+      <div className="relative mx-auto w-full max-w-[1020px] px-7 pb-[76px] pt-[88px]">
         <Tape className="mb-[30px]">{tape}</Tape>
         <h1 className="poster text-[clamp(52px,9vw,110px)] leading-[0.9]">
           {title} <span className="text-red">{accent}</span>
@@ -45,7 +45,7 @@ export function Page({
 export function PortNote({ mockup }: { mockup: string }) {
   if (process.env.NODE_ENV === "production") return null;
   return (
-    <div className="mx-auto mb-10 max-w-[1020px] px-7">
+    <div className="mx-auto mb-10 w-full max-w-[1020px] px-7">
       <div className="typewriter hard-border bg-tape p-4 text-[13px]">
         Not yet ported. The spec is <code>docs/mockups/{mockup}</code>. Read CLAUDE.md, then port section by section.
       </div>

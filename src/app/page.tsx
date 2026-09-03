@@ -17,7 +17,7 @@ export default function HomePage() {
       <Nav current="/" />
 
       {/* Hero */}
-      <div className="relative mx-auto max-w-[1020px] px-7 pb-[84px] pt-[92px]">
+      <div className="relative mx-auto w-full max-w-[1020px] px-7 pb-[84px] pt-[92px]">
         <Tape className="mb-8">{SITE.strap}</Tape>
         <div className="poster text-[clamp(76px,15vw,196px)] leading-[0.86]">
           <span className="block">Door</span>
