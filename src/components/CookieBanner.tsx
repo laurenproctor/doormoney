@@ -50,7 +50,7 @@ export function CookieBanner() {
           <Eyebrow>Cookies</Eyebrow>
           <p className="max-w-[62ch] text-[15px] leading-[1.6]">
             {SITE.name} sets only the cookies it needs to keep a musician signed in, take a payment, and remember this notice.
-            No analytics, no advertising, nothing that follows anyone around.{" "}
+            Page views are counted without cookies. No advertising, nothing that follows anyone around.{" "}
             <Link href="/cookies" className="underline decoration-1 underline-offset-4">
               Read the cookie policy
             </Link>

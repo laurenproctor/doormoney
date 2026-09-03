@@ -90,7 +90,7 @@ const SECTIONS: LegalSection[] = [
       <>
         <Bullets
           items={[
-            "No analytics cookies. Door Money runs no analytics scripts at all.",
+            "No analytics cookies. Door Money counts page views with Vercel Web Analytics, which sets no cookies and stores no IP addresses.",
             "No advertising cookies, no retargeting, no social media pixels.",
             "No third-party fonts. The typefaces are served from Door Money's own servers, so no font provider sees a visit.",
             "No chat widgets or other embedded services on the marketing pages.",

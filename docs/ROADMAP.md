@@ -38,7 +38,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] Waitlist table and API route; the form on Home and List an act writes to it
 - [x] Waitlist confirmation email (sends once Resend and a sender address are in `.env.local`)
 - [ ] Domain pointed at Vercel
-- [ ] Analytics (Plausible or Vercel Analytics)
+- [x] Analytics: Vercel Web Analytics, cookieless, off on the embed (`src/components/Analytics.tsx`). Switch it on in the Vercel project's Analytics tab.
 
 **Done when:** every page from the mockups exists at a real URL, and the waitlist form saves to the database.
 

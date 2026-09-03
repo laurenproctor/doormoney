@@ -34,7 +34,7 @@ const SECTIONS: LegalSection[] = [
             <Term key="acts" name="Acts">Act name, the run&apos;s dates and venues, the show list, prices, and optionally a photo per show and a self-reported attendance figure. Stripe collects identity and bank details directly for payouts; {SITE.name} stores only the Stripe account reference.</Term>,
             <Term key="patrons" name="Patrons">Name or business name, email address, the mark (a name or a logo), what they bought or bid on, and the payment status. Card numbers go straight to Stripe and never touch {SITE.name}.</Term>,
             <Term key="fans" name="Fans who back through the widget">Display name, email address and the tier chosen.</Term>,
-            <Term key="auto" name="Automatically">Server logs with IP address, browser type and the pages requested, kept briefly for security and debugging. {SITE.name} runs no analytics scripts and no tracking pixels.</Term>,
+            <Term key="auto" name="Automatically">Server logs with IP address, browser type and the pages requested, kept briefly for security and debugging. {SITE.name} counts page views with Vercel Web Analytics, which sets no cookies and stores no IP addresses. No tracking pixels.</Term>,
           ]}
         />
       </>
