@@ -17,8 +17,8 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] Seed data: Gutter Hymns and Rosie, so every screen has something to render
 - [x] Supabase project created, migration applied, `.env.local` filled in
 - [ ] Stripe account in test mode, Connect enabled (Express accounts)
-- [ ] Deployed to Vercel from `main`
-- [ ] Resend (or equivalent) account for transactional email
+- [x] Deployed to Vercel from `main`
+- [x] Resend (or equivalent) account for transactional email
 
 **Done when:** `npm run dev` shows the home page with the sample board pulled from Supabase, and a push to `main` deploys.
 
@@ -42,7 +42,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 
 **Done when:** every page from the mockups exists at a real URL, and the waitlist form saves to the database.
 
-**Decision needed before starting:** the tagline. "Proof or it doesn't pay" is still on every page. See `docs/DECISIONS.md`.
+**Tagline:** settled. See `docs/DECISIONS.md`, decision 1.
 
 ---
 

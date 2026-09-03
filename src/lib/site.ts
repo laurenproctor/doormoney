@@ -1,5 +1,6 @@
 // One place for the strings that appear on every page.
-// The tagline is an open decision; see docs/DECISIONS.md, decision 1.
+// The tagline was settled on 2026-09-03; see docs/DECISIONS.md, decision 1.
+// Both lines show in the home hero. Footer and email use the first line alone.
 
 /**
  * Public site URL. Prefer NEXT_PUBLIC_SITE_URL; fall back to the URL Vercel
@@ -16,11 +17,14 @@ function siteUrl(): string {
 
 export const SITE = {
   name: "Door Money",
-  tagline: "Proof or it doesn't pay.",
+  tagline: "Put money behind the music.",
+  taglineSecond: "Support the musicians you want to keep hearing.",
   strap: "Sponsorship for bands that actually gig",
   city: "New York",
   url: siteUrl(),
   feePercent: 15,
+  /** Address on the legal pages. Placeholder domain until decision 5 is settled. */
+  contact: "hello@doormoney.co",
 } as const;
 
 export const NAV = [
@@ -29,6 +33,15 @@ export const NAV = [
   { href: "/auctions", label: "Live auctions" },
   { href: "/widget", label: "Widget" },
   { href: "/list", label: "List an act" },
+  { href: "/contact", label: "Contact" },
+] as const;
+
+/** The house paper: legal and policy pages, linked from the footer. */
+export const LEGAL = [
+  { href: "/terms", label: "Terms and conditions" },
+  { href: "/privacy", label: "Privacy policy" },
+  { href: "/cookies", label: "Cookie policy" },
+  { href: "/accessibility", label: "Accessibility" },
 ] as const;
 
 /** The house rules. Shown on Home and on Placements; keep one copy. */

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NAV, SITE } from "@/lib/site";
+import { LEGAL, NAV, SITE } from "@/lib/site";
 
 export function Footer({ note }: { note?: string }) {
   return (
@@ -13,6 +13,13 @@ export function Footer({ note }: { note?: string }) {
         <div className="mt-4 flex flex-wrap gap-[18px]">
           {NAV.filter((n) => n.href !== "/").map((n) => (
             <Link key={n.href} href={n.href} className="typewriter text-[13px] text-paper">
+              {n.label}
+            </Link>
+          ))}
+        </div>
+        <div className="mt-6 flex flex-wrap gap-x-[18px] gap-y-1.5 border-t-2 border-dashed border-gray pt-4">
+          {LEGAL.map((n) => (
+            <Link key={n.href} href={n.href} className="typewriter text-[12.5px] text-[#9B968A] hover:text-paper">
               {n.label}
             </Link>
           ))}

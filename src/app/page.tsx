@@ -23,7 +23,10 @@ export default function HomePage() {
           <span className="block">Door</span>
           <span className="block text-red">Money</span>
         </div>
-        <p className="typewriter mt-6 text-[clamp(19px,2.6vw,26px)]">{SITE.tagline}</p>
+        <p className="typewriter mt-6 text-[clamp(19px,2.6vw,26px)]">
+          <span className="block">{SITE.tagline}</span>
+          <span className="block">{SITE.taglineSecond}</span>
+        </p>
         <p className="mt-5 max-w-[54ch] text-[17px]">
           Local businesses and gear brands put money behind working musicians. A name on the kick drum, the road
           cases, the tip jar, or a post. Small sums, but they cover the gas, the rooms, and the difference between a

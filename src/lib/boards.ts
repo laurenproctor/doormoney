@@ -31,6 +31,14 @@ export async function getBoard(slug: string): Promise<Board | null> {
     .order("created_at");
   if (lotsError) console.error("board lots query failed", lotsError.message);
 
+  // purchases is locked too. Who bought a sold lot comes through the lot_buyers view (migration 0003).
+  const soldIds = (lots ?? []).filter((l) => l.status === "sold").map((l) => l.id);
+  const buyers = new Map<string, string>();
+  if (soldIds.length) {
+    const { data } = await sb.from("lot_buyers").select("lot_id,name").in("lot_id", soldIds);
+    for (const b of (data ?? []) as { lot_id: string; name: string }[]) buyers.set(b.lot_id, b.name);
+  }
+
   const shaped: BoardLot[] = (lots ?? []).map((l) => {
     type BidRow = { amount_cents: number; anonymous: boolean; patron_names: { name: string } | null };
     const bids = ((l.bids ?? []) as unknown as BidRow[]).sort((a, b) => b.amount_cents - a.amount_cents);
@@ -43,6 +51,7 @@ export async function getBoard(slug: string): Promise<Board | null> {
       mode: l.mode,
       status: l.status,
       topBid: top ? { amountCents: top.amount_cents, patronName: top.anonymous ? "Anonymous patron" : top.patron_names?.name ?? "Patron", anonymous: top.anonymous } : null,
+      soldTo: buyers.get(l.id) ?? null,
     };
   });
 

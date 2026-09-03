@@ -16,7 +16,9 @@ Options on the table:
 - "Money that reaches the band while they're still on the road."
 - Something new.
 
-**Default in code:** kept, as `SITE.tagline` in `src/lib/site.ts`. One string to change.
+**Decided (2026-09-03):** "Put money behind the music." with a second line, "Support the musicians you want to keep hearing." Both live in `SITE` in `src/lib/site.ts`. The hero shows both; the footer and emails show the first line alone.
+
+Note: the second line uses "you", which the voice rules in `CLAUDE.md` otherwise ban. Treated as a deliberate exception for the tagline only.
 
 ---
 
