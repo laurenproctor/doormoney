@@ -5,7 +5,7 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Cookie policy",
-  description: "The few cookies Door Money sets, what each one does, and why there is no cookie banner.",
+  description: "The few cookies Door Money sets, what each one does, and what the banner at the bottom of the page is for.",
 };
 
 const UPDATED = "September 3, 2026";
@@ -16,6 +16,12 @@ const COOKIES: { name: string; setBy: string; purpose: string; lasts: string }[]
     setBy: SITE.name,
     purpose: "Keeps a signed-in act or patron signed in between pages. Set only after sign-in.",
     lasts: "Refreshes while the person keeps using the site, and ends at sign-out.",
+  },
+  {
+    name: "dm_cookies",
+    setBy: SITE.name,
+    purpose: "Remembers that the cookie notice at the bottom of the page was accepted, so it stays out of the way on the next visit.",
+    lasts: "One year.",
   },
   {
     name: "__stripe_mid",
@@ -48,7 +54,7 @@ const SECTIONS: LegalSection[] = [
     heading: "The cookies Door Money sets",
     body: (
       <>
-        <p>Three, and two of them belong to Stripe and appear only while someone is paying.</p>
+        <p>Four, and two of them belong to Stripe and appear only while someone is paying.</p>
         <div className="overflow-x-auto">
           <table className="hard-border w-full min-w-[560px] border-collapse bg-cream text-[15px] leading-[1.55]">
             <thead>
@@ -91,8 +97,9 @@ const SECTIONS: LegalSection[] = [
           ]}
         />
         <p>
-          That is why there is no cookie banner. The law asks for consent before a site sets cookies that are not strictly
-          necessary. {SITE.name} sets none, so there is nothing to ask.
+          The law asks for consent before a site sets cookies that are not strictly necessary. {SITE.name} sets none of
+          those. The banner at the bottom of the page is a notice, not a request: it says what the site sets and links here.
+          Accepting it sets one more cookie, so the banner stays away for a year.
         </p>
       </>
     ),
@@ -155,13 +162,13 @@ export default function CookiesPage() {
       accent="policy"
       intro={
         <p>
-          {SITE.name} sets almost no cookies. This page lists the ones it does, what each one is for, and why there is no
-          banner asking anyone to accept them.
+          {SITE.name} sets almost no cookies. This page lists the ones it does, what each one is for, and what the banner
+          at the bottom of the page is asking.
         </p>
       }
       stamp={
         <>
-          NO<br />BANNER<br />NEEDED
+          NOTHING<br />TO<br />TRACK
         </>
       }
       updated={UPDATED}

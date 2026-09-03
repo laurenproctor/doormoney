@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Anton, Archivo, Special_Elite } from "next/font/google";
+import { CookieBanner } from "@/components/CookieBanner";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -16,7 +17,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${anton.variable} ${specialElite.variable} ${archivo.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   );
 }
