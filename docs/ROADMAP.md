@@ -120,11 +120,11 @@ This is the phase that decides whether the business works, so it comes before au
 
 **Goal:** enough evidence that the run happened to keep patrons confident, without the nightly-photo burden the copy no longer promises.
 
-- [ ] Show list per run: the act enters dates and venues once
-- [ ] "Played" toggle per show on the act dashboard, one tap
-- [ ] Optional photo per show, stored in Supabase Storage, shown on the end-of-run record
+- [x] Show list per run: the act enters dates and venues once. On the run page in the dashboard.
+- [x] "Played" toggle per show on the act dashboard, one tap
+- [x] Optional photo per show, stored in Supabase Storage (public `shows` bucket). Shown on the end-of-run record once Phase 3 builds it.
 - [ ] Patron flag: "I don't think this ran." Pauses the next release for that lot until Door Money looks.
-- [ ] Attendance field per show, self-reported, optional
+- [x] Attendance field per show, self-reported, optional
 
 **Done when:** the end-of-run record can show a real photo from a real show, and a flagged lot pauses correctly.
 
@@ -134,7 +134,7 @@ This is the phase that decides whether the business works, so it comes before au
 
 **Goal:** the first fifty acts and the first fifty patrons, by hand.
 
-- [ ] Admin views: acts, runs, lots, payments, flags. Read-only first, actions later.
+- [~] Admin views at `/admin`: acts, runs, lots, payments, contact notes, waitlist. Read-only, gated by `ADMIN_EMAILS`. Flags arrive with Phase 6's patron flag; actions later.
 - [ ] Founding-act badge and free-forever listing for the first fifty
 - [ ] Terms of service and privacy policy, reviewed by a lawyer
 - [ ] Stripe review of the platform model, done before real money moves at scale

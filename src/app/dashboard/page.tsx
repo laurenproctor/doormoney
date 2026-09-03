@@ -37,6 +37,9 @@ export default async function DashboardPage() {
   const pending = allLots.filter((l) => l.status === "pending_funding");
   const open = allLots.filter((l) => l.status === "open");
   const worth = sold.reduce((n, l) => n + l.price_cents, 0);
+  const { data: shows } = current ? await sb.from("shows").select("id,played").eq("run_id", current.id) : { data: [] as { id: string; played: boolean }[] };
+  const showRows = shows ?? [];
+  const playedCount = showRows.filter((s) => s.played).length;
 
   // Marks waiting on the act's yes, across every run.
   const { data: marks } = await sb
@@ -92,6 +95,11 @@ export default async function DashboardPage() {
                 <Fact n={String(open.length + pending.length)} label="open" />
                 <Fact n={formatMoney(worth)} label="sold so far" />
               </dl>
+              {showRows.length > 0 && (
+                <p className="typewriter -mt-2 mb-5 text-[13px] text-gray">
+                  {playedCount} of {showRows.length} shows played.
+                </p>
+              )}
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href={`/dashboard/runs/${current.id}`}>{current.status === "draft" ? "Price and publish" : "Edit the spots"}</ButtonLink>
                 {boardLive && <ButtonLink href={boardHref} variant="ghost">See the board</ButtonLink>}

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { RunForm, type RunInput } from "@/components/RunForm";
 import { LotsEditor, type ExistingLot } from "@/components/LotsEditor";
+import { ShowsPanel, type ShowRow } from "@/components/ShowsPanel";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { CATALOG } from "@/lib/catalog";
@@ -31,6 +32,7 @@ export default async function RunPage({ params }: Props) {
   if (!run) notFound();
 
   const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status").eq("run_id", id).order("created_at");
+  const { data: shows } = await sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", id).order("played_on");
   const surfaces = CATALOG.filter((s) => s.appliesTo.includes(act.type));
   const boardHref = `${SITE.url}/board/${act.slug}`;
 
@@ -53,6 +55,14 @@ export default async function RunPage({ params }: Props) {
           The standard card for this kind of act. Card prices are a starting point; the act&apos;s own number always wins. Sold spots stay as they are.
         </p>
         <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={(lots ?? []) as ExistingLot[]} boardHref={boardHref} />
+      </Card>
+
+      <Card className="mb-10">
+        <CardHead eyebrow="The shows">Every date on the run</CardHead>
+        <p className="mb-6 max-w-[60ch] text-[15px] text-gray">
+          Enter the dates once. Through the run, one tap marks a show played. A photo and a headcount are optional and go on the record patrons get at the end.
+        </p>
+        <ShowsPanel runId={run.id} shows={(shows ?? []) as ShowRow[]} defaultCity={act.city} />
       </Card>
 
       <Card className="max-w-[760px]">
