@@ -15,7 +15,7 @@ export default async function NewRunPage() {
     <DashboardShell
       current="/dashboard"
       actName={act.name}
-      tape="Step two of three"
+      eyebrow="Step two of three"
       title="Describe the"
       accent="run"
       intro={<p>The dates, the number of shows, and a name for the board. Patrons back the run, not a single night.</p>}

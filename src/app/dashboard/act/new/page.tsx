@@ -15,7 +15,7 @@ export default async function NewActPage() {
   return (
     <DashboardShell
       current="/dashboard/act"
-      tape="Step one of three"
+      eyebrow="Step one of three"
       title="Name the"
       accent="act"
       intro={<p>The name, the board address and a photo. Everything here can change later. The run and the prices come next.</p>}

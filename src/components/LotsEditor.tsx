@@ -56,14 +56,14 @@ export function LotsEditor({
         <input type="hidden" name="run_id" value={runId} />
         {groups.map(({ g, items }) => (
           <div key={g} className="mb-8">
-            <p className="typewriter mb-1 text-[15px] text-red-deep">{GROUPS[g].eyebrow}</p>
-            <p className="mb-3 max-w-none text-[15px] text-gray">{GROUPS[g].heading}</p>
-            <div className="hard-border bg-white">
+            <p className="caps mb-1 text-[15px] text-accent-ink">{GROUPS[g].eyebrow}</p>
+            <p className="mb-3 max-w-none text-[15px] text-muted">{GROUPS[g].heading}</p>
+            <div className="edge bg-panel">
               {items.map((s) => {
                 const r = rows[s.key];
                 const locked = lockedKeys.has(s.key);
                 return (
-                  <div key={s.key} className={`grid gap-3 border-b-2 border-dashed border-gray p-4 last:border-b-0 md:grid-cols-[28px_1fr_90px_140px_150px] md:items-center ${r.on ? "" : "opacity-80"}`}>
+                  <div key={s.key} className={`grid gap-3 border-b border-line p-4 last:border-b-0 md:grid-cols-[28px_1fr_90px_140px_150px] md:items-center ${r.on ? "" : "opacity-80"}`}>
                     <input
                       type="checkbox"
                       name={`on_${s.key}`}
@@ -72,16 +72,16 @@ export function LotsEditor({
                       disabled={locked}
                       onChange={(e) => set(s.key, { on: e.target.checked })}
                       aria-label={s.name}
-                      className="h-5 w-5 accent-[var(--red)]"
+                      className="h-5 w-5 accent-[var(--accent)]"
                     />
                     {locked && <input type="hidden" name={`on_${s.key}`} value="1" />}
                     <div>
                       <b className="block text-[15px]">{s.name}</b>
-                      <span className="typewriter block text-[14px] text-gray">
+                      <span className="block text-[14px] text-muted">
                         Card price {formatMoney(s.defaultPriceCents)} per {s.period}. Seen by {s.seenBy}.
                       </span>
                     </div>
-                    <label className="typewriter text-[14px]">
+                    <label className="caps text-[14px]">
                       Spots
                       <input
                         type="number"
@@ -92,10 +92,10 @@ export function LotsEditor({
                         disabled={!r.on}
                         onChange={(e) => set(s.key, { count: e.target.value.replace(/[^0-9]/g, "").slice(0, 1) })}
                         onBlur={() => set(s.key, { count: String(Math.max(1, Math.min(6, Number(r.count) || 1))) })}
-                        className="hard-border mt-1 w-full bg-paper px-2 py-1.5 text-[15px]"
+                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       />
                     </label>
-                    <label className="typewriter text-[14px]">
+                    <label className="caps text-[14px]">
                       Price, dollars
                       <input
                         name={`price_${s.key}`}
@@ -103,17 +103,17 @@ export function LotsEditor({
                         value={r.price}
                         disabled={!r.on}
                         onChange={(e) => set(s.key, { price: e.target.value })}
-                        className="hard-border mt-1 w-full bg-paper px-2 py-1.5 text-[15px]"
+                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       />
                     </label>
-                    <label className="typewriter text-[14px]">
+                    <label className="caps text-[14px]">
                       Sold as
                       <select
                         name={`mode_${s.key}`}
                         value={r.mode}
                         disabled={!r.on}
                         onChange={(e) => set(s.key, { mode: e.target.value as "fixed" | "auction" })}
-                        className="hard-border mt-1 w-full bg-paper px-2 py-1.5 text-[15px]"
+                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       >
                         <option value="fixed">Fixed price</option>
                         <option value="auction">Auction, price is the reserve</option>
@@ -128,12 +128,12 @@ export function LotsEditor({
 
         <div className="flex flex-wrap items-center gap-4">
           <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the spots"}</Button>
-          {state.ok && <span className="typewriter text-[14.5px] text-gray">Saved {state.saved} {state.saved === 1 ? "spot" : "spots"}.</span>}
-          {state.error && <span className="typewriter text-[14.5px] text-red-deep">{state.error}</span>}
+          {state.ok && <span className="text-[14.5px] text-muted">Saved {state.saved} {state.saved === 1 ? "spot" : "spots"}.</span>}
+          {state.error && <span className="text-[14.5px] text-accent-ink">{state.error}</span>}
         </div>
       </form>
 
-      <div className="mt-10 border-t-[3px] border-ink pt-6">
+      <div className="mt-10 border-t border-line pt-6">
         {runStatus === "draft" ? (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
@@ -153,13 +153,13 @@ export function LotsEditor({
               >
                 {publishing ? "Publishing" : "Publish the board"}
               </Button>
-              {publishError && <span className="typewriter text-[14.5px] text-red-deep">{publishError}</span>}
+              {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
             </div>
           </>
         ) : (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
-              The board is live at <a href={boardHref} className="break-all text-red-deep underline decoration-2 underline-offset-4">{boardHref}</a>. Prices on open spots can still change here.
+              The board is live at <a href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{boardHref}</a>. Prices on open spots can still change here.
             </p>
             {runStatus === "open" && (
               <div className="flex flex-wrap items-center gap-4">
@@ -177,7 +177,7 @@ export function LotsEditor({
                 >
                   Take the board down
                 </Button>
-                {publishError && <span className="typewriter text-[14.5px] text-red-deep">{publishError}</span>}
+                {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
               </div>
             )}
           </>

@@ -1,7 +1,9 @@
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { Section, SectionHead, Stamp, Tape } from "@/components/Brand";
+import { Eyebrow, Section, SectionHead } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
+import { HeroArt } from "@/components/HeroArt";
+import { Theme } from "@/components/Theme";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { CATALOG } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
@@ -13,39 +15,39 @@ export default function HomePage() {
   const featured = HOME_SURFACES.map((k) => CATALOG.find((s) => s.key === k)!);
 
   return (
-    <>
+    <Theme name="blue">
       <Nav current="/" />
-      <main id="main">
+      <main id="main" className="flex-1">
 
       {/* Hero */}
-      <div className="relative mx-auto w-full max-w-[1020px] px-7 pb-[84px] pt-[92px]">
-        <Tape className="mb-8">{SITE.strap}</Tape>
-        <h1 className="poster text-[clamp(76px,15vw,196px)] leading-[0.86]">
-          <span className="block">Door</span>
-          <span className="block text-red">Money</span>
-        </h1>
-        <p className="typewriter mt-6 text-[clamp(19px,2.6vw,26px)]">
-          <span className="block">{SITE.tagline}</span>
-          <span className="block">{SITE.taglineSecond}</span>
-        </p>
-        <p className="mt-5 max-w-[54ch] text-[17px]">
-          Local businesses and gear brands put money behind working musicians. A name on the kick drum, the road
-          cases, the tip jar, or a post. Small sums, but they cover the gas, the rooms, and the difference between a
-          run that happens and a run that doesn&apos;t.
-        </p>
-        <div className="mt-[38px] flex flex-wrap gap-[22px]">
-          <ButtonLink href="/list">List an act</ButtonLink>
-          <ButtonLink href="/placements" variant="ghost">Become a patron</ButtonLink>
+      <section className="relative overflow-hidden border-b border-line">
+        <HeroArt theme="blue" />
+        <div className="relative mx-auto flex min-h-[min(calc(100svh-82px),860px)] w-full max-w-[1120px] flex-col justify-center px-7 pb-12 pt-20">
+          <Eyebrow className="mb-9">{SITE.strap}</Eyebrow>
+          <h1 className="display max-w-[11ch] text-[clamp(50px,8.4vw,108px)] leading-[0.96]">
+            Put money behind the <em className="text-accent-ink">music.</em>
+          </h1>
+          <p className="caps mt-9 max-w-[44ch] text-[14.5px] leading-[2]">{SITE.taglineSecond}</p>
+          <p className="mt-5 max-w-[50ch] text-[16px] leading-[1.7] text-muted">
+            Local businesses and gear brands put money behind working musicians. A name on the kick drum, the road
+            cases, the tip jar, or a post. Small sums, but they cover the gas, the rooms, and the difference between a
+            run that happens and a run that doesn&apos;t.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <ButtonLink href="/placements" arrow>Become a patron</ButtonLink>
+            <ButtonLink href="/list" variant="ghost">List an act</ButtonLink>
+          </div>
+          <div className="caps mt-auto flex items-end justify-between gap-4 pt-20 text-[14px] text-muted">
+            <span>Acts. Patrons. Together.</span>
+            <span aria-hidden="true" className="text-[22px] leading-none">&darr;</span>
+          </div>
         </div>
-        <Stamp className="absolute right-7 top-[92px] max-[860px]:hidden">
-          DOOR MONEY<br />PAID<br />AT THE DOOR
-        </Stamp>
-      </div>
+      </section>
 
       {/* How it works */}
       <Section>
         <SectionHead eyebrow="How it works">What sponsorship does for a band</SectionHead>
-        <div className="mt-9 grid gap-[30px] md:grid-cols-2">
+        <div className="mt-12 grid gap-x-16 gap-y-12 md:grid-cols-2">
           <Steps
             audience="For bands"
             steps={[
@@ -66,74 +68,74 @@ export default function HomePage() {
       </Section>
 
       {/* What's for sale */}
-      <Section>
+      <Section className="pool">
         <SectionHead eyebrow="What's for sale">Small placements, priced flat</SectionHead>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((s) => (
-            <div key={s.key} className="hard-border hard-shadow-sm bg-white p-5">
-              <div className="poster text-[22px] leading-tight">{s.name}</div>
-              <div className="typewriter mt-1 text-[14.5px] text-red-deep">
+            <div key={s.key} className="flex flex-col bg-ground p-7">
+              <div className="display text-[24px] leading-[1.1]">{s.name}</div>
+              <div className="caps mt-2 text-[14px] text-accent-ink">
                 from {formatMoney(s.defaultPriceCents)} a {s.period}
               </div>
-              <p className="mt-2.5 max-w-none text-[15px] leading-[1.6] text-gray">{s.blurb}</p>
+              <p className="mt-4 max-w-none text-[15px] leading-[1.6] text-muted">{s.blurb}</p>
             </div>
           ))}
         </div>
-        <p className="typewriter mt-6 text-[15px] text-gray">
+        <p className="mt-7 max-w-[62ch] text-[15px] text-muted">
           Each band sets its own prices, per tour or per month. Every placement needs the band&apos;s yes, and patrons
           put the money up before the first show.
         </p>
-        <div className="mt-6">
-          <ButtonLink href="/placements" variant="ghost">All placements and prices</ButtonLink>
+        <div className="mt-7">
+          <ButtonLink href="/placements" variant="ghost" arrow>All placements and prices</ButtonLink>
         </div>
       </Section>
 
       {/* House rules */}
       <Section>
-        <SectionHead eyebrow="House rules">The rules everyone plays by</SectionHead>
-        <ol className="hard-border relative mt-8 max-w-[720px] bg-cream px-[42px] py-[46px] shadow-[9px_9px_0_var(--black)] max-md:px-[22px] max-md:py-8">
-          {HOUSE_RULES.map((r, i) => (
-            <li
-              key={r}
-              className={`typewriter flex items-baseline gap-4 py-[11px] text-[clamp(15px,2vw,18px)] leading-[1.5] ${
-                i ? "border-t-2 border-dashed border-[#A79D8A]" : ""
-              }`}
-            >
-              <span className="poster text-[15px] text-red-deep">x</span>
-              {r}
-            </li>
-          ))}
-        </ol>
+        <div className="grid gap-12 md:grid-cols-[1fr_1.2fr] md:gap-20">
+          <div>
+            <SectionHead eyebrow="House rules">The rules everyone plays by</SectionHead>
+            <p className="text-muted">Five lines, the same on every board. They keep bands safe and keep a placement worth buying.</p>
+          </div>
+          <ol className="glow bg-panel px-8 py-4 max-md:px-6">
+            {HOUSE_RULES.map((r, i) => (
+              <li key={r} className={`grid grid-cols-[48px_1fr] items-baseline gap-4 py-5 text-[clamp(15px,1.8vw,17px)] leading-[1.55] ${i ? "border-t border-line" : ""}`}>
+                <span className="display text-[24px] text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
+                <span>{r}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       </Section>
 
       {/* Waitlist */}
-      <Section id="list">
+      <Section id="list" className="pool">
         <SectionHead eyebrow="Get on the list">First fifty bands, first fifty patrons</SectionHead>
-        <p className="text-gray">
+        <p className="text-muted">
           {SITE.name} is opening in {SITE.city} first: the bands, the residencies, the corner bars, the neighborhood
           patrons. Musicians and patrons who leave a name here get an email when it opens.
         </p>
-        <div className="mt-8 max-w-[560px]">
+        <div className="mt-9 max-w-[560px]">
           <WaitlistForm />
         </div>
       </Section>
 
       </main>
       <Footer />
-    </>
+    </Theme>
   );
 }
 
 function Steps({ audience, steps }: { audience: string; steps: [string, string][] }) {
   return (
     <div>
-      <div className="poster mb-[18px] text-[24px]">{audience}</div>
+      <div className="display mb-2 text-[26px]">{audience}</div>
       {steps.map(([title, body], i) => (
-        <div key={title} className="grid grid-cols-[44px_1fr] gap-4 border-t-2 border-dashed border-gray py-4">
-          <div className="poster text-[26px] text-red">{i + 1}</div>
+        <div key={title} className="grid grid-cols-[52px_1fr] gap-4 border-t border-line py-5">
+          <div className="display text-[28px] leading-none text-accent-ink">{String(i + 1).padStart(2, "0")}</div>
           <div>
-            <b className="block text-[16px]">{title}</b>
-            <p className="max-w-none text-[15px] leading-[1.6] text-gray">{body}</p>
+            <b className="block text-[16px] font-medium">{title}</b>
+            <p className="max-w-none text-[15px] leading-[1.6] text-muted">{body}</p>
           </div>
         </div>
       ))}

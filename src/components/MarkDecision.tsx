@@ -14,13 +14,13 @@ export function MarkDecision({ purchaseId }: { purchaseId: string }) {
     });
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <button type="button" disabled={pending} onClick={() => act("approved")} className="poster hard-border cursor-pointer bg-red-deep px-4 py-2 text-[15px] text-white shadow-[3px_3px_0_var(--black)] disabled:opacity-60">
+      <button type="button" disabled={pending} onClick={() => act("approved")} className="caps edge cursor-pointer bg-accent px-4 py-2 text-[15px] text-on-accent disabled:opacity-60">
         Approve
       </button>
-      <button type="button" disabled={pending} onClick={() => act("declined")} className="poster hard-border cursor-pointer bg-white px-4 py-2 text-[15px] shadow-[3px_3px_0_var(--black)] disabled:opacity-60">
+      <button type="button" disabled={pending} onClick={() => act("declined")} className="caps edge cursor-pointer bg-panel px-4 py-2 text-[15px] disabled:opacity-60">
         Decline
       </button>
-      {error && <span className="typewriter text-[14px] text-red-deep">{error}</span>}
+      {error && <span className="text-[14px] text-accent-ink">{error}</span>}
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function WaitlistForm({ defaultRole = "band" }: { defaultRole?: "band" | 
       <fieldset className="flex gap-2.5">
         <legend className="sr-only">Role</legend>
         {(["band", "patron"] as const).map((r) => (
-          <label key={r} className="poster hard-border cursor-pointer bg-white px-4 py-2 text-[15px] has-[:checked]:bg-tape">
+          <label key={r} className="caps edge cursor-pointer px-4 py-2.5 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-on-accent">
             <input type="radio" name="role" value={r} defaultChecked={r === defaultRole} className="sr-only" />
             {r === "band" ? "A band or act" : "A patron"}
           </label>
@@ -36,7 +36,7 @@ export function WaitlistForm({ defaultRole = "band" }: { defaultRole?: "band" | 
       <div>
         <Button type="submit" disabled={pending}>{pending ? "One second" : "Get on the list"}</Button>
       </div>
-      {state.errors?.form && <p className="typewriter text-[14.5px] text-red-deep">{state.errors.form}</p>}
+      {state.errors?.form && <p className="text-[14.5px] text-accent-ink">{state.errors.form}</p>}
     </form>
   );
 }
@@ -49,9 +49,9 @@ function Field({ name, type = "text", placeholder, error }: { name: string; type
         type={type}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="hard-border w-full bg-white px-3.5 py-3 text-[15px] focus:shadow-[4px_4px_0_var(--black)] focus:outline-none"
+        className="edge w-full bg-panel px-3.5 py-3 text-[15px] focus:border-accent focus:outline-none"
       />
-      {error && <p className="typewriter mt-1 text-[14.5px] text-red-deep">{error}</p>}
+      {error && <p className="mt-1 text-[14.5px] text-accent-ink">{error}</p>}
     </div>
   );
 }
@@ -70,7 +70,7 @@ export function ActWaitlistForm() {
     return (
       <div className="pb-2.5 pt-[26px] text-center">
         <Stamp size="lg" className="mx-auto mb-[18px]">ON THE<br />LIST</Stamp>
-        <p className="typewriter max-w-none">On the list. An email goes out when listings open.</p>
+        <p className="max-w-none">On the list. An email goes out when listings open.</p>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export function ActWaitlistForm() {
         {ACT_TYPES.map(([value, label], i) => (
           <label
             key={value}
-            className="poster hard-border min-w-[120px] flex-1 cursor-pointer bg-white p-3 text-center text-[16px] has-[:checked]:bg-tape has-[:checked]:shadow-[inset_0_0_0_2px_var(--black)]"
+            className="caps edge min-w-[120px] flex-1 cursor-pointer bg-panel p-3 text-center text-[16px] has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:checked]:border-accent"
           >
             <input type="radio" name="act_type" value={value} defaultChecked={i === 0} className="sr-only" />
             {label}
@@ -94,7 +94,7 @@ export function ActWaitlistForm() {
       <LabelledField name="email" label="Email" type="email" autoComplete="email" error={state.errors?.email} />
       <LabelledField name="city" label="City" placeholder="NYC" />
       <Button type="submit" disabled={pending}>{pending ? "One second" : "Get on the list"}</Button>
-      {state.errors?.form && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{state.errors.form}</p>}
+      {state.errors?.form && <p className="mt-1.5 text-[14.5px] text-accent-ink">{state.errors.form}</p>}
     </form>
   );
 }
@@ -117,7 +117,7 @@ function LabelledField({
   const id = `act-${name}`;
   return (
     <div className="mb-[18px]">
-      <label htmlFor={id} className="poster mb-1.5 block text-[15px] tracking-[0.04em]">
+      <label htmlFor={id} className="caps mb-2 block text-[14px] text-muted">
         {label}
       </label>
       <input
@@ -126,9 +126,9 @@ function LabelledField({
         type={type}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="typewriter hard-border w-full bg-paper px-3.5 py-3 text-[15px]"
+        className="edge w-full bg-ground px-3.5 py-3 text-[15px]"
       />
-      {error && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{error}</p>}
+      {error && <p className="mt-1.5 text-[14.5px] text-accent-ink">{error}</p>}
     </div>
   );
 }

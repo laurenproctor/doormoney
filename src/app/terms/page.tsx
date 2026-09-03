@@ -278,7 +278,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       path="/terms"
-      tape="House paper"
+      eyebrow="House paper"
       title="Terms and"
       accent="conditions"
       intro={

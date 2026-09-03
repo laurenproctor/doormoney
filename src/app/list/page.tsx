@@ -31,13 +31,14 @@ export default async function ListPage() {
   const sample = await getBoard("gutter-hymns");
   return (
     <Page
+      theme="amber"
       current="/list"
-      tape="For bands, house acts, and soloists"
+      eyebrow="For bands, house acts, and soloists"
       title="List an"
       accent="act"
       intro={
         <>
-          <p className="typewriter text-[clamp(18px,2.5vw,25px)]">Musicians set the surfaces, the prices, and the final yes.</p>
+          <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">Musicians set the surfaces, the prices, and the final yes.</p>
           <p className="mt-5 max-w-[55ch]">
             Patrons and brands pay for small placements on the gear a band already hauls to every show: the kick drum,
             the cases, the straps, the tip jar, the feed. The money is there before the first date, and it arrives
@@ -63,12 +64,12 @@ export default async function ListPage() {
         <SectionHead eyebrow="What can be listed">Gear an act already owns</SectionHead>
         <div className="mt-[30px] flex flex-wrap gap-3.5">
           {CHIPS.map((c) => (
-            <span key={c} className="poster hard-border bg-white px-4 py-2 text-[16px] shadow-[4px_4px_0_var(--black)]">
+            <span key={c} className="caps edge px-4 py-2.5 text-[14px]">
               {c}
             </span>
           ))}
         </div>
-        <p className="typewriter mt-6 text-[14.5px] text-gray">
+        <p className="mt-6 text-[14.5px] text-muted">
           Touring acts price per tour, house acts per month, soloists per season. The placements page lists full
           details and standard prices. Instruments are never for sale and nobody will ever ask.
         </p>
@@ -89,29 +90,29 @@ export default async function ListPage() {
             </div>
           </div>
           {sample && (
-            <div aria-hidden="true" className="hard-border hard-shadow max-w-[340px] bg-white">
-              <div className="poster flex items-center justify-between border-b-[3px] border-ink bg-tape px-3.5 py-2.5 text-[15px]">
+            <div aria-hidden="true" className="edge glow max-w-[340px] bg-panel">
+              <div className="caps flex items-center justify-between border-b border-line px-3.5 py-2.5 text-[14px]">
                 Back the {sample.run.title.toLowerCase()}
-                <i className="-rotate-3 border-2 border-ink bg-white px-[7px] py-0.5 text-[14px] not-italic tracking-[0.06em] text-red-deep">{SITE.name}</i>
+                <i className="not-italic text-accent-ink">{SITE.name}</i>
               </div>
               <div className="px-3.5 py-3">
                 <b className="block text-[15px]">{sample.act.name}</b>
-                <small className="typewriter text-[14px] text-gray">
+                <small className="caps text-[14px] text-muted">
                   {sample.run.showCount} shows. {formatDateRange(sample.run.startsOn, sample.run.endsOn)}.
                 </small>
-                <div className="relative mt-2.5 h-3 border-2 border-ink">
-                  <i className="absolute inset-y-0 left-0 w-[59%] bg-red" />
+                <div className="relative mt-2.5 h-1.5 bg-line">
+                  <i className="absolute inset-y-0 left-0 w-[59%] bg-accent" />
                 </div>
                 <div className="mt-2.5 grid gap-1.5">
                   {[...WIDGET_TIERS.map((t) => [t.title, formatMoney(t.amountCents)]), ["Take a placement", "$500+"]].map(([title, price], i) => (
-                    <span key={title} className={`flex justify-between border-2 border-ink px-2.5 py-1.5 text-[14px] ${i === 0 ? "bg-tape" : ""}`}>
+                    <span key={title} className={`flex justify-between border border-line px-2.5 py-1.5 text-[14px] ${i === 0 ? "border-accent! bg-accent/10" : ""}`}>
                       {title}
                       <b>{price}</b>
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="poster mx-3.5 mb-3.5 mt-3 border-[3px] border-ink bg-red-deep p-[9px] text-center text-[15px] text-white shadow-[3px_3px_0_var(--black)]">
+              <div className="caps mx-3.5 mb-3.5 mt-3 border border-accent bg-accent p-[10px] text-center text-[14px] text-on-accent">
                 Back for {formatMoney(WIDGET_TIERS[0].amountCents)}
               </div>
             </div>
@@ -124,8 +125,8 @@ export default async function ListPage() {
         <div className="mt-[34px] grid gap-[26px] md:grid-cols-2">
           {MONEY.map(([q, a]) => (
             <div key={q}>
-              <b className="poster mb-1.5 block text-[20px]">{q}</b>
-              <p className="max-w-none text-[15px] text-gray">{a}</p>
+              <b className="display mb-1.5 block text-[20px]">{q}</b>
+              <p className="max-w-none text-[15px] text-muted">{a}</p>
             </div>
           ))}
         </div>

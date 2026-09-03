@@ -3,29 +3,37 @@ import { LEGAL, NAV, SITE } from "@/lib/site";
 
 export function Footer({ note }: { note?: string }) {
   return (
-    <footer className="border-t-[3px] border-ink bg-ink py-14 pb-20 text-paper">
-      <div className="mx-auto max-w-[1020px] px-7">
-        <div className="poster text-[28px]">{SITE.name}</div>
-        <p className="mt-2.5 text-[14.5px] leading-[1.7] text-[#9B968A]">
-          {SITE.tagline}
-          {note ? ` ${note}` : ""}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-[18px]">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="typewriter text-[14.5px] text-paper">
-              {n.label}
+    <footer className="border-t border-line pb-12 pt-16">
+      <div className="mx-auto max-w-[1120px] px-7">
+        <div className="grid gap-12 md:grid-cols-[1fr_auto_auto] md:gap-20">
+          <div>
+            <div className="display text-[clamp(30px,4vw,44px)] leading-none">{SITE.name}</div>
+            <p className="mt-4 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">
+              {SITE.tagline}
+              {note ? ` ${note}` : ""}
+            </p>
+          </div>
+          <nav aria-label="Pages" className="grid content-start gap-2.5">
+            {NAV.map((n) => (
+              <Link key={n.href} href={n.href} className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
+                {n.label}
+              </Link>
+            ))}
+            <Link href="/login" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
+              Act sign-in
             </Link>
-          ))}
+          </nav>
+          <nav aria-label="Legal" className="grid content-start gap-2.5">
+            {LEGAL.map((n) => (
+              <Link key={n.href} href={n.href} className="caps text-[14px] text-muted no-underline hover:text-ink">
+                {n.label}
+              </Link>
+            ))}
+          </nav>
         </div>
-        <div className="mt-6 flex flex-wrap gap-x-[18px] gap-y-1.5 border-t-2 border-dashed border-gray pt-4">
-          {LEGAL.map((n) => (
-            <Link key={n.href} href={n.href} className="typewriter text-[14px] text-[#9B968A] hover:text-paper">
-              {n.label}
-            </Link>
-          ))}
-          <Link href="/login" className="typewriter text-[14px] text-[#9B968A] hover:text-paper">
-            Act sign-in
-          </Link>
+        <div className="caps mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-[14px] text-muted">
+          <span>Acts. Patrons. Together.</span>
+          <span>{SITE.city}</span>
         </div>
       </div>
     </footer>

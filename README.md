@@ -25,7 +25,7 @@ Opens on http://localhost:3000 with sample data and pretend forms. No accounts n
 CLAUDE.md                 product rules, voice rules, engineering rules
 docs/ROADMAP.md           phases 0 to 7
 docs/DECISIONS.md         open product questions and the defaults in code
-docs/mockups/             the seven HTML mockups. The design spec.
+docs/mockups/             the seven HTML mockups. Page structure and copy; the look lives in src/app/globals.css.
 supabase/migrations/      schema
 supabase/seed.sql         Gutter Hymns, Rosie, the standard card
 src/lib/catalog.ts        the standard card (surfaces, default prices)

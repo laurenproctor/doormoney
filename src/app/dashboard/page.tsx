@@ -65,14 +65,14 @@ export default async function DashboardPage() {
     <DashboardShell
       current="/dashboard"
       actName={act.name}
-      tape={act.founding ? "Founding act" : `${act.city}`}
+      eyebrow={act.founding ? "Founding act" : `${act.city}`}
       title={act.name}
       accent=""
       intro={
-        <p className="typewriter">
+        <p className="caps">
           {boardLive ? (
             <>
-              The board is up at <Link href={boardHref} className="break-all text-red-deep underline decoration-2 underline-offset-4">{SITE.url}{boardHref}</Link>.
+              The board is up at <Link href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{SITE.url}{boardHref}</Link>.
             </>
           ) : current ? (
             "The board is private until the run is published."
@@ -87,16 +87,16 @@ export default async function DashboardPage() {
           <CardHead eyebrow="The run">{current ? current.title : "Start a run"}</CardHead>
           {current ? (
             <>
-              <p className="typewriter mb-4 text-[15px]">
+              <p className="mb-4 text-[15px]">
                 {STATUS[current.status]}. {current.show_count} {current.kind === "season" ? "gigs" : "shows"}, {formatDateRange(current.starts_on, current.ends_on)}.
               </p>
-              <dl className="mb-6 grid grid-cols-3 gap-3 border-y-2 border-dashed border-gray py-3">
+              <dl className="mb-6 grid grid-cols-3 gap-3 border-y border-line py-3">
                 <Fact n={String(sold.length)} label="sold" />
                 <Fact n={String(open.length + pending.length)} label="open" />
                 <Fact n={formatMoney(worth)} label="sold so far" />
               </dl>
               {showRows.length > 0 && (
-                <p className="typewriter -mt-2 mb-5 text-[14.5px] text-gray">
+                <p className="-mt-2 mb-5 text-[14.5px] text-muted">
                   {playedCount} of {showRows.length} shows played.
                 </p>
               )}
@@ -105,12 +105,12 @@ export default async function DashboardPage() {
                 {boardLive && <ButtonLink href={boardHref} variant="ghost">See the board</ButtonLink>}
               </div>
               {runs && runs.length > 1 && (
-                <p className="typewriter mt-5 max-w-none text-[14px] text-gray">
+                <p className="mt-5 max-w-none text-[14px] text-muted">
                   Earlier runs:{" "}
                   {runs.slice(1).map((r, i) => (
                     <span key={r.id}>
                       {i > 0 && ", "}
-                      <Link href={`/dashboard/runs/${r.id}`} className="text-red-deep underline decoration-2 underline-offset-4">{r.title}</Link>
+                      <Link href={`/dashboard/runs/${r.id}`} className="text-accent-ink underline decoration-1 underline-offset-4">{r.title}</Link>
                     </span>
                   ))}
                 </p>
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
             </>
           ) : (
             <>
-              <p className="mb-6 max-w-none text-[15px] text-gray">A tour, a season, or a residency month. Dates, a show count, then prices on the spots.</p>
+              <p className="mb-6 max-w-none text-[15px] text-muted">A tour, a season, or a residency month. Dates, a show count, then prices on the spots.</p>
               <ButtonLink href="/dashboard/runs/new">Describe the run</ButtonLink>
             </>
           )}
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHead eyebrow="Payouts">{act.stripe_payouts_enabled ? "Payouts on" : "Getting paid"}</CardHead>
-          <p className="mb-6 max-w-none text-[15px] text-gray">
+          <p className="mb-6 max-w-none text-[15px] text-muted">
             {act.stripe_payouts_enabled
               ? "Door Money pays every Friday through the run. Nothing to chase."
               : act.stripe_account_id
@@ -141,22 +141,22 @@ export default async function DashboardPage() {
         <Card className="md:col-span-2">
           <CardHead eyebrow="Marks waiting on a yes">{waiting.length ? `${waiting.length} to look at` : "Nothing waiting"}</CardHead>
           {waiting.length === 0 ? (
-            <p className="max-w-none text-[15px] text-gray">When a patron sends a mark for a spot they bought, it shows here. Nothing goes on the gear without the act&apos;s yes.</p>
+            <p className="max-w-none text-[15px] text-muted">When a patron sends a mark for a spot they bought, it shows here. Nothing goes on the gear without the act&apos;s yes.</p>
           ) : (
-            <ul className="divide-y-2 divide-dashed divide-gray">
+            <ul className="divide-y divide-line">
               {waiting.map((m) => (
                 <li key={m.id} className="grid gap-4 py-4 md:grid-cols-[120px_1fr_auto] md:items-center">
-                  <div className="hard-border flex h-[100px] w-[120px] items-center justify-center bg-paper p-2">
+                  <div className="edge flex h-[100px] w-[120px] items-center justify-center bg-ground p-2">
                     {m.url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.url} alt={`${m.patron} mark`} className="max-h-full max-w-full object-contain" />
                     ) : (
-                      <span className="poster text-center text-[15px] leading-tight">{m.text ?? m.patron}</span>
+                      <span className="caps text-center text-[15px] leading-tight">{m.text ?? m.patron}</span>
                     )}
                   </div>
                   <div>
                     <b className="block text-[15px]">{m.patron}</b>
-                    <span className="typewriter text-[14.5px] text-gray">{m.lot}</span>
+                    <span className="caps text-[14.5px] text-muted">{m.lot}</span>
                   </div>
                   <MarkDecision purchaseId={m.id} />
                 </li>
@@ -168,8 +168,8 @@ export default async function DashboardPage() {
         {boardLive && (
           <Card className="md:col-span-2">
             <CardHead eyebrow="The widget">One line for the act&apos;s own site</CardHead>
-            <p className="mb-4 max-w-none text-[15px] text-gray">Paste this where the widget should sit. It shows the run, the tiers, and a button to back it.</p>
-            <pre className="hard-border max-w-full overflow-x-auto bg-ink p-4 text-[14.5px] leading-[1.6] text-paper">
+            <p className="mb-4 max-w-none text-[15px] text-muted">Paste this where the widget should sit. It shows the run, the tiers, and a button to back it.</p>
+            <pre className="edge max-w-full overflow-x-auto bg-panel p-4 font-mono text-[14.5px] leading-[1.6] text-ink">
               <code>{snippet}</code>
             </pre>
           </Card>
@@ -182,8 +182,8 @@ export default async function DashboardPage() {
 function Fact({ n, label }: { n: string; label: string }) {
   return (
     <div>
-      <dt className="poster text-[26px] leading-none">{n}</dt>
-      <dd className="typewriter text-[14px] text-gray">{label}</dd>
+      <dt className="display text-[26px] leading-none">{n}</dt>
+      <dd className="caps text-[14px] text-muted">{label}</dd>
     </div>
   );
 }

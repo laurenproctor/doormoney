@@ -32,7 +32,7 @@ const SECTIONS: LegalSection[] = [
           "Keeps text black on paper, with contrast far above the minimum. Red is used for emphasis, never as the only signal.",
           "Scales with the browser. Text and layout hold together at 200% zoom and on screens 380 pixels wide.",
           "Labels every form field, and reports errors in words next to the field they belong to.",
-          "Hides decorative stamps, tape labels and diagrams from screen readers, and gives every meaningful image a text alternative.",
+          "Hides decorative seals, stage lights and diagrams from screen readers, and gives every meaningful image a text alternative.",
           "Turns off smooth scrolling for anyone whose system asks for reduced motion. Nothing on the site flashes or moves on its own.",
           "Gives auction closing times in words as well as a countdown, and never times out a form.",
         ]}
@@ -48,7 +48,7 @@ const SECTIONS: LegalSection[] = [
         <Bullets
           items={[
             "Display headings use a condensed uppercase typeface, which some readers find slower to read. Body text uses a plain sans-serif face, and every page can be read at any zoom.",
-            "Tape labels sit at a slight tilt. Their text is short, and each one is repeated in plain text nearby or hidden from assistive tools.",
+            "Eyebrow labels sit at a slight tilt. Their text is short, and each one is repeated in plain text nearby or hidden from assistive tools.",
             "The payment form comes from Stripe. It is built to be accessible, and Door Money cannot change its internals.",
             "The widget lives in a frame on an act's own site. Door Money's snippet gives the frame a title, and the rest of that page is the act's.",
             "Photos an act adds to a record carry the description the act wrote. Door Money asks for one but cannot check it.",
@@ -98,7 +98,7 @@ export default function AccessibilityPage() {
   return (
     <LegalPage
       path="/accessibility"
-      tape="House paper"
+      eyebrow="House paper"
       title="Accessibility"
       accent="statement"
       intro={

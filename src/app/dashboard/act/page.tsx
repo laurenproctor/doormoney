@@ -13,7 +13,7 @@ export default async function EditActPage() {
   if (!act) redirect("/dashboard/act/new");
 
   return (
-    <DashboardShell current="/dashboard/act" actName={act.name} tape="Who is playing" title="The" accent="act">
+    <DashboardShell current="/dashboard/act" actName={act.name} eyebrow="Who is playing" title="The" accent="act">
       <Card className="max-w-[720px]">
         <ActForm act={act} siteUrl={SITE.url} />
       </Card>

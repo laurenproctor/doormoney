@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Eyebrow } from "@/components/Brand";
 import { Countdown } from "@/components/Countdown";
 import { formatMoney } from "@/lib/money";
 
@@ -28,22 +29,26 @@ function initials(name: string) {
 }
 
 const MARK = {
-  tape: "-rotate-3 bg-tape text-ink",
-  red: "rounded-full bg-red-deep text-white",
-  black: "-rotate-3 bg-ink text-paper",
-  open: "-rotate-3 border-dashed bg-white text-gray",
+  /** Another patron holds the bid. */
+  bid: "border-accent/70 text-accent-ink",
+  /** This patron holds the bid. */
+  mine: "rounded-full border-accent bg-accent text-on-accent",
+  /** Sold. */
+  sold: "border-ink bg-ink text-ground",
+  /** Nobody yet. */
+  open: "border-dashed border-line text-muted",
 } as const;
 
 function Mark({ text, kind }: { text: string; kind: keyof typeof MARK }) {
   return (
-    <span aria-hidden="true" className={`poster flex h-[26px] w-[26px] flex-none items-center justify-center border-2 border-ink text-[14px] leading-none tracking-[0.02em] ${MARK[kind]}`}>
+    <span aria-hidden="true" className={`caps flex h-[26px] w-[26px] flex-none items-center justify-center border text-[14px] leading-none tracking-normal ${MARK[kind]}`}>
       {text}
     </span>
   );
 }
 
 /**
- * The black board box and the lot list. Until Phase 5 ships real bidding, pressing a button
+ * The board total and the lot list. Until Phase 5 ships real bidding, pressing a button
  * raises the bid locally, as the mockup does, so the board total responds.
  */
 export function BoardLots({
@@ -77,69 +82,69 @@ export function BoardLots({
 
   return (
     <>
-      <div className="hard-border mb-2.5 mt-9 flex flex-wrap items-center justify-between gap-5 bg-ink px-7 py-[26px] text-paper shadow-[8px_8px_0_var(--red)]">
+      <div className="lit mt-12 flex flex-wrap items-end justify-between gap-6 bg-panel px-8 py-7 max-md:px-6">
         <div>
-          <b className="poster block text-[clamp(34px,5.4vw,54px)] leading-none">{formatMoney(worth)}</b>
-          <span className="typewriter text-[14.5px] text-[#9B968A]">what the board is worth right now</span>
+          <b className="display block text-[clamp(38px,6vw,64px)] leading-none">{formatMoney(worth)}</b>
+          <span className="caps mt-2 block text-[14px] text-muted">what the board is worth right now</span>
         </div>
-        <div className="text-right">
+        <div className="md:text-right">
           {closesAt ? (
-            <Countdown closesAt={closesAt} className="typewriter block text-[clamp(18px,2.8vw,24px)]" />
+            <Countdown closesAt={closesAt} className="display block text-[clamp(24px,3.4vw,36px)] leading-none" />
           ) : (
-            <b className="typewriter block text-[clamp(18px,2.8vw,24px)]">Open</b>
+            <b className="display block text-[clamp(24px,3.4vw,36px)] leading-none">Open</b>
           )}
-          <span className="typewriter text-[14px] text-[#9B968A]">{closesLabel}</span>
+          <span className="caps mt-2 block text-[14px] text-muted">{closesLabel}</span>
         </div>
       </div>
 
-      <div className="pb-5 pt-[94px]">
-        <p className="typewriter mb-3 text-[15px] text-red-deep">The spots</p>
-        <h2 className="poster mb-6 text-[clamp(28px,4vw,44px)] leading-none">{heading}</h2>
-        {lots.map((l) => {
-          const v = live[l.id];
-          const sold = v.sold;
-          const amount = sold || l.mode === "fixed" ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? l.priceCents);
-          const label = sold ? "won at" : l.mode === "fixed" ? "buy now" : v.bidCents ? "current bid" : "opening bid";
-          const bidder = v.bidder ?? "open";
-          const markKind = v.mine ? "red" : sold ? "black" : v.bidder && !l.anonymous ? "tape" : "open";
-          const markText = v.mine ? "TP" : l.anonymous ? "?" : v.bidder ? initials(v.bidder) : "+";
-          const button = l.mode === "fixed" ? "Take it" : `Bid ${formatMoney((v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents)}`;
-          return (
-            <div
-              key={l.id}
-              className={`hard-border relative mb-[22px] grid items-center gap-x-5 gap-y-2 px-[22px] py-5 shadow-[6px_6px_0_var(--black)] min-[681px]:grid-cols-[1fr_auto] ${
-                sold ? "bg-[#F6F1E4]" : "bg-white"
-              }`}
-            >
-              <div>
-                <div className="poster text-[22px] leading-[1.05]">{l.name}</div>
-                <div className="typewriter mt-1 text-[14px] text-gray">{l.note}</div>
-              </div>
-              <div className="min-w-[190px] min-[681px]:text-right">
-                <div className="typewriter text-[14.5px] text-gray">{label}</div>
-                <div className={`poster text-[28px] leading-none ${sold ? "text-gray" : ""}`}>{formatMoney(amount)}</div>
-                <div className="flex items-center gap-[7px] min-[681px]:justify-end">
-                  <Mark text={markText} kind={markKind} />
-                  <div className="typewriter text-[14px] text-gray">{bidder}</div>
+      <div className="pb-6 pt-[84px]">
+        <Eyebrow className="mb-5">The spots</Eyebrow>
+        <h2 className="display mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
+        <div className="grid gap-px bg-line">
+          {lots.map((l) => {
+            const v = live[l.id];
+            const sold = v.sold;
+            const amount = sold || l.mode === "fixed" ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? l.priceCents);
+            const label = sold ? "won at" : l.mode === "fixed" ? "buy now" : v.bidCents ? "current bid" : "opening bid";
+            const bidder = v.bidder ?? "open";
+            const markKind = v.mine ? "mine" : sold ? "sold" : v.bidder && !l.anonymous ? "bid" : "open";
+            const markText = v.mine ? "TP" : l.anonymous ? "?" : v.bidder ? initials(v.bidder) : "+";
+            const button = l.mode === "fixed" ? "Take it" : `Bid ${formatMoney((v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents)}`;
+            return (
+              <div
+                key={l.id}
+                className={`relative grid items-center gap-x-8 gap-y-3 px-7 py-6 max-md:px-5 min-[681px]:grid-cols-[1fr_auto] ${sold ? "bg-ground" : "bg-ground"}`}
+              >
+                <div>
+                  <div className={`display text-[24px] leading-[1.1] ${sold ? "text-muted" : ""}`}>{l.name}</div>
+                  <div className="mt-1.5 max-w-[60ch] text-[14.5px] leading-[1.55] text-muted">{l.note}</div>
                 </div>
-                {!sold && (
-                  <button
-                    type="button"
-                    onClick={() => press(l)}
-                    className="poster mt-2 cursor-pointer border-[3px] border-ink bg-red-deep px-[18px] py-[9px] text-[15px] tracking-[0.03em] text-white shadow-[4px_4px_0_var(--black)] transition-[transform,box-shadow] duration-[80ms] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--black)]"
-                  >
-                    {button}
-                  </button>
+                <div className="min-w-[200px] min-[681px]:text-right">
+                  <div className="caps text-[14px] text-muted">{label}</div>
+                  <div className={`display mt-1 text-[30px] leading-none ${sold ? "text-muted" : "text-accent-ink"}`}>{formatMoney(amount)}</div>
+                  <div className="mt-2 flex items-center gap-2 min-[681px]:justify-end">
+                    <Mark text={markText} kind={markKind} />
+                    <div className="caps text-[14px] text-muted">{bidder}</div>
+                  </div>
+                  {!sold && (
+                    <button
+                      type="button"
+                      onClick={() => press(l)}
+                      className="caps mt-3 cursor-pointer border border-accent bg-accent px-5 py-3 text-[14px] tracking-[0.16em] text-on-accent transition-colors hover:border-accent-ink hover:bg-accent-ink"
+                    >
+                      {button}
+                    </button>
+                  )}
+                </div>
+                {sold && (
+                  <div className="caps absolute right-5 top-4 bg-accent px-2.5 py-1 text-[14px] text-on-accent min-[681px]:right-7 min-[681px]:top-6">
+                    Sold
+                  </div>
                 )}
               </div>
-              {sold && (
-                <div className="typewriter absolute -top-3.5 right-4 -rotate-[9deg] border-[3px] border-red bg-cream px-3 py-[3px] text-[15px] text-red-deep shadow-[2px_2px_0_rgba(0,0,0,0.2)]">
-                  SOLD
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </>
   );

@@ -1,29 +1,28 @@
 import type { ReactNode } from "react";
 
-/** Tilted yellow label. */
-export function Tape({ children, className = "" }: { children: ReactNode; className?: string }) {
+/** Small tracked-caps label with a short rule in front: the line above every headline. */
+export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <span
-      className={`inline-block -rotate-[1.5deg] bg-tape px-[18px] py-1.5 text-[14.5px] font-bold tracking-[0.04em] text-ink shadow-[2px_2px_0_rgba(0,0,0,0.25)] ${className}`}
-    >
-      {children}
+    <span className={`caps inline-flex items-center gap-3.5 text-[14px] text-accent-ink ${className}`}>
+      <i aria-hidden="true" className="inline-block h-px w-7 shrink-0 bg-accent" />
+      <span>{children}</span>
     </span>
   );
 }
 
 const stampSizes = {
-  md: "h-[118px] w-[118px] text-[14px]",
-  lg: "h-[150px] w-[150px] text-[17px]",
+  md: "h-[132px] w-[132px] text-[14px]",
+  lg: "h-[164px] w-[164px] text-[15px]",
 } as const;
 
-/** Circular red stamp. Pass line breaks as separate children. */
+/** Circular seal in the page's light. Pass line breaks as separate children. */
 export function Stamp({ children, size = "md", className = "" }: { children: ReactNode; size?: keyof typeof stampSizes; className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={`typewriter flex -rotate-[8deg] items-center justify-center rounded-full border-[3px] border-red text-center leading-[1.25] text-red ${stampSizes[size]} ${className}`}
+      className={`caps lit flex items-center justify-center rounded-full border border-accent/70 text-center leading-[1.45] tracking-[0.1em] text-accent-ink ${stampSizes[size]} ${className}`}
     >
-      {children}
+      <span>{children}</span>
     </div>
   );
 }
@@ -32,8 +31,8 @@ export function Stamp({ children, size = "md", className = "" }: { children: Rea
 export function SectionHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
   return (
     <>
-      <p className="typewriter mb-3 text-[15px] text-red-deep">{eyebrow}</p>
-      <h2 className="poster mb-4 text-[clamp(32px,4.8vw,54px)] leading-none">{children}</h2>
+      <Eyebrow className="mb-5">{eyebrow}</Eyebrow>
+      <h2 className="display mb-4 max-w-[22ch] text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{children}</h2>
     </>
   );
 }
@@ -41,13 +40,13 @@ export function SectionHead({ eyebrow, children }: { eyebrow: string; children: 
 /** Wrapper that gives every section the same width and rule. */
 export function Section({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
   return (
-    <section id={id} className={`border-t-[3px] border-ink py-[84px] ${className}`}>
-      <div className="mx-auto max-w-[1020px] px-7">{children}</div>
+    <section id={id} className={`border-t border-line py-[84px] ${className}`}>
+      <div className="mx-auto max-w-[1120px] px-7">{children}</div>
     </section>
   );
 }
 
-/** Numbered steps with dashed rules between them. `lg` is the roomier version on List an act. */
+/** Numbered steps with thin rules between them. `lg` is the roomier version on List an act. */
 export function Steps({
   steps,
   size = "md",
@@ -65,14 +64,14 @@ export function Steps({
       {steps.map(([title, body], i) => (
         <div
           key={title}
-          className={`grid border-t-2 border-dashed border-gray ${ruleFirst ? "" : "first:border-t-0"} ${
-            lg ? "grid-cols-[52px_1fr] gap-[18px] py-5" : "grid-cols-[44px_1fr] gap-4 py-4"
+          className={`grid border-t border-line ${ruleFirst ? "" : "first:border-t-0"} ${
+            lg ? "grid-cols-[64px_1fr] gap-[18px] py-6" : "grid-cols-[52px_1fr] gap-4 py-5"
           }`}
         >
-          <div className={`poster text-red ${lg ? "text-[30px]" : "text-[26px]"}`}>{i + 1}</div>
+          <div className={`display text-accent-ink ${lg ? "text-[34px]" : "text-[28px]"} leading-none`}>{String(i + 1).padStart(2, "0")}</div>
           <div>
-            <b className={`block ${lg ? "text-[17px]" : "text-[16px]"}`}>{title}</b>
-            <p className={`max-w-none text-gray ${lg ? "text-[15px] leading-[1.65]" : "text-[15px] leading-[1.6]"}`}>{body}</p>
+            <b className={`block font-medium ${lg ? "text-[17px]" : "text-[16px]"}`}>{title}</b>
+            <p className={`max-w-none text-muted ${lg ? "text-[15px] leading-[1.65]" : "text-[15px] leading-[1.6]"}`}>{body}</p>
           </div>
         </div>
       ))}
@@ -80,14 +79,14 @@ export function Steps({
   );
 }
 
-/** Typewriter lines behind a black rule: the "how it goes" lists. `marked` puts a red x before each line. */
+/** Short lines behind an accent rule: the "how it goes" lists. `marked` puts a small accent square before each line. */
 export function Lines({ lines, marked = false, className = "" }: { lines: ReactNode[]; marked?: boolean; className?: string }) {
   return (
-    <ul className={`typewriter max-w-[56ch] border-l-[3px] border-ink text-[15px] ${marked ? "pl-5 leading-[2.2]" : "pl-[18px] leading-[2]"} ${className}`}>
+    <ul className={`max-w-[56ch] border-l border-accent/60 pl-5 text-[15px] leading-[1.6] ${marked ? "grid gap-2.5" : "grid gap-2"} ${className}`}>
       {lines.map((line, i) => (
-        <li key={i}>
-          {marked && <span aria-hidden="true" className="text-red-deep">x </span>}
-          {line}
+        <li key={i} className={marked ? "grid grid-cols-[14px_1fr] items-baseline gap-2.5" : ""}>
+          {marked && <span aria-hidden="true" className="inline-block h-1.5 w-1.5 bg-accent" />}
+          <span>{line}</span>
         </li>
       ))}
     </ul>

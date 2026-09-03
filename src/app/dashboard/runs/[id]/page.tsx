@@ -40,18 +40,18 @@ export default async function RunPage({ params }: Props) {
     <DashboardShell
       current="/dashboard"
       actName={act.name}
-      tape={STATUS_LABEL[run.status] ?? run.status}
+      eyebrow={STATUS_LABEL[run.status] ?? run.status}
       title={run.title}
       accent=""
       intro={
-        <p className="typewriter">
+        <p className="caps">
           {run.show_count} {run.kind === "season" ? "gigs" : "shows"}, {formatDateRange(run.starts_on, run.ends_on)}.
         </p>
       }
     >
       <Card className="mb-10">
         <CardHead eyebrow="Step three of three">Price the spots</CardHead>
-        <p className="mb-6 max-w-[60ch] text-[15px] text-gray">
+        <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           The standard card for this kind of act. Card prices are a starting point; the act&apos;s own number always wins. Sold spots stay as they are.
         </p>
         <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={(lots ?? []) as ExistingLot[]} boardHref={boardHref} />
@@ -59,7 +59,7 @@ export default async function RunPage({ params }: Props) {
 
       <Card className="mb-10">
         <CardHead eyebrow="The shows">Every date on the run</CardHead>
-        <p className="mb-6 max-w-[60ch] text-[15px] text-gray">
+        <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           Enter the dates once. Through the run, one tap marks a show played. A photo and a headcount are optional and go on the record patrons get at the end.
         </p>
         <ShowsPanel runId={run.id} shows={(shows ?? []) as ShowRow[]} defaultCity={act.city} />

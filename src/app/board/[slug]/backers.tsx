@@ -40,10 +40,10 @@ export const BACKERS_DISCLAIMER =
 
 export function RosieBackers() {
   return (
-    <div className="border-t-[3px] border-ink py-14">
-      <div className="mx-auto max-w-[1020px] px-7">
-        <p className="typewriter mb-3 text-[15px] text-red-deep">Who backs a bassoonist</p>
-        <h2 className="poster mb-6 text-[clamp(28px,4vw,44px)] leading-none">Small patrons with perfect aim</h2>
+    <div className="border-t border-line py-14">
+      <div className="mx-auto max-w-[1120px] px-7">
+        <p className="caps mb-3 text-[15px] text-accent-ink">Who backs a bassoonist</p>
+        <h2 className="display mb-6 text-[clamp(28px,4vw,44px)] leading-none">Small patrons with perfect aim</h2>
         <p>
           The pitch here isn&apos;t reach. A solo player&apos;s following is small, but it&apos;s made of working
           players, serious students, and the rooms she gigs in, and for the right buyer that&apos;s their whole target
@@ -52,15 +52,15 @@ export function RosieBackers() {
         </p>
         <div className="mt-[26px] grid gap-[18px] min-[681px]:grid-cols-2">
           {BACKERS.map((b) => (
-            <div key={b.title} className={`hard-border px-[18px] py-4 shadow-[5px_5px_0_var(--black)] ${b.wide ? "bg-tape min-[681px]:col-span-2" : "bg-white"}`}>
-              <b className="poster block text-[17px]">{b.title}</b>
-              <span className="mt-1 block text-[14.5px] leading-[1.55] text-gray">{b.body}</span>
-              <span className="typewriter mt-2 block border-t-2 border-dashed border-[#A79D8A] pt-2 text-[14px] leading-[1.6] text-ink">{b.who}</span>
-              <span className={`typewriter mt-1.5 block text-[14px] ${b.wide ? "text-ink" : "text-red-deep"}`}>Fits: {b.fits}</span>
+            <div key={b.title} className={`edge px-[18px] py-4 ${b.wide ? "lit bg-panel min-[681px]:col-span-2" : "bg-panel"}`}>
+              <b className="block text-[17px]">{b.title}</b>
+              <span className="mt-1 block text-[14.5px] leading-[1.55] text-muted">{b.body}</span>
+              <span className="mt-2 block border-t border-line pt-2 text-[14px] leading-[1.6] text-ink">{b.who}</span>
+              <span className={`mt-1.5 block text-[14px] text-accent-ink`}>Fits: {b.fits}</span>
             </div>
           ))}
         </div>
-        <p className="typewriter mt-[22px] max-w-[70ch] text-[14px] text-gray">
+        <p className="mt-[22px] max-w-[70ch] text-[14px] text-muted">
           Companies named here are examples of who each spot is built for. None of them are involved with Door Money,
           and none have bought anything.
         </p>

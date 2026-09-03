@@ -56,9 +56,9 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>Four, and two of them belong to Stripe and appear only while someone is paying.</p>
         <div className="overflow-x-auto">
-          <table className="hard-border w-full min-w-[560px] border-collapse bg-cream text-[15px] leading-[1.55]">
+          <table className="edge w-full min-w-[560px] border-collapse bg-panel text-[15px] leading-[1.55]">
             <thead>
-              <tr className="typewriter bg-ink text-left text-paper">
+              <tr className="caps bg-panel text-left text-ink">
                 <th className="p-3 font-normal">Cookie</th>
                 <th className="p-3 font-normal">Set by</th>
                 <th className="p-3 font-normal">What it does</th>
@@ -67,8 +67,8 @@ const SECTIONS: LegalSection[] = [
             </thead>
             <tbody>
               {COOKIES.map((c) => (
-                <tr key={c.name} className="border-t-2 border-dashed border-gray align-top">
-                  <td className="typewriter p-3 whitespace-nowrap">{c.name}</td>
+                <tr key={c.name} className="border-t border-line align-top">
+                  <td className="p-3 font-mono text-[14.5px] whitespace-nowrap">{c.name}</td>
                   <td className="p-3">{c.setBy}</td>
                   <td className="p-3">{c.purpose}</td>
                   <td className="p-3">{c.lasts}</td>
@@ -77,7 +77,7 @@ const SECTIONS: LegalSection[] = [
             </tbody>
           </table>
         </div>
-        <p className="typewriter text-[14.5px] text-gray">
+        <p className="text-[14.5px] text-muted">
           The sign-in cookie&apos;s full name includes the project reference of the database it belongs to, so the middle part varies.
         </p>
       </>
@@ -157,7 +157,7 @@ export default function CookiesPage() {
   return (
     <LegalPage
       path="/cookies"
-      tape="House paper"
+      eyebrow="House paper"
       title="Cookie"
       accent="policy"
       intro={

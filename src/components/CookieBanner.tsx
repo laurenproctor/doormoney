@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { Button } from "@/components/Button";
-import { Tape } from "@/components/Brand";
+import { Eyebrow } from "@/components/Brand";
 import { SITE } from "@/lib/site";
 
 /** Name of the cookie that records that the notice was accepted. Listed on /cookies; keep the two in step. */
@@ -43,15 +43,15 @@ export function CookieBanner() {
   return (
     <aside
       aria-label="Cookie notice"
-      className="fixed inset-x-0 bottom-0 z-40 border-t-[3px] border-ink bg-cream shadow-[0_-5px_0_var(--black)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ground "
     >
-      <div className="mx-auto flex max-w-[1020px] flex-wrap items-center gap-x-8 gap-y-4 px-7 py-4 sm:py-5">
+      <div className="mx-auto flex max-w-[1120px] flex-wrap items-center gap-x-8 gap-y-4 px-7 py-4 sm:py-5">
         <div className="flex min-w-0 flex-1 basis-[420px] flex-col items-start gap-3">
-          <Tape>Cookies</Tape>
+          <Eyebrow>Cookies</Eyebrow>
           <p className="max-w-[62ch] text-[15px] leading-[1.6]">
             {SITE.name} sets only the cookies it needs to keep an act signed in, take a payment, and remember this notice.
             No analytics, no advertising, nothing that follows anyone around.{" "}
-            <Link href="/cookies" className="underline decoration-2 underline-offset-4">
+            <Link href="/cookies" className="underline decoration-1 underline-offset-4">
               Read the cookie policy
             </Link>
             .

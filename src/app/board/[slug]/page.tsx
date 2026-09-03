@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { Lines, Tape } from "@/components/Brand";
+import { Eyebrow, Lines } from "@/components/Brand";
+import { HeroArt } from "@/components/HeroArt";
+import { Theme, themeFor } from "@/components/Theme";
 import { getBoard, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
@@ -34,6 +36,8 @@ export default async function BoardPage({ params }: Props) {
   if (!board || !board.run) notFound();
   const { act, run } = board;
 
+  // Every act gets its own colour of light, the same one every time.
+  const theme = themeFor(slug);
   const season = run.kind === "season";
   const unit = season ? "gigs" : "shows";
   const noun = act.type === "soloist" ? "The act" : "The band";
@@ -66,52 +70,55 @@ export default async function BoardPage({ params }: Props) {
   ];
 
   return (
-    <>
+    <Theme name={theme}>
       <Nav current="/auctions" />
-      <main id="main">
-      <div className="mx-auto max-w-[1020px] px-7 pt-[66px]">
-        <div className="mb-[26px]">
-          <Tape>Live board</Tape>
-        </div>
-        <h1 className={`poster leading-[0.88] ${act.name.length > 14 ? "text-[clamp(42px,8.4vw,100px)]" : "text-[clamp(52px,10vw,120px)]"}`}>{act.name}</h1>
-        <p className="typewriter mt-[18px] text-[clamp(15px,2.2vw,19px)]">
-          {run.title}. {run.showCount} {unit}, {formatDateRange(run.startsOn, run.endsOn)}. {act.city}.
-        </p>
-        {act.bio && <p className="mt-[22px] max-w-[58ch] border-l-[3px] border-ink pl-[18px] text-[16px]">{act.bio}</p>}
-        <div className="mt-[26px] flex flex-wrap gap-[30px]">
-          {facts.map(([value, label]) => (
-            <div key={label}>
-              <b className="poster block text-[clamp(24px,3.4vw,34px)] leading-none">{value}</b>
-              <span className="typewriter text-[14px] text-gray">{label}</span>
+      <main id="main" className="flex-1">
+        <section className="relative overflow-hidden">
+          <HeroArt theme={theme} />
+          <div className="relative mx-auto max-w-[1120px] px-7 pb-10 pt-[72px]">
+            <Eyebrow className="mb-7">Live board</Eyebrow>
+            <h1 className={`display max-w-[14ch] leading-[0.98] ${act.name.length > 14 ? "text-[clamp(40px,7vw,92px)]" : "text-[clamp(48px,8.4vw,108px)]"}`}>{act.name}</h1>
+            <p className="caps mt-6 text-[14.5px] leading-[2]">
+              {run.title}. {run.showCount} {unit}, {formatDateRange(run.startsOn, run.endsOn)}. {act.city}.
+            </p>
+            {act.bio && <p className="mt-6 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
+            <div className="mt-8 flex flex-wrap gap-x-12 gap-y-6">
+              {facts.map(([value, label]) => (
+                <div key={label}>
+                  <b className="display block text-[clamp(28px,4vw,40px)] leading-none">{value}</b>
+                  <span className="caps mt-1.5 block text-[14px] text-muted">{label}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        </section>
+        <div className="mx-auto max-w-[1120px] px-7">
+          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Bid on the season" : "Bid on the run"} />
         </div>
-        <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Bid on the season" : "Bid on the run"} />
-      </div>
 
-      {showBackers && <RosieBackers />}
+        {showBackers && <RosieBackers />}
 
-      <div className="border-t-[3px] border-ink py-14">
-        <div className="mx-auto max-w-[1020px] px-7">
-          <p className="typewriter mb-3 text-[15px] text-red-deep">If a bid wins</p>
-          <h2 className="poster mb-6 text-[clamp(28px,4vw,44px)] leading-none">What happens after {closeDay ?? "the close"}</h2>
-          <Lines
-            marked
-            lines={[
-              "The winning patron puts the money up within 48 hours, or the spot goes to the next bid.",
-              `${noun} approves the mark. Nothing goes up without their yes.`,
-              `${noun} plays the ${season ? "season" : "run"} it was already playing.`,
-              `The money reaches ${noun.toLowerCase()} week by week as the ${season ? "season" : "run"} goes on.`,
-              season
-                ? "End of season: a record of every gig the placement ran at."
-                : "End of the run, the patron gets a record of it: every show, every room, the attendance count.",
-            ]}
-          />
+        <div className="border-t border-line py-16">
+          <div className="mx-auto max-w-[1120px] px-7">
+            <Eyebrow className="mb-5">If a bid wins</Eyebrow>
+            <h2 className="display mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">What happens after {closeDay ?? "the close"}</h2>
+            <Lines
+              marked
+              lines={[
+                "The winning patron puts the money up within 48 hours, or the spot goes to the next bid.",
+                `${noun} approves the mark. Nothing goes up without their yes.`,
+                `${noun} plays the ${season ? "season" : "run"} it was already playing.`,
+                `The money reaches ${noun.toLowerCase()} week by week as the ${season ? "season" : "run"} goes on.`,
+                season
+                  ? "End of season: a record of every gig the placement ran at."
+                  : "End of the run, the patron gets a record of it: every show, every room, the attendance count.",
+              ]}
+            />
+          </div>
         </div>
-      </div>
       </main>
 
       <Footer note={showBackers ? BACKERS_DISCLAIMER : undefined} />
-    </>
+    </Theme>
   );
 }

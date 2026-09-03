@@ -2,7 +2,7 @@
 
 Sponsorship marketplace for working musicians in New York. Local businesses and gear brands put money behind bands, house acts and soloists: a name on the kick drum, the road cases, the tip jar, a post. Door Money holds the money and pays the act weekly through the run. Fans can also back an act through an embeddable widget.
 
-Read `docs/ROADMAP.md` for the phases and `docs/DECISIONS.md` for the open product questions and the defaults this codebase assumes. The seven HTML files in `docs/mockups/` are the design spec; port from them, don't redesign.
+Read `docs/ROADMAP.md` for the phases and `docs/DECISIONS.md` for the open product questions and the defaults this codebase assumes. The seven HTML files in `docs/mockups/` hold the page structure and the copy. The look is the design system below, not the mockups' paper palette.
 
 @AGENTS.md
 
@@ -34,14 +34,17 @@ These are firm. They apply to page copy, button labels, emails, error messages, 
 
 ## Design system
 
-Tokens live in `src/app/globals.css` and mirror the mockups exactly. Use them; don't introduce new colors or fonts.
+Tokens live in `src/app/globals.css`. Use them; don't introduce new colors or fonts.
 
-- Paper `#EDE8DC` (page background), black `#000000`, red `#E03A1E`, tape `#F2C230`, gray `#55524B`
-- Deep red `#C42F14` (`text-red-deep`, `bg-red-deep`) for any red text under 24px and for button fills. It is the brand red darkened to reach 4.5:1 on paper, white and cream. Brand red stays for display headlines, stamps, borders and rules.
+Every page is a dark room with one colour of light in it. The room is the same on every page; the light changes per page.
+
+- The room: `ground` (page background), `ink` `#F4F0E8` (text), `muted` (secondary text), `line` (1px rules and borders), `panel` (a lifted, translucent block).
+- The light: `accent` (fills, glows, rules, display type at 24px and up), `accent-ink` (the tint of the accent that clears 4.5:1 on the ground; use it for any accent text under 24px), `on-accent` (text on an accent fill).
+- Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, dashboard, the embed), lime (placements), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). Boards take a colour by slug through `themeFor`, so each act keeps the same light.
 - Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
-- Anton for display and buttons (uppercase), Special Elite for typewriter accents and metadata, Archivo for body
-- Hard black borders (3px), hard offset shadows (no blur), tilted tape labels, circular red stamps
-- Components in `src/components/`: `Nav`, `Footer`, `Tape`, `Stamp`, `Button`, `Wordmark`. Reuse them.
+- Bodoni Moda for display, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for body and for tracked caps labels (the `caps` utility). Nothing else.
+- Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it.
+- Components in `src/components/`: `Theme`, `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`. Reuse them.
 
 ## Engineering rules
 
@@ -57,17 +60,17 @@ Tokens live in `src/app/globals.css` and mirror the mockups exactly. Use them; d
 
 ## Working with the mockups
 
-`docs/mockups/*.html` are self-contained pages with inline CSS. When porting one:
+`docs/mockups/*.html` are self-contained pages with inline CSS in the old paper look. They are the source for sections, order and copy, not for colour or type. When porting one:
 
 1. Read the whole file first.
-2. Reuse the shared components rather than copying the nav and footer.
+2. Reuse the shared components rather than copying the nav and footer. Take the layout and the words from the mockup; take the look from the design system above.
 3. Keep the copy word for word unless it breaks a voice rule above, in which case fix it and note it in the commit.
 4. Replace hardcoded sample data with reads from Supabase, using the seed data so the result looks the same.
 5. Match the layout at desktop and at 380px wide.
 
 ## Do not
 
-- Add a dark mode. The paper palette is the brand.
+- Add a light mode. The dark room and the coloured light are the brand.
 - Add analytics scripts, chat widgets or third-party embeds to the marketing pages without asking.
 - Store card numbers, ever. Stripe Elements only.
 - Write "you" anywhere a person will read it.

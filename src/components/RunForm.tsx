@@ -45,14 +45,14 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
         <legend className={labelClass}>Kind of run</legend>
         <div className="grid gap-3.5 md:grid-cols-3">
           {KINDS.map(([value, label, blurb]) => (
-            <label key={value} className="hard-border cursor-pointer bg-white p-3.5 has-[:checked]:bg-tape has-[:checked]:shadow-[inset_0_0_0_2px_var(--black)]">
+            <label key={value} className="edge cursor-pointer bg-panel p-3.5 has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:checked]:border-accent">
               <input type="radio" name="kind" value={value} defaultChecked={defaultKind === value} className="sr-only" />
-              <span className="poster block text-[17px]">{label}</span>
-              <span className="block text-[14.5px] leading-[1.5] text-gray">{blurb}</span>
+              <span className="caps block text-[17px]">{label}</span>
+              <span className="block text-[14.5px] leading-[1.5] text-muted">{blurb}</span>
             </label>
           ))}
         </div>
-        {err.kind && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{err.kind}</p>}
+        {err.kind && <p className="mt-1.5 text-[14.5px] text-accent-ink">{err.kind}</p>}
       </fieldset>
 
       <Field label="Run name" error={err.title} hint='Shows on the board. "Fall run", "Winter season", "October at Barbès".'>
@@ -83,8 +83,8 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>{pending ? "Saving" : run ? "Save the run" : "Save and price the spots"}</Button>
-        {state.ok && <span className="typewriter text-[14.5px] text-gray">Saved.</span>}
-        {err.form && <span className="typewriter text-[14.5px] text-red-deep">{err.form}</span>}
+        {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
+        {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>
     </form>
   );

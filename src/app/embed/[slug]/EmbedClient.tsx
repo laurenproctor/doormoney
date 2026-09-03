@@ -27,58 +27,61 @@ export function EmbedClient(p: {
   }, [done, tier]);
 
   const chosen = tier === "placement" ? null : tier;
+  const tierClass = (on: boolean) =>
+    `grid cursor-pointer grid-cols-[72px_1fr] items-center gap-3 border px-3 py-2.5 text-left transition-colors ${
+      on ? "border-accent bg-accent/10" : "border-line bg-transparent hover:border-ink/50"
+    }`;
 
   return (
-    <div ref={root} className="hard-border mx-auto max-w-[380px] bg-white shadow-[6px_6px_0_var(--black)]">
-      <div className="poster flex items-center justify-between border-b-[3px] border-ink bg-tape px-4 py-3 text-[17px]">
+    <div ref={root} className="lit mx-auto max-w-[380px] bg-ground text-ink">
+      <div className="caps flex items-center justify-between gap-3 border-b border-line px-4 py-3 text-[14px]">
         <span>Back the {p.runTitle.toLowerCase()}</span>
-        <span className="poster -rotate-3 border-2 border-ink bg-white px-2 py-0.5 text-[14px] tracking-[0.06em] text-red-deep">Door Money</span>
+        <span className="text-accent-ink">Door Money</span>
       </div>
 
       {done ? (
-        <div className="px-4 py-7 text-center">
-          <div className="typewriter mx-auto mb-3.5 flex h-[104px] w-[104px] -rotate-[8deg] items-center justify-center rounded-full border-[3px] border-red text-[14.5px] text-red-deep">BACKED</div>
+        <div className="px-4 py-8 text-center">
+          <div className="caps lit mx-auto mb-4 flex h-[104px] w-[104px] items-center justify-center rounded-full border border-accent/70 text-[14px] text-accent-ink">Backed</div>
           <p className="max-w-none text-[14.5px] leading-[1.6]"><b>{chosen?.label} to {p.actName}.</b><br />A receipt is on its way, and the name goes on the {chosen?.key === "merch_card" ? "merch table card" : "tour thank-you"} when the run wraps.</p>
         </div>
       ) : (
         <>
-          <div className="px-4 pt-3.5">
-            <b className="block text-[15px]">{p.actName}</b>
-            <span className="typewriter text-[14px] text-gray">{p.showCount} shows.</span>
+          <div className="px-4 pt-4">
+            <b className="display block text-[22px] leading-none">{p.actName}</b>
+            <span className="caps mt-1.5 block text-[14px] text-muted">{p.showCount} shows.</span>
           </div>
-          <div className="relative mx-4 mt-3 h-4 border-2 border-ink"><i className="absolute inset-y-0 left-0 bg-red" style={{ width: `${p.progress}%` }} /></div>
-          <div className="typewriter flex justify-between px-4 pt-1.5 text-[14px] text-gray"><span>{p.backedLabel} backed</span><span>of {p.goalLabel}</span></div>
+          <div className="relative mx-4 mt-3.5 h-1.5 bg-line"><i className="absolute inset-y-0 left-0 bg-accent" style={{ width: `${p.progress}%` }} /></div>
+          <div className="caps flex justify-between px-4 pt-2 text-[14px] text-muted"><span>{p.backedLabel} backed</span><span>of {p.goalLabel}</span></div>
 
-          <div className="grid gap-2 px-4 pt-3.5">
+          <div className="grid gap-2 px-4 pt-4">
             {p.tiers.map((t) => (
-              <button key={t.key} type="button" onClick={() => setTier(t)}
-                className={`grid cursor-pointer grid-cols-[64px_1fr] items-center gap-3 border-2 border-ink px-3 py-2.5 text-left ${chosen?.key === t.key ? "bg-tape shadow-[3px_3px_0_var(--black)]" : "bg-white hover:bg-cream"}`}>
-                <span className="poster text-[22px] leading-none">{t.label}</span>
-                <span><b className="block text-[14.5px] leading-tight">{t.title}</b><span className="block text-[14px] leading-snug text-gray">{t.blurb}</span></span>
+              <button key={t.key} type="button" onClick={() => setTier(t)} aria-pressed={chosen?.key === t.key} className={tierClass(chosen?.key === t.key)}>
+                <span className="display text-[22px] leading-none">{t.label}</span>
+                <span><b className="block text-[14.5px] font-medium leading-tight">{t.title}</b><span className="block text-[14px] leading-snug text-muted">{t.blurb}</span></span>
               </button>
             ))}
-            <button type="button" onClick={() => setTier("placement")}
-              className={`grid cursor-pointer grid-cols-[64px_1fr] items-center gap-3 border-2 border-ink px-3 py-2.5 text-left ${tier === "placement" ? "bg-tape shadow-[3px_3px_0_var(--black)]" : "bg-white hover:bg-cream"}`}>
-              <span className="poster text-[22px] leading-none">$500<small className="typewriter block text-[14px] normal-case text-gray">and up</small></span>
-              <span><b className="block text-[14.5px] leading-tight">Take a placement</b><span className="block text-[14px] leading-snug text-gray">Kick head, cases, straps, posts. Opens the act&apos;s board on Door Money.</span></span>
+            <button type="button" onClick={() => setTier("placement")} aria-pressed={tier === "placement"} className={tierClass(tier === "placement")}>
+              <span className="display text-[22px] leading-none">$500<small className="caps mt-1 block text-[14px] text-muted">and up</small></span>
+              <span><b className="block text-[14.5px] font-medium leading-tight">Take a placement</b><span className="block text-[14px] leading-snug text-muted">Kick head, cases, straps, posts. Opens the act&apos;s board on Door Money.</span></span>
             </button>
           </div>
 
           {chosen && (
             <div className="grid gap-2 px-4 pt-3">
-              <input className="hard-border w-full px-2.5 py-2 text-[15px]" placeholder="Name, as it should appear" aria-label="Name" />
-              <input className="hard-border w-full px-2.5 py-2 text-[15px]" type="email" placeholder="Email" aria-label="Email" />
+              <input className="edge w-full px-3 py-2.5 text-[15px]" placeholder="Name, as it should appear" aria-label="Name" />
+              <input className="edge w-full px-3 py-2.5 text-[15px]" type="email" placeholder="Email" aria-label="Email" />
               {/* Phase 4: mount the Stripe Payment Element here. */}
-              <div className="typewriter flex items-center gap-2 border-2 border-dashed border-ink bg-[#FAF8F3] px-2.5 py-2 text-[14px] text-gray">Card field, served by Door Money. Nothing typed here touches the host site.</div>
+              <div className="flex items-center gap-2 border border-dashed border-line px-3 py-2.5 text-[14px] text-muted">Card field, served by Door Money. Nothing typed here touches the host site.</div>
             </div>
           )}
 
           <button type="button"
             onClick={() => { if (tier === "placement") window.open(p.boardUrl, "_blank"); else setDone(true); }}
-            className="poster mx-4 mt-3.5 w-[calc(100%-32px)] cursor-pointer border-[3px] border-ink bg-red-deep px-3 py-3 text-[18px] tracking-[0.03em] text-white shadow-[4px_4px_0_var(--black)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--black)]">
+            className="caps mx-4 mt-4 flex w-[calc(100%-32px)] cursor-pointer items-center justify-center gap-3 border border-accent bg-accent px-3 py-3.5 text-[14px] tracking-[0.16em] text-on-accent transition-colors hover:border-accent-ink hover:bg-accent-ink">
             {tier === "placement" ? "Open the board" : `Back for ${chosen?.label}`}
+            <span aria-hidden="true" className="text-[16px] leading-none">&rarr;</span>
           </button>
-          <p className="typewriter max-w-none px-4 pb-3.5 pt-3 text-[14px] leading-[1.6] text-gray">Door Money holds the money and pays the act weekly through the run. Refunded in full if the run is cancelled.</p>
+          <p className="max-w-none px-4 pb-4 pt-3 text-[14px] leading-[1.6] text-muted">Door Money holds the money and pays the act weekly through the run. Refunded in full if the run is cancelled.</p>
         </>
       )}
     </div>

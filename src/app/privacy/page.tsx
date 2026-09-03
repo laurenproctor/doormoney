@@ -191,7 +191,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       path="/privacy"
-      tape="House paper"
+      eyebrow="House paper"
       title="Privacy"
       accent="policy"
       intro={

@@ -29,14 +29,14 @@ export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: strin
         {ACT_TYPES.map(([value, label]) => (
           <label
             key={value}
-            className="poster hard-border min-w-[120px] flex-1 cursor-pointer bg-white p-3 text-center text-[16px] has-[:checked]:bg-tape has-[:checked]:shadow-[inset_0_0_0_2px_var(--black)]"
+            className="caps edge min-w-[120px] flex-1 cursor-pointer bg-panel p-3 text-center text-[16px] has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:checked]:border-accent"
           >
             <input type="radio" name="type" value={value} defaultChecked={(act?.type ?? "touring_band") === value} className="sr-only" />
             {label}
           </label>
         ))}
       </fieldset>
-      {err.type && <p className="typewriter -mt-3 mb-3 text-[14.5px] text-red-deep">{err.type}</p>}
+      {err.type && <p className="-mt-3 mb-3 text-[14.5px] text-accent-ink">{err.type}</p>}
 
       <Field label="Act name" error={err.name}>
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
@@ -75,15 +75,15 @@ export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: strin
       <Field label="Photo" error={err.photo} hint="JPG, PNG or WebP, under 5MB. Shows on the board and the widget.">
         {act?.photo_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={act.photo_url} alt="" className="hard-border mb-3 h-[120px] w-[120px] object-cover" />
+          <img src={act.photo_url} alt="" className="edge mb-3 h-[120px] w-[120px] object-cover" />
         )}
-        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="typewriter block text-[15px]" />
+        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block text-[15px]" />
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the act" : "Create the act"}</Button>
-        {state.ok && <span className="typewriter text-[14.5px] text-gray">Saved.</span>}
-        {err.form && <span className="typewriter text-[14.5px] text-red-deep">{err.form}</span>}
+        {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
+        {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>
     </form>
   );
@@ -96,8 +96,8 @@ export function Field({ label, hint, error, children }: { label: string; hint?: 
         <span className={labelClass}>{label}</span>
         {children}
       </label>
-      {hint && !error && <p className="typewriter mt-1.5 max-w-none text-[14px] text-gray">{hint}</p>}
-      {error && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{error}</p>}
+      {hint && !error && <p className="mt-1.5 max-w-none text-[14px] text-muted">{hint}</p>}
+      {error && <p className="mt-1.5 text-[14.5px] text-accent-ink">{error}</p>}
     </div>
   );
 }

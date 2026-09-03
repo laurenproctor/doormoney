@@ -15,20 +15,21 @@ export default async function LoginPage({ searchParams }: Props) {
 
   return (
     <Page
+      theme="blue"
       current="/login"
-      tape="For acts already listed"
+      eyebrow="For acts already listed"
       title="Sign"
       accent="in"
       intro={
-        <p className="typewriter text-[clamp(18px,2.5vw,25px)]">Acts sign in with an email link. No passwords to remember.</p>
+        <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">Acts sign in with an email link. No passwords to remember.</p>
       }
     >
-      <div className="mx-auto grid max-w-[1020px] gap-[40px] px-7 pb-[90px] md:grid-cols-[1fr_1fr]">
-        <div className="hard-border bg-white p-7 shadow-[7px_7px_0_var(--black)]">
+      <div className="mx-auto grid max-w-[1120px] gap-[40px] px-7 pb-[90px] md:grid-cols-[1fr_1fr]">
+        <div className="edge bg-panel p-7 ">
           <LoginForm next={next} linkError={linkError} />
         </div>
         <div>
-          <h2 className="typewriter mb-3 text-[15px] text-red-deep">How it goes</h2>
+          <h2 className="caps mb-3 text-[15px] text-accent-ink">How it goes</h2>
           <Lines
             lines={[
               "Enter the email the act listed with.",

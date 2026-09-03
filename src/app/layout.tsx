@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { Anton, Archivo, Special_Elite } from "next/font/google";
+import { Archivo, Bodoni_Moda } from "next/font/google";
 import { CookieBanner } from "@/components/CookieBanner";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
-const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton" });
-const specialElite = Special_Elite({ weight: "400", subsets: ["latin"], variable: "--font-special-elite" });
+const bodoni = Bodoni_Moda({ subsets: ["latin"], style: ["normal", "italic"], axes: ["opsz"], variable: "--font-bodoni" });
 const archivo = Archivo({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-archivo" });
 
 export const metadata: Metadata = {
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${anton.variable} ${specialElite.variable} ${archivo.variable} h-full antialiased`}>
+    <html lang="en" className={`${bodoni.variable} ${archivo.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         {children}
         <CookieBanner />

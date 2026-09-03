@@ -35,7 +35,7 @@ export default async function AdminPage() {
   const held = (purchases.data ?? []).filter((p) => p.payment_status === "held").reduce((n, p) => n + p.amount_cents, 0);
 
   return (
-    <DashboardShell current="/admin" actName="Door Money staff" tape="Read only" title="Admin" accent="">
+    <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Read only" title="Admin" accent="">
       <div className="grid gap-[30px]">
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-5">
           <Stat n={String(actRows.length)} label="acts" />
@@ -50,7 +50,7 @@ export default async function AdminPage() {
           <Table
             head={["Act", "Owner", "Type", "City", "Stripe", "Runs", "Listed"]}
             rows={actRows.map((a) => [
-              <Link key="n" href={`/board/${a.slug}`} className="text-red-deep underline decoration-2 underline-offset-4">{a.name}</Link>,
+              <Link key="n" href={`/board/${a.slug}`} className="text-accent-ink underline decoration-1 underline-offset-4">{a.name}</Link>,
               a.profiles?.email ?? "",
               a.type.replace("_", " "),
               a.city,
@@ -84,7 +84,7 @@ export default async function AdminPage() {
         <Card>
           <CardHead eyebrow="Payments">{(purchases.data ?? []).length} purchases</CardHead>
           {(purchases.data ?? []).length === 0 ? (
-            <p className="max-w-none text-[15px] text-gray">Nothing yet. Phase 3.</p>
+            <p className="max-w-none text-[15px] text-muted">Nothing yet. Phase 3.</p>
           ) : (
             <Table
               head={["When", "Lot", "Amount", "Fee", "Payment", "Mark"]}
@@ -99,18 +99,18 @@ export default async function AdminPage() {
         <Card>
           <CardHead eyebrow="Contact notes">{(notes.data ?? []).length} received</CardHead>
           {(notes.data ?? []).length === 0 ? (
-            <p className="max-w-none text-[15px] text-gray">No notes yet.</p>
+            <p className="max-w-none text-[15px] text-muted">No notes yet.</p>
           ) : (
-            <ul className="divide-y-2 divide-dashed divide-gray">
+            <ul className="divide-y divide-line">
               {(notes.data ?? []).map((n) => (
                 <li key={n.id} className="py-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <b className="text-[15px]">{n.subject}</b>
-                    <span className="typewriter text-[14px] text-gray">{when.format(new Date(n.created_at))} · {n.status}</span>
+                    <span className="caps text-[14px] text-muted">{when.format(new Date(n.created_at))} · {n.status}</span>
                   </div>
-                  <p className="typewriter max-w-none text-[14.5px] text-gray">
+                  <p className="max-w-none text-[14.5px] text-muted">
                     {n.reason.replace(/_/g, " ")} · {n.name}
-                    {n.organization ? `, ${n.organization}` : ""} · <a href={`mailto:${n.email}`} className="text-red-deep underline decoration-2 underline-offset-4">{n.email}</a>
+                    {n.organization ? `, ${n.organization}` : ""} · <a href={`mailto:${n.email}`} className="text-accent-ink underline decoration-1 underline-offset-4">{n.email}</a>
                   </p>
                   <p className="mt-2 max-w-none whitespace-pre-wrap text-[15px]">{n.message}</p>
                 </li>
@@ -133,20 +133,20 @@ export default async function AdminPage() {
 
 function Stat({ n, label }: { n: string; label: string }) {
   return (
-    <div className="hard-border bg-white p-4">
-      <dt className="poster text-[28px] leading-none">{n}</dt>
-      <dd className="typewriter text-[14px] text-gray">{label}</dd>
+    <div className="edge bg-panel p-4">
+      <dt className="display text-[28px] leading-none">{n}</dt>
+      <dd className="caps text-[14px] text-muted">{label}</dd>
     </div>
   );
 }
 
 function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
-  if (rows.length === 0) return <p className="max-w-none text-[15px] text-gray">Nothing here yet.</p>;
+  if (rows.length === 0) return <p className="max-w-none text-[15px] text-muted">Nothing here yet.</p>;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] border-collapse text-[15px]">
         <thead>
-          <tr className="typewriter border-b-[3px] border-ink text-left text-[14px] text-gray">
+          <tr className="caps border-b border-line text-left text-[14px] text-muted">
             {head.map((h) => (
               <th key={h} className="py-2 pr-4 font-normal">{h}</th>
             ))}
@@ -154,7 +154,7 @@ function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b-2 border-dashed border-gray align-top">
+            <tr key={i} className="border-b border-line align-top">
               {r.map((c, j) => (
                 <td key={j} className="py-2 pr-4">{c}</td>
               ))}

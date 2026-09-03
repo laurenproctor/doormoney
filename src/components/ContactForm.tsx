@@ -7,7 +7,7 @@ import { CONTACT_REASONS } from "@/lib/contact";
 
 const initial: ContactState = { ok: false };
 
-const inputClass = "typewriter hard-border w-full bg-paper px-3.5 py-3 text-[15px] focus:shadow-[4px_4px_0_var(--black)]";
+const inputClass = "edge w-full bg-ground px-3.5 py-3 text-[15px] focus:border-accent";
 
 /**
  * The form on /contact. It records when it mounted and sends that along; the action rejects
@@ -29,11 +29,11 @@ export function ContactForm() {
 
   if (state.ok) {
     return (
-      <div role="status" className="hard-border hard-shadow bg-cream px-7 pb-8 pt-9 text-center">
+      <div role="status" className="edge glow bg-panel px-7 pb-8 pt-9 text-center">
         <Stamp size="lg" className="mx-auto mb-5">
           NOTE<br />RECEIVED
         </Stamp>
-        <p className="typewriter mx-auto max-w-[40ch] text-[16px]">The note reached Door Money. A reply will follow when one is useful.</p>
+        <p className="mx-auto max-w-[40ch] text-[16px]">The note reached Door Money. A reply will follow when one is useful.</p>
       </div>
     );
   }
@@ -156,14 +156,14 @@ export function ContactForm() {
         <Button type="submit" disabled={pending} aria-disabled={pending}>
           {pending ? "Sending" : "Send the note"}
         </Button>
-        <p className="typewriter text-[14.5px] text-gray">Door Money stores the note and answers from a real inbox.</p>
+        <p className="text-[14.5px] text-muted">Door Money stores the note and answers from a real inbox.</p>
       </div>
 
       {/* Submission feedback. Announced to assistive tools as it changes. */}
       <div aria-live="polite" aria-atomic="true">
-        {errors.form && <p className="typewriter text-[14.5px] text-red-deep">{errors.form}</p>}
+        {errors.form && <p className="text-[14.5px] text-accent-ink">{errors.form}</p>}
         {!errors.form && fieldErrors.length > 0 && (
-          <p className="typewriter text-[14.5px] text-red-deep">
+          <p className="text-[14.5px] text-accent-ink">
             {fieldErrors.length === 1 ? "One field needs attention." : `${fieldErrors.length} fields need attention.`}
           </p>
         )}
@@ -189,13 +189,13 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="poster mb-1.5 block text-[15px] tracking-[0.04em]">
+      <label htmlFor={id} className="caps mb-2 block text-[14px] text-muted">
         {label}
-        {hint && <span className="typewriter ml-2 text-[14px] normal-case tracking-normal text-gray">{hint}</span>}
+        {hint && <span className="ml-2 text-[14px] normal-case tracking-normal text-muted">{hint}</span>}
       </label>
       {children}
       {error && (
-        <p id={errorId} className="typewriter mt-1.5 text-[14.5px] text-red-deep">
+        <p id={errorId} className="mt-1.5 text-[14.5px] text-accent-ink">
           {error}
         </p>
       )}

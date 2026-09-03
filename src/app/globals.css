@@ -1,27 +1,102 @@
 @import "tailwindcss";
 
-/* Door Money tokens. Mirror the mockups exactly; do not add colors or fonts. */
+/*
+  Door Money tokens.
+
+  Every page is a dark room with one colour of light in it. The room (ground, ink, muted, line, panel)
+  stays the same everywhere; the light (accent) changes per page through a `data-theme` attribute that
+  the <Theme> component sets. Pages never pick hex values: they pick a theme and use the semantic tokens.
+
+  Contrast: accent-ink is the tint of each accent that clears 4.5:1 on its ground, for text under 24px.
+  Accent itself is for fills, glows, rules and display type. on-accent is the text colour on an accent fill.
+*/
 :root {
-  --paper: #EDE8DC;
-  --black: #000000;
-  --red: #E03A1E;
-  --tape: #F2C230;
-  --gray: #55524B;
-  --cream: #FFF9EE;
-  /* Brand red darkened just enough to reach 4.5:1 on paper, white and cream. Use it for text under 24px and for button fills. */
-  --red-deep: #C42F14;
+  color-scheme: dark;
+  --ground: #050a1c;
+  --ink: #f4f0e8;
+  --muted: #9aa5c4;
+  --line: rgba(244, 240, 232, 0.16);
+  --panel: rgba(244, 240, 232, 0.045);
+  --accent: #3d5afe;
+  --accent-ink: #8296ff;
+  --on-accent: #ffffff;
+}
+
+/* Blue is the house colour: home, sign in, the dashboard, the widget embed. */
+[data-theme="blue"] {
+  --ground: #050a1c;
+  --muted: #9aa5c4;
+  --accent: #3d5afe;
+  --accent-ink: #8296ff;
+  --on-accent: #ffffff;
+}
+/* Lime: the placements. */
+[data-theme="lime"] {
+  --ground: #070903;
+  --muted: #a7ad93;
+  --accent: #c8ff1e;
+  --accent-ink: #d3ff4a;
+  --on-accent: #0a0d02;
+}
+/* Magenta: live auctions and boards. */
+[data-theme="magenta"] {
+  --ground: #14030d;
+  --muted: #bd99ab;
+  --accent: #ff3d9a;
+  --accent-ink: #ff7dbd;
+  --on-accent: #1a0410;
+}
+/* Amber: list an act. */
+[data-theme="amber"] {
+  --ground: #120b02;
+  --muted: #b9a98d;
+  --accent: #ffb020;
+  --accent-ink: #ffc24d;
+  --on-accent: #1a1002;
+}
+/* Teal: the widget. */
+[data-theme="teal"] {
+  --ground: #02100f;
+  --muted: #90b4ad;
+  --accent: #20e3c2;
+  --accent-ink: #5cebd1;
+  --on-accent: #03201b;
+}
+/* Violet: contact. */
+[data-theme="violet"] {
+  --ground: #0b0518;
+  --muted: #a99bc4;
+  --accent: #9d6bff;
+  --accent-ink: #b893ff;
+  --on-accent: #12071f;
+}
+/* Red: the 404 and anything that went wrong. */
+[data-theme="red"] {
+  --ground: #160404;
+  --muted: #bd9b96;
+  --accent: #ff4d3a;
+  --accent-ink: #ff8273;
+  --on-accent: #1a0503;
+}
+/* Mono: the house paper (terms, privacy, cookies, accessibility). White light, no colour. */
+[data-theme="mono"] {
+  --ground: #0a0a0a;
+  --muted: #a3a09a;
+  --accent: #f4f0e8;
+  --accent-ink: #f4f0e8;
+  --on-accent: #0a0a0a;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-ink: var(--black);
-  --color-red: var(--red);
-  --color-tape: var(--tape);
-  --color-gray: var(--gray);
-  --color-red-deep: var(--red-deep);
-  --color-cream: var(--cream);
-  --font-poster: var(--font-anton), Impact, sans-serif;
-  --font-type: var(--font-special-elite), "Courier New", monospace;
+  --color-ground: var(--ground);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-panel: var(--panel);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --font-display: var(--font-bodoni), "Bodoni MT", "Didot", Georgia, serif;
   --font-sans: var(--font-archivo), Helvetica, Arial, sans-serif;
 }
 
@@ -32,23 +107,88 @@ html { scroll-behavior: smooth; }
 }
 
 body {
-  background: var(--paper);
-  color: var(--black);
+  background: var(--ground);
+  color: var(--ink);
   font-family: var(--font-sans);
   font-size: 16.5px;
   line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
 }
 
 p { max-width: 62ch; }
 
-:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+::selection { background: var(--accent); color: var(--on-accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Links inside running text are underlined so they never rely on color alone. */
-article a { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+/* Links inside running text are underlined so they never rely on colour alone. */
+article a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+article a:hover { color: var(--accent-ink); }
+
+/* Form controls sit on the ground, one line around them, the accent when focused. */
+input, select, textarea { background: transparent; color: var(--ink); }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--accent) !important; }
+select option { background: var(--ground); color: var(--ink); }
 
 /* Reusable brand utilities. Prefer these over ad-hoc classes so pages stay consistent. */
-@utility hard-border { border: 3px solid var(--black); }
-@utility hard-shadow { box-shadow: 7px 7px 0 var(--black); }
-@utility hard-shadow-sm { box-shadow: 5px 5px 0 var(--black); }
-@utility poster { font-family: var(--font-poster); text-transform: uppercase; font-weight: 400; }
-@utility typewriter { font-family: var(--font-type); }
+
+/* Display type: the serif, set in caps. Headlines, prices, big numbers. */
+@utility display { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; font-variation-settings: "opsz" 96; }
+/* Tracked caps: labels, eyebrows, nav, buttons, metadata. */
+@utility caps { font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 400; }
+/* One thin line around a block. */
+@utility edge { border: 1px solid var(--line); }
+/* A block that the page light catches: thin line plus a soft accent glow underneath. */
+@utility glow { border: 1px solid var(--line); box-shadow: 0 40px 90px -50px color-mix(in srgb, var(--accent) 60%, transparent); }
+/* Accent-coloured light spilling from behind a block. */
+@utility lit { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), 0 0 60px -10px color-mix(in srgb, var(--accent) 55%, transparent); }
+
+/*
+  Hero art: a stage light on the right of the hero. A white-hot bloom in the page's accent,
+  fluted glass lines across it, and an optional photograph underneath (public/hero/<theme>.jpg).
+*/
+.hero-art { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.hero-art > img {
+  position: absolute; inset: 0 0 0 28%; height: 100%; width: 72%; object-fit: cover; object-position: center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 100%);
+}
+.hero-art > .bloom {
+  position: absolute; inset: -30% -20% -30% 22%;
+  background: radial-gradient(
+    ellipse 40% 54% at 66% 48%,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.9) 4%,
+    color-mix(in srgb, var(--accent) 60%, white) 12%,
+    var(--accent) 28%,
+    color-mix(in srgb, var(--accent) 60%, transparent) 46%,
+    color-mix(in srgb, var(--accent) 22%, transparent) 64%,
+    transparent 82%
+  );
+  animation: breathe 11s ease-in-out infinite alternate;
+  transform-origin: 66% 48%;
+}
+.hero-art.has-photo > .bloom { opacity: 0.55; mix-blend-mode: screen; }
+/* The light dies out before the bottom edge, so a hero never ends in a hard line. */
+.hero-art > .fade { position: absolute; inset: auto 0 0 0; height: 160px; background: linear-gradient(180deg, transparent, var(--ground)); }
+.hero-art > .flutes {
+  position: absolute; inset: 0 0 0 26%;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 1px, rgba(255, 255, 255, 0.07) 1px 2px, transparent 2px 7px);
+  -webkit-mask-image: radial-gradient(ellipse 58% 78% at 66% 48%, #000 15%, transparent 85%);
+  mask-image: radial-gradient(ellipse 58% 78% at 66% 48%, #000 15%, transparent 85%);
+}
+@keyframes breathe {
+  from { transform: scale(1); filter: brightness(1); }
+  to { transform: scale(1.06); filter: brightness(1.12); }
+}
+@media (max-width: 860px) {
+  /* On a phone the light sits in the top-right corner, above the words, and stays dim. */
+  .hero-art { opacity: 0.55; }
+  .hero-art > .bloom { inset: -60% -70% 50% 25%; }
+  .hero-art > .flutes { inset: 0 -50% 45% 20%; }
+  .hero-art > .fade { height: 120px; }
+  .hero-art > img { inset: 0; width: 100%; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+}
+
+/* A quiet stage light behind a section or card: the accent, very dim, pooled at the top. */
+.pool { background-image: radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
