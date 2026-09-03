@@ -52,7 +52,7 @@ Every page is a dark room with one colour of light in it. The room is the same o
 - Next.js 16 App Router. `params` and `searchParams` are Promises: await them. `middleware.ts` is now `proxy.ts`.
 - Server components by default. Add `"use client"` only for interactivity.
 - Supabase for Postgres, Auth, Realtime and Storage. Server-side client in `src/lib/supabase/server.ts`, browser client in `src/lib/supabase/client.ts`. Never use the service-role key in client code.
-- Stripe Connect with Express accounts, separate charges and transfers. Door Money's 15% is an `application_fee_amount` on the transfer. Every Stripe webhook handler must be idempotent: check `stripe_events` before acting.
+- Stripe Connect with Express accounts, separate charges and transfers. The patron pays Door Money through an embedded Checkout Session; the charge sits on the platform balance and weekly Transfers (with `source_transaction`) move the act's share out. Door Money's 15% is the part never transferred: the schedule is built from amount minus `fee_cents`. Never `application_fee_amount`, never `transfer_data` on the charge. Every Stripe webhook handler must be idempotent: check `stripe_events` before acting, and make each write conditional on the state it expects.
 - Money is stored as integer cents in Postgres, never floats. Format with `formatMoney` from `src/lib/money.ts`.
 - The widget at `/embed/[slug]` must be frameable by any origin; nothing else may be. See `next.config.ts` headers.
 - Standard-card surfaces and prices live in `src/lib/catalog.ts`. Prices there are defaults; the act's own price on a lot always wins.

@@ -69,15 +69,15 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 
 This is the phase that decides whether the business works, so it comes before auctions and before the widget. Both of those reuse everything built here.
 
-- [ ] Checkout for a fixed-price lot: Stripe Payment Element, on Door Money's own domain
-- [ ] Charge model: platform charge with a delayed transfer to the act's connected account (separate charges and transfers). Door Money holds the balance.
-- [ ] Weekly payout job: every Friday, transfer each act's released amount to their Connect account. Vercel Cron or n8n, either is fine.
-- [ ] Release rule: what counts as "the run happening." See `docs/DECISIONS.md`, decision 2. The default in this codebase is calendar-based: funds release in equal weekly slices across the run's dates, with an act-side "cancel run" that refunds the remainder.
-- [ ] Refunds: full refund if the act cancels before the first show; prorated if cancelled mid-run
-- [ ] Receipts: payment confirmation to the patron, payout notice to the act
-- [ ] End-of-run record: the page the patron sees when the run closes. Shows played, rooms, attendance where known.
-- [ ] Stripe webhooks for every state change, idempotent
-- [ ] Door Money's 15% taken as an application fee on the transfer, not on the charge
+- [x] Checkout for a fixed-price lot: embedded Checkout Session on the board itself (`LotCheckout`, `/api/checkout`). Stripe's form, Door Money's page.
+- [x] Charge model: platform charge with delayed transfers to the act's connected account (separate charges and transfers, `source_transaction` on each). Door Money holds the balance.
+- [x] Weekly payout job: Vercel Cron hits `/api/cron/payouts` every Friday 14:00 UTC (`vercel.json`, bearer `CRON_SECRET`); `src/lib/payouts.ts` moves every due slice and emails the act. Idempotent, safe to run by hand.
+- [x] Release rule: what counts as "the run happening." See `docs/DECISIONS.md`, decision 2. The default in this codebase is calendar-based: funds release in equal weekly slices across the run's dates, with an act-side "cancel run" that refunds the remainder.
+- [x] Refunds: the act can cancel an open or live run from the dashboard; every patron gets back the unreleased slices, fee included (`src/lib/refunds.ts`). A declined mark refunds in full and puts the spot back on the board. Refunds made in the Stripe Dashboard are mirrored by the `charge.refunded` webhook.
+- [x] Receipts: payment confirmation to the patron and a sale notice to the act at purchase; a payout notice to the act each Friday something moves
+- [x] End-of-run record at `/record/[purchaseId]`: the shows, the rooms, attendance where counted, and the week-by-week money. Linked from the receipt; emailed again when the Friday job closes the run.
+- [x] Stripe webhooks, idempotent: checkout completed / async succeeded / async failed / expired, charge.refunded, transfer.created, account.updated. Disputes are still manual.
+- [x] Door Money's 15% kept by transfer math: the schedule is built from amount minus `fee_cents`, so the fee is what never leaves the platform balance. (Stripe has no application fee on transfers; `application_fee_amount` belongs to destination and direct charges, which this is not.)
 
 **Done when:** a test-mode patron backs a test-mode act, the money sits in the platform balance, and the Friday job moves it. Then run it with one real act and one real patron, for real money, before building anything else.
 

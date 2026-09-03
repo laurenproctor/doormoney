@@ -8,11 +8,12 @@ import { Theme, themeFor } from "@/components/Theme";
 import { getBoard, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
-import { bidStepCents } from "@/lib/money";
+import { bidStepCents, formatMoney } from "@/lib/money";
+import { stripe, stripeConfigured } from "@/lib/stripe";
 import { BoardLots, type LotView } from "./BoardLots";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -33,11 +34,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const article = (n: number) => (/^(8|11$|18$|8\d)/.test(String(n)) ? "an" : "a");
 const firstSentence = (s: string) => s.split(/(?<=\.)\s/)[0];
 
-export default async function BoardPage({ params }: Props) {
-  const { slug } = await params;
+/** What the patron sees back on the board after Stripe's embedded checkout sends them here. */
+async function paidNotice(sessionId: string | undefined, slug: string) {
+  if (!sessionId || !sessionId.startsWith("cs_") || !stripeConfigured()) return null;
+  try {
+    const s = await stripe.checkout.sessions.retrieve(sessionId);
+    if (s.metadata?.act_slug !== slug) return null;
+    const email = s.customer_details?.email ?? null;
+    if (s.status === "complete" && s.payment_status !== "unpaid") return { kind: "paid" as const, amount: s.amount_total ?? 0, email };
+    if (s.status === "complete") return { kind: "processing" as const, amount: s.amount_total ?? 0, email };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function BoardPage({ params, searchParams }: Props) {
+  const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const board = await getBoard(slug);
   if (!board || !board.run) notFound();
   const { act, run } = board;
+  const paid = await paidNotice(typeof sp.paid === "string" ? sp.paid : undefined, slug);
 
   // Every act gets its own colour of light, the same one every time.
   const theme = themeFor(slug);
@@ -65,6 +82,7 @@ export default async function BoardPage({ params }: Props) {
       note: s ? `${firstSentence(s.blurb)} Shows up: ${s.seenBy}.` : "",
       mode: l.mode,
       sold: l.status === "sold",
+      pending: l.status === "pending_funding",
       priceCents: l.priceCents,
       bidCents: l.topBid?.amountCents ?? null,
       bidder: l.status === "sold" ? (l.soldTo ?? "a patron") : (l.topBid?.patronName ?? null),
@@ -84,7 +102,7 @@ export default async function BoardPage({ params }: Props) {
       <Nav current="/auctions" />
       <main id="main" className="flex-1">
         <section className="relative overflow-hidden">
-          <HeroArt theme={theme} />
+          <HeroArt theme={theme} src={act.photoUrl} />
           <div className="hero-in relative mx-auto max-w-[1120px] px-7 pb-10 pt-[72px]">
             <Eyebrow className="mb-7">Live board</Eyebrow>
             <h1 className={`display max-w-[14ch] leading-[0.98] ${act.name.length > 14 ? "text-[clamp(40px,7vw,92px)]" : "text-[clamp(48px,8.4vw,108px)]"}`}>{act.name}</h1>
@@ -104,6 +122,18 @@ export default async function BoardPage({ params }: Props) {
           </div>
         </section>
         <div className="mx-auto max-w-[1120px] px-7">
+          {paid && (
+            <div role="status" className="lit mt-10 bg-panel px-8 py-7 max-md:px-6">
+              <Eyebrow className="mb-3">{paid.kind === "paid" ? "Paid" : "Payment on its way"}</Eyebrow>
+              <p className="max-w-none text-[16px]">
+                {paid.kind === "paid"
+                  ? `${formatMoney(paid.amount)} received. The spot is taken for the run, and the board shows it within a minute.`
+                  : `${formatMoney(paid.amount)} is clearing. The spot is held until it lands, and the board updates on its own.`}
+                {paid.email ? ` A record is on its way to ${paid.email}.` : ""}
+              </p>
+              <p className="mt-2 max-w-none text-[15px] text-muted">Door Money holds the money and pays {act.name} every Friday through the run.</p>
+            </div>
+          )}
           <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Back the season" : "Back the run"} />
         </div>
 

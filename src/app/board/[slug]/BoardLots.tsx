@@ -2,6 +2,7 @@
 import { useState, type CSSProperties } from "react";
 import { Eyebrow } from "@/components/Brand";
 import { Countdown } from "@/components/Countdown";
+import { LotCheckout } from "@/components/LotCheckout";
 import { formatMoney } from "@/lib/money";
 
 export type LotView = {
@@ -10,6 +11,8 @@ export type LotView = {
   note: string;
   mode: "fixed" | "auction";
   sold: boolean;
+  /** Somebody is mid-checkout on this lot. */
+  pending: boolean;
   priceCents: number;
   bidCents: number | null;
   bidder: string | null;
@@ -48,8 +51,9 @@ function Mark({ text, kind }: { text: string; kind: keyof typeof MARK }) {
 }
 
 /**
- * The board total and the lot list. Until Phase 5 ships real bidding, pressing a button
- * raises the bid locally, as the mockup does, so the board total responds.
+ * The board total and the lot list. Fixed-price spots check out for real through LotCheckout.
+ * Until Phase 5 ships real bidding, pressing a bid button raises the bid locally, as the mockup
+ * does, so the board total responds.
  */
 export function BoardLots({
   lots,
@@ -62,6 +66,7 @@ export function BoardLots({
   closesLabel: string;
   heading: string;
 }) {
+  const [taking, setTaking] = useState<string | null>(null);
   const [live, setLive] = useState<Record<string, Live>>(() =>
     Object.fromEntries(lots.map((l) => [l.id, { bidCents: l.bidCents, bidder: l.bidder, mine: false, sold: l.sold }])),
   );
@@ -72,9 +77,12 @@ export function BoardLots({
   }, 0);
 
   const press = (l: LotView) => {
+    if (l.mode === "fixed") {
+      setTaking((cur) => (cur === l.id ? null : l.id));
+      return;
+    }
     setLive((prev) => {
       const v = prev[l.id];
-      if (l.mode === "fixed") return { ...prev, [l.id]: { bidCents: l.priceCents, bidder: "This patron", mine: true, sold: true } };
       const next = (v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents;
       return { ...prev, [l.id]: { ...v, bidCents: next, bidder: "This patron", mine: true } };
     });
@@ -106,7 +114,7 @@ export function BoardLots({
             const sold = v.sold;
             const amount = sold || l.mode === "fixed" ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? l.priceCents);
             const label = sold ? "won at" : l.mode === "fixed" ? "fixed price" : v.bidCents ? "current bid" : "opening bid";
-            const bidder = v.bidder ?? "open";
+            const bidder = l.pending && !sold ? "being taken right now" : (v.bidder ?? "open");
             const markKind = v.mine ? "mine" : sold ? "sold" : v.bidder && !l.anonymous ? "bid" : "open";
             const markText = v.mine ? "TP" : l.anonymous ? "?" : v.bidder ? initials(v.bidder) : "+";
             const button = l.mode === "fixed" ? `Take this spot for ${formatMoney(l.priceCents)}` : `Bid ${formatMoney((v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents)}`;
@@ -128,16 +136,20 @@ export function BoardLots({
                     <Mark text={markText} kind={markKind} />
                     <div className="caps text-[14px] text-muted">{bidder}</div>
                   </div>
-                  {!sold && (
+                  {!sold && !l.pending && (
                     <button
                       type="button"
                       onClick={() => press(l)}
+                      aria-expanded={l.mode === "fixed" ? taking === l.id : undefined}
                       className="caps mt-3 cursor-pointer border border-accent bg-accent px-5 py-3 text-[14px] tracking-[0.16em] text-on-accent transition-colors hover:border-accent-ink hover:bg-accent-ink"
                     >
                       {button}
                     </button>
                   )}
                 </div>
+                {taking === l.id && !sold && (
+                  <LotCheckout lotId={l.id} lotName={l.name.toLowerCase()} priceLabel={formatMoney(l.priceCents)} onClose={() => setTaking(null)} />
+                )}
                 {sold && (
                   <div className="caps absolute right-5 top-4 bg-accent px-2.5 py-1 text-[14px] text-on-accent min-[681px]:right-7 min-[681px]:top-6">
                     Sold

@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useState, useTransition } from "react";
 import { saveLots, type LotsState } from "@/app/actions/lots";
-import { publishRun, unpublishRun } from "@/app/actions/run";
+import { cancelRun, publishRun, unpublishRun } from "@/app/actions/run";
 import { Button } from "@/components/Button";
 import { GROUPS, type Surface, type SurfaceGroup } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
@@ -45,6 +45,8 @@ export function LotsEditor({
   const lockedKeys = new Set(lots.filter((l) => l.status !== "open").map((l) => l.surface_key));
 
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelled, setCancelled] = useState<{ refundedCents: number; patrons: number } | null>(null);
   const [publishing, startPublish] = useTransition();
   const onCount = Object.values(rows).filter((r) => r.on).length;
 
@@ -156,13 +158,20 @@ export function LotsEditor({
               {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
             </div>
           </>
+        ) : runStatus === "cancelled" || cancelled ? (
+          <p className="max-w-[56ch] text-[15px]">
+            This run is cancelled. The spots are off the board
+            {cancelled && cancelled.patrons > 0 ? `, and ${formatMoney(cancelled.refundedCents)} went back to ${cancelled.patrons === 1 ? "one patron" : `${cancelled.patrons} patrons`}` : ""}.
+          </p>
+        ) : runStatus === "closed" ? (
+          <p className="max-w-[56ch] text-[15px]">This run is over. Patrons have their records, and the board is down.</p>
         ) : (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
               The board is live at <a href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{boardHref}</a>. Prices on open spots can still change here.
             </p>
-            {runStatus === "open" && (
-              <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {runStatus === "open" && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -177,7 +186,41 @@ export function LotsEditor({
                 >
                   Take the board down
                 </Button>
-                {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
+              )}
+              {!confirmCancel && (
+                <button type="button" onClick={() => setConfirmCancel(true)} className="caps cursor-pointer text-[14px] text-muted hover:text-accent-ink">
+                  Cancel the run
+                </button>
+              )}
+              {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
+            </div>
+            {confirmCancel && (
+              <div className="edge mt-5 max-w-[620px] bg-panel p-5">
+                <p className="max-w-none text-[15px]">
+                  Cancelling takes every spot off the board and refunds each patron the slices not yet released, fee included. Slices already paid for weeks the run played stay paid. This cannot be undone.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                  <Button
+                    type="button"
+                    disabled={publishing}
+                    onClick={() =>
+                      startPublish(async () => {
+                        setPublishError(null);
+                        const r = await cancelRun(runId);
+                        if (!r.ok) setPublishError(r.error ?? "That did not go through.");
+                        else {
+                          setCancelled({ refundedCents: r.refundedCents ?? 0, patrons: r.patrons ?? 0 });
+                          if (r.error) setPublishError(r.error);
+                        }
+                      })
+                    }
+                  >
+                    {publishing ? "Cancelling" : "Yes, cancel the run"}
+                  </Button>
+                  <button type="button" onClick={() => setConfirmCancel(false)} className="caps cursor-pointer text-[14px] text-muted hover:text-ink">
+                    Keep it
+                  </button>
+                </div>
               </div>
             )}
           </>

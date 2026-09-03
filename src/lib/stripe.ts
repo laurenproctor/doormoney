@@ -1,43 +1,72 @@
 import Stripe from "stripe";
 
-// One Stripe client for the server. The API version pins behaviour; bump deliberately.
+/** One Stripe client for the server. The SDK pins the API version (2026-08-26.dahlia at time of writing); bump deliberately. */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder");
 
+export const stripeConfigured = () => Boolean(process.env.STRIPE_SECRET_KEY);
+
+/** Tags lot checkouts in the Stripe Dashboard so they can be told apart from fan backings. */
+const LOT_CHECKOUT_LABEL = "doormoney_lot_qhtzmvkr";
+
+/** How long a patron has to finish paying once they start. The lot is held for them meanwhile. */
+export const CHECKOUT_MINUTES = 30;
+
 /**
- * Charge model (see docs/ROADMAP.md, Phase 3):
- * - Charge the patron on the platform account.
- * - Hold the balance.
- * - Transfer weekly slices to the act's Connect account, with Door Money's 15%
- *   taken as the difference (the platform keeps what it doesn't transfer).
- *
- * Nothing here moves real money yet. These are the shapes Phase 3 fills in.
+ * Charge model (docs/ROADMAP.md, Phase 3; docs/DECISIONS.md, decision 2A):
+ * - The patron pays Door Money through an embedded Checkout Session on Door Money's own page.
+ *   The charge lands on the platform balance. No destination, no application fee on the charge.
+ * - Door Money holds it. Every Friday through the run, one slice moves to the act's Connect account
+ *   as a Transfer against that charge. Door Money's 15% is simply the part never transferred:
+ *   the schedule is built from (amount - fee), so the fee is kept by arithmetic, not by a Stripe parameter.
  */
-export async function createHoldPaymentIntent(params: {
+export async function createLotCheckoutSession(params: {
+  purchaseId: string;
+  lotId: string;
+  actId: string;
+  actSlug: string;
   amountCents: number;
+  /** "Kick drum head, Gutter Hymns, Fall run" */
+  description: string;
   patronEmail: string;
-  metadata: Record<string, string>;
+  /** Where the embedded checkout sends the patron afterwards. Must contain {CHECKOUT_SESSION_ID}. */
+  returnUrl: string;
 }) {
-  return stripe.paymentIntents.create({
-    amount: params.amountCents,
-    currency: "usd",
-    receipt_email: params.patronEmail,
-    metadata: params.metadata,
-    automatic_payment_methods: { enabled: true },
+  const metadata = { purchase_id: params.purchaseId, lot_id: params.lotId, act_id: params.actId, act_slug: params.actSlug, kind: "lot" };
+  return stripe.checkout.sessions.create({
+    mode: "payment",
+    ui_mode: "embedded_page",
+    return_url: params.returnUrl,
+    customer_email: params.patronEmail,
+    line_items: [
+      {
+        quantity: 1,
+        price_data: { currency: "usd", unit_amount: params.amountCents, product_data: { name: params.description } },
+      },
+    ],
+    payment_intent_data: { description: params.description, metadata },
+    metadata,
+    // Stripe wants at least 30 minutes; the extra five keep a slow request from landing under the line.
+    expires_at: Math.floor(Date.now() / 1000) + (CHECKOUT_MINUTES + 5) * 60,
+    integration_identifier: LOT_CHECKOUT_LABEL,
   });
 }
 
+/** One weekly slice to an act. The idempotency key is the payout row id, so a retried job never pays twice. */
 export async function transferSliceToAct(params: {
   amountCents: number;
   stripeAccountId: string;
-  sourcePaymentIntentId?: string;
+  /** The charge the money came from. Lets the transfer go out before the balance is available. */
+  sourceChargeId: string;
   idempotencyKey: string;
+  metadata: Record<string, string>;
 }) {
   return stripe.transfers.create(
     {
       amount: params.amountCents,
       currency: "usd",
       destination: params.stripeAccountId,
-      ...(params.sourcePaymentIntentId ? { source_transaction: params.sourcePaymentIntentId } : {}),
+      source_transaction: params.sourceChargeId,
+      metadata: params.metadata,
     },
     { idempotencyKey: params.idempotencyKey },
   );

@@ -2,7 +2,9 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
+import { cancelRun as cancelRunForReal } from "@/lib/refunds";
+import { stripeConfigured } from "@/lib/stripe";
 import { requireUser, ownedAct } from "@/lib/auth";
 
 export type RunField = "kind" | "title" | "starts_on" | "ends_on" | "show_count" | "expected_attendance" | "bidding_closes_at";
@@ -129,4 +131,28 @@ export async function unpublishRun(runId: string): Promise<{ ok: boolean; error?
   revalidatePath(`/board/${act.slug}`);
   revalidatePath("/auctions");
   return { ok: true };
+}
+
+/**
+ * The act pulls the run. Spots come off the board and every patron gets the unreleased part back.
+ * Ownership is checked here; the money moves in src/lib/refunds.ts with the service role.
+ */
+export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: string; refundedCents?: number; patrons?: number }> {
+  const user = await requireUser("/dashboard");
+  const act = await ownedAct(user.id);
+  if (!act) return { ok: false, error: "No act on this account." };
+
+  const sb = await supabaseServer();
+  const { data: run } = await sb.from("runs").select("id,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
+  if (!run) return { ok: false, error: "That run is not on this account." };
+  if (!["open", "live"].includes(run.status)) return { ok: false, error: "Only an open or live run can be cancelled." };
+  if (!stripeConfigured()) return { ok: false, error: "Refunds are not switched on yet. Contact Door Money to cancel the run." };
+
+  const r = await cancelRunForReal(supabaseAdmin(), runId);
+  if (!r.ok) return { ok: false, error: r.error };
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/runs/${runId}`);
+  revalidatePath(`/board/${act.slug}`);
+  revalidatePath("/auctions");
+  return { ok: true, refundedCents: r.refundedCents, patrons: r.patrons, ...(r.errors.length ? { error: `${r.errors.length} refund${r.errors.length === 1 ? "" : "s"} did not go through. Door Money has the details.` } : {}) };
 }
