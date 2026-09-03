@@ -1,12 +1,25 @@
 // One place for the strings that appear on every page.
 // The tagline is an open decision; see docs/DECISIONS.md, decision 1.
 
+/**
+ * Public site URL. Prefer NEXT_PUBLIC_SITE_URL; fall back to the URL Vercel
+ * assigns the deployment, then to localhost. Empty strings count as unset,
+ * since `new URL("")` throws at build time.
+ */
+function siteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit.startsWith("http") ? explicit : `https://${explicit}`;
+  const vercel = (process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL)?.trim();
+  if (vercel) return `https://${vercel}`;
+  return "http://localhost:3000";
+}
+
 export const SITE = {
   name: "Door Money",
   tagline: "Proof or it doesn't pay.",
   strap: "Sponsorship for bands that actually gig",
   city: "New York",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: siteUrl(),
   feePercent: 15,
 } as const;
 

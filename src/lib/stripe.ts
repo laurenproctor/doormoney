@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 
 // One Stripe client for the server. The API version pins behaviour; bump deliberately.
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder");
 
 /**
  * Charge model (see docs/ROADMAP.md, Phase 3):
