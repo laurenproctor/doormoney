@@ -13,7 +13,7 @@ export interface BoardLot {
 }
 
 export interface Board {
-  act: { slug: string; name: string; type: "touring_band" | "house_act" | "soloist"; city: string; bio: string | null };
+  act: { slug: string; name: string; type: "touring_band" | "house_act" | "soloist"; city: string; bio: string | null; photoUrl?: string | null };
   run: { title: string; kind: string; startsOn: string; endsOn: string; showCount: number; expectedAttendance: number | null; biddingClosesAt: string | null };
   lots: BoardLot[];
 }

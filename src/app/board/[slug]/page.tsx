@@ -15,7 +15,14 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const board = await getBoard(slug);
-  return { title: board ? `${board.act.name}, live board` : "Board" };
+  if (!board || !board.run) return { title: "Board" };
+  const description = `${board.act.name}, ${board.run.title}. ${board.run.showCount} ${board.run.kind === "season" ? "gigs" : "shows"} in ${board.act.city}. Patrons put money behind the run on Door Money.`;
+  return {
+    title: `${board.act.name}, live board`,
+    description,
+    openGraph: { title: `${board.act.name} on Door Money`, description, type: "website", ...(board.act.photoUrl ? { images: [{ url: board.act.photoUrl }] } : {}) },
+    twitter: { card: board.act.photoUrl ? "summary_large_image" : "summary", title: `${board.act.name} on Door Money`, description },
+  };
 }
 
 /** First sentence of a blurb, for the one-line note under a lot name. */

@@ -8,9 +8,10 @@ export async function getBoard(slug: string): Promise<Board | null> {
   if (!configured()) return SAMPLE_BOARDS[slug] ?? null;
 
   const sb = await supabaseServer();
-  const { data: actRow } = await sb.from("acts").select("id,slug,name,type,city,bio").eq("slug", slug).single();
+  const { data: actRow } = await sb.from("acts").select("id,slug,name,type,city,bio,photo_url").eq("slug", slug).single();
   if (!actRow) return null;
-  const { id: actId, ...act } = actRow;
+  const { id: actId, photo_url, ...actRest } = actRow;
+  const act = { ...actRest, photoUrl: photo_url as string | null };
 
   const { data: run } = await sb
     .from("runs")
