@@ -85,7 +85,7 @@ export function BoardLots({
       <div className="lit mt-12 flex flex-wrap items-end justify-between gap-6 bg-panel px-8 py-7 max-md:px-6">
         <div>
           <b className="heading block text-[clamp(38px,6vw,64px)] leading-none">{formatMoney(worth)}</b>
-          <span className="caps mt-2 block text-[14px] text-muted">what the board is worth right now</span>
+          <span className="caps mt-2 block text-[14px] text-muted">in sold placements and current bids</span>
         </div>
         <div className="md:text-right">
           {closesAt ? (
@@ -98,18 +98,18 @@ export function BoardLots({
       </div>
 
       <div className="pb-6 pt-[84px]">
-        <Eyebrow className="mb-5">The spots</Eyebrow>
+        <Eyebrow className="mb-5">The placements</Eyebrow>
         <h2 className="heading mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
         <div className="grid gap-px bg-line">
           {lots.map((l, i) => {
             const v = live[l.id];
             const sold = v.sold;
             const amount = sold || l.mode === "fixed" ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? l.priceCents);
-            const label = sold ? "won at" : l.mode === "fixed" ? "buy now" : v.bidCents ? "current bid" : "opening bid";
+            const label = sold ? "won at" : l.mode === "fixed" ? "fixed price" : v.bidCents ? "current bid" : "opening bid";
             const bidder = v.bidder ?? "open";
             const markKind = v.mine ? "mine" : sold ? "sold" : v.bidder && !l.anonymous ? "bid" : "open";
             const markText = v.mine ? "TP" : l.anonymous ? "?" : v.bidder ? initials(v.bidder) : "+";
-            const button = l.mode === "fixed" ? "Take it" : `Bid ${formatMoney((v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents)}`;
+            const button = l.mode === "fixed" ? `Take this spot for ${formatMoney(l.priceCents)}` : `Bid ${formatMoney((v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents)}`;
             return (
               <div
                 key={l.id}

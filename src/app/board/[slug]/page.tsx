@@ -28,6 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** First sentence of a blurb, for the one-line note under a lot name. */
+
+/** "an 18-show run", "a 32-gig season". */
+const article = (n: number) => (/^(8|11$|18$|8\d)/.test(String(n)) ? "an" : "a");
 const firstSentence = (s: string) => s.split(/(?<=\.)\s/)[0];
 
 export default async function BoardPage({ params }: Props) {
@@ -40,11 +43,18 @@ export default async function BoardPage({ params }: Props) {
   const theme = themeFor(slug);
   const season = run.kind === "season";
   const unit = season ? "gigs" : "shows";
-  const noun = act.type === "soloist" ? "The act" : "The band";
+  const noun = act.type === "soloist" ? "The musician" : "The band";
   const auction = board.lots.some((l) => l.mode === "auction");
   const closesAt = run.biddingClosesAt;
   const closeDay = closesAt ? weekdayOf(closesAt) : null;
-  const closesLabel = closesAt ? `${auction ? "auction" : "listing"} closes ${closeDay}, ${clockOf(closesAt)}` : "no close time set";
+  const closesLabel = closesAt ? `${auction ? "bidding" : "listing"} closes ${closeDay}, ${clockOf(closesAt)}` : "no close time set";
+  // The commercial context first, from the run data; the bio's personality follows it.
+  const plural = act.type !== "soloist";
+  const lead = season
+    ? `${act.name} is playing ${article(run.showCount)} ${run.showCount}-gig ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}, carrying the same case and stand into every room.`
+    : `${act.name} ${plural ? "are" : "is"} taking ${article(run.showCount)} ${run.showCount}-show ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}${
+        run.expectedAttendance ? `, putting roughly ${run.expectedAttendance.toLocaleString("en-US")} people in front of the same stage setup` : ""
+      }.`;
   const showBackers = slug === "rosie-bassoon";
 
   const lots: LotView[] = board.lots.map((l) => {
@@ -66,7 +76,7 @@ export default async function BoardPage({ params }: Props) {
   const facts: [string, string][] = [
     [String(run.showCount), season ? "gigs a season" : "shows on the run"],
     ...(run.expectedAttendance ? [[`~${run.expectedAttendance.toLocaleString("en-US")}`, "expected attendance"] as [string, string]] : []),
-    [String(openSpots(board)), "spots still open"],
+    [String(openSpots(board)), "placements still open"],
   ];
 
   return (
@@ -81,7 +91,8 @@ export default async function BoardPage({ params }: Props) {
             <p className="caps mt-6 text-[14.5px] leading-[2]">
               {run.title}. {run.showCount} {unit}, {formatDateRange(run.startsOn, run.endsOn)}. {act.city}.
             </p>
-            {act.bio && <p className="mt-6 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
+            <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>
+            {act.bio && <p className="mt-5 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
             <div className="mt-8 flex flex-wrap gap-x-12 gap-y-6">
               {facts.map(([value, label]) => (
                 <div key={label}>
@@ -93,7 +104,7 @@ export default async function BoardPage({ params }: Props) {
           </div>
         </section>
         <div className="mx-auto max-w-[1120px] px-7">
-          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Bid on the season" : "Bid on the run"} />
+          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Back the season" : "Back the run"} />
         </div>
 
         {showBackers && <RosieBackers />}
@@ -106,7 +117,7 @@ export default async function BoardPage({ params }: Props) {
               marked
               lines={[
                 "The winning patron puts the money up within 48 hours, or the spot goes to the next bid.",
-                `${noun} approves the mark. Nothing goes up without their yes.`,
+                `${noun} approves the mark. The musician always has the final say.`,
                 `${noun} plays the ${season ? "season" : "run"} it was already playing.`,
                 `The money reaches ${noun.toLowerCase()} week by week as the ${season ? "season" : "run"} goes on.`,
                 season

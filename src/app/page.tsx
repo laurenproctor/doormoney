@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { Eyebrow, Section, SectionHead } from "@/components/Brand";
@@ -6,14 +7,28 @@ import { ButtonLink } from "@/components/Button";
 import { HeroArt } from "@/components/HeroArt";
 import { Theme } from "@/components/Theme";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
+import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import type { Board } from "@/lib/sample";
 import { HOUSE_RULES, SITE } from "@/lib/site";
 
 const HOME_SURFACES = ["kick_head", "case_sticker", "strap", "tip_jar_card", "merch_runner", "posts_email"];
 
-export default function HomePage() {
+const KIND: Record<Board["act"]["type"], (city: string) => string> = {
+  touring_band: () => "Band, touring",
+  house_act: (city) => `House act, ${city}`,
+  soloist: (city) => `Soloist, gigging ${city}`,
+};
+
+/*
+  The page runs in this order: the idea, the musicians taking backing now, how it works for each
+  side, what can be backed, the musician's final say beside the house rules, then the founding cohort.
+*/
+export default async function HomePage() {
   const featured = HOME_SURFACES.map((k) => CATALOG.find((s) => s.key === k)!);
+  const boards = (await listOpenBoards()).slice(0, 3);
 
   return (
     <Theme name="blue">
@@ -28,49 +43,103 @@ export default function HomePage() {
           <h1 className="display max-w-[11ch] text-[clamp(50px,8.4vw,108px)] leading-[0.96]">
             Put money behind the <em className="text-accent-ink">music.</em>
           </h1>
-          <p className="caps mt-9 max-w-[44ch] text-[14.5px] leading-[2]">{SITE.taglineSecond}</p>
-          <p className="mt-5 max-w-[50ch] text-[16px] leading-[1.7] text-muted">
-            Local businesses and gear brands put money behind working musicians. A name on the kick drum, the road
-            cases, the tip jar, or a post. Small sums, but they cover the gas, the rooms, and the difference between a
-            run that happens and a run that doesn&apos;t.
+          <p className="caps mt-9 max-w-[52ch] text-[14.5px] leading-[2]">{SITE.taglineSecond}</p>
+          <p className="mt-5 max-w-[52ch] text-[16px] leading-[1.7] text-muted">
+            Door Money lets businesses, brands and fans back musicians through placements attached to the work they are
+            already doing: the kick drum and the road cases, the merch table, the mailing list and the music stand.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <ButtonLink href="/placements" arrow>Become a patron</ButtonLink>
+            <ButtonLink href="/auctions" arrow>Back a musician</ButtonLink>
             <ButtonLink href="/list" variant="ghost">List an act</ButtonLink>
           </div>
           <div className="caps mt-auto flex items-end justify-between gap-4 pt-20 text-[14px] text-muted">
-            <span>Acts. Patrons. Together.</span>
+            <span>Musicians. Patrons. Together.</span>
             <span aria-hidden="true" className="text-[22px] leading-none">&darr;</span>
           </div>
         </div>
       </section>
 
+      {/* The idea */}
+      <Section>
+        <div className="grid gap-12 md:grid-cols-[1.2fr_1fr] md:gap-20">
+          <div>
+            <SectionHead eyebrow="Patronage for working musicians">Musicians create value every night. Most of it never becomes income.</SectionHead>
+          </div>
+          <div className="grid content-center gap-5 text-[clamp(16px,1.9vw,19px)] leading-[1.6]">
+            <p className="max-w-none">
+              A coffee shop can back the neighborhood band. A gear company can support the musicians already using its
+              products. A fan can help keep a residency alive.
+            </p>
+            <p className="max-w-none">
+              Door Money turns those relationships into real income for musicians, without asking them to become
+              influencers.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Live boards */}
+      {boards.length > 0 && (
+        <Section className="pool">
+          <SectionHead eyebrow="Live boards">Musicians accepting backing now</SectionHead>
+          <div className="mt-10 grid gap-px bg-line md:grid-flow-col md:auto-cols-fr">
+            {boards.map((b, i) => {
+              const gigs = b.run.kind === "season";
+              return (
+                <Link
+                  key={b.act.slug}
+                  href={`/board/${b.act.slug}`}
+                  data-reveal
+                  style={{ "--i": i } as CSSProperties}
+                  className="lift flex flex-col gap-3 bg-ground p-7 text-ink no-underline"
+                >
+                  <span className="caps text-[14px] text-accent-ink">{KIND[b.act.type](b.act.city)}</span>
+                  <span className="heading text-[clamp(24px,2.6vw,30px)] leading-[1.05]">{b.act.name}</span>
+                  <span className="caps text-[14px] leading-[1.7] text-muted">
+                    {b.run.title}. {b.run.showCount} {gigs ? "gigs" : "shows"}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
+                  </span>
+                  <span className="mt-2 flex flex-wrap gap-x-7 gap-y-3 border-t border-line pt-4">
+                    <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />
+                    <Stat value={String(openSpots(b))} label="placements open" />
+                  </span>
+                  <span className="caps mt-1 text-[14px] text-accent-ink">See the board &rarr;</span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mt-7">
+            <ButtonLink href="/auctions" variant="ghost" arrow>All live boards</ButtonLink>
+          </div>
+        </Section>
+      )}
+
       {/* How it works */}
       <Section>
-        <SectionHead eyebrow="How it works">What sponsorship does for a band</SectionHead>
+        <SectionHead eyebrow="How it works">Money for the work musicians are already doing</SectionHead>
         <div className="mt-12 grid gap-x-16 gap-y-12 md:grid-cols-2">
           <Steps
-            audience="For bands"
+            audience="For musicians"
             steps={[
-              ["Musicians list their surfaces", "Kick head, case spots, straps, tip jar, posts. Musicians set the prices and keep the final say. Nothing goes up without their yes."],
-              ["A patron backs the run", "A local business or a gear brand takes a surface and puts the money up before the first show."],
-              ["The money reaches the musician", "Payment reaches the band as the run happens, every week. No invoices, no chasing, no waiting on a check."],
+              ["Musicians decide what they want to offer", "A kick drum. A road case. A thank-you post. A music stand. Musicians choose what belongs on the board, set the price and approve every patron."],
+              ["Someone backs the run", "A local business, brand or fan chooses a placement and funds it before the shows begin."],
+              ["The musician gets paid while they play", "Door Money holds the money and pays it to the musician in weekly slices as the run happens. No invoices, no chasing, no waiting on a check."],
             ]}
           />
           <Steps
             audience="For patrons"
             steps={[
-              ["Pick a band", "The Sunday band at the corner bar, a touring act coming through, or a whole neighborhood circuit of rooms."],
-              ["Door Money holds the money", "Door Money charges nothing until the placement actually runs, at a real show, in front of a real crowd. A placement that never goes up never costs a patron a cent."],
-              ["Patrons see where it went", "A record of the whole run: the shows the band played, the rooms, and how many people filled them. Support a patron can point at, not just spend."],
+              ["Back someone you want to keep playing", "Choose a touring act, house band, freelancer or neighborhood musician."],
+              ["Fund something real", "Choose a placement and put the money behind a specific run, residency or season. Door Money holds it and releases it only as the run happens. A placement that never runs costs nothing."],
+              ["See what your support made possible", "Follow the shows, rooms and audience the placement traveled through, and know exactly where the money went."],
             ]}
           />
         </div>
       </Section>
 
-      {/* What's for sale */}
+      {/* What can be backed */}
       <Section className="pool">
-        <SectionHead eyebrow="What's for sale">Small placements, priced flat</SectionHead>
+        <SectionHead eyebrow="What can be backed">Ways to back the work</SectionHead>
+        <p className="text-muted">A musician has more to sponsor than a social post. Standard-card prices; each musician sets their own.</p>
         <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((s, i) => (
             <div key={s.key} data-reveal style={{ "--i": i } as CSSProperties} className="lift flex flex-col bg-ground p-7">
@@ -83,38 +152,45 @@ export default function HomePage() {
           ))}
         </div>
         <p className="mt-7 max-w-[62ch] text-[15px] text-muted">
-          Each band sets its own prices, per tour or per month. Every placement needs the band&apos;s yes, and patrons
-          put the money up before the first show.
+          Each musician sets their own prices, per run or per month. Every placement needs the musician&apos;s yes, and
+          patrons put the money up before the first show.
         </p>
         <div className="mt-7">
           <ButtonLink href="/placements" variant="ghost" arrow>All placements and prices</ButtonLink>
         </div>
       </Section>
 
-      {/* House rules */}
+      {/* The musician's call, and the house rules */}
       <Section>
         <div className="grid gap-12 md:grid-cols-[1fr_1.2fr] md:gap-20">
           <div>
-            <SectionHead eyebrow="House rules">The rules everyone plays by</SectionHead>
-            <p className="text-muted">Five lines, the same on every board. They keep bands safe and keep a placement worth buying.</p>
+            <SectionHead eyebrow="The musician's call">The musician always has the final say</SectionHead>
+            <p className="text-muted">
+              Musicians choose what goes on their board, set the prices, approve every patron and decide what appears
+              beside their name. The marketplace works because neither side gets to exploit the other.
+            </p>
           </div>
-          <ol className="glow bg-panel px-8 py-4 max-md:px-6">
-            {HOUSE_RULES.map((r, i) => (
-              <li key={r} className={`grid grid-cols-[48px_1fr] items-baseline gap-4 py-5 text-[clamp(15px,1.8vw,17px)] leading-[1.55] ${i ? "border-t border-line" : ""}`}>
-                <span className="heading text-[24px] text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
-                <span>{r}</span>
-              </li>
-            ))}
-          </ol>
+          <div>
+            <Eyebrow className="mb-4">House rules</Eyebrow>
+            <ol className="glow bg-panel px-8 py-4 max-md:px-6">
+              {HOUSE_RULES.map((r, i) => (
+                <li key={r} className={`grid grid-cols-[48px_1fr] items-baseline gap-4 py-5 text-[clamp(15px,1.8vw,17px)] leading-[1.55] ${i ? "border-t border-line" : ""}`}>
+                  <span className="heading text-[24px] text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </Section>
 
-      {/* Waitlist */}
+      {/* Founding cohort */}
       <Section id="list" className="pool">
-        <SectionHead eyebrow="Get on the list">First fifty bands, first fifty patrons</SectionHead>
+        <SectionHead eyebrow="Founding cohort">The first 50 musicians. The first 50 patrons.</SectionHead>
         <p className="text-muted">
-          {SITE.name} is opening in {SITE.city} first: the bands, the residencies, the corner bars, the neighborhood
-          patrons. Musicians and patrons who leave a name here get an email when it opens.
+          {SITE.name} launches in {SITE.city}, starting with the musicians already making the city&apos;s musical life
+          happen (bands, house acts, freelancers and soloists) and the people and businesses who want to keep them
+          working. Leave a name here for an email when it opens.
         </p>
         <div className="mt-9 max-w-[560px]">
           <WaitlistForm />
@@ -124,6 +200,15 @@ export default function HomePage() {
       </main>
       <Footer />
     </Theme>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <span className="block">
+      <b className="heading block text-[22px] leading-none">{value}</b>
+      <span className="caps mt-1 block text-[14px] text-muted">{label}</span>
+    </span>
   );
 }
 

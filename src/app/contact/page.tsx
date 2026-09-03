@@ -6,11 +6,11 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Door Money about listing an act, backing a run, partnerships, press, or another question.",
+  description: "Contact Door Money about listing as a musician, backing a run, partnerships, press, or another question.",
 };
 
 const WHAT_HELPS = [
-  "The act, business, venue, or publication name",
+  "The musician, business, venue, or publication name",
   "The run or placement involved, when applicable",
   "A clear question or proposed next step",
   "A deadline, when one is real",
@@ -28,8 +28,8 @@ export default function ContactPage() {
         <>
           <p className="text-[15px] text-accent-ink">Questions, introductions, and useful propositions start here.</p>
           <p className="mt-4">
-            Acts can ask about listing. Patrons and brands can ask about backing a run. Venues, press, and potential partners
-            can introduce themselves. {SITE.name} reads every note and answers plainly.
+            Musicians can ask about listing. Patrons and brands can ask about backing a run. Venues, press, and
+            potential partners can introduce themselves. A person reads every note and answers plainly.
           </p>
         </>
       }
@@ -42,8 +42,8 @@ export default function ContactPage() {
       <Section>
         <SectionHead eyebrow={`Contact ${SITE.name}`}>Put a name to the question</SectionHead>
         <p>
-          Pick the closest reason, add the details, and send it through. Messages about an active payment or placement should
-          include the act or run name.
+          Pick the closest reason, add the details, and send it through. Messages about an active payment or placement
+          should include the musician or run name.
         </p>
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_280px] md:gap-12">
           <ContactForm />

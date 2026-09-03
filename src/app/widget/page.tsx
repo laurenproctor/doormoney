@@ -7,7 +7,12 @@ import { formatDateRange } from "@/lib/dates";
 import { SITE } from "@/lib/site";
 import { WidgetFrame } from "./WidgetFrame";
 
-export const metadata: Metadata = { title: "The widget" };
+export const metadata: Metadata = {
+  title: "The widget",
+  description: "Turn a musician's own website into a place people can back them. One embed, always current.",
+};
+
+// This page speaks to the musician directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
 
 const DEMO_SLUG = "gutter-hymns";
 
@@ -16,17 +21,15 @@ const DEMO_CITIES =
   "Providence, Boston, Portland, Burlington, Albany, Kingston, Brooklyn, Philadelphia, Baltimore, Richmond, Asheville, Nashville, Louisville, Cincinnati, Columbus, Pittsburgh, Buffalo, Rochester.";
 
 const INSTALL: [string, string][] = [
-  ["The act copies their snippet", "It appears on the act's Door Money dashboard the moment their board is live. Same snippet for every page it goes on."],
-  ["The act pastes it into their site", "Squarespace, WordPress, Wix, Webflow, Carrd, Shopify, a hand-built site. Anywhere that takes an embed block or custom HTML."],
-  ["The widget keeps itself current", "When the run changes, the totals change, or a new board opens, the widget updates on its own. The act never touches the code again."],
+  ["Copy the snippet", "It appears on the Door Money dashboard the moment the board is live. Same snippet for every page it goes on."],
+  ["Paste it into the site", "Squarespace, WordPress, Wix, Webflow, Carrd, Shopify, a hand-built site. Anywhere that takes an embed block or custom HTML."],
+  ["The widget keeps itself current", "When the run changes, the totals change, or a new board opens, the widget updates on its own. Nobody touches the code again."],
 ];
 
-const FACTS = [
-  "The act's site only holds one line of code. The widget itself lives on Door Money and loads into a frame the site cannot see into.",
-  "Inside that frame, the card field comes from the payment processor. The card number never reaches the act's site and never reaches Door Money's servers. Only a token does.",
-  "Door Money holds every payment and releases it to the act weekly, exactly as it does for placements bought on Door Money itself.",
-  "If an act's site is ever hacked or defaced, the widget stays untouched, because none of it is stored there.",
-  "Refunds, receipts and disputes run through Door Money, so the act never fields a payment question.",
+const FACTS: [string, string][] = [
+  ["Payments stay secure.", "Card details are handled by the payment processor, not the musician's website. The card number never reaches the site and never reaches Door Money's servers."],
+  ["Nothing sensitive lives on the musician's site.", "The site holds one line of code. The widget itself is hosted by Door Money and loads into a frame the site cannot see into."],
+  ["Door Money handles payment support.", "Receipts, refunds and disputes stay off the musician's plate."],
 ];
 
 const FULL = ["Squarespace", "WordPress", "Wix", "Webflow", "Carrd", "Shopify", "Own code"];
@@ -40,23 +43,24 @@ export default async function WidgetPage() {
     <Page
       theme="teal"
       current="/widget"
-      eyebrow="For every act with a website"
-      title="The"
-      accent="widget"
+      eyebrow="For every musician with a website"
+      title="Turn your own website into a place"
+      accent="people can back you."
+      headline="md"
       intro={
         <>
           <p>
-            One line of code puts a Door Money box on any act&apos;s own site. Fans and local businesses back the act
-            right there, on the page they already visit, without leaving for another platform. The money reaches the
-            act on the same weekly schedule as everything else on Door Money.
+            Every Door Money board can live directly on the musician&apos;s website. Fans and patrons can see the
+            current run, choose a placement and pay without leaving the page.
           </p>
+          <p className="caps mt-6 text-[14.5px] leading-[2] text-accent-ink">One embed. Always current.</p>
           <Lines
             className="mt-[30px]"
             lines={[
-              "The act pastes one line into their site.",
+              "You paste one line into your site.",
               "The widget shows the current run and takes the payment.",
-              "Door Money holds the money and pays the act weekly.",
-              "The act keeps every fan on their own page.",
+              "Door Money holds the money and pays you weekly.",
+              "Every fan stays on your own page.",
             ]}
           />
           <div className="mt-[34px] flex flex-wrap gap-[22px]">
@@ -67,9 +71,10 @@ export default async function WidgetPage() {
       }
     >
       <Section id="demo">
-        <SectionHead eyebrow="The demo">What it looks like on a band&apos;s site</SectionHead>
+        <SectionHead eyebrow="The demo">What it looks like on a musician&apos;s site</SectionHead>
         <p className="text-muted">
-          A band page with the widget dropped in. Picking a tier and pressing the button shows how it feels for a fan.
+          A band&apos;s page with the widget dropped in. Picking a tier and pressing the button shows how it feels for
+          a fan.
         </p>
 
         <div className="edge mt-10 bg-panel ">
@@ -113,10 +118,10 @@ export default async function WidgetPage() {
       </Section>
 
       <Section id="install">
-        <SectionHead eyebrow="The install">One line, on any site</SectionHead>
+        <SectionHead eyebrow="The install">One embed. Always current.</SectionHead>
         <p className="text-muted">
-          Every act on Door Money gets their own snippet. It goes wherever the site builder allows custom code: a page,
-          a sidebar, a footer. Nothing else to configure.
+          Every musician on Door Money gets their own snippet. It goes wherever the site builder allows custom code: a
+          page, a sidebar, a footer. Nothing else to configure.
         </p>
         <pre className="edge mt-[26px] overflow-x-auto font-mono bg-panel px-6 py-[22px] text-[15px] leading-[1.7] text-ink ">
           <span className="text-accent-ink">&lt;script</span> src=<span className="text-ink">&quot;{SITE.url}/embed.js&quot;</span> data-act=
@@ -127,17 +132,16 @@ export default async function WidgetPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="The money">Why the act&apos;s site never handles a card</SectionHead>
+        <SectionHead eyebrow="The money">Payments stay secure</SectionHead>
         <p className="text-muted">
-          The widget takes payment on the act&apos;s page without the act&apos;s site ever seeing the card. Here is
-          how the layers sit.
+          The widget takes payment on your page without your site ever seeing the card. Here is how the layers sit.
         </p>
         <div className="mt-9 grid items-start gap-[30px] md:grid-cols-2">
           <svg
             viewBox="0 0 440 330"
             xmlns="http://www.w3.org/2000/svg"
             role="img"
-            aria-label="Three nested boxes: the act's site, the Door Money frame inside it, and the payment processor's card field inside that"
+            aria-label="Three nested boxes: the musician's site, the Door Money frame inside it, and the payment processor's card field inside that"
             fill="none"
             stroke="var(--ink)"
             strokeWidth="1.5"
@@ -145,7 +149,7 @@ export default async function WidgetPage() {
             className="edge glow block h-auto w-full bg-panel"
           >
             <rect x="20" y="20" width="400" height="290" />
-            <text x="36" y="48" fill="var(--ink)" stroke="none" fontFamily="var(--font-bodoni),Georgia,serif" fontSize="19" letterSpacing="0.5">THE ACT&apos;S SITE</text>
+            <text x="36" y="48" fill="var(--ink)" stroke="none" fontFamily="var(--font-bodoni),Georgia,serif" fontSize="19" letterSpacing="0.5">THE MUSICIAN&apos;S SITE</text>
             <text x="36" y="70" fill="var(--muted)" stroke="none" fontFamily="var(--font-archivo),Helvetica,sans-serif" fontSize="12">Shows the widget. Cannot read inside it.</text>
             <rect x="60" y="92" width="320" height="196" stroke="var(--accent)" />
             <text x="76" y="120" fill="var(--accent)" stroke="none" fontFamily="var(--font-bodoni),Georgia,serif" fontSize="19" letterSpacing="0.5">DOOR MONEY FRAME</text>
@@ -157,10 +161,13 @@ export default async function WidgetPage() {
             <text x="116" y="250" fill="var(--on-accent)" stroke="none" fontFamily="var(--font-archivo),Helvetica,sans-serif" fontSize="12">not Door Money&apos;s servers either.</text>
           </svg>
           <ul>
-            {FACTS.map((f, i) => (
-              <li key={f} className={`flex items-baseline gap-3.5 py-3 text-[15px] leading-[1.55] ${i ? "border-t border-line" : ""}`}>
+            {FACTS.map(([title, body], i) => (
+              <li key={title} className={`flex items-baseline gap-3.5 py-3.5 text-[15px] leading-[1.55] ${i ? "border-t border-line" : ""}`}>
                 <span aria-hidden="true" className="text-accent-ink">&#9642;</span>
-                {f}
+                <span>
+                  <b className="block font-medium text-ink">{title}</b>
+                  <span className="text-muted">{body}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -174,7 +181,7 @@ export default async function WidgetPage() {
             <h3 className="heading mb-2 text-[22px]">The full widget</h3>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">
               Anywhere that accepts custom code or an embed block. Fans pay on the page, the run and the totals show
-              live, and the act keeps the visitor on their own site.
+              live, and the visitor never leaves your site.
             </p>
             <Platforms list={FULL} />
           </div>
@@ -182,7 +189,7 @@ export default async function WidgetPage() {
             <h3 className="heading mb-2 text-[22px]">The link button</h3>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">
               For platforms that only allow links: link-in-bio pages, Bandcamp, a Substack footer, an Instagram bio.
-              The button sends the fan to the act&apos;s board on Door Money, where the same payment happens.
+              The button sends the fan to your board on Door Money, where the same payment happens.
             </p>
             <Platforms list={LINK} />
             <a
@@ -198,8 +205,8 @@ export default async function WidgetPage() {
       <Section>
         <SectionHead eyebrow="List an act">The widget comes with the board</SectionHead>
         <p className="text-muted">
-          Every act that lists on Door Money gets the snippet and the link button on day one. Nothing extra to set up,
-          nothing extra to pay.
+          Every musician who lists on Door Money gets the snippet and the link button on day one. Nothing extra to set
+          up, nothing extra to pay.
         </p>
         <div className="mt-[34px] flex flex-wrap gap-[22px]">
           <ButtonLink href="/list">List an act</ButtonLink>

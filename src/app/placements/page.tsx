@@ -11,6 +11,7 @@ import { DIAGRAMS, StageSchematic } from "./diagrams";
 export const metadata: Metadata = { title: "The placements" };
 
 // The page is the standard card for bands and house acts, as in the mockup. Soloist-only surfaces stay off it.
+// The second-person lines are absent on purpose: this page speaks to patrons about musicians.
 const SURFACES = CATALOG.filter((s) => s.appliesTo.includes("touring_band") || s.appliesTo.includes("house_act"));
 const byGroup = (g: SurfaceGroup) => SURFACES.filter((s) => s.group === g);
 
@@ -19,11 +20,11 @@ const HERO_KEYS = new Set(["kick_head", "tip_jar_card"]);
 
 const INTROS: Record<SurfaceGroup, string> = {
   onstage:
-    "A name on these surfaces rides along in every fan photo, every phone video and every review shot, night after night, for the price of one print run. Each format matches the band's own artwork, and every one needs the band's yes before it ships.",
+    "These are the stage surfaces most likely to appear again and again in crowd photos, phone videos, press shots and tour documentation. Each format matches the musician's own artwork, and every one needs the musician's yes before it ships.",
   room:
-    "The merch table and the tip jar hold a fan's attention longer than anything on the stage. People stop, read, and reach for a wallet, so a name in these spots earns more attention per dollar than any other surface a band owns. Residency placements live here too, priced monthly for house bands and resident acts.",
+    "The stage gets glances. The merch table and tip jar get pauses. These placements live where fans stop, read, buy and talk. Residency placements live here too, priced monthly for house acts.",
   online:
-    "These placements carry their own numbers: post reach, email opens, video views. They travel past the room, and they make the easiest first buy for anyone who has never sponsored a band before.",
+    "Posts, email and video extend the relationship beyond the room and come with familiar metrics: views, reach, opens and clicks. They also make the easiest first buy for anyone who has never backed a musician before.",
 };
 
 export default function PlacementsPage() {
@@ -37,16 +38,23 @@ export default function PlacementsPage() {
       accent="placements"
       intro={
         <>
-          <p>
-            Every surface a band can offer, what it costs, and who sees it. Each band sets its own prices; the figures
-            here are the standard card. Door Money holds the funds until the placement runs at a real show.
+          <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">
+            There is more value in a working musician&apos;s world than a sponsored post.
+          </p>
+          <p className="mt-5 max-w-[55ch]">
+            A drummer carries the same kick head through twenty rooms. A freelancer opens the same case in rehearsal
+            after rehearsal. Hundreds of people stand in front of the same merch table.
+          </p>
+          <p className="mt-4 max-w-[55ch]">
+            Door Money lets musicians decide which of those surfaces can help fund the work. Each musician sets their
+            own prices; the figures here are the standard card.
           </p>
           <Lines
             className="mt-[30px]"
             lines={[
-              "A patron picks a surface and puts the money up.",
-              "The band plays the run.",
-              "The money reaches the band as it happens.",
+              "A patron picks a placement and puts the money up.",
+              "The musician plays the run.",
+              "The money reaches the musician as it happens.",
               "The patron gets a record of where it went.",
             ]}
           />
@@ -57,7 +65,7 @@ export default function PlacementsPage() {
           DOOR MONEY<br />PAID<br />AT THE DOOR
         </>
       }
-      footerNote="Standard-card prices shown; each band sets its own."
+      footerNote="Standard-card prices shown; each musician sets their own."
     >
       {groups.map((g) => (
         <Section key={g}>
@@ -71,7 +79,7 @@ export default function PlacementsPage() {
           </div>
           {g === "online" && (
             <p className="mt-6 text-[14.5px] text-muted">
-              Bands price touring placements per tour, typically 15 to 25 shows, and residency placements per month.
+              Touring musicians price placements per tour, typically 15 to 25 shows; house acts price per month.
               Longer runs and bigger venues scale per date, so nobody renegotiates.
             </p>
           )}
@@ -79,22 +87,22 @@ export default function PlacementsPage() {
       ))}
 
       <Section>
-        <SectionHead eyebrow="One name only">Exclusivity is for sale too</SectionHead>
+        <SectionHead eyebrow="Category exclusivity">One musician. One category.</SectionHead>
         <div className="edge glow mt-9 max-w-[760px] bg-accent text-on-accent px-7 py-[30px]">
-          <div className="heading text-[24px]">Category exclusivity</div>
+          <div className="heading text-[24px]">Priced by the musician, like everything else here</div>
           <p className="mt-2 text-[15px]">
-            By default a band can carry more than one patron. Being the only name in a category on a run, or the only
-            patron on a whole tour, is a premium the band can choose to offer. Priced by the band, like everything else
-            here.
+            A coffee company may not want another coffee company on the same run. A guitar brand may want the gear
+            category to itself. Musicians can make that exclusivity available, and price it accordingly.
           </p>
         </div>
       </Section>
 
       <Section>
-        <SectionHead eyebrow="Before signing">The rules that keep it worth buying</SectionHead>
+        <SectionHead eyebrow="Before signing">The musician always has the final say</SectionHead>
         <p>
-          The rules that keep bands safe are the same ones that keep a placement worth having. A stage that
-          doesn&apos;t look bought is the only kind worth being on.
+          Musicians choose what goes on the board, set the prices and approve every patron. The marketplace works
+          because neither side gets to exploit the other, and a stage that doesn&apos;t look bought is the only kind
+          worth being on.
         </p>
         <ul className="edge glow mt-[30px] max-w-[560px] bg-panel px-7 py-[26px] text-[15px] leading-[2.1]">
           {HOUSE_RULES.map((r) => (
@@ -106,9 +114,9 @@ export default function PlacementsPage() {
       </Section>
 
       <Section className="pb-24">
-        <SectionHead eyebrow="Opening soon">Back a band that&apos;s already working</SectionHead>
+        <SectionHead eyebrow="Opening soon">Back a musician who&apos;s already working</SectionHead>
         <p>
-          Door Money opens in New York first. Patrons on the list see the first bands, rooms and circuits before
+          Door Money opens in New York first. Patrons on the list see the first musicians, rooms and circuits before
           anyone else.
         </p>
         <div className="mt-[30px] flex flex-wrap gap-5">

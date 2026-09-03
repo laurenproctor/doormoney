@@ -6,7 +6,7 @@ import { joinWaitlist, type WaitlistState } from "@/app/actions/waitlist";
 
 const initial: WaitlistState = { ok: false };
 
-/** The short form on Home: band or patron, three fields. */
+/** The short form on Home: musician or patron, three fields. The role value stays "band" for the action. */
 export function WaitlistForm({ defaultRole = "band" }: { defaultRole?: "band" | "patron" }) {
   const [state, action, pending] = useActionState(joinWaitlist, initial);
 
@@ -26,11 +26,11 @@ export function WaitlistForm({ defaultRole = "band" }: { defaultRole?: "band" | 
         {(["band", "patron"] as const).map((r) => (
           <label key={r} className="caps edge cursor-pointer px-4 py-2.5 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-on-accent">
             <input type="radio" name="role" value={r} defaultChecked={r === defaultRole} className="sr-only" />
-            {r === "band" ? "A band or act" : "A patron"}
+            {r === "band" ? "A musician" : "A patron"}
           </label>
         ))}
       </fieldset>
-      <Field name="name" placeholder="Name or band name" error={state.errors?.name} />
+      <Field name="name" placeholder="Name, or the band's name" error={state.errors?.name} />
       <Field name="email" type="email" placeholder="Email" error={state.errors?.email} />
       <Field name="city" placeholder="City (optional)" />
       <div>
@@ -59,10 +59,10 @@ function Field({ name, type = "text", placeholder, error }: { name: string; type
 const ACT_TYPES = [
   ["touring_band", "Band"],
   ["house_act", "House act"],
-  ["soloist", "Solo"],
+  ["soloist", "Soloist"],
 ] as const;
 
-/** The act signup on List an act: act type instead of role, labelled fields, paper inputs. */
+/** The musician signup on List an act: act type instead of role, labelled fields. */
 export function ActWaitlistForm() {
   const [state, action, pending] = useActionState(joinWaitlist, initial);
 
@@ -79,7 +79,7 @@ export function ActWaitlistForm() {
     <form action={action} noValidate>
       <input type="hidden" name="role" value="band" />
       <fieldset className="mb-[18px] flex flex-wrap gap-3.5">
-        <legend className="sr-only">Act type</legend>
+        <legend className="sr-only">Type of musician</legend>
         {ACT_TYPES.map(([value, label], i) => (
           <label
             key={value}
@@ -90,7 +90,7 @@ export function ActWaitlistForm() {
           </label>
         ))}
       </fieldset>
-      <LabelledField name="name" label="Act name" autoComplete="organization" error={state.errors?.name} />
+      <LabelledField name="name" label="Musician or band name" autoComplete="organization" error={state.errors?.name} />
       <LabelledField name="email" label="Email" type="email" autoComplete="email" error={state.errors?.email} />
       <LabelledField name="city" label="City" placeholder="NYC" />
       <Button type="submit" disabled={pending}>{pending ? "One second" : "Get on the list"}</Button>

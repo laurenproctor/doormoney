@@ -14,7 +14,8 @@ export function Page({
   accent,
   intro,
   stamp,
-  strap = "Acts. Patrons. Together.",
+  strap = "Musicians. Patrons. Together.",
+  headline = "lg",
   children,
   footerNote,
 }: {
@@ -28,6 +29,8 @@ export function Page({
   stamp?: ReactNode;
   /** The short line in the bottom-left corner of the hero. */
   strap?: string;
+  /** `md` for a headline of more than four or five words, so it stays to three lines. */
+  headline?: "lg" | "md";
   children: ReactNode;
   footerNote?: string;
 }) {
@@ -39,7 +42,7 @@ export function Page({
           <HeroArt theme={theme} />
           <div className="hero-in relative mx-auto w-full max-w-[1120px] px-7 pb-[72px] pt-[88px]">
             <Eyebrow className="mb-8">{eyebrow}</Eyebrow>
-            <h1 className="display max-w-[12ch] text-[clamp(44px,7.4vw,96px)] leading-[0.98]">
+            <h1 className={`display leading-[0.98] ${headline === "md" ? "max-w-[18ch] text-[clamp(36px,5.6vw,72px)]" : "max-w-[12ch] text-[clamp(44px,7.4vw,96px)]"}`}>
               {title} {accent && <em className="text-accent-ink">{accent}</em>}
             </h1>
             <div className="mt-8 max-w-[56ch] text-[17px]">{intro}</div>

@@ -21,7 +21,7 @@ export function Footer({ note }: { note?: string }) {
               </Link>
             ))}
             <Link href="/login" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
-              Act sign-in
+              Musician sign-in
             </Link>
           </nav>
           <nav aria-label="Legal" className="grid content-start gap-2.5">

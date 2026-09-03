@@ -62,7 +62,7 @@ export function EmbedClient(p: {
             ))}
             <button type="button" onClick={() => setTier("placement")} aria-pressed={tier === "placement"} className={tierClass(tier === "placement")}>
               <span className="heading text-[22px] leading-none">$500<small className="caps mt-1 block text-[14px] text-muted">and up</small></span>
-              <span><b className="block text-[14.5px] font-medium leading-tight">Take a placement</b><span className="block text-[14px] leading-snug text-muted">Kick head, cases, straps, posts. Opens the act&apos;s board on Door Money.</span></span>
+              <span><b className="block text-[14.5px] font-medium leading-tight">Take a placement</b><span className="block text-[14px] leading-snug text-muted">Kick head, cases, straps, posts. Opens the musician&apos;s board on Door Money.</span></span>
             </button>
           </div>
 
@@ -81,7 +81,7 @@ export function EmbedClient(p: {
             {tier === "placement" ? "Open the board" : `Back for ${chosen?.label}`}
             <span aria-hidden="true" className="text-[16px] leading-none">&rarr;</span>
           </button>
-          <p className="max-w-none px-4 pb-4 pt-3 text-[14px] leading-[1.6] text-muted">Door Money holds the money and pays the act weekly through the run. Refunded in full if the run is cancelled.</p>
+          <p className="max-w-none px-4 pb-4 pt-3 text-[14px] leading-[1.6] text-muted">Door Money holds the money and pays the musician weekly through the run. Refunded in full if the run is cancelled.</p>
         </>
       )}
     </div>

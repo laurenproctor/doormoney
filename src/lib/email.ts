@@ -36,11 +36,11 @@ const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<":
 
 /** The waitlist confirmation. Third person throughout, per the voice rules. */
 export function waitlistConfirmation(params: { to: string; name: string; role: "band" | "patron" }): Mail {
-  const who = params.role === "band" ? "an act" : "a patron";
+  const who = params.role === "band" ? "a musician" : "a patron";
   const next =
     params.role === "band"
-      ? `When listings go live, acts on the list go up first. The first fifty list free forever.`
-      : `When the first boards open, patrons on the list see the bands, rooms and circuits before anyone else.`;
+      ? `When listings go live, musicians on the list go up first, as the founding cohort.`
+      : `When the first boards open, patrons on the list see the musicians, rooms and circuits before anyone else.`;
   const lines = [
     `${params.name} is on the ${SITE.name} list as ${who}.`,
     `${SITE.name} opens in ${SITE.city} first. ${next}`,

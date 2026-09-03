@@ -137,7 +137,7 @@ export function LotsEditor({
         {runStatus === "draft" ? (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
-              The board is private until it is published. Publishing puts it at the board address and on the live auctions page. Save the spots first.
+              The board is private until it is published. Publishing puts it at the board address and on the live boards page. Save the spots first.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Button

@@ -8,23 +8,24 @@ Read `docs/ROADMAP.md` for the phases and `docs/DECISIONS.md` for the open produ
 
 ## Vocabulary
 
-Use these words and only these words for these things.
+Use these words and only these words for these things. The idea behind all of it: Door Money is a patronage market for working musicians. Placements are the mechanism, not the point.
 
-- **Act**: any musician or group that lists. Also "band" when the act is a band, "musician" generically. Never "artist" in product copy, never "creator", never "user".
-- **Patron**: anyone who pays. A business buying a placement, a brand, or a fan backing through the widget. Never "sponsor", "advertiser", "customer", "buyer".
-- **Run**: the thing a patron backs. A tour, a season, or a residency month. Never "campaign".
+- **Musician**: the supply side. Subtypes when the type matters: band, soloist, ensemble, house act. Never "artist" in product copy, never "creator", never "user". "Act" survives in the data model (`acts` table) and in the flow name "List an act"; in prose, say musician.
+- **Patron**: anyone who pays. Subtypes: fan, local business, brand. Never "sponsor", "advertiser", "customer", "buyer".
+- **Run**: the period being funded. A tour, a residency, a season, a series of shows. Never "campaign".
+- **Board**: a musician's offering for one run. A musician opens a board for a run; patrons back placements on the board.
+- **Placement**: one opportunity on a board (a surface, on a run, at a price). "Lot" is the database word; in copy say placement, or "spot" informally.
 - **Surface**: a physical or digital place a mark can go (kick head, case sticker, post). The standard card lists them.
-- **Lot**: one surface, on one run, at one price. What a business patron buys.
-- **Backing**: a fan-tier contribution through the widget. Not a lot.
-- **Board**: an act's public page of lots for the current run.
+- **Backing**: a fan-tier contribution through the widget. Not a placement.
 - **Mark**: the patron's name or logo as it will appear. Never "ad", never "creative".
 - **Record**: the end-of-run summary a patron receives. Never "receipt" in copy (fine in code for Stripe receipts), never "report".
+- **Sponsorship** is fine for the transaction itself. The company is not "an advertising marketplace" or "an influencer platform"; the differentiator is that musicians get paid for the work of being musicians without becoming influencers.
 
 ## Voice rules for anything user-facing
 
 These are firm. They apply to page copy, button labels, emails, error messages, empty states and placeholder text.
 
-1. **No second person.** Never "you", "your", "yours". Write about musicians, acts, patrons and fans in the third person. "Acts set their own prices," not "you set your prices." Button labels are imperative or nominal: "List an act", "Back the run", "Get on the list".
+1. **No second person by default.** Write about musicians, patrons and fans in the third person. "Musicians set their own prices," not "you set your prices." Button labels are imperative or nominal: "List an act", "Back the run", "Get on the list". The exceptions, settled in the 2026-09 copy brief: the hero's second line, the patron steps on the home page, and the pages that speak to musicians directly (List an act, the widget).
 2. **Active voice.** Name who does what. "Door Money holds the money," not "the money is held." "Patrons put the money up," not "the money is put up."
 3. **Benefits before mechanics.** Lead with what sponsorship does for the act (gas, rooms, the difference between a run that happens and one that doesn't) and what a patron gets (attention, a name in the room, support they can point at). Mechanics (holds, weekly payouts, approvals) come second and stay short.
 4. **Plain words.** No insider phrasing, no jargon, no cleverness that needs decoding. "When Door Money opens," not "when doors open." "Attendance," not "through the door."

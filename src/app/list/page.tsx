@@ -9,22 +9,31 @@ import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "List an act" };
+export const metadata: Metadata = {
+  title: "List an act",
+  description: "Get paid for the audience you're already building. Listing is free; Door Money earns 15% only when a placement sells.",
+};
+
+// This page speaks to the musician directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
 
 const STEPS: [string, string][] = [
-  ["The musician picks the surfaces", "Standard-card prices, or whatever numbers the act wants. Anything not for sale stays off the board, and nothing goes up without the musician's yes."],
-  ["The board goes live", "Acts choose auction or fixed price, surface by surface. Winners put the money up within 48 hours or the spot rolls to the next bid."],
-  ["The run happens", "The act plays the season or the tour it was already playing. Nothing about the gigs changes."],
-  ["The money arrives during the run", "The money lands week by week as the run goes on, not at the end of it. No invoices, no chasing, no waiting on anybody's accounting department."],
+  ["You decide what goes on the board", "Standard-card prices, or your own numbers. Anything not for sale stays off the board, and nothing goes up without your yes."],
+  ["The board goes live", "Fixed price or open to bids, placement by placement. Winners put the money up within 48 hours or the spot rolls to the next bid."],
+  ["Nothing about the gigs changes", "You keep playing the gigs you were already going to play. Door Money adds another way for those gigs to pay."],
+  ["The money arrives during the run", "It lands week by week as the run goes on, not at the end of it. No invoices, no chasing, no waiting on anybody's accounting department."],
 ];
 
-const CHIPS = ["Kick drum head", "Road cases", "Guitar straps", "Amp grilles", "Tip jar card", "Stage thank-you", "Merch table", "Hang tags", "Picks", "Posts and email", "Rig rundown", "Case lid, solo", "Music stand"];
+const BOARD: [string, string[]][] = [
+  ["Onstage", ["Kick drum head", "Guitar straps", "Amp grilles", "Music stand", "Riser fascia"]],
+  ["Around the room", ["Tip jar card", "Merch table", "Road cases", "Hang tags", "Picks", "Stage thank-you"]],
+  ["Online", ["Posts and email", "Rig rundown", "Vlog logo card", "Poster credit"]],
+];
 
 const MONEY: [string, string][] = [
-  ["What does it cost?", `Nothing to list. ${SITE.name} takes ${SITE.feePercent}% of sold spots, and only sold spots. If nothing sells, the act owes nothing and has lost nothing.`],
-  ["When is the money real?", "The moment a spot sells. Winners put the money up within 48 hours, before a note is played, and it reaches the act while the run is happening."],
-  ["What if a patron asks for something an act doesn't want?", "Every placement needs the musician's yes before it ships, and that yes can become a no before anything goes up. The act's board, the act's call."],
-  ["What about regular income?", `Door, merch, tips, and guarantees belong to the act and stay that way. ${SITE.name} only ever touches the patron money it brings in.`],
+  ["Door Money makes money when you make money.", `Listing costs nothing. ${SITE.name} keeps ${SITE.feePercent}% of completed placements. If nothing sells, you owe nothing.`],
+  ["When is the money real?", "The moment a placement sells. Winners put the money up within 48 hours, before a note is played, and it reaches you while the run is happening."],
+  ["What if a patron asks for something you don't want?", "Every placement needs your yes before it ships, and that yes can become a no before anything goes up. Your board, your call."],
+  ["What about regular income?", `Door, merch, tips and guarantees are yours and stay that way. ${SITE.name} only ever touches the patron money it brings in.`],
 ];
 
 export default async function ListPage() {
@@ -33,18 +42,20 @@ export default async function ListPage() {
     <Page
       theme="amber"
       current="/list"
-      eyebrow="For bands, house acts, and soloists"
-      title="List an"
-      accent="act"
+      eyebrow="For working musicians"
+      title="Get paid for the audience"
+      accent="you're already building."
+      headline="md"
       intro={
         <>
-          <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">Musicians set the surfaces, the prices, and the final yes.</p>
-          <p className="mt-5 max-w-[55ch]">
-            Patrons and brands pay for small placements on the gear a band already hauls to every show: the kick drum,
-            the cases, the straps, the tip jar, the feed. The money is there before the first date, and it arrives
-            while the run is happening rather than months after it. Listing is free.
+          <p className="max-w-[55ch]">
+            Door Money helps businesses, brands and fans put money behind the shows you&apos;re already playing. You
+            choose what to offer, what it costs and who appears beside your name.
           </p>
-          <div className="mt-[34px]">
+          <p className="caps mt-6 text-[14.5px] leading-[2] text-accent-ink">
+            Listing is free. {SITE.name} earns {SITE.feePercent}% only when something sells.
+          </p>
+          <div className="mt-[30px]">
             <ButtonLink href="#list">List an act</ButtonLink>
           </div>
         </>
@@ -61,29 +72,36 @@ export default async function ListPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="What can be listed">Gear an act already owns</SectionHead>
-        <div className="mt-[30px] flex flex-wrap gap-3.5">
-          {CHIPS.map((c) => (
-            <span key={c} className="caps edge px-4 py-2.5 text-[14px]">
-              {c}
-            </span>
+        <SectionHead eyebrow="What can be listed">What can go on the board</SectionHead>
+        <div className="mt-[30px] grid gap-8 md:grid-cols-3">
+          {BOARD.map(([group, items]) => (
+            <div key={group}>
+              <div className="caps mb-3.5 border-b border-line pb-2.5 text-[14px] text-accent-ink">{group}</div>
+              <div className="flex flex-wrap gap-2.5">
+                {items.map((c) => (
+                  <span key={c} className="caps edge px-3.5 py-2 text-[14px]">
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         <p className="mt-6 text-[14.5px] text-muted">
-          Touring acts price per tour, house acts per month, soloists per season. The placements page lists full
+          Touring musicians price per tour, house acts per month, soloists per season. The placements page lists full
           details and standard prices. Instruments are never for sale and nobody will ever ask.
         </p>
       </Section>
 
       <Section>
-        <SectionHead eyebrow="The widget">The board goes wherever the act does</SectionHead>
+        <SectionHead eyebrow="The widget">The board goes wherever you do</SectionHead>
         <div className="mt-[30px] grid items-center gap-9 md:grid-cols-[1.1fr_1fr]">
           <div>
             <p>
-              Listing on Door Money comes with a widget for the act&apos;s own site. It shows the current run, takes
-              the payment, and pays out weekly, so an act can send fans to their own page instead of a third party.
-              Where a platform only allows links, a button sends fans to the act&apos;s board instead. Both arrive on
-              day one, at no extra cost.
+              Listing on Door Money comes with a widget for your own site. It shows the current run, takes the
+              payment and pays out weekly, so fans can back you on your page instead of a third party&apos;s. Where a
+              platform only allows links, a button sends them to your board instead. Both arrive on day one, at no
+              extra cost.
             </p>
             <div className="mt-[26px] flex flex-wrap gap-[18px]">
               <ButtonLink href="/widget" variant="ghost">See the widget</ButtonLink>
@@ -133,10 +151,10 @@ export default async function ListPage() {
       </Section>
 
       <Section id="list">
-        <SectionHead eyebrow="List an act">First fifty acts list free forever</SectionHead>
+        <SectionHead eyebrow="Founding cohort">Join Door Money&apos;s first 50 musicians</SectionHead>
         <p>
-          {SITE.name} is opening in {SITE.city} first. Acts that leave a name here get an email when listings go live,
-          with the founding acts up first.
+          {SITE.name} launches in {SITE.city}. Musicians who leave a name here get an email when listings go live, and
+          the founding cohort goes up first.
         </p>
         <div className="mt-[34px] max-w-[560px]">
           <ActWaitlistForm />
