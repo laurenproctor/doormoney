@@ -32,7 +32,7 @@ export function SectionHead({ eyebrow, children }: { eyebrow: string; children: 
   return (
     <>
       <Eyebrow className="mb-5">{eyebrow}</Eyebrow>
-      <h2 className="display mb-4 max-w-[22ch] text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{children}</h2>
+      <h2 className="heading mb-4 max-w-[22ch] text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{children}</h2>
     </>
   );
 }
@@ -68,7 +68,7 @@ export function Steps({
             lg ? "grid-cols-[64px_1fr] gap-[18px] py-6" : "grid-cols-[52px_1fr] gap-4 py-5"
           }`}
         >
-          <div className={`display text-accent-ink ${lg ? "text-[34px]" : "text-[28px]"} leading-none`}>{String(i + 1).padStart(2, "0")}</div>
+          <div className={`heading text-accent-ink ${lg ? "text-[34px]" : "text-[28px]"} leading-none`}>{String(i + 1).padStart(2, "0")}</div>
           <div>
             <b className={`block font-medium ${lg ? "text-[17px]" : "text-[16px]"}`}>{title}</b>
             <p className={`max-w-none text-muted ${lg ? "text-[15px] leading-[1.65]" : "text-[15px] leading-[1.6]"}`}>{body}</p>

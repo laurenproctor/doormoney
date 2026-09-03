@@ -81,7 +81,7 @@ export function CardHead({ eyebrow, children }: { eyebrow: string; children: Rea
   return (
     <>
       <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
-      <h2 className="display mb-4 text-[clamp(24px,3.4vw,34px)] leading-none">{children}</h2>
+      <h2 className="heading mb-4 text-[clamp(24px,3.4vw,34px)] leading-none">{children}</h2>
     </>
   );
 }

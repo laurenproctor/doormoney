@@ -81,7 +81,7 @@ export default function PlacementsPage() {
       <Section>
         <SectionHead eyebrow="One name only">Exclusivity is for sale too</SectionHead>
         <div className="edge glow mt-9 max-w-[760px] bg-accent text-on-accent px-7 py-[30px]">
-          <div className="display text-[24px]">Category exclusivity</div>
+          <div className="heading text-[24px]">Category exclusivity</div>
           <p className="mt-2 text-[15px]">
             By default a band can carry more than one patron. Being the only name in a category on a run, or the only
             patron on a whole tour, is a premium the band can choose to offer. Priced by the band, like everything else
@@ -141,7 +141,7 @@ function Card({ surface: s, hero, diagram }: { surface: Surface; hero: boolean; 
   return (
     <div className={`edge glow px-6 py-[26px] ${hero ? "col-span-full lit bg-panel" : "bg-panel"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-3.5">
-        <div className={`display leading-[1.05] ${hero ? "text-[clamp(26px,3.6vw,36px)]" : "text-[24px]"}`}>{s.name}</div>
+        <div className={`heading leading-[1.05] ${hero ? "text-[clamp(26px,3.6vw,36px)]" : "text-[24px]"}`}>{s.name}</div>
         <div className={`caps whitespace-nowrap text-[15px] ${hero ? "text-accent-ink" : "text-accent-ink"}`}>
           from {formatMoney(s.defaultPriceCents)} a {s.period}
         </div>

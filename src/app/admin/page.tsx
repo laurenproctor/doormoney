@@ -134,7 +134,7 @@ export default async function AdminPage() {
 function Stat({ n, label }: { n: string; label: string }) {
   return (
     <div className="edge bg-panel p-4">
-      <dt className="display text-[28px] leading-none">{n}</dt>
+      <dt className="heading text-[28px] leading-none">{n}</dt>
       <dd className="caps text-[14px] text-muted">{label}</dd>
     </div>
   );

@@ -43,7 +43,7 @@ export function RosieBackers() {
     <div className="border-t border-line py-14">
       <div className="mx-auto max-w-[1120px] px-7">
         <p className="caps mb-3 text-[15px] text-accent-ink">Who backs a bassoonist</p>
-        <h2 className="display mb-6 text-[clamp(28px,4vw,44px)] leading-none">Small patrons with perfect aim</h2>
+        <h2 className="heading mb-6 text-[clamp(28px,4vw,44px)] leading-none">Small patrons with perfect aim</h2>
         <p>
           The pitch here isn&apos;t reach. A solo player&apos;s following is small, but it&apos;s made of working
           players, serious students, and the rooms she gigs in, and for the right buyer that&apos;s their whole target

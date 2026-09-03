@@ -84,14 +84,14 @@ export function BoardLots({
     <>
       <div className="lit mt-12 flex flex-wrap items-end justify-between gap-6 bg-panel px-8 py-7 max-md:px-6">
         <div>
-          <b className="display block text-[clamp(38px,6vw,64px)] leading-none">{formatMoney(worth)}</b>
+          <b className="heading block text-[clamp(38px,6vw,64px)] leading-none">{formatMoney(worth)}</b>
           <span className="caps mt-2 block text-[14px] text-muted">what the board is worth right now</span>
         </div>
         <div className="md:text-right">
           {closesAt ? (
-            <Countdown closesAt={closesAt} className="display block text-[clamp(24px,3.4vw,36px)] leading-none" />
+            <Countdown closesAt={closesAt} className="heading block text-[clamp(24px,3.4vw,36px)] leading-none" />
           ) : (
-            <b className="display block text-[clamp(24px,3.4vw,36px)] leading-none">Open</b>
+            <b className="heading block text-[clamp(24px,3.4vw,36px)] leading-none">Open</b>
           )}
           <span className="caps mt-2 block text-[14px] text-muted">{closesLabel}</span>
         </div>
@@ -99,7 +99,7 @@ export function BoardLots({
 
       <div className="pb-6 pt-[84px]">
         <Eyebrow className="mb-5">The spots</Eyebrow>
-        <h2 className="display mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
+        <h2 className="heading mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
         <div className="grid gap-px bg-line">
           {lots.map((l) => {
             const v = live[l.id];
@@ -116,12 +116,12 @@ export function BoardLots({
                 className={`relative grid items-center gap-x-8 gap-y-3 px-7 py-6 max-md:px-5 min-[681px]:grid-cols-[1fr_auto] ${sold ? "bg-ground" : "bg-ground"}`}
               >
                 <div>
-                  <div className={`display text-[24px] leading-[1.1] ${sold ? "text-muted" : ""}`}>{l.name}</div>
+                  <div className={`heading text-[24px] leading-[1.1] ${sold ? "text-muted" : ""}`}>{l.name}</div>
                   <div className="mt-1.5 max-w-[60ch] text-[14.5px] leading-[1.55] text-muted">{l.note}</div>
                 </div>
                 <div className="min-w-[200px] min-[681px]:text-right">
                   <div className="caps text-[14px] text-muted">{label}</div>
-                  <div className={`display mt-1 text-[30px] leading-none ${sold ? "text-muted" : "text-accent-ink"}`}>{formatMoney(amount)}</div>
+                  <div className={`heading mt-1 text-[30px] leading-none ${sold ? "text-muted" : "text-accent-ink"}`}>{formatMoney(amount)}</div>
                   <div className="mt-2 flex items-center gap-2 min-[681px]:justify-end">
                     <Mark text={markText} kind={markKind} />
                     <div className="caps text-[14px] text-muted">{bidder}</div>

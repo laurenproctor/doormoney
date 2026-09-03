@@ -42,9 +42,9 @@ Every page is a dark room with one colour of light in it. The room is the same o
 - The light: `accent` (fills, glows, rules, display type at 24px and up), `accent-ink` (the tint of the accent that clears 4.5:1 on the ground; use it for any accent text under 24px), `on-accent` (text on an accent fill).
 - Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, dashboard, the embed), lime (placements), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). Boards take a colour by slug through `themeFor`, so each act keeps the same light.
 - Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
-- Bodoni Moda for display, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for body and for tracked caps labels (the `caps` utility). Nothing else.
-- Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it.
-- Components in `src/components/`: `Theme`, `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`. Reuse them.
+- Bodoni Moda for H1s only, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for everything else: headings below the H1 (the `heading` utility, medium weight), body, and tracked caps labels (the `caps` utility). Nothing else.
+- Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`).
+- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`. Reuse them.
 
 ## Engineering rules
 

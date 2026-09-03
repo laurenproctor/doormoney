@@ -132,8 +132,10 @@ select option { background: var(--ground); color: var(--ink); }
 
 /* Reusable brand utilities. Prefer these over ad-hoc classes so pages stay consistent. */
 
-/* Display type: the serif, set in caps. Headlines, prices, big numbers. */
+/* Display type: the serif, set in caps. H1s only. */
 @utility display { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; font-variation-settings: "opsz" 96; }
+/* Every heading below the H1: the sans at medium weight, tight, with lining tabular figures. Section heads, card titles, prices, big numbers. */
+@utility heading { font-family: var(--font-sans); font-weight: 500; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
 /* Tracked caps: labels, eyebrows, nav, buttons, metadata. */
 @utility caps { font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 400; }
 /* One thin line around a block. */
@@ -149,7 +151,7 @@ select option { background: var(--ground); color: var(--ink); }
 */
 .hero-art { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .hero-art > img {
-  position: absolute; inset: 0 0 0 28%; height: 100%; width: 72%; object-fit: cover; object-position: center;
+  position: absolute; inset: 0 0 0 28%; height: 100%; width: 72%; object-fit: cover; object-position: 60% center;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 100%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 100%);
 }
@@ -187,7 +189,7 @@ select option { background: var(--ground); color: var(--ink); }
   .hero-art > .bloom { inset: -60% -70% 50% 25%; }
   .hero-art > .flutes { inset: 0 -50% 45% 20%; }
   .hero-art > .fade { height: 120px; }
-  .hero-art > img { inset: 0; width: 100%; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+  .hero-art > img { inset: 0; width: 100%; object-position: 65% center; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
 }
 
 /* A quiet stage light behind a section or card: the accent, very dim, pooled at the top. */

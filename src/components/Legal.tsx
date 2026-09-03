@@ -66,9 +66,9 @@ export function LegalPage({
             id={s.id}
             className="grid min-w-0 scroll-mt-6 gap-x-6 border-t border-line py-9 md:grid-cols-[72px_1fr]"
           >
-            <div className="display text-[36px] leading-none text-accent-ink md:text-[44px]">{i + 1}</div>
+            <div className="heading text-[36px] leading-none text-accent-ink md:text-[44px]">{i + 1}</div>
             <div className="min-w-0">
-              <h2 className="display mb-4 text-[clamp(26px,3.6vw,38px)] leading-none">{s.heading}</h2>
+              <h2 className="heading mb-4 text-[clamp(26px,3.6vw,38px)] leading-none">{s.heading}</h2>
               <div className="grid gap-4 text-[16px] leading-[1.7]">{s.body}</div>
             </div>
           </article>

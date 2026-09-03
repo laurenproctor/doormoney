@@ -182,7 +182,7 @@ export default async function DashboardPage() {
 function Fact({ n, label }: { n: string; label: string }) {
   return (
     <div>
-      <dt className="display text-[26px] leading-none">{n}</dt>
+      <dt className="heading text-[26px] leading-none">{n}</dt>
       <dd className="caps text-[14px] text-muted">{label}</dd>
     </div>
   );

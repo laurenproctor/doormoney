@@ -40,7 +40,7 @@ export default async function AuctionsPage() {
           return (
             <div key={b.act.slug} className="edge flex flex-col gap-3.5 bg-panel px-[26px] py-7 ">
               <div className="caps text-[14.5px] text-accent-ink">{KIND[b.act.type](b.act.city)}</div>
-              <div className="display text-[clamp(28px,4vw,40px)] leading-[0.95]">{b.act.name}</div>
+              <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">{b.act.name}</div>
               <div className="caps text-[14.5px] leading-[1.7] text-muted">
                 {b.run.title}. {b.run.showCount} {gigs ? "gigs" : "shows"}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
               </div>
@@ -66,7 +66,7 @@ export default async function AuctionsPage() {
 
         <div className="edge flex flex-col items-start justify-center gap-3.5 bg-panel px-[26px] py-7 text-ink ">
           <div className="caps text-[14.5px] text-accent-ink">Any act</div>
-          <div className="display text-[clamp(28px,4vw,40px)] leading-[0.95]">The next board is open</div>
+          <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">The next board is open</div>
           <div className="text-[14.5px] leading-[1.7] text-muted">
             Bands, house acts, soloists. Musicians list the surfaces, set the prices, and keep the final say. {SITE.name}{" "}
             is opening in {SITE.city} first.
@@ -81,7 +81,7 @@ export default async function AuctionsPage() {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
-      <b className="display block text-[26px] leading-none">{value}</b>
+      <b className="heading block text-[26px] leading-none">{value}</b>
       <span className="caps text-[14px] text-muted">{label}</span>
     </div>
   );

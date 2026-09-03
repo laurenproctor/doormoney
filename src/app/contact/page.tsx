@@ -49,7 +49,7 @@ export default function ContactPage() {
           <ContactForm />
           <aside aria-labelledby="what-helps" className="self-start">
             <div className="edge glow bg-panel p-6">
-              <h3 id="what-helps" className="display mb-3 text-[22px] leading-none">
+              <h3 id="what-helps" className="heading mb-3 text-[22px] leading-none">
                 What helps
               </h3>
               <Lines marked lines={WHAT_HELPS} className="text-[15px]" />

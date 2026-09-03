@@ -43,12 +43,12 @@ export default function NotFound() {
 
             <div aria-hidden="true" className="relative mt-2 w-full max-w-[300px] md:mt-3 md:w-[280px]">
               <div className="glow bg-ground px-6 pb-7 pt-5">
-                <div className="display text-[24px] leading-tight">Set list</div>
+                <div className="heading text-[24px] leading-tight">Set list</div>
                 <div className="caps mt-1 text-[14px] text-muted">Tonight, one night only</div>
                 <ol className="mt-4 text-[15px] leading-none">
                   {SET.map((song, i) => (
                     <li key={i} className="flex min-h-[42px] items-baseline gap-3 border-b border-line py-3">
-                      <span className="display w-6 text-[18px] text-accent-ink">{i + 1}</span>
+                      <span className="heading w-6 text-[18px] text-accent-ink">{i + 1}</span>
                       {song && <span className="caps text-[14px] text-muted line-through decoration-accent decoration-2">{song}</span>}
                     </li>
                   ))}

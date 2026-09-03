@@ -21,7 +21,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-line">
-        <HeroArt theme="blue" />
+        <HeroArt theme="blue" photo="saxophone" />
         <div className="relative mx-auto flex min-h-[min(calc(100svh-82px),860px)] w-full max-w-[1120px] flex-col justify-center px-7 pb-12 pt-20">
           <Eyebrow className="mb-9">{SITE.strap}</Eyebrow>
           <h1 className="display max-w-[11ch] text-[clamp(50px,8.4vw,108px)] leading-[0.96]">
@@ -73,7 +73,7 @@ export default function HomePage() {
         <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((s) => (
             <div key={s.key} className="flex flex-col bg-ground p-7">
-              <div className="display text-[24px] leading-[1.1]">{s.name}</div>
+              <div className="heading text-[24px] leading-[1.1]">{s.name}</div>
               <div className="caps mt-2 text-[14px] text-accent-ink">
                 from {formatMoney(s.defaultPriceCents)} a {s.period}
               </div>
@@ -100,7 +100,7 @@ export default function HomePage() {
           <ol className="glow bg-panel px-8 py-4 max-md:px-6">
             {HOUSE_RULES.map((r, i) => (
               <li key={r} className={`grid grid-cols-[48px_1fr] items-baseline gap-4 py-5 text-[clamp(15px,1.8vw,17px)] leading-[1.55] ${i ? "border-t border-line" : ""}`}>
-                <span className="display text-[24px] text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
+                <span className="heading text-[24px] text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
                 <span>{r}</span>
               </li>
             ))}
@@ -129,10 +129,10 @@ export default function HomePage() {
 function Steps({ audience, steps }: { audience: string; steps: [string, string][] }) {
   return (
     <div>
-      <div className="display mb-2 text-[26px]">{audience}</div>
+      <div className="heading mb-2 text-[26px]">{audience}</div>
       {steps.map(([title, body], i) => (
         <div key={title} className="grid grid-cols-[52px_1fr] gap-4 border-t border-line py-5">
-          <div className="display text-[28px] leading-none text-accent-ink">{String(i + 1).padStart(2, "0")}</div>
+          <div className="heading text-[28px] leading-none text-accent-ink">{String(i + 1).padStart(2, "0")}</div>
           <div>
             <b className="block text-[16px] font-medium">{title}</b>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">{body}</p>

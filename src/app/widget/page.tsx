@@ -81,7 +81,7 @@ export default async function WidgetPage() {
           </div>
           <div className="grid md:grid-cols-[1.25fr_1fr]">
             <div className="border-b border-line bg-ground px-[30px] py-[34px] text-ink md:border-b-0 md:border-r">
-              <div className="display text-[clamp(40px,6vw,64px)] leading-[0.9]">
+              <div className="heading text-[clamp(40px,6vw,64px)] leading-[0.9]">
                 {first}
                 <br />
                 <span className="text-accent-ink">{rest.join(" ")}</span>
@@ -171,7 +171,7 @@ export default async function WidgetPage() {
         <SectionHead eyebrow="Where it works">Every site, one way or another</SectionHead>
         <div className="mt-[34px] grid gap-[26px] md:grid-cols-2">
           <div className="edge bg-panel px-[22px] py-6 ">
-            <h3 className="display mb-2 text-[22px]">The full widget</h3>
+            <h3 className="heading mb-2 text-[22px]">The full widget</h3>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">
               Anywhere that accepts custom code or an embed block. Fans pay on the page, the run and the totals show
               live, and the act keeps the visitor on their own site.
@@ -179,7 +179,7 @@ export default async function WidgetPage() {
             <Platforms list={FULL} />
           </div>
           <div className="edge bg-panel px-[22px] py-6 ">
-            <h3 className="display mb-2 text-[22px]">The link button</h3>
+            <h3 className="heading mb-2 text-[22px]">The link button</h3>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">
               For platforms that only allow links: link-in-bio pages, Bandcamp, a Substack footer, an Instagram bio.
               The button sends the fan to the act&apos;s board on Door Money, where the same payment happens.

@@ -85,7 +85,7 @@ export default async function BoardPage({ params }: Props) {
             <div className="mt-8 flex flex-wrap gap-x-12 gap-y-6">
               {facts.map(([value, label]) => (
                 <div key={label}>
-                  <b className="display block text-[clamp(28px,4vw,40px)] leading-none">{value}</b>
+                  <b className="heading block text-[clamp(28px,4vw,40px)] leading-none">{value}</b>
                   <span className="caps mt-1.5 block text-[14px] text-muted">{label}</span>
                 </div>
               ))}
@@ -101,7 +101,7 @@ export default async function BoardPage({ params }: Props) {
         <div className="border-t border-line py-16">
           <div className="mx-auto max-w-[1120px] px-7">
             <Eyebrow className="mb-5">If a bid wins</Eyebrow>
-            <h2 className="display mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">What happens after {closeDay ?? "the close"}</h2>
+            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">What happens after {closeDay ?? "the close"}</h2>
             <Lines
               marked
               lines={[

@@ -81,7 +81,7 @@ function ShowLine({ show }: { show: ShowRow }) {
         type="button"
         disabled={pending}
         onClick={() => run(() => markShow(show.id, { played: !show.played }))}
-        className={`display edge cursor-pointer px-3 py-1.5 text-[14.5px] disabled:opacity-60 ${show.played ? "bg-accent text-on-accent" : "bg-panel"}`}
+        className={`caps edge cursor-pointer px-3 py-1.5 text-[14.5px] disabled:opacity-60 ${show.played ? "bg-accent text-on-accent" : "bg-panel"}`}
         aria-pressed={show.played}
       >
         {show.played ? "Played" : "Mark played"}

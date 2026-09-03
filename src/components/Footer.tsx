@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LEGAL, NAV, SITE } from "@/lib/site";
+import { Logo } from "@/components/Logo";
 
 export function Footer({ note }: { note?: string }) {
   return (
@@ -7,7 +8,7 @@ export function Footer({ note }: { note?: string }) {
       <div className="mx-auto max-w-[1120px] px-7">
         <div className="grid gap-12 md:grid-cols-[1fr_auto_auto] md:gap-20">
           <div>
-            <div className="display text-[clamp(30px,4vw,44px)] leading-none">{SITE.name}</div>
+            <Logo className="h-[64px] w-auto text-ink max-md:h-[52px]" />
             <p className="mt-4 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">
               {SITE.tagline}
               {note ? ` ${note}` : ""}
@@ -32,8 +33,16 @@ export function Footer({ note }: { note?: string }) {
           </nav>
         </div>
         <div className="caps mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-[14px] text-muted">
-          <span>Acts. Patrons. Together.</span>
-          <span>{SITE.city}</span>
+          <span>
+            Made with{" "}
+            <span role="img" aria-label="love">
+              ❤️
+            </span>{" "}
+            in NYC
+          </span>
+          <span>
+            &copy; {new Date().getFullYear()} {SITE.name}. All rights reserved.
+          </span>
         </div>
       </div>
     </footer>

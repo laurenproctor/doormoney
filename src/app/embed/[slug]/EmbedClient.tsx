@@ -47,7 +47,7 @@ export function EmbedClient(p: {
       ) : (
         <>
           <div className="px-4 pt-4">
-            <b className="display block text-[22px] leading-none">{p.actName}</b>
+            <b className="heading block text-[22px] leading-none">{p.actName}</b>
             <span className="caps mt-1.5 block text-[14px] text-muted">{p.showCount} shows.</span>
           </div>
           <div className="relative mx-4 mt-3.5 h-1.5 bg-line"><i className="absolute inset-y-0 left-0 bg-accent" style={{ width: `${p.progress}%` }} /></div>
@@ -56,12 +56,12 @@ export function EmbedClient(p: {
           <div className="grid gap-2 px-4 pt-4">
             {p.tiers.map((t) => (
               <button key={t.key} type="button" onClick={() => setTier(t)} aria-pressed={chosen?.key === t.key} className={tierClass(chosen?.key === t.key)}>
-                <span className="display text-[22px] leading-none">{t.label}</span>
+                <span className="heading text-[22px] leading-none">{t.label}</span>
                 <span><b className="block text-[14.5px] font-medium leading-tight">{t.title}</b><span className="block text-[14px] leading-snug text-muted">{t.blurb}</span></span>
               </button>
             ))}
             <button type="button" onClick={() => setTier("placement")} aria-pressed={tier === "placement"} className={tierClass(tier === "placement")}>
-              <span className="display text-[22px] leading-none">$500<small className="caps mt-1 block text-[14px] text-muted">and up</small></span>
+              <span className="heading text-[22px] leading-none">$500<small className="caps mt-1 block text-[14px] text-muted">and up</small></span>
               <span><b className="block text-[14.5px] font-medium leading-tight">Take a placement</b><span className="block text-[14px] leading-snug text-muted">Kick head, cases, straps, posts. Opens the act&apos;s board on Door Money.</span></span>
             </button>
           </div>

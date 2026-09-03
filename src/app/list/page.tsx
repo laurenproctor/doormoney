@@ -125,7 +125,7 @@ export default async function ListPage() {
         <div className="mt-[34px] grid gap-[26px] md:grid-cols-2">
           {MONEY.map(([q, a]) => (
             <div key={q}>
-              <b className="display mb-1.5 block text-[20px]">{q}</b>
+              <b className="heading mb-1.5 block text-[20px]">{q}</b>
               <p className="max-w-none text-[15px] text-muted">{a}</p>
             </div>
           ))}
