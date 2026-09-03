@@ -15,7 +15,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] `CLAUDE.md` encoding the product rules and the voice rules
 - [x] Data model designed and written as a Supabase migration
 - [x] Seed data: Gutter Hymns and Rosie, so every screen has something to render
-- [ ] Supabase project created, migration applied, `.env.local` filled in
+- [x] Supabase project created, migration applied, `.env.local` filled in
 - [ ] Stripe account in test mode, Connect enabled (Express accounts)
 - [ ] Deployed to Vercel from `main`
 - [ ] Resend (or equivalent) account for transactional email

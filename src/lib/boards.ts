@@ -8,27 +8,31 @@ export async function getBoard(slug: string): Promise<Board | null> {
   if (!configured()) return SAMPLE_BOARDS[slug] ?? null;
 
   const sb = await supabaseServer();
-  const { data: act } = await sb.from("acts").select("slug,name,type,city,bio").eq("slug", slug).single();
-  if (!act) return null;
+  const { data: actRow } = await sb.from("acts").select("id,slug,name,type,city,bio").eq("slug", slug).single();
+  if (!actRow) return null;
+  const { id: actId, ...act } = actRow;
 
   const { data: run } = await sb
     .from("runs")
     .select("id,title,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at")
-    .eq("act_id", (await sb.from("acts").select("id").eq("slug", slug).single()).data!.id)
+    .eq("act_id", actId)
     .in("status", ["open", "live"])
     .order("starts_on", { ascending: false })
     .limit(1)
     .single();
   if (!run) return { act, run: null as never, lots: [] };
 
-  const { data: lots } = await sb
+  // lots and bids are linked twice (a bid belongs to a lot; a lot records its winning bid),
+  // so the join has to name the relationship. Patron names come through the patron_names view.
+  const { data: lots, error: lotsError } = await sb
     .from("lots")
-    .select("id,surface_key,label,price_cents,mode,status,bids(amount_cents,anonymous,patrons(name))")
+    .select("id,surface_key,label,price_cents,mode,status,bids!bids_lot_id_fkey(amount_cents,anonymous,patron_names(name))")
     .eq("run_id", run.id)
     .order("created_at");
+  if (lotsError) console.error("board lots query failed", lotsError.message);
 
   const shaped: BoardLot[] = (lots ?? []).map((l) => {
-    type BidRow = { amount_cents: number; anonymous: boolean; patrons: { name: string } | null };
+    type BidRow = { amount_cents: number; anonymous: boolean; patron_names: { name: string } | null };
     const bids = ((l.bids ?? []) as unknown as BidRow[]).sort((a, b) => b.amount_cents - a.amount_cents);
     const top = bids[0];
     return {
@@ -38,7 +42,7 @@ export async function getBoard(slug: string): Promise<Board | null> {
       priceCents: l.price_cents,
       mode: l.mode,
       status: l.status,
-      topBid: top ? { amountCents: top.amount_cents, patronName: top.anonymous ? "Anonymous patron" : top.patrons?.name ?? "Patron", anonymous: top.anonymous } : null,
+      topBid: top ? { amountCents: top.amount_cents, patronName: top.anonymous ? "Anonymous patron" : top.patron_names?.name ?? "Patron", anonymous: top.anonymous } : null,
     };
   });
 
