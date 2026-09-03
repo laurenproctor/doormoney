@@ -156,14 +156,14 @@ export function ContactForm() {
         <Button type="submit" disabled={pending} aria-disabled={pending}>
           {pending ? "Sending" : "Send the note"}
         </Button>
-        <p className="typewriter text-[13px] text-gray">Door Money stores the note and answers from a real inbox.</p>
+        <p className="typewriter text-[14.5px] text-gray">Door Money stores the note and answers from a real inbox.</p>
       </div>
 
       {/* Submission feedback. Announced to assistive tools as it changes. */}
       <div aria-live="polite" aria-atomic="true">
-        {errors.form && <p className="typewriter text-[13.5px] text-red">{errors.form}</p>}
+        {errors.form && <p className="typewriter text-[14.5px] text-red-deep">{errors.form}</p>}
         {!errors.form && fieldErrors.length > 0 && (
-          <p className="typewriter text-[13.5px] text-red">
+          <p className="typewriter text-[14.5px] text-red-deep">
             {fieldErrors.length === 1 ? "One field needs attention." : `${fieldErrors.length} fields need attention.`}
           </p>
         )}
@@ -191,11 +191,11 @@ function Field({
     <div>
       <label htmlFor={id} className="poster mb-1.5 block text-[15px] tracking-[0.04em]">
         {label}
-        {hint && <span className="typewriter ml-2 text-[12.5px] normal-case tracking-normal text-gray">{hint}</span>}
+        {hint && <span className="typewriter ml-2 text-[14px] normal-case tracking-normal text-gray">{hint}</span>}
       </label>
       {children}
       {error && (
-        <p id={errorId} className="typewriter mt-1.5 text-[13px] text-red">
+        <p id={errorId} className="typewriter mt-1.5 text-[14.5px] text-red-deep">
           {error}
         </p>
       )}

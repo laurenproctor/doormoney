@@ -76,7 +76,7 @@ export default async function WidgetPage() {
             <i className="inline-block h-3 w-3 rounded-full border-2 border-ink" />
             <i className="inline-block h-3 w-3 rounded-full border-2 border-ink" />
             <i className="inline-block h-3 w-3 rounded-full border-2 border-ink" />
-            <span className="typewriter ml-2 flex-1 border-2 border-ink bg-white px-2.5 py-1 text-[12.5px] text-gray">gutterhymns.band/tour</span>
+            <span className="typewriter ml-2 flex-1 border-2 border-ink bg-white px-2.5 py-1 text-[14px] text-gray">gutterhymns.band/tour</span>
           </div>
           <div className="grid md:grid-cols-[1.25fr_1fr]">
             <div className="border-b-[3px] border-ink bg-[#1A1814] px-[30px] py-[34px] text-paper md:border-b-0 md:border-r-[3px]">
@@ -85,7 +85,7 @@ export default async function WidgetPage() {
                 <br />
                 <span className="text-tape">{rest.join(" ")}</span>
               </div>
-              <div className="typewriter mt-[22px] text-[13.5px] leading-[1.9] text-[#C9C4B8]">
+              <div className="typewriter mt-[22px] text-[14.5px] leading-[1.9] text-[#C9C4B8]">
                 {demo && (
                   <>
                     <b className="font-normal text-paper">{demo.run.title}.</b> {demo.run.showCount} shows,{" "}
@@ -97,14 +97,14 @@ export default async function WidgetPage() {
               </div>
               <div className="mt-[26px] flex flex-wrap gap-2.5">
                 {["Tickets", "Merch", "Listen", "Mailing list"].map((l) => (
-                  <span key={l} className="poster border-2 border-[#6B655A] px-3 py-1.5 text-[12px] tracking-[0.04em] text-[#C9C4B8]">
+                  <span key={l} className="poster border-2 border-[#6B655A] px-3 py-1.5 text-[14px] tracking-[0.04em] text-[#C9C4B8]">
                     {l}
                   </span>
                 ))}
               </div>
             </div>
             <div className="bg-paper px-[22px] pb-[26px] pt-[22px]">
-              <div className="typewriter mb-2.5 text-[12px] text-gray">Door Money widget, embedded in the page</div>
+              <div className="typewriter mb-2.5 text-[14px] text-gray">Door Money widget, embedded in the page</div>
               <WidgetFrame slug={DEMO_SLUG} actName={demo?.act.name ?? DEMO_SLUG} />
             </div>
           </div>
@@ -117,7 +117,7 @@ export default async function WidgetPage() {
           Every act on Door Money gets their own snippet. It goes wherever the site builder allows custom code: a page,
           a sidebar, a footer. Nothing else to configure.
         </p>
-        <pre className="typewriter hard-border mt-[26px] overflow-x-auto bg-ink px-6 py-[22px] text-[14px] leading-[1.7] text-paper shadow-[7px_7px_0_var(--red)]">
+        <pre className="typewriter hard-border mt-[26px] overflow-x-auto bg-ink px-6 py-[22px] text-[15px] leading-[1.7] text-paper shadow-[7px_7px_0_var(--red)]">
           <span className="text-tape">&lt;script</span> src=<span className="text-[#FFB3A3]">&quot;{SITE.url}/embed.js&quot;</span> data-act=
           <span className="text-[#FFB3A3]">&quot;{DEMO_SLUG}&quot;</span>
           <span className="text-tape">&gt;&lt;/script&gt;</span>
@@ -158,7 +158,7 @@ export default async function WidgetPage() {
           <ul>
             {FACTS.map((f, i) => (
               <li key={f} className={`typewriter flex items-baseline gap-3.5 py-3 text-[15px] leading-[1.55] ${i ? "border-t-2 border-dashed border-[#A79D8A]" : ""}`}>
-                <span className="poster text-[14px] text-red">x</span>
+                <span className="poster text-[15px] text-red-deep">x</span>
                 {f}
               </li>
             ))}
@@ -170,16 +170,16 @@ export default async function WidgetPage() {
         <SectionHead eyebrow="Where it works">Every site, one way or another</SectionHead>
         <div className="mt-[34px] grid gap-[26px] md:grid-cols-2">
           <div className="hard-border bg-white px-[22px] py-6 shadow-[6px_6px_0_var(--black)]">
-            <h4 className="poster mb-2 text-[22px]">The full widget</h4>
-            <p className="max-w-none text-[14.5px] leading-[1.6] text-gray">
+            <h3 className="poster mb-2 text-[22px]">The full widget</h3>
+            <p className="max-w-none text-[15px] leading-[1.6] text-gray">
               Anywhere that accepts custom code or an embed block. Fans pay on the page, the run and the totals show
               live, and the act keeps the visitor on their own site.
             </p>
             <Platforms list={FULL} />
           </div>
           <div className="hard-border bg-white px-[22px] py-6 shadow-[6px_6px_0_var(--black)]">
-            <h4 className="poster mb-2 text-[22px]">The link button</h4>
-            <p className="max-w-none text-[14.5px] leading-[1.6] text-gray">
+            <h3 className="poster mb-2 text-[22px]">The link button</h3>
+            <p className="max-w-none text-[15px] leading-[1.6] text-gray">
               For platforms that only allow links: link-in-bio pages, Bandcamp, a Substack footer, an Instagram bio.
               The button sends the fan to the act&apos;s board on Door Money, where the same payment happens.
             </p>
@@ -188,7 +188,7 @@ export default async function WidgetPage() {
               href={`/board/${DEMO_SLUG}`}
               className="poster hard-border mt-4 inline-flex items-center gap-2.5 bg-tape px-4 py-2.5 text-[15px] tracking-[0.03em] text-ink no-underline shadow-[4px_4px_0_var(--black)]"
             >
-              <span className="text-red">&#9679;</span> Back {demo?.act.name ?? "the act"} on Door Money
+              <span aria-hidden="true" className="text-red">&#9679;</span> Back {demo?.act.name ?? "the act"} on Door Money
             </a>
           </div>
         </div>
@@ -213,7 +213,7 @@ function Platforms({ list }: { list: string[] }) {
   return (
     <div className="mt-3 flex flex-wrap gap-2">
       {list.map((p) => (
-        <span key={p} className="typewriter border-2 border-ink bg-cream px-2.5 py-1 text-[12px]">
+        <span key={p} className="typewriter border-2 border-ink bg-cream px-2.5 py-1 text-[14px]">
           {p}
         </span>
       ))}

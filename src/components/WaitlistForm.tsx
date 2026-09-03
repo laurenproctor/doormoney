@@ -24,7 +24,7 @@ export function WaitlistForm({ defaultRole = "band" }: { defaultRole?: "band" | 
       <fieldset className="flex gap-2.5">
         <legend className="sr-only">Role</legend>
         {(["band", "patron"] as const).map((r) => (
-          <label key={r} className="poster hard-border cursor-pointer bg-white px-4 py-2 text-[14px] has-[:checked]:bg-tape">
+          <label key={r} className="poster hard-border cursor-pointer bg-white px-4 py-2 text-[15px] has-[:checked]:bg-tape">
             <input type="radio" name="role" value={r} defaultChecked={r === defaultRole} className="sr-only" />
             {r === "band" ? "A band or act" : "A patron"}
           </label>
@@ -36,7 +36,7 @@ export function WaitlistForm({ defaultRole = "band" }: { defaultRole?: "band" | 
       <div>
         <Button type="submit" disabled={pending}>{pending ? "One second" : "Get on the list"}</Button>
       </div>
-      {state.errors?.form && <p className="typewriter text-[13px] text-red">{state.errors.form}</p>}
+      {state.errors?.form && <p className="typewriter text-[14.5px] text-red-deep">{state.errors.form}</p>}
     </form>
   );
 }
@@ -51,7 +51,7 @@ function Field({ name, type = "text", placeholder, error }: { name: string; type
         aria-label={placeholder}
         className="hard-border w-full bg-white px-3.5 py-3 text-[15px] focus:shadow-[4px_4px_0_var(--black)] focus:outline-none"
       />
-      {error && <p className="typewriter mt-1 text-[13px] text-red">{error}</p>}
+      {error && <p className="typewriter mt-1 text-[14.5px] text-red-deep">{error}</p>}
     </div>
   );
 }
@@ -94,7 +94,7 @@ export function ActWaitlistForm() {
       <LabelledField name="email" label="Email" type="email" autoComplete="email" error={state.errors?.email} />
       <LabelledField name="city" label="City" placeholder="NYC" />
       <Button type="submit" disabled={pending}>{pending ? "One second" : "Get on the list"}</Button>
-      {state.errors?.form && <p className="typewriter mt-1.5 text-[13px] text-red">{state.errors.form}</p>}
+      {state.errors?.form && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{state.errors.form}</p>}
     </form>
   );
 }
@@ -128,7 +128,7 @@ function LabelledField({
         autoComplete={autoComplete}
         className="typewriter hard-border w-full bg-paper px-3.5 py-3 text-[15px]"
       />
-      {error && <p className="typewriter mt-1.5 text-[13px] text-red">{error}</p>}
+      {error && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{error}</p>}
     </div>
   );
 }

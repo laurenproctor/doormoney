@@ -25,7 +25,7 @@ export default function ContactPage() {
       accent="Money"
       intro={
         <>
-          <p className="typewriter text-[15px] text-red">Questions, introductions, and useful propositions start here.</p>
+          <p className="typewriter text-[15px] text-red-deep">Questions, introductions, and useful propositions start here.</p>
           <p className="mt-4">
             Acts can ask about listing. Patrons and brands can ask about backing a run. Venues, press, and potential partners
             can introduce themselves. {SITE.name} reads every note and answers plainly.
@@ -51,10 +51,10 @@ export default function ContactPage() {
               <h3 id="what-helps" className="poster mb-3 text-[22px] leading-none">
                 What helps
               </h3>
-              <Lines marked lines={WHAT_HELPS} className="text-[14px]" />
+              <Lines marked lines={WHAT_HELPS} className="text-[15px]" />
             </div>
-            <p className="typewriter mt-5 text-[13px] leading-[1.7] text-gray">
-              Email works too: <a href={`mailto:${SITE.contact}`} className="text-ink underline decoration-1 underline-offset-4 hover:text-red">{SITE.contact}</a>
+            <p className="typewriter mt-5 text-[14.5px] leading-[1.7] text-gray">
+              Email works too: <a href={`mailto:${SITE.contact}`} className="text-ink underline decoration-1 underline-offset-4 hover:text-red-deep">{SITE.contact}</a>
             </p>
           </aside>
         </div>

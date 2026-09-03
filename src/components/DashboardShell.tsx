@@ -34,25 +34,26 @@ export function DashboardShell({
       <Nav />
       <div className="border-b-[3px] border-ink bg-white">
         <div className="mx-auto flex max-w-[1020px] flex-wrap items-center justify-between gap-3 px-7 py-2.5">
-          <div className="typewriter text-[13.5px]">{actName ? actName : "New act"}</div>
+          <div className="typewriter text-[14.5px]">{actName ? actName : "New act"}</div>
           <div className="flex flex-wrap items-center gap-[18px]">
             {LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`poster border-b-[3px] pb-0.5 text-[13px] tracking-[0.04em] no-underline hover:border-red ${current === l.href ? "border-ink" : "border-transparent"}`}
+                className={`poster border-b-[3px] pb-0.5 text-[14.5px] tracking-[0.04em] no-underline hover:border-red ${current === l.href ? "border-ink" : "border-transparent"}`}
               >
                 {l.label}
               </Link>
             ))}
             <form action={signOut}>
-              <button type="submit" className="poster cursor-pointer border-b-[3px] border-transparent pb-0.5 text-[13px] tracking-[0.04em] text-gray hover:border-red">
+              <button type="submit" className="poster cursor-pointer border-b-[3px] border-transparent pb-0.5 text-[14.5px] tracking-[0.04em] text-gray hover:border-red">
                 Sign out
               </button>
             </form>
           </div>
         </div>
       </div>
+      <main id="main">
       <div className="mx-auto w-full max-w-[1020px] px-7 pb-[40px] pt-[64px]">
         <Tape className="mb-[26px]">{tape}</Tape>
         <h1 className="poster text-[clamp(44px,8vw,96px)] leading-[0.9]">
@@ -61,6 +62,7 @@ export function DashboardShell({
         {intro && <div className="mt-5 max-w-[56ch] text-[17px]">{intro}</div>}
       </div>
       <div className="mx-auto w-full max-w-[1020px] px-7 pb-[90px]">{children}</div>
+      </main>
       <Footer />
     </>
   );
@@ -74,7 +76,7 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 export function CardHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
   return (
     <>
-      <h3 className="typewriter mb-2 text-[14px] text-red">{eyebrow}</h3>
+      <p className="typewriter mb-2 text-[15px] text-red-deep">{eyebrow}</p>
       <h2 className="poster mb-4 text-[clamp(24px,3.4vw,34px)] leading-none">{children}</h2>
     </>
   );

@@ -27,6 +27,7 @@ export function Page({
   return (
     <>
       <Nav current={current} />
+      <main id="main">
       <div className="relative mx-auto w-full max-w-[1020px] px-7 pb-[76px] pt-[88px]">
         <Tape className="mb-[30px]">{tape}</Tape>
         <h1 className="poster text-[clamp(52px,9vw,110px)] leading-[0.9]">
@@ -36,6 +37,7 @@ export function Page({
         {stamp && <Stamp className="absolute right-7 top-[88px] max-[860px]:hidden">{stamp}</Stamp>}
       </div>
       {children}
+      </main>
       <Footer note={footerNote} />
     </>
   );
@@ -46,7 +48,7 @@ export function PortNote({ mockup }: { mockup: string }) {
   if (process.env.NODE_ENV === "production") return null;
   return (
     <div className="mx-auto mb-10 w-full max-w-[1020px] px-7">
-      <div className="typewriter hard-border bg-tape p-4 text-[13px]">
+      <div className="typewriter hard-border bg-tape p-4 text-[14.5px]">
         Not yet ported. The spec is <code>docs/mockups/{mockup}</code>. Read CLAUDE.md, then port section by section.
       </div>
     </div>

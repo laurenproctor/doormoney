@@ -8,6 +8,8 @@
   --tape: #F2C230;
   --gray: #55524B;
   --cream: #FFF9EE;
+  /* Brand red darkened just enough to reach 4.5:1 on paper, white and cream. Use it for text under 24px and for button fills. */
+  --red-deep: #C42F14;
 }
 
 @theme inline {
@@ -16,6 +18,7 @@
   --color-red: var(--red);
   --color-tape: var(--tape);
   --color-gray: var(--gray);
+  --color-red-deep: var(--red-deep);
   --color-cream: var(--cream);
   --font-poster: var(--font-anton), Impact, sans-serif;
   --font-type: var(--font-special-elite), "Courier New", monospace;
@@ -25,6 +28,7 @@
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  *, ::before, ::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
 body {
@@ -38,6 +42,9 @@ body {
 p { max-width: 62ch; }
 
 :focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+/* Links inside running text are underlined so they never rely on color alone. */
+article a { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 
 /* Reusable brand utilities. Prefer these over ad-hoc classes so pages stay consistent. */
 @utility hard-border { border: 3px solid var(--black); }

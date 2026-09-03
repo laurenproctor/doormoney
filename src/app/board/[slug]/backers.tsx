@@ -42,7 +42,7 @@ export function RosieBackers() {
   return (
     <div className="border-t-[3px] border-ink py-14">
       <div className="mx-auto max-w-[1020px] px-7">
-        <h3 className="typewriter mb-3 text-[15px] text-red">Who backs a bassoonist</h3>
+        <p className="typewriter mb-3 text-[15px] text-red-deep">Who backs a bassoonist</p>
         <h2 className="poster mb-6 text-[clamp(28px,4vw,44px)] leading-none">Small patrons with perfect aim</h2>
         <p>
           The pitch here isn&apos;t reach. A solo player&apos;s following is small, but it&apos;s made of working
@@ -54,13 +54,13 @@ export function RosieBackers() {
           {BACKERS.map((b) => (
             <div key={b.title} className={`hard-border px-[18px] py-4 shadow-[5px_5px_0_var(--black)] ${b.wide ? "bg-tape min-[681px]:col-span-2" : "bg-white"}`}>
               <b className="poster block text-[17px]">{b.title}</b>
-              <span className="mt-1 block text-[13.5px] leading-[1.55] text-gray">{b.body}</span>
-              <span className="typewriter mt-2 block border-t-2 border-dashed border-[#A79D8A] pt-2 text-[12.5px] leading-[1.6] text-ink">{b.who}</span>
-              <span className="typewriter mt-1.5 block text-[12.5px] text-red">Fits: {b.fits}</span>
+              <span className="mt-1 block text-[14.5px] leading-[1.55] text-gray">{b.body}</span>
+              <span className="typewriter mt-2 block border-t-2 border-dashed border-[#A79D8A] pt-2 text-[14px] leading-[1.6] text-ink">{b.who}</span>
+              <span className={`typewriter mt-1.5 block text-[14px] ${b.wide ? "text-ink" : "text-red-deep"}`}>Fits: {b.fits}</span>
             </div>
           ))}
         </div>
-        <p className="typewriter mt-[22px] max-w-[70ch] text-[12.5px] text-gray">
+        <p className="typewriter mt-[22px] max-w-[70ch] text-[14px] text-gray">
           Companies named here are examples of who each spot is built for. None of them are involved with Door Money,
           and none have bought anything.
         </p>

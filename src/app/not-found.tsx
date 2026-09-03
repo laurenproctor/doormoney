@@ -40,11 +40,11 @@ export default function NotFound() {
           <div aria-hidden="true" className="relative mt-2 w-full max-w-[300px] md:mt-3 md:w-[280px]">
             <div className="hard-border hard-shadow bg-white px-6 pb-7 pt-5">
               <div className="poster text-[22px] leading-tight">Set list</div>
-              <div className="typewriter mt-0.5 text-[12.5px] text-gray">Tonight, one night only</div>
+              <div className="typewriter mt-0.5 text-[14px] text-gray">Tonight, one night only</div>
               <ol className="typewriter mt-4 text-[15px] leading-none">
                 {SET.map((song, i) => (
                   <li key={i} className="flex min-h-[42px] items-baseline gap-3 border-b-2 border-dashed border-gray py-3">
-                    <span className="poster w-5 text-[18px] text-red">{i + 1}</span>
+                    <span className="poster w-5 text-[18px] text-red-deep">{i + 1}</span>
                     {song && <span className="text-gray line-through decoration-red decoration-[3px]">{song}</span>}
                   </li>
                 ))}

@@ -48,11 +48,11 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
             <label key={value} className="hard-border cursor-pointer bg-white p-3.5 has-[:checked]:bg-tape has-[:checked]:shadow-[inset_0_0_0_2px_var(--black)]">
               <input type="radio" name="kind" value={value} defaultChecked={defaultKind === value} className="sr-only" />
               <span className="poster block text-[17px]">{label}</span>
-              <span className="block text-[13.5px] leading-[1.5] text-gray">{blurb}</span>
+              <span className="block text-[14.5px] leading-[1.5] text-gray">{blurb}</span>
             </label>
           ))}
         </div>
-        {err.kind && <p className="typewriter mt-1.5 text-[13px] text-red">{err.kind}</p>}
+        {err.kind && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{err.kind}</p>}
       </fieldset>
 
       <Field label="Run name" error={err.title} hint='Shows on the board. "Fall run", "Winter season", "October at Barbès".'>
@@ -83,8 +83,8 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>{pending ? "Saving" : run ? "Save the run" : "Save and price the spots"}</Button>
-        {state.ok && <span className="typewriter text-[13.5px] text-gray">Saved.</span>}
-        {err.form && <span className="typewriter text-[13px] text-red">{err.form}</span>}
+        {state.ok && <span className="typewriter text-[14.5px] text-gray">Saved.</span>}
+        {err.form && <span className="typewriter text-[14.5px] text-red-deep">{err.form}</span>}
       </div>
     </form>
   );

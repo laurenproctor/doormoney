@@ -36,7 +36,7 @@ export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: strin
           </label>
         ))}
       </fieldset>
-      {err.type && <p className="typewriter -mt-3 mb-3 text-[13px] text-red">{err.type}</p>}
+      {err.type && <p className="typewriter -mt-3 mb-3 text-[14.5px] text-red-deep">{err.type}</p>}
 
       <Field label="Act name" error={err.name}>
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
@@ -77,13 +77,13 @@ export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: strin
           // eslint-disable-next-line @next/next/no-img-element
           <img src={act.photo_url} alt="" className="hard-border mb-3 h-[120px] w-[120px] object-cover" />
         )}
-        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="typewriter block text-[14px]" />
+        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="typewriter block text-[15px]" />
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the act" : "Create the act"}</Button>
-        {state.ok && <span className="typewriter text-[13.5px] text-gray">Saved.</span>}
-        {err.form && <span className="typewriter text-[13px] text-red">{err.form}</span>}
+        {state.ok && <span className="typewriter text-[14.5px] text-gray">Saved.</span>}
+        {err.form && <span className="typewriter text-[14.5px] text-red-deep">{err.form}</span>}
       </div>
     </form>
   );
@@ -92,10 +92,12 @@ export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: strin
 export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="mb-[18px]">
-      <label className={labelClass}>{label}</label>
-      {children}
-      {hint && !error && <p className="typewriter mt-1.5 max-w-none text-[12.5px] text-gray">{hint}</p>}
-      {error && <p className="typewriter mt-1.5 text-[13px] text-red">{error}</p>}
+      <label className="block">
+        <span className={labelClass}>{label}</span>
+        {children}
+      </label>
+      {hint && !error && <p className="typewriter mt-1.5 max-w-none text-[14px] text-gray">{hint}</p>}
+      {error && <p className="typewriter mt-1.5 text-[14.5px] text-red-deep">{error}</p>}
     </div>
   );
 }

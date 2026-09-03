@@ -15,14 +15,15 @@ export default function HomePage() {
   return (
     <>
       <Nav current="/" />
+      <main id="main">
 
       {/* Hero */}
       <div className="relative mx-auto w-full max-w-[1020px] px-7 pb-[84px] pt-[92px]">
         <Tape className="mb-8">{SITE.strap}</Tape>
-        <div className="poster text-[clamp(76px,15vw,196px)] leading-[0.86]">
+        <h1 className="poster text-[clamp(76px,15vw,196px)] leading-[0.86]">
           <span className="block">Door</span>
           <span className="block text-red">Money</span>
-        </div>
+        </h1>
         <p className="typewriter mt-6 text-[clamp(19px,2.6vw,26px)]">
           <span className="block">{SITE.tagline}</span>
           <span className="block">{SITE.taglineSecond}</span>
@@ -71,14 +72,14 @@ export default function HomePage() {
           {featured.map((s) => (
             <div key={s.key} className="hard-border hard-shadow-sm bg-white p-5">
               <div className="poster text-[22px] leading-tight">{s.name}</div>
-              <div className="typewriter mt-1 text-[13px] text-red">
+              <div className="typewriter mt-1 text-[14.5px] text-red-deep">
                 from {formatMoney(s.defaultPriceCents)} a {s.period}
               </div>
-              <p className="mt-2.5 max-w-none text-[14px] leading-[1.6] text-gray">{s.blurb}</p>
+              <p className="mt-2.5 max-w-none text-[15px] leading-[1.6] text-gray">{s.blurb}</p>
             </div>
           ))}
         </div>
-        <p className="typewriter mt-6 text-[14px] text-gray">
+        <p className="typewriter mt-6 text-[15px] text-gray">
           Each band sets its own prices, per tour or per month. Every placement needs the band&apos;s yes, and patrons
           put the money up before the first show.
         </p>
@@ -98,7 +99,7 @@ export default function HomePage() {
                 i ? "border-t-2 border-dashed border-[#A79D8A]" : ""
               }`}
             >
-              <span className="poster text-[14px] text-red">x</span>
+              <span className="poster text-[15px] text-red-deep">x</span>
               {r}
             </li>
           ))}
@@ -117,6 +118,7 @@ export default function HomePage() {
         </div>
       </Section>
 
+      </main>
       <Footer />
     </>
   );
@@ -131,7 +133,7 @@ function Steps({ audience, steps }: { audience: string; steps: [string, string][
           <div className="poster text-[26px] text-red">{i + 1}</div>
           <div>
             <b className="block text-[16px]">{title}</b>
-            <p className="max-w-none text-[14.5px] leading-[1.6] text-gray">{body}</p>
+            <p className="max-w-none text-[15px] leading-[1.6] text-gray">{body}</p>
           </div>
         </div>
       ))}

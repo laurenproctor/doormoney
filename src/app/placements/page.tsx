@@ -69,7 +69,7 @@ export default function PlacementsPage() {
             ))}
           </div>
           {g === "online" && (
-            <p className="typewriter mt-6 text-[13.5px] text-gray">
+            <p className="typewriter mt-6 text-[14.5px] text-gray">
               Bands price touring placements per tour, typically 15 to 25 shows, and residency placements per month.
               Longer runs and bigger venues scale per date, so nobody renegotiates.
             </p>
@@ -81,7 +81,7 @@ export default function PlacementsPage() {
         <SectionHead eyebrow="One name only">Exclusivity is for sale too</SectionHead>
         <div className="hard-border hard-shadow mt-9 max-w-[760px] bg-tape px-7 py-[30px]">
           <div className="poster text-[24px]">Category exclusivity</div>
-          <p className="mt-2 text-[14.5px]">
+          <p className="mt-2 text-[15px]">
             By default a band can carry more than one patron. Being the only name in a category on a run, or the only
             patron on a whole tour, is a premium the band can choose to offer. Priced by the band, like everything else
             here.
@@ -98,7 +98,7 @@ export default function PlacementsPage() {
         <ul className="typewriter hard-border hard-shadow mt-[30px] max-w-[560px] bg-cream px-7 py-[26px] text-[15px] leading-[2.1]">
           {HOUSE_RULES.map((r) => (
             <li key={r}>
-              <span className="text-red">x</span> {r}
+              <span aria-hidden="true" className="text-red-deep">x</span> {r}
             </li>
           ))}
         </ul>
@@ -123,10 +123,10 @@ function StageKey({ surfaces }: { surfaces: Surface[] }) {
   return (
     <div className="hard-border hard-shadow mt-[34px] bg-white px-[22px] pb-[18px] pt-[22px]">
       <StageSchematic />
-      <div className="typewriter mt-4 grid grid-cols-2 gap-x-[18px] gap-y-1.5 border-t-2 border-dashed border-[#A79D8A] pt-3 text-[12.5px] text-gray min-[701px]:grid-cols-3">
+      <div className="typewriter mt-4 grid grid-cols-2 gap-x-[18px] gap-y-1.5 border-t-2 border-dashed border-[#A79D8A] pt-3 text-[14px] text-gray min-[701px]:grid-cols-3">
         {surfaces.map((s, i) => (
           <div key={s.key}>
-            <b className="mr-1.5 font-sans font-bold text-red">{i + 1}</b>
+            <b className="mr-1.5 font-sans font-bold text-red-deep">{i + 1}</b>
             {s.name}
           </div>
         ))}
@@ -141,17 +141,17 @@ function Card({ surface: s, hero, diagram }: { surface: Surface; hero: boolean; 
     <div className={`hard-border hard-shadow px-6 py-[26px] ${hero ? "col-span-full bg-ink text-paper" : "bg-white"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-3.5">
         <div className={`poster leading-[1.05] ${hero ? "text-[clamp(26px,3.6vw,36px)]" : "text-[24px]"}`}>{s.name}</div>
-        <div className={`typewriter whitespace-nowrap text-[15px] ${hero ? "text-tape" : "text-red"}`}>
+        <div className={`typewriter whitespace-nowrap text-[15px] ${hero ? "text-tape" : "text-red-deep"}`}>
           from {formatMoney(s.defaultPriceCents)} a {s.period}
         </div>
       </div>
-      <p className={`mt-2.5 max-w-none text-[14.5px] leading-[1.65] ${hero ? "text-[#C9C4B8]" : "text-gray"}`}>{s.blurb}</p>
+      <p className={`mt-2.5 max-w-none text-[15px] leading-[1.65] ${hero ? "text-[#C9C4B8]" : "text-gray"}`}>{s.blurb}</p>
       <div
-        className={`typewriter mt-3.5 border-t-2 border-dashed pt-2.5 text-[12.5px] leading-[1.9] ${
+        className={`typewriter mt-3.5 border-t-2 border-dashed pt-2.5 text-[14px] leading-[1.9] ${
           hero ? "border-[#4A473F]" : "border-[#A79D8A]"
         }`}
       >
-        <b className={`font-normal ${hero ? "text-tape" : "text-red"}`}>Seen by:</b> {s.seenBy}.
+        <b className={`font-normal ${hero ? "text-tape" : "text-red-deep"}`}>Seen by:</b> {s.seenBy}.
       </div>
       {diagram && (
         <div className="mt-[18px]">

@@ -20,7 +20,7 @@ export function ShowsPanel({ runId, shows, defaultCity }: { runId: string; shows
   return (
     <div>
       {shows.length > 0 && (
-        <p className="typewriter mb-4 text-[14px]">
+        <p className="typewriter mb-4 text-[15px]">
           {played} of {shows.length} played.
         </p>
       )}
@@ -52,7 +52,7 @@ export function ShowsPanel({ runId, shows, defaultCity }: { runId: string; shows
           <Button type="submit" variant="ghost" disabled={adding} className="px-5 py-3 text-[16px]">{adding ? "Adding" : "Add a show"}</Button>
         </div>
       </form>
-      {addState.error && <p className="typewriter -mt-1 text-[13px] text-red">{addState.error}</p>}
+      {addState.error && <p className="typewriter -mt-1 text-[14.5px] text-red-deep">{addState.error}</p>}
     </div>
   );
 }
@@ -72,21 +72,21 @@ function ShowLine({ show }: { show: ShowRow }) {
 
   return (
     <li className="grid gap-3 py-3.5 md:grid-cols-[120px_1fr_130px_160px_auto] md:items-center">
-      <div className="typewriter text-[14px]">{fmt.format(new Date(show.played_on))}</div>
+      <div className="typewriter text-[15px]">{fmt.format(new Date(show.played_on))}</div>
       <div className="text-[15px]">
         {show.venue ?? <span className="text-gray">No venue named</span>}
-        {show.city && <span className="typewriter block text-[12.5px] text-gray">{show.city}</span>}
+        {show.city && <span className="typewriter block text-[14px] text-gray">{show.city}</span>}
       </div>
       <button
         type="button"
         disabled={pending}
         onClick={() => run(() => markShow(show.id, { played: !show.played }))}
-        className={`poster hard-border cursor-pointer px-3 py-1.5 text-[13px] shadow-[3px_3px_0_var(--black)] disabled:opacity-60 ${show.played ? "bg-tape" : "bg-white"}`}
+        className={`poster hard-border cursor-pointer px-3 py-1.5 text-[14.5px] shadow-[3px_3px_0_var(--black)] disabled:opacity-60 ${show.played ? "bg-tape" : "bg-white"}`}
         aria-pressed={show.played}
       >
         {show.played ? "Played" : "Mark played"}
       </button>
-      <label className="typewriter text-[12px]">
+      <label className="typewriter text-[14px]">
         Attendance
         <input
           inputMode="numeric"
@@ -96,7 +96,7 @@ function ShowLine({ show }: { show: ShowRow }) {
             const n = attendance === "" ? null : Number(attendance);
             if (n !== (show.attendance ?? null)) run(() => markShow(show.id, { attendance: n }));
           }}
-          className="hard-border mt-0.5 w-full bg-paper px-2 py-1 text-[14px]"
+          className="hard-border mt-0.5 w-full bg-paper px-2 py-1 text-[15px]"
         />
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -106,7 +106,7 @@ function ShowLine({ show }: { show: ShowRow }) {
         ) : null}
         <form action={photoAction} className="flex items-center gap-2">
           <input type="hidden" name="show_id" value={show.id} />
-          <label className="typewriter cursor-pointer text-[12.5px] text-red">
+          <label className="typewriter cursor-pointer text-[14px] text-red-deep">
             {show.photo_url ? "Swap photo" : "Add a photo"}
             <input
               type="file"
@@ -117,13 +117,13 @@ function ShowLine({ show }: { show: ShowRow }) {
               disabled={uploading}
             />
           </label>
-          {uploading && <span className="typewriter text-[12px] text-gray">Uploading</span>}
+          {uploading && <span className="typewriter text-[14px] text-gray">Uploading</span>}
         </form>
-        <button type="button" disabled={pending} onClick={() => run(() => removeShow(show.id))} className="typewriter cursor-pointer text-[12.5px] text-gray hover:text-red">
+        <button type="button" disabled={pending} onClick={() => run(() => removeShow(show.id))} className="typewriter cursor-pointer text-[14px] text-gray hover:text-red-deep">
           Remove
         </button>
       </div>
-      {(error || photoState.error) && <p className="typewriter text-[12.5px] text-red md:col-span-5">{error ?? photoState.error}</p>}
+      {(error || photoState.error) && <p className="typewriter text-[14px] text-red-deep md:col-span-5">{error ?? photoState.error}</p>}
     </li>
   );
 }

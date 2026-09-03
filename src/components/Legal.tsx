@@ -38,7 +38,7 @@ export function LegalPage({
       intro={
         <>
           {intro}
-          <p className="typewriter mt-5 text-[13.5px] text-gray">Last updated {updated}.</p>
+          <p className="typewriter mt-5 text-[14.5px] text-gray">Last updated {updated}.</p>
         </>
       }
       stamp={stamp}
@@ -46,12 +46,12 @@ export function LegalPage({
     >
       <Section>
         <nav aria-label="Contents" className="hard-border hard-shadow-sm mb-14 max-w-[560px] bg-cream p-6">
-          <h2 className="typewriter mb-3 text-[15px] text-red">Contents</h2>
-          <ol className="typewriter grid gap-1 text-[14.5px] leading-[1.7] sm:grid-cols-2">
+          <h2 className="typewriter mb-3 text-[15px] text-red-deep">Contents</h2>
+          <ol className="typewriter grid gap-1 text-[15px] leading-[1.7] sm:grid-cols-2">
             {sections.map((s, i) => (
               <li key={s.id}>
-                <span className="text-red">{i + 1}.</span>{" "}
-                <a href={`#${s.id}`} className="underline decoration-1 underline-offset-4 hover:text-red">
+                <span className="text-red-deep">{i + 1}.</span>{" "}
+                <a href={`#${s.id}`} className="underline decoration-1 underline-offset-4 hover:text-red-deep">
                   {s.heading}
                 </a>
               </li>
@@ -105,7 +105,7 @@ export function Term({ name, children }: { name: string; children: ReactNode }) 
 /** Mailto link to the house address. */
 export function Contact() {
   return (
-    <a href={`mailto:${SITE.contact}`} className="underline decoration-2 underline-offset-4 hover:text-red">
+    <a href={`mailto:${SITE.contact}`} className="underline decoration-2 underline-offset-4 hover:text-red-deep">
       {SITE.contact}
     </a>
   );

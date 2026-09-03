@@ -14,7 +14,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError?: boole
       <div className="pb-2.5 pt-[26px] text-center">
         <Stamp size="lg" className="mx-auto mb-[18px]">LINK<br />SENT</Stamp>
         <p className="typewriter mx-auto max-w-none">A sign-in link is on its way to {state.email}.</p>
-        <p className="mx-auto mt-2 max-w-[40ch] text-[14.5px] text-gray">It works once and expires in an hour. Check the spam folder if it takes more than a minute.</p>
+        <p className="mx-auto mt-2 max-w-[40ch] text-[15px] text-gray">It works once and expires in an hour. Check the spam folder if it takes more than a minute.</p>
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError?: boole
       />
       <Button type="submit" disabled={pending}>{pending ? "One second" : "Send the link"}</Button>
       {(state.error || linkError) && (
-        <p className="typewriter mt-3 text-[13px] text-red">
+        <p className="typewriter mt-3 text-[14.5px] text-red-deep">
           {state.error ?? "That link has expired or was already used. Send a fresh one."}
         </p>
       )}

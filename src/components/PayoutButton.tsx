@@ -22,7 +22,7 @@ export function PayoutButton({ configured, label, ghost = false }: { configured:
       >
         {pending ? "Opening Stripe" : label}
       </Button>
-      {error && <span className="typewriter text-[13px] text-red">{error}</span>}
+      {error && <span className="typewriter text-[14.5px] text-red-deep">{error}</span>}
     </div>
   );
 }

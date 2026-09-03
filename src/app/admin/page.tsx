@@ -50,7 +50,7 @@ export default async function AdminPage() {
           <Table
             head={["Act", "Owner", "Type", "City", "Stripe", "Runs", "Listed"]}
             rows={actRows.map((a) => [
-              <Link key="n" href={`/board/${a.slug}`} className="text-red">{a.name}</Link>,
+              <Link key="n" href={`/board/${a.slug}`} className="text-red-deep underline decoration-2 underline-offset-4">{a.name}</Link>,
               a.profiles?.email ?? "",
               a.type.replace("_", " "),
               a.city,
@@ -106,13 +106,13 @@ export default async function AdminPage() {
                 <li key={n.id} className="py-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <b className="text-[15px]">{n.subject}</b>
-                    <span className="typewriter text-[12.5px] text-gray">{when.format(new Date(n.created_at))} · {n.status}</span>
+                    <span className="typewriter text-[14px] text-gray">{when.format(new Date(n.created_at))} · {n.status}</span>
                   </div>
-                  <p className="typewriter max-w-none text-[13px] text-gray">
+                  <p className="typewriter max-w-none text-[14.5px] text-gray">
                     {n.reason.replace(/_/g, " ")} · {n.name}
-                    {n.organization ? `, ${n.organization}` : ""} · <a href={`mailto:${n.email}`} className="text-red">{n.email}</a>
+                    {n.organization ? `, ${n.organization}` : ""} · <a href={`mailto:${n.email}`} className="text-red-deep underline decoration-2 underline-offset-4">{n.email}</a>
                   </p>
-                  <p className="mt-2 max-w-none whitespace-pre-wrap text-[14.5px]">{n.message}</p>
+                  <p className="mt-2 max-w-none whitespace-pre-wrap text-[15px]">{n.message}</p>
                 </li>
               ))}
             </ul>
@@ -135,7 +135,7 @@ function Stat({ n, label }: { n: string; label: string }) {
   return (
     <div className="hard-border bg-white p-4">
       <dt className="poster text-[28px] leading-none">{n}</dt>
-      <dd className="typewriter text-[12px] text-gray">{label}</dd>
+      <dd className="typewriter text-[14px] text-gray">{label}</dd>
     </div>
   );
 }
@@ -144,9 +144,9 @@ function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
   if (rows.length === 0) return <p className="max-w-none text-[15px] text-gray">Nothing here yet.</p>;
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse text-[14px]">
+      <table className="w-full min-w-[640px] border-collapse text-[15px]">
         <thead>
-          <tr className="typewriter border-b-[3px] border-ink text-left text-[12.5px] text-gray">
+          <tr className="typewriter border-b-[3px] border-ink text-left text-[14px] text-gray">
             {head.map((h) => (
               <th key={h} className="py-2 pr-4 font-normal">{h}</th>
             ))}

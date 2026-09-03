@@ -68,6 +68,7 @@ export default async function BoardPage({ params }: Props) {
   return (
     <>
       <Nav current="/auctions" />
+      <main id="main">
       <div className="mx-auto max-w-[1020px] px-7 pt-[66px]">
         <div className="mb-[26px]">
           <Tape>Live board</Tape>
@@ -81,7 +82,7 @@ export default async function BoardPage({ params }: Props) {
           {facts.map(([value, label]) => (
             <div key={label}>
               <b className="poster block text-[clamp(24px,3.4vw,34px)] leading-none">{value}</b>
-              <span className="typewriter text-[12.5px] text-gray">{label}</span>
+              <span className="typewriter text-[14px] text-gray">{label}</span>
             </div>
           ))}
         </div>
@@ -92,7 +93,7 @@ export default async function BoardPage({ params }: Props) {
 
       <div className="border-t-[3px] border-ink py-14">
         <div className="mx-auto max-w-[1020px] px-7">
-          <h3 className="typewriter mb-3 text-[15px] text-red">If a bid wins</h3>
+          <p className="typewriter mb-3 text-[15px] text-red-deep">If a bid wins</p>
           <h2 className="poster mb-6 text-[clamp(28px,4vw,44px)] leading-none">What happens after {closeDay ?? "the close"}</h2>
           <Lines
             marked
@@ -108,6 +109,7 @@ export default async function BoardPage({ params }: Props) {
           />
         </div>
       </div>
+      </main>
 
       <Footer note={showBackers ? BACKERS_DISCLAIMER : undefined} />
     </>

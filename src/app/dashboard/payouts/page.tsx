@@ -46,7 +46,7 @@ export default async function PayoutsPage({ searchParams }: Props) {
           {state === "on" && <PayoutButton configured={configured} label="Update bank details" ghost />}
         </Card>
         <div>
-          <h3 className="typewriter mb-3 text-[15px] text-red">How the money moves</h3>
+          <h2 className="typewriter mb-3 text-[15px] text-red-deep">How the money moves</h2>
           <Lines
             lines={[
               "A patron pays when they take a spot. Door Money holds it.",

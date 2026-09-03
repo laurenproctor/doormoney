@@ -6,24 +6,24 @@ export function Footer({ note }: { note?: string }) {
     <footer className="border-t-[3px] border-ink bg-ink py-14 pb-20 text-paper">
       <div className="mx-auto max-w-[1020px] px-7">
         <div className="poster text-[28px]">{SITE.name}</div>
-        <p className="mt-2.5 text-[13px] leading-[1.7] text-[#9B968A]">
+        <p className="mt-2.5 text-[14.5px] leading-[1.7] text-[#9B968A]">
           {SITE.tagline}
           {note ? ` ${note}` : ""}
         </p>
         <div className="mt-4 flex flex-wrap gap-[18px]">
           {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="typewriter text-[13px] text-paper">
+            <Link key={n.href} href={n.href} className="typewriter text-[14.5px] text-paper">
               {n.label}
             </Link>
           ))}
         </div>
         <div className="mt-6 flex flex-wrap gap-x-[18px] gap-y-1.5 border-t-2 border-dashed border-gray pt-4">
           {LEGAL.map((n) => (
-            <Link key={n.href} href={n.href} className="typewriter text-[12.5px] text-[#9B968A] hover:text-paper">
+            <Link key={n.href} href={n.href} className="typewriter text-[14px] text-[#9B968A] hover:text-paper">
               {n.label}
             </Link>
           ))}
-          <Link href="/login" className="typewriter text-[12.5px] text-[#9B968A] hover:text-paper">
+          <Link href="/login" className="typewriter text-[14px] text-[#9B968A] hover:text-paper">
             Act sign-in
           </Link>
         </div>

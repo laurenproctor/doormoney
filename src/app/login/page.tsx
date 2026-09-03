@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: Props) {
           <LoginForm next={next} linkError={linkError} />
         </div>
         <div>
-          <h3 className="typewriter mb-3 text-[15px] text-red">How it goes</h3>
+          <h2 className="typewriter mb-3 text-[15px] text-red-deep">How it goes</h2>
           <Lines
             lines={[
               "Enter the email the act listed with.",

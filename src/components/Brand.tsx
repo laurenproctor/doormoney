@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export function Tape({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <span
-      className={`inline-block -rotate-[1.5deg] bg-tape px-[18px] py-1.5 text-[13px] font-bold tracking-[0.04em] text-ink shadow-[2px_2px_0_rgba(0,0,0,0.25)] ${className}`}
+      className={`inline-block -rotate-[1.5deg] bg-tape px-[18px] py-1.5 text-[14.5px] font-bold tracking-[0.04em] text-ink shadow-[2px_2px_0_rgba(0,0,0,0.25)] ${className}`}
     >
       {children}
     </span>
@@ -32,7 +32,7 @@ export function Stamp({ children, size = "md", className = "" }: { children: Rea
 export function SectionHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
   return (
     <>
-      <h3 className="typewriter mb-3 text-[15px] text-red">{eyebrow}</h3>
+      <p className="typewriter mb-3 text-[15px] text-red-deep">{eyebrow}</p>
       <h2 className="poster mb-4 text-[clamp(32px,4.8vw,54px)] leading-none">{children}</h2>
     </>
   );
@@ -72,7 +72,7 @@ export function Steps({
           <div className={`poster text-red ${lg ? "text-[30px]" : "text-[26px]"}`}>{i + 1}</div>
           <div>
             <b className={`block ${lg ? "text-[17px]" : "text-[16px]"}`}>{title}</b>
-            <p className={`max-w-none text-gray ${lg ? "text-[15px] leading-[1.65]" : "text-[14.5px] leading-[1.6]"}`}>{body}</p>
+            <p className={`max-w-none text-gray ${lg ? "text-[15px] leading-[1.65]" : "text-[15px] leading-[1.6]"}`}>{body}</p>
           </div>
         </div>
       ))}
@@ -86,7 +86,7 @@ export function Lines({ lines, marked = false, className = "" }: { lines: ReactN
     <ul className={`typewriter max-w-[56ch] border-l-[3px] border-ink text-[15px] ${marked ? "pl-5 leading-[2.2]" : "pl-[18px] leading-[2]"} ${className}`}>
       {lines.map((line, i) => (
         <li key={i}>
-          {marked && <span className="text-red">x </span>}
+          {marked && <span aria-hidden="true" className="text-red-deep">x </span>}
           {line}
         </li>
       ))}

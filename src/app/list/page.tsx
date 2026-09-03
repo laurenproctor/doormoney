@@ -68,7 +68,7 @@ export default async function ListPage() {
             </span>
           ))}
         </div>
-        <p className="typewriter mt-6 text-[13.5px] text-gray">
+        <p className="typewriter mt-6 text-[14.5px] text-gray">
           Touring acts price per tour, house acts per month, soloists per season. The placements page lists full
           details and standard prices. Instruments are never for sale and nobody will ever ask.
         </p>
@@ -92,11 +92,11 @@ export default async function ListPage() {
             <div aria-hidden="true" className="hard-border hard-shadow max-w-[340px] bg-white">
               <div className="poster flex items-center justify-between border-b-[3px] border-ink bg-tape px-3.5 py-2.5 text-[15px]">
                 Back the {sample.run.title.toLowerCase()}
-                <i className="-rotate-3 border-2 border-ink bg-white px-[7px] py-0.5 text-[10px] not-italic tracking-[0.06em] text-red">{SITE.name}</i>
+                <i className="-rotate-3 border-2 border-ink bg-white px-[7px] py-0.5 text-[14px] not-italic tracking-[0.06em] text-red-deep">{SITE.name}</i>
               </div>
               <div className="px-3.5 py-3">
-                <b className="block text-[14px]">{sample.act.name}</b>
-                <small className="typewriter text-[12px] text-gray">
+                <b className="block text-[15px]">{sample.act.name}</b>
+                <small className="typewriter text-[14px] text-gray">
                   {sample.run.showCount} shows. {formatDateRange(sample.run.startsOn, sample.run.endsOn)}.
                 </small>
                 <div className="relative mt-2.5 h-3 border-2 border-ink">
@@ -104,14 +104,14 @@ export default async function ListPage() {
                 </div>
                 <div className="mt-2.5 grid gap-1.5">
                   {[...WIDGET_TIERS.map((t) => [t.title, formatMoney(t.amountCents)]), ["Take a placement", "$500+"]].map(([title, price], i) => (
-                    <span key={title} className={`flex justify-between border-2 border-ink px-2.5 py-1.5 text-[12.5px] ${i === 0 ? "bg-tape" : ""}`}>
+                    <span key={title} className={`flex justify-between border-2 border-ink px-2.5 py-1.5 text-[14px] ${i === 0 ? "bg-tape" : ""}`}>
                       {title}
                       <b>{price}</b>
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="poster mx-3.5 mb-3.5 mt-3 border-[3px] border-ink bg-red p-[9px] text-center text-[15px] text-white shadow-[3px_3px_0_var(--black)]">
+              <div className="poster mx-3.5 mb-3.5 mt-3 border-[3px] border-ink bg-red-deep p-[9px] text-center text-[15px] text-white shadow-[3px_3px_0_var(--black)]">
                 Back for {formatMoney(WIDGET_TIERS[0].amountCents)}
               </div>
             </div>
@@ -125,7 +125,7 @@ export default async function ListPage() {
           {MONEY.map(([q, a]) => (
             <div key={q}>
               <b className="poster mb-1.5 block text-[20px]">{q}</b>
-              <p className="max-w-none text-[14.5px] text-gray">{a}</p>
+              <p className="max-w-none text-[15px] text-gray">{a}</p>
             </div>
           ))}
         </div>

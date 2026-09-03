@@ -38,9 +38,9 @@ export default async function AuctionsPage() {
           const gigs = b.run.kind === "season";
           return (
             <div key={b.act.slug} className="hard-border flex flex-col gap-3.5 bg-white px-[26px] py-7 shadow-[8px_8px_0_var(--black)]">
-              <div className="typewriter text-[13px] text-red">{KIND[b.act.type](b.act.city)}</div>
+              <div className="typewriter text-[14.5px] text-red-deep">{KIND[b.act.type](b.act.city)}</div>
               <div className="poster text-[clamp(28px,4vw,40px)] leading-[0.95]">{b.act.name}</div>
-              <div className="typewriter text-[13.5px] leading-[1.7] text-gray">
+              <div className="typewriter text-[14.5px] leading-[1.7] text-gray">
                 {b.run.title}. {b.run.showCount} {gigs ? "gigs" : "shows"}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
               </div>
               <div className="flex flex-wrap gap-[26px] border-t-2 border-dashed border-[#A79D8A] pt-3.5">
@@ -53,8 +53,8 @@ export default async function AuctionsPage() {
                 )}
               </div>
               {b.run.biddingClosesAt && (
-                <div className="typewriter text-[13.5px]">
-                  Closes in <Countdown closesAt={b.run.biddingClosesAt} className="font-bold text-red" />, {weekdayOf(b.run.biddingClosesAt)}{" "}
+                <div className="typewriter text-[14.5px]">
+                  Closes in <Countdown closesAt={b.run.biddingClosesAt} className="font-bold text-red-deep" />, {weekdayOf(b.run.biddingClosesAt)}{" "}
                   {clockOf(b.run.biddingClosesAt)}
                 </div>
               )}
@@ -64,9 +64,9 @@ export default async function AuctionsPage() {
         })}
 
         <div className="hard-border flex flex-col items-start justify-center gap-3.5 bg-ink px-[26px] py-7 text-paper shadow-[8px_8px_0_var(--black)]">
-          <div className="typewriter text-[13px] text-tape">Any act</div>
+          <div className="typewriter text-[14.5px] text-tape">Any act</div>
           <div className="poster text-[clamp(28px,4vw,40px)] leading-[0.95]">The next board is open</div>
-          <div className="typewriter text-[13.5px] leading-[1.7] text-[#9B968A]">
+          <div className="typewriter text-[14.5px] leading-[1.7] text-[#9B968A]">
             Bands, house acts, soloists. Musicians list the surfaces, set the prices, and keep the final say. {SITE.name}{" "}
             is opening in {SITE.city} first.
           </div>
@@ -81,7 +81,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
       <b className="poster block text-[26px] leading-none">{value}</b>
-      <span className="typewriter text-[12px] text-gray">{label}</span>
+      <span className="typewriter text-[14px] text-gray">{label}</span>
     </div>
   );
 }

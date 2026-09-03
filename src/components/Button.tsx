@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 const base =
   "poster inline-block cursor-pointer border-[3px] border-ink px-[30px] py-3.5 text-[19px] tracking-[0.03em] no-underline shadow-[5px_5px_0_var(--black)] transition-[transform,box-shadow] duration-[80ms] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[3px_3px_0_var(--black)]";
 const styles = {
-  solid: "bg-red text-white",
+  solid: "bg-red-deep text-white",
   ghost: "bg-white text-ink",
 } as const;
 

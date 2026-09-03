@@ -37,6 +37,8 @@ These are firm. They apply to page copy, button labels, emails, error messages, 
 Tokens live in `src/app/globals.css` and mirror the mockups exactly. Use them; don't introduce new colors or fonts.
 
 - Paper `#EDE8DC` (page background), black `#000000`, red `#E03A1E`, tape `#F2C230`, gray `#55524B`
+- Deep red `#C42F14` (`text-red-deep`, `bg-red-deep`) for any red text under 24px and for button fills. It is the brand red darkened to reach 4.5:1 on paper, white and cream. Brand red stays for display headlines, stamps, borders and rules.
+- Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
 - Anton for display and buttons (uppercase), Special Elite for typewriter accents and metadata, Archivo for body
 - Hard black borders (3px), hard offset shadows (no blur), tilted tape labels, circular red stamps
 - Components in `src/components/`: `Nav`, `Footer`, `Tape`, `Stamp`, `Button`, `Wordmark`. Reuse them.

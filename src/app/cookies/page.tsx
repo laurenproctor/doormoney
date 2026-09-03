@@ -50,7 +50,7 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>Three, and two of them belong to Stripe and appear only while someone is paying.</p>
         <div className="overflow-x-auto">
-          <table className="hard-border w-full min-w-[560px] border-collapse bg-cream text-[14.5px] leading-[1.55]">
+          <table className="hard-border w-full min-w-[560px] border-collapse bg-cream text-[15px] leading-[1.55]">
             <thead>
               <tr className="typewriter bg-ink text-left text-paper">
                 <th className="p-3 font-normal">Cookie</th>
@@ -71,7 +71,7 @@ const SECTIONS: LegalSection[] = [
             </tbody>
           </table>
         </div>
-        <p className="typewriter text-[13.5px] text-gray">
+        <p className="typewriter text-[14.5px] text-gray">
           The sign-in cookie&apos;s full name includes the project reference of the database it belongs to, so the middle part varies.
         </p>
       </>
