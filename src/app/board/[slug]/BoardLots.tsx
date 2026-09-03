@@ -43,7 +43,7 @@ function Mark({ text, kind }: { text: string; kind: keyof typeof MARK }) {
 }
 
 /**
- * The black board box and the lot list. Bidding is pretend until Phase 5: pressing a button
+ * The black board box and the lot list. Until Phase 5 ships real bidding, pressing a button
  * raises the bid locally, as the mockup does, so the board total responds.
  */
 export function BoardLots({
@@ -95,10 +95,6 @@ export function BoardLots({
       <div className="pb-5 pt-[94px]">
         <h3 className="typewriter mb-3 text-[15px] text-red">The spots</h3>
         <h2 className="poster mb-6 text-[clamp(28px,4vw,44px)] leading-none">{heading}</h2>
-        <p className="typewriter mb-[30px] mt-1.5 text-[13px] text-gray">
-          This page is a sample. The acts, patrons, and numbers are illustrative, and the bid buttons here are pretend.
-        </p>
-
         {lots.map((l) => {
           const v = live[l.id];
           const sold = v.sold;

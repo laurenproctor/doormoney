@@ -23,7 +23,7 @@ export default async function AuctionsPage() {
   return (
     <Page
       current="/auctions"
-      tape="Sample boards, illustrative bids"
+      tape="Open boards"
       title="Live"
       accent="auctions"
       intro={
@@ -32,7 +32,6 @@ export default async function AuctionsPage() {
           closes. {count} up this week.
         </p>
       }
-      footerNote="Sample index: boards, bids, and figures are illustrative until real listings open."
     >
       <div className="mx-auto grid max-w-[1020px] gap-[30px] px-7 pb-[90px] md:grid-cols-2">
         {boards.map((b) => {

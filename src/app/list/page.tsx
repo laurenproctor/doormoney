@@ -53,7 +53,6 @@ export default async function ListPage() {
           DOOR MONEY<br />PAID<br />AT THE DOOR
         </>
       }
-      footerNote="The terms here describe the working plan until Door Money opens."
     >
       <Section>
         <SectionHead eyebrow="How listing works">What listing gets a musician</SectionHead>

@@ -64,13 +64,11 @@ export default async function WidgetPage() {
           </div>
         </>
       }
-      footerNote="The widget shown here is a demo; the snippet, domain and tiers illustrate the idea only, until Door Money opens."
     >
       <Section id="demo">
         <SectionHead eyebrow="The demo">What it looks like on a band&apos;s site</SectionHead>
         <p className="text-gray">
-          A sample band page with the widget dropped in. The tiers, totals and card field are pretend; picking a tier
-          and pressing the button shows how it feels for a fan.
+          A band page with the widget dropped in. Picking a tier and pressing the button shows how it feels for a fan.
         </p>
 
         <div className="hard-border mt-10 bg-white shadow-[9px_9px_0_var(--black)]">

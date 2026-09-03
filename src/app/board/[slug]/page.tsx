@@ -63,7 +63,7 @@ export default async function BoardPage({ params }: Props) {
       <Nav current="/auctions" />
       <div className="mx-auto max-w-[1020px] px-7 pt-[66px]">
         <div className="mb-[26px]">
-          <Tape>Sample listing</Tape>
+          <Tape>Live board</Tape>
         </div>
         <h1 className={`poster leading-[0.88] ${act.name.length > 14 ? "text-[clamp(42px,8.4vw,100px)]" : "text-[clamp(52px,10vw,120px)]"}`}>{act.name}</h1>
         <p className="typewriter mt-[18px] text-[clamp(15px,2.2vw,19px)]">
@@ -102,9 +102,7 @@ export default async function BoardPage({ params }: Props) {
         </div>
       </div>
 
-      <Footer
-        note={`Sample board: every act, patron, bid, and number shown is illustrative. ${showBackers ? `${BACKERS_DISCLAIMER} ` : ""}Real listings open with the first acts.`}
-      />
+      <Footer note={showBackers ? BACKERS_DISCLAIMER : undefined} />
     </>
   );
 }
