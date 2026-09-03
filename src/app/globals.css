@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Door Money tokens. Mirror the mockups exactly; do not add colors or fonts. */
+:root {
+  --paper: #EDE8DC;
+  --black: #000000;
+  --red: #E03A1E;
+  --tape: #F2C230;
+  --gray: #55524B;
+  --cream: #FFF9EE;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--black);
+  --color-red: var(--red);
+  --color-tape: var(--tape);
+  --color-gray: var(--gray);
+  --color-cream: var(--cream);
+  --font-poster: var(--font-anton), Impact, sans-serif;
+  --font-type: var(--font-special-elite), "Courier New", monospace;
+  --font-sans: var(--font-archivo), Helvetica, Arial, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--black);
+  font-family: var(--font-sans);
+  font-size: 16.5px;
+  line-height: 1.7;
+}
+
+p { max-width: 62ch; }
+
+:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+/* Reusable brand utilities. Prefer these over ad-hoc classes so pages stay consistent. */
+@utility hard-border { border: 3px solid var(--black); }
+@utility hard-shadow { box-shadow: 7px 7px 0 var(--black); }
+@utility hard-shadow-sm { box-shadow: 5px 5px 0 var(--black); }
+@utility poster { font-family: var(--font-poster); text-transform: uppercase; font-weight: 400; }
+@utility typewriter { font-family: var(--font-type); }

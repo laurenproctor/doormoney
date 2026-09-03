@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gutter Hymns, spring run. A Door Money auction.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDE8DC;
+  --black:#000000;
+  --red:#E03A1E;
+  --tape:#F2C230;
+  --gray:#55524B;
+  --poster:'Anton',Impact,sans-serif;
+  --type:'Special Elite','Courier New',monospace;
+  --sans:'Archivo',Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--black);font-family:var(--sans);font-size:16.5px;line-height:1.7}
+.wrap{max-width:920px;margin:0 auto;padding:0 28px}
+.bar{border-bottom:3px solid var(--black);padding:14px 0}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.bar .bm{font-family:var(--poster);font-size:20px;text-transform:uppercase}
+.bar .bm span{color:var(--red)}
+a.bm{text-decoration:none;color:var(--black)}
+.nav{display:flex;gap:18px;flex-wrap:wrap}
+.nav a{font-family:var(--poster);font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:var(--black);text-decoration:none;border-bottom:3px solid transparent;padding-bottom:2px}
+.nav a:hover{border-bottom-color:var(--red)}
+.nav a.on{border-bottom-color:var(--black)}
+.fnav{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap}
+.fnav a{font-family:var(--type);font-size:13px;color:var(--paper)}
+.tape{display:inline-block;background:var(--tape);font-weight:700;font-size:12px;letter-spacing:0.04em;padding:5px 14px;transform:rotate(-1.5deg);box-shadow:2px 2px 0 rgba(0,0,0,0.25)}
+
+.hero{padding:66px 0 50px}
+.hero h1{font-family:var(--poster);font-size:clamp(52px,10vw,120px);line-height:0.88;text-transform:uppercase}
+.hero .run{font-family:var(--type);font-size:clamp(15px,2.2vw,19px);margin-top:18px}
+.hero .facts{display:flex;gap:30px;flex-wrap:wrap;margin-top:26px}
+.hero .fact b{font-family:var(--poster);font-size:clamp(24px,3.4vw,34px);display:block;line-height:1}
+.hero .fact span{font-family:var(--type);font-size:12.5px;color:var(--gray)}
+
+.board{border:3px solid var(--black);background:var(--black);color:var(--paper);box-shadow:8px 8px 0 var(--red);padding:26px 28px;margin:36px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.board .bw b{font-family:var(--poster);font-size:clamp(34px,5.4vw,54px);line-height:1;display:block}
+.board .bw span{font-family:var(--type);font-size:13px;color:#9B968A}
+.board .cd{text-align:right}
+.board .cd b{font-family:var(--type);font-size:clamp(18px,2.8vw,24px);display:block}
+.board .cd span{font-family:var(--type);font-size:12.5px;color:#9B968A}
+
+.lots{padding:44px 0 20px}
+h3{font-family:var(--type);font-size:15px;color:var(--red);margin-bottom:12px}
+h2{font-family:var(--poster);font-weight:400;font-size:clamp(28px,4vw,44px);line-height:1;text-transform:uppercase;margin-bottom:24px}
+.lot{border:3px solid var(--black);background:#fff;box-shadow:6px 6px 0 var(--black);padding:20px 22px;margin-bottom:22px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:center;position:relative}
+@media(max-width:680px){.lot{grid-template-columns:1fr}}
+.lot .ln{font-family:var(--poster);font-size:22px;text-transform:uppercase;line-height:1.05}
+.lot .lp{font-family:var(--type);font-size:12.5px;color:var(--gray);margin-top:4px}
+.lot .bidside{text-align:right;min-width:190px}
+@media(max-width:680px){.lot .bidside{text-align:left}}
+.lot .cur{font-family:var(--type);font-size:13px;color:var(--gray)}
+.lot .amt{font-family:var(--poster);font-size:28px;line-height:1}
+.lot .bidline{display:flex;align-items:center;justify-content:flex-end;gap:7px}
+.mark{flex:0 0 auto;width:26px;height:26px;border:2px solid var(--black);display:flex;align-items:center;justify-content:center;font-family:var(--poster);font-size:11px;letter-spacing:0.02em;line-height:1;background:var(--tape);color:var(--black);transform:rotate(-3deg)}
+.mark.r{background:var(--red);color:#fff;border-radius:50%;transform:rotate(0)}
+.mark.k{background:var(--black);color:var(--paper)}
+.mark.o{background:#fff;border-style:dashed;color:var(--gray)}
+.bidder{font-family:var(--type);font-size:12.5px;color:var(--gray)}
+.bidbtn{margin-top:8px;font-family:var(--poster);font-size:15px;text-transform:uppercase;letter-spacing:0.03em;padding:9px 18px;border:3px solid var(--black);background:var(--red);color:#fff;box-shadow:4px 4px 0 var(--black);cursor:pointer;transition:transform .08s,box-shadow .08s}
+.bidbtn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--black)}
+.lot.sold{background:#F6F1E4}
+.lot.sold .amt{color:var(--gray)}
+.soldstamp{position:absolute;right:16px;top:-14px;transform:rotate(-9deg);border:3px solid var(--red);color:var(--red);font-family:var(--type);font-size:15px;padding:3px 12px;background:#FFF9EE;box-shadow:2px 2px 0 rgba(0,0,0,0.2)}
+.demo-note{font-family:var(--type);font-size:13px;color:var(--gray);margin:6px 0 30px}
+
+.how{border-top:3px solid var(--black);padding:56px 0}
+.how ol{list-style:none;font-family:var(--type);font-size:15px;line-height:2.2;border-left:3px solid var(--black);padding-left:20px;max-width:56ch}
+.how li:before{content:"x ";color:var(--red)}
+
+footer{padding:46px 0 70px;border-top:3px solid var(--black);background:var(--black);color:var(--paper)}
+footer .fw{font-family:var(--poster);font-size:24px;text-transform:uppercase}
+footer p{font-size:13px;color:#9B968A;margin-top:8px;line-height:1.7;max-width:62ch}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="wrap"><a class="bm" href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Door<span>Money</span></a><nav class="nav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a class="on" href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a><a href="https://claude.ai/code/artifact/145571bd-5285-45d3-932c-5cbfb9f3312f">Widget</a><a href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a></nav></div></div>
+
+<div class="wrap hero">
+  <div style="margin-bottom:26px"><span class="tape">Sample listing</span></div>
+  <h1>Gutter Hymns</h1>
+  <p class="run">Spring run. 18 shows, Mar 6 to Apr 2. NYC out to Chicago and back, venues of 300 to 900.</p>
+  <div class="facts">
+    <div class="fact"><b>18</b><span>shows on the run</span></div>
+    <div class="fact"><b>~9,400</b><span>expected attendance</span></div>
+    <div class="fact"><b>21k</b><span>followers, all platforms</span></div>
+    <div class="fact"><b>6</b><span>spots still open</span></div>
+  </div>
+  <div class="board">
+    <div class="bw"><b id="total">$2,760</b><span>what the board is worth right now</span></div>
+    <div class="cd"><b id="clock">4d 07:12:33</b><span>auction closes Friday, 8pm ET</span></div>
+  </div>
+</div>
+
+<div class="wrap lots">
+  <h3>The spots</h3>
+  <h2>Bid on the run</h2>
+  <p class="demo-note">This page is a sample. The bands, patrons, and numbers are illustrative, and the bid buttons here are pretend.</p>
+
+  <div class="lot sold">
+    <div>
+      <div class="ln">Kick drum head</div>
+      <div class="lp">Shows up: front and center on the kit, every night of the run. One patron only.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">won at</div>
+      <div class="amt">$1,350</div>
+      <div class="bidline"><span class="mark k" data-mark aria-hidden="true">KS</span><div class="bidder">Kettle St. Coffee</div></div>
+    </div>
+    <div class="soldstamp">SOLD</div>
+  </div>
+
+  <div class="lot" data-bid="280" data-step="30" data-lot="straps">
+    <div>
+      <div class="ln">Guitar straps</div>
+      <div class="lp">Custom straps for the front line, band keeps them. Shows up: across the front line's chests in every front-on photo.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$280</div>
+      <div class="bidline"><span class="mark r" data-mark aria-hidden="true">RW</span><div class="bidder" data-bidder>Ridgewood Wine Co.</div></div>
+      <button class="bidbtn" data-btn>Bid $310</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="150" data-step="25" data-lot="case3">
+    <div>
+      <div class="ln">Case spot no. 3</div>
+      <div class="lp">One sticker on the flight case stack, in the band's own style. Shows up: on the case stack, stage-side all night, every date.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$150</div>
+      <div class="bidline"><span class="mark" data-mark aria-hidden="true">HW</span><div class="bidder" data-bidder>Hi-Watt Print Shop</div></div>
+      <button class="bidbtn" data-btn>Bid $175</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="130" data-step="25" data-lot="case4">
+    <div>
+      <div class="ln">Case spot no. 4</div>
+      <div class="lp">Last spot on the stack. Shows up: on the case stack, stage-side all night, every date.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$130</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">?</span><div class="bidder" data-bidder>Anonymous patron</div></div>
+      <button class="bidbtn" data-btn>Bid $155</button>
+    </div>
+  </div>
+
+  <div class="lot sold">
+    <div>
+      <div class="ln">Case spots no. 1 and 2</div>
+      <div class="lp">Shows up: on the case stack, stage-side all night, every date.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">won at</div>
+      <div class="amt">$180 each</div>
+      <div class="bidline"><span class="mark k" data-mark aria-hidden="true">BB</span><div class="bidder">Bushwick Bike Works, LMN Pedals</div></div>
+    </div>
+    <div class="soldstamp">SOLD</div>
+  </div>
+
+  <div class="lot" data-bid="410" data-step="40" data-lot="merch">
+    <div>
+      <div class="ln">Merch table runner</div>
+      <div class="lp">Runner plus counter card, the surface fans spend the most time in front of. Shows up: on the merch table, where fans stop the longest.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$410</div>
+      <div class="bidline"><span class="mark r" data-mark aria-hidden="true">LP</span><div class="bidder" data-bidder>LMN Pedals</div></div>
+      <button class="bidbtn" data-btn>Bid $450</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="160" data-step="20" data-lot="picks">
+    <div>
+      <div class="ln">Picks</div>
+      <div class="lp">Band on one face, the patron on the other, thrown to the crowd nightly. Shows up: played all night, thrown to the crowd at the end.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$160</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">?</span><div class="bidder" data-bidder>Anonymous patron</div></div>
+      <button class="bidbtn" data-btn>Bid $180</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="310" data-step="30" data-lot="posts">
+    <div>
+      <div class="ln">Posts and email</div>
+      <div class="lp">Named thank-you in the tour announcement and mailing list, in the band's voice. Shows up: in the tour announcement and the band's mailing list.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$310</div>
+      <div class="bidline"><span class="mark r" data-mark aria-hidden="true">RW</span><div class="bidder" data-bidder>Ridgewood Wine Co.</div></div>
+      <button class="bidbtn" data-btn>Bid $340</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="0" data-step="0" data-lot="rundown" data-buynow="400">
+    <div>
+      <div class="ln">Rig rundown</div>
+      <div class="lp">Integration in the gear walkthrough video. Fixed price, no bidding. Shows up: in the gear walkthrough, in front of players who buy gear.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">buy now</div>
+      <div class="amt" data-amt>$400</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">+</span><div class="bidder" data-bidder>open</div></div>
+      <button class="bidbtn" data-btn>Take it</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap how">
+  <h3>If a bid wins</h3>
+  <h2>What happens after Friday</h2>
+  <ol>
+    <li>The winning patron puts the money up within 48 hours, or the spot goes to the next bid.</li>
+    <li>The band approves the mark. Nothing goes up without their yes.</li>
+    <li>The band plays the run it was already playing.</li>
+    <li>The money reaches the band week by week as the run goes on.</li>
+    <li>End of the run, the patron gets a record of it: every show, every room, the attendance count.</li>
+  </ol>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="fw">Door Money</div>
+    <p>Proof or it doesn't pay. Sample auction page: every band, patron, bid, and number shown is illustrative. Real listings open with the first bands.</p>
+    <div class="fnav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a></div>
+  </div>
+</footer>
+
+<script>
+function setMark(l,t){var m=l.querySelector("[data-mark]");if(m){m.textContent=t;m.className="mark r";}}
+function money(n){return "$"+n.toLocaleString("en-US");}
+var soldTotal=1350+180+180;
+function recalc(){
+  var t=soldTotal;
+  document.querySelectorAll(".lot[data-bid]").forEach(function(l){
+    var b=parseInt(l.getAttribute("data-bid"),10)||0;
+    var bn=parseInt(l.getAttribute("data-buynow")||"0",10);
+    t+=b||0;if(bn&&!b)t+=0;
+  });
+  document.getElementById("total").textContent=money(t);
+}
+document.querySelectorAll(".lot[data-bid]").forEach(function(l){
+  var btn=l.querySelector("[data-btn]");if(!btn)return;
+  btn.addEventListener("click",function(){
+    var step=parseInt(l.getAttribute("data-step"),10);
+    var bn=parseInt(l.getAttribute("data-buynow")||"0",10);
+    var amtEl=l.querySelector("[data-amt]"),bidEl=l.querySelector("[data-bidder]");
+    if(bn){
+      l.setAttribute("data-bid",String(bn));
+      l.classList.add("sold");
+      bidEl.textContent="This patron";setMark(l,"TP");
+      btn.remove();
+      var s=document.createElement("div");s.className="soldstamp";s.textContent="SOLD";l.appendChild(s);
+      var cur=l.querySelector(".cur");if(cur)cur.textContent="won at";
+      recalc();return;
+    }
+    var b=parseInt(l.getAttribute("data-bid"),10)+step;
+    l.setAttribute("data-bid",String(b));
+    amtEl.textContent=money(b);
+    bidEl.textContent="This patron";setMark(l,"TP");
+    btn.textContent="Bid "+money(b+step);
+    recalc();
+  });
+});
+recalc();
+var end=Date.now()+ (4*24*3600+7*3600+12*60+33)*1000;
+function tick(){
+  var s=Math.max(0,Math.floor((end-Date.now())/1000));
+  var d=Math.floor(s/86400);s-=d*86400;
+  var h=Math.floor(s/3600);s-=h*3600;
+  var m=Math.floor(s/60);var sec=s-m*60;
+  function p(n){return (n<10?"0":"")+n;}
+  document.getElementById("clock").textContent=d+"d "+p(h)+":"+p(m)+":"+p(sec);
+}
+tick();setInterval(tick,1000);
+</script>
+</body>
+</html>

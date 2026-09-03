@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Door Money. Live auctions.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDE8DC;
+  --black:#000000;
+  --red:#E03A1E;
+  --tape:#F2C230;
+  --gray:#55524B;
+  --poster:'Anton',Impact,sans-serif;
+  --type:'Special Elite','Courier New',monospace;
+  --sans:'Archivo',Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--black);font-family:var(--sans);font-size:16.5px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto;padding:0 28px}
+.bar{border-bottom:3px solid var(--black);padding:14px 0}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+a.bm{font-family:var(--poster);font-size:20px;text-transform:uppercase;color:var(--black);text-decoration:none}
+a.bm span{color:var(--red)}
+.nav{display:flex;gap:18px;flex-wrap:wrap}
+.nav a{font-family:var(--poster);font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:var(--black);text-decoration:none;border-bottom:3px solid transparent;padding-bottom:2px}
+.nav a:hover{border-bottom-color:var(--red)}
+.nav a.on{border-bottom-color:var(--black)}
+
+.hero{padding:76px 0 30px}
+.hero .tape{display:inline-block;background:var(--tape);font-weight:700;font-size:13px;letter-spacing:0.04em;padding:6px 18px;transform:rotate(-1.5deg);box-shadow:2px 2px 0 rgba(0,0,0,0.25);margin-bottom:28px}
+.hero h1{font-family:var(--poster);font-size:clamp(48px,9vw,108px);line-height:0.9;text-transform:uppercase}
+.hero h1 span{color:var(--red)}
+.hero .sub{margin-top:22px;font-size:17px;max-width:56ch}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:30px;padding:50px 0 90px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.aucard{border:3px solid var(--black);background:#fff;box-shadow:8px 8px 0 var(--black);padding:28px 26px;display:flex;flex-direction:column;gap:14px}
+.aucard .kind{font-family:var(--type);font-size:13px;color:var(--red)}
+.aucard .an{font-family:var(--poster);font-size:clamp(28px,4vw,40px);line-height:0.95;text-transform:uppercase}
+.aucard .run{font-family:var(--type);font-size:13.5px;color:var(--gray);line-height:1.7}
+.aucard .stats{display:flex;gap:26px;flex-wrap:wrap;border-top:2px dashed #A79D8A;padding-top:14px}
+.aucard .st b{font-family:var(--poster);font-size:26px;display:block;line-height:1}
+.aucard .st span{font-family:var(--type);font-size:12px;color:var(--gray)}
+.aucard .closes{font-family:var(--type);font-size:13.5px}
+.aucard .closes b{color:var(--red)}
+.btn{display:inline-block;align-self:flex-start;font-family:var(--poster);font-size:17px;text-transform:uppercase;letter-spacing:0.03em;padding:12px 24px;border:3px solid var(--black);background:var(--red);color:#fff;text-decoration:none;box-shadow:5px 5px 0 var(--black);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--black)}
+.aucard.blk{background:var(--black);color:var(--paper);align-items:flex-start;justify-content:center}
+.aucard.blk .an{color:var(--paper)}
+.aucard.blk .run{color:#9B968A}
+.aucard.blk .btn{background:var(--tape);color:var(--black)}
+
+footer{padding:46px 0 70px;border-top:3px solid var(--black);background:var(--black);color:var(--paper)}
+footer .fw{font-family:var(--poster);font-size:24px;text-transform:uppercase}
+footer p{font-size:13px;color:#9B968A;margin-top:8px;line-height:1.7}
+.fnav{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap}
+.fnav a{font-family:var(--type);font-size:13px;color:var(--paper)}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="wrap"><a class="bm" href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Door<span>Money</span></a><nav class="nav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a class="on" href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a><a href="https://claude.ai/code/artifact/145571bd-5285-45d3-932c-5cbfb9f3312f">Widget</a><a href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a></nav></div></div>
+
+<div class="wrap hero">
+  <span class="tape">Sample boards, illustrative bids</span>
+  <h1>Live <span>auctions</span></h1>
+  <p class="sub">Every open board on Door Money: who's playing, what the board is worth right now, and when bidding closes. Two boards are up this week, one touring band and one gigging soloist.</p>
+</div>
+
+<div class="wrap grid">
+  <div class="aucard">
+    <div class="kind">Band, touring</div>
+    <div class="an">Gutter Hymns</div>
+    <div class="run">Spring run. 18 shows, Mar 6 to Apr 2, NYC out to Chicago and back, venues of 300 to 900.</div>
+    <div class="stats">
+      <div class="st"><b>$2,760</b><span>board worth</span></div>
+      <div class="st"><b>6</b><span>spots open</span></div>
+      <div class="st"><b>~9,400</b><span>expected attendance</span></div>
+    </div>
+    <div class="closes">Closes in <b id="c1">4d 07:12:33</b>, Friday 8pm ET</div>
+    <a class="btn" href="https://claude.ai/code/artifact/1cdefed4-4339-4577-b59e-0146a40bcc15">See the board</a>
+  </div>
+
+  <div class="aucard">
+    <div class="kind">Solo, gigging NYC</div>
+    <div class="an">Rosie the Bassoonist</div>
+    <div class="run">Fall season. September to December, 30+ gigs across four boroughs, case lid and stand up for bids.</div>
+    <div class="stats">
+      <div class="st"><b>$610</b><span>board worth</span></div>
+      <div class="st"><b>5</b><span>spots open</span></div>
+      <div class="st"><b>30+</b><span>gigs a season</span></div>
+    </div>
+    <div class="closes">Closes in <b id="c2">2d 19:44:10</b>, Sunday 8pm ET</div>
+    <a class="btn" href="https://claude.ai/code/artifact/bee122a2-9ed3-4ae0-8113-70e2b4467255">See the board</a>
+  </div>
+
+  <div class="aucard blk">
+    <div class="kind" style="color:var(--tape)">Any act</div>
+    <div class="an">The next board is open</div>
+    <div class="run">Bands, house acts, soloists. Musicians list the surfaces, set the prices, and keep the final say. Door Money is opening in New York first.</div>
+    <a class="btn" href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="fw">Door Money</div>
+    <p>Proof or it doesn't pay. Sample index: boards, bids, and figures are illustrative until real listings open.</p>
+    <div class="fnav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a></div>
+  </div>
+</footer>
+
+<script>
+function mk(id,offsetSec){
+  var end=Date.now()+offsetSec*1000;
+  function p(n){return (n<10?"0":"")+n;}
+  function tick(){
+    var s=Math.max(0,Math.floor((end-Date.now())/1000));
+    var d=Math.floor(s/86400);s-=d*86400;
+    var h=Math.floor(s/3600);s-=h*3600;
+    var m=Math.floor(s/60);var sec=s-m*60;
+    document.getElementById(id).textContent=d+"d "+p(h)+":"+p(m)+":"+p(sec);
+  }
+  tick();setInterval(tick,1000);
+}
+mk("c1",4*24*3600+7*3600+12*60+33);
+mk("c2",2*24*3600+19*3600+44*60+10);
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rosie the Bassoonist, fall season. A Door Money listing.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDE8DC;
+  --black:#000000;
+  --red:#E03A1E;
+  --tape:#F2C230;
+  --gray:#55524B;
+  --poster:'Anton',Impact,sans-serif;
+  --type:'Special Elite','Courier New',monospace;
+  --sans:'Archivo',Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--black);font-family:var(--sans);font-size:16.5px;line-height:1.7}
+.wrap{max-width:920px;margin:0 auto;padding:0 28px}
+.bar{border-bottom:3px solid var(--black);padding:14px 0}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.bar .bm{font-family:var(--poster);font-size:20px;text-transform:uppercase}
+.bar .bm span{color:var(--red)}
+a.bm{text-decoration:none;color:var(--black)}
+.nav{display:flex;gap:18px;flex-wrap:wrap}
+.nav a{font-family:var(--poster);font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:var(--black);text-decoration:none;border-bottom:3px solid transparent;padding-bottom:2px}
+.nav a:hover{border-bottom-color:var(--red)}
+.nav a.on{border-bottom-color:var(--black)}
+.fnav{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap}
+.fnav a{font-family:var(--type);font-size:13px;color:var(--paper)}
+.tape{display:inline-block;background:var(--tape);font-weight:700;font-size:12px;letter-spacing:0.04em;padding:5px 14px;transform:rotate(-1.5deg);box-shadow:2px 2px 0 rgba(0,0,0,0.25)}
+
+.hero{padding:66px 0 50px}
+.hero h1{font-family:var(--poster);font-size:clamp(42px,8.4vw,100px);line-height:0.88;text-transform:uppercase}
+.hero .run{font-family:var(--type);font-size:clamp(15px,2.2vw,19px);margin-top:18px}
+.hero .bio{margin-top:22px;font-size:16px;max-width:58ch;border-left:3px solid var(--black);padding-left:18px}
+.hero .facts{display:flex;gap:30px;flex-wrap:wrap;margin-top:26px}
+.hero .fact b{font-family:var(--poster);font-size:clamp(24px,3.4vw,34px);display:block;line-height:1}
+.hero .fact span{font-family:var(--type);font-size:12.5px;color:var(--gray)}
+
+.board{border:3px solid var(--black);background:var(--black);color:var(--paper);box-shadow:8px 8px 0 var(--red);padding:26px 28px;margin:36px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.board .bw b{font-family:var(--poster);font-size:clamp(34px,5.4vw,54px);line-height:1;display:block}
+.board .bw span{font-family:var(--type);font-size:13px;color:#9B968A}
+.board .cd{text-align:right}
+.board .cd b{font-family:var(--type);font-size:clamp(18px,2.8vw,24px);display:block}
+.board .cd span{font-family:var(--type);font-size:12.5px;color:#9B968A}
+
+.lots{padding:44px 0 20px}
+h3{font-family:var(--type);font-size:15px;color:var(--red);margin-bottom:12px}
+h2{font-family:var(--poster);font-weight:400;font-size:clamp(28px,4vw,44px);line-height:1;text-transform:uppercase;margin-bottom:24px}
+.lot{border:3px solid var(--black);background:#fff;box-shadow:6px 6px 0 var(--black);padding:20px 22px;margin-bottom:22px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:center;position:relative}
+@media(max-width:680px){.lot{grid-template-columns:1fr}}
+.lot .ln{font-family:var(--poster);font-size:22px;text-transform:uppercase;line-height:1.05}
+.lot .lp{font-family:var(--type);font-size:12.5px;color:var(--gray);margin-top:4px}
+.lot .bidside{text-align:right;min-width:190px}
+@media(max-width:680px){.lot .bidside{text-align:left}}
+.lot .cur{font-family:var(--type);font-size:13px;color:var(--gray)}
+.lot .amt{font-family:var(--poster);font-size:28px;line-height:1}
+.lot .bidline{display:flex;align-items:center;justify-content:flex-end;gap:7px}
+.mark{flex:0 0 auto;width:26px;height:26px;border:2px solid var(--black);display:flex;align-items:center;justify-content:center;font-family:var(--poster);font-size:11px;letter-spacing:0.02em;line-height:1;background:var(--tape);color:var(--black);transform:rotate(-3deg)}
+.mark.r{background:var(--red);color:#fff;border-radius:50%;transform:rotate(0)}
+.mark.k{background:var(--black);color:var(--paper)}
+.mark.o{background:#fff;border-style:dashed;color:var(--gray)}
+.bidder{font-family:var(--type);font-size:12.5px;color:var(--gray)}
+.bidbtn{margin-top:8px;font-family:var(--poster);font-size:15px;text-transform:uppercase;letter-spacing:0.03em;padding:9px 18px;border:3px solid var(--black);background:var(--red);color:#fff;box-shadow:4px 4px 0 var(--black);cursor:pointer;transition:transform .08s,box-shadow .08s}
+.bidbtn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--black)}
+.lot.sold{background:#F6F1E4}
+.lot.sold .amt{color:var(--gray)}
+.soldstamp{position:absolute;right:16px;top:-14px;transform:rotate(-9deg);border:3px solid var(--red);color:var(--red);font-family:var(--type);font-size:15px;padding:3px 12px;background:#FFF9EE;box-shadow:2px 2px 0 rgba(0,0,0,0.2)}
+.demo-note{font-family:var(--type);font-size:13px;color:var(--gray);margin:6px 0 30px}
+
+.backers{border-top:3px solid var(--black);padding:56px 0}
+.backers .bl{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:26px}
+@media(max-width:680px){.backers .bl{grid-template-columns:1fr}}
+.backers .bi.wide{grid-column:1 / -1;background:var(--tape)}
+.backers .bi{border:3px solid var(--black);background:#fff;box-shadow:5px 5px 0 var(--black);padding:16px 18px}
+.backers .bi b{font-family:var(--poster);font-size:17px;text-transform:uppercase;display:block}
+.backers .bi .who{font-family:var(--type);font-size:12.5px;color:var(--black);line-height:1.6;display:block;margin-top:8px;border-top:2px dashed #A79D8A;padding-top:8px}
+.backers .bi .fits{font-family:var(--type);font-size:12.5px;color:var(--red);display:block;margin-top:6px}
+.backers .disc{margin-top:22px;font-family:var(--type);font-size:12.5px;color:var(--gray);max-width:70ch}
+.backers .bi span{font-size:13.5px;color:var(--gray);line-height:1.55;display:block;margin-top:4px}
+
+.how{border-top:3px solid var(--black);padding:56px 0}
+.how ol{list-style:none;font-family:var(--type);font-size:15px;line-height:2.2;border-left:3px solid var(--black);padding-left:20px;max-width:56ch}
+.how li:before{content:"x ";color:var(--red)}
+
+footer{padding:46px 0 70px;border-top:3px solid var(--black);background:var(--black);color:var(--paper)}
+footer .fw{font-family:var(--poster);font-size:24px;text-transform:uppercase}
+footer p{font-size:13px;color:#9B968A;margin-top:8px;line-height:1.7;max-width:62ch}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="wrap"><a class="bm" href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Door<span>Money</span></a><nav class="nav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a class="on" href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a><a href="https://claude.ai/code/artifact/145571bd-5285-45d3-932c-5cbfb9f3312f">Widget</a><a href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a></nav></div></div>
+
+<div class="wrap hero">
+  <div style="margin-bottom:26px"><span class="tape">Sample listing</span></div>
+  <h1>Rosie the Bassoonist</h1>
+  <p class="run">Fall season. September to December, New York City.</p>
+  <p class="bio">Rosie is a gigging musician in NYC: a working bassoonist moving between the rehearsals, services, chamber dates, and sessions that keep a freelance player employed, with a feed where the bassoon does the talking. She is the shape of Door Money's solo tier: one player, small surfaces, small money, and a few hundred dollars a season that makes freelancing add up. The bassoon itself is not for sale and never will be. The case, the stand, and the feed are.</p>
+  <div class="facts">
+    <div class="fact"><b>30+</b><span>gigs a season, sample figure</span></div>
+    <div class="fact"><b>4</b><span>boroughs played</span></div>
+    <div class="fact"><b>12k</b><span>followers, sample figure</span></div>
+    <div class="fact"><b>5</b><span>spots still open</span></div>
+  </div>
+  <div class="board">
+    <div class="bw"><b id="total">$610</b><span>what the board is worth right now</span></div>
+    <div class="cd"><b id="clock">2d 19:44:10</b><span>listing closes Sunday, 8pm ET</span></div>
+  </div>
+</div>
+
+<div class="wrap lots">
+  <h3>The spots</h3>
+  <h2>Bid on the season</h2>
+  <p class="demo-note">This page is a sample. Patrons, bids, and figures are illustrative, and the bid buttons are pretend.</p>
+
+  <div class="lot sold">
+    <div>
+      <div class="ln">Case lid spot no. 1</div>
+      <div class="lp">A decal inside the case lid, at eye level whenever the case is open. Shows up: in front of every player in the rehearsal room, the pit and the green room.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">won at</div>
+      <div class="amt">$180</div>
+      <div class="bidline"><span class="mark r" data-mark aria-hidden="true">RR</span><div class="bidder">Riverside Reeds</div></div>
+    </div>
+    <div class="soldstamp">SOLD</div>
+  </div>
+
+  <div class="lot" data-bid="120" data-step="20">
+    <div>
+      <div class="ln">Case lid spot no. 2</div>
+      <div class="lp">Same lid, second spot. Reaches the same working players, at a lower price.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$120</div>
+      <div class="bidline"><span class="mark k" data-mark aria-hidden="true">UW</span><div class="bidder" data-bidder>Uptown Woodwind Repair</div></div>
+      <button class="bidbtn" data-btn>Bid $140</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="90" data-step="15">
+    <div>
+      <div class="ln">Case lid spot no. 3</div>
+      <div class="lp">Last spot on the lid. The cheapest way onto a case that opens 30-plus times a season.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$90</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">?</span><div class="bidder" data-bidder>Anonymous patron</div></div>
+      <button class="bidbtn" data-btn>Bid $105</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="140" data-step="20">
+    <div>
+      <div class="ln">Music stand front</div>
+      <div class="lp">A small mark on the stand banner, facing the room at every gig where she brings her own stand. Reaches the whole audience, plus the students and parents in it.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$140</div>
+      <div class="bidline"><span class="mark" data-mark aria-hidden="true">PM</span><div class="bidder" data-bidder>Parkside Music School</div></div>
+      <button class="bidbtn" data-btn>Bid $160</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="80" data-step="15">
+    <div>
+      <div class="ln">Season thank-you post</div>
+      <div class="lp">A named thank-you in her season announcement, written in her voice. Shows up: in her season announcement post.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">current bid</div>
+      <div class="amt" data-amt>$80</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">?</span><div class="bidder" data-bidder>Anonymous patron</div></div>
+      <button class="bidbtn" data-btn>Bid $95</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="0" data-buynow="250">
+    <div>
+      <div class="ln">Practice sessions, supported by</div>
+      <div class="lp">A month of her practice-room videos carrying the patron's name on the card. Fixed price, no bidding. Shows up: on the card in her practice-room videos.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">buy now</div>
+      <div class="amt" data-amt>$250</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">+</span><div class="bidder" data-bidder>open</div></div>
+      <button class="bidbtn" data-btn>Take it</button>
+    </div>
+  </div>
+
+  <div class="lot" data-bid="0" data-buynow="100">
+    <div>
+      <div class="ln">Recital program credit</div>
+      <div class="lp">A printed thank-you line in the program at her next recital. Fixed price. Shows up: printed in the recital program.</div>
+    </div>
+    <div class="bidside">
+      <div class="cur">buy now</div>
+      <div class="amt" data-amt>$100</div>
+      <div class="bidline"><span class="mark o" data-mark aria-hidden="true">+</span><div class="bidder" data-bidder>open</div></div>
+      <button class="bidbtn" data-btn>Take it</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap backers">
+  <h3>Who backs a bassoonist</h3>
+  <h2>Small patrons with perfect aim</h2>
+  <p>The pitch here isn't reach. A solo player's following is small, but it's made of working players, serious students, and the rooms she gigs in, and for the right buyer that's their whole target market gathered in one place, reachable nowhere else this directly. These are the kinds of buyers each spot is built for, with real examples of who that means:</p>
+  <div class="bl"><div class="bi"><b>Reed and cane sellers</b><span>Her feed is watched almost entirely by people who buy reeds, cane and tools. That is the entire customer list, gathered in one place, reachable nowhere else this cheaply.</span><span class="who">Forrests Music, Hodge Products, Advantage Double Reeds, Otter Creek Double Reeds, Rigotti cane</span><span class="fits">Fits: the thank-you post, practice sessions</span></div><div class="bi"><b>Case and instrument makers</b><span>The case lid is the one surface a case maker would actually want. It opens at every rehearsal, service and pit call, in front of other working players deciding what to buy next.</span><span class="who">Marcus Bonna, Wilhelm Heckel, P&uuml;chner, Fox Products, Moosmann</span><span class="fits">Fits: case lid spots 1 to 3</span></div><div class="bi"><b>Repair shops and dealers</b><span>A freelancer's case gets opened in front of the exact people who need an overhaul and have been putting it off. Regional shops buy proximity, not reach.</span><span class="who">Charles Double Reed Company (Kingston, NY), RDG Woodwinds, Nielsen Woodwinds, Midwest Musical Imports, Chuck Levin's</span><span class="fits">Fits: case lid spots, music stand front</span></div><div class="bi"><b>Schools, studios and festivals</b><span>The stand banner and the program credit put a name in front of serious students and the parents sitting with them. Recruitment spend that lands in the room instead of a feed.</span><span class="who">Third Street Music School Settlement, Brooklyn Conservatory of Music, Bloomingdale School of Music, Mannes, Interlochen, Aspen Music Festival</span><span class="fits">Fits: music stand front, recital program credit</span></div><div class="bi wide"><b>Neighborhood businesses</b><span>The shop on the block that just wants its local musician to keep playing. No targeting logic, no reach argument. The purest version of the whole idea.</span><span class="who">Sahadi's, Devoci&oacute;n, McNally Jackson, Talea Beer Co., Russ &amp; Daughters</span><span class="fits">Fits: any open spot, usually the cheapest one</span></div></div><p class="disc">Companies named here are examples of who each spot is built for. None of them are involved with Door Money, and none have bought anything.</p>
+</div>
+
+<div class="wrap how">
+  <h3>If a bid wins</h3>
+  <h2>What happens after Sunday</h2>
+  <ol>
+    <li>The winning patron puts the money up within 48 hours, or the spot goes to the next bid.</li>
+    <li>Rosie approves the mark. Nothing goes up without her yes.</li>
+    <li>She plays the season she was already playing.</li>
+    <li>The money reaches her through the season rather than at the end of it.</li>
+    <li>End of season: a record of every gig the placement ran at.</li>
+  </ol>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="fw">Door Money</div>
+    <p>Proof or it doesn't pay. Sample listing built as a concept preview: the patrons, bids, gig counts, and follower figures are illustrative, not Rosie's real numbers. Companies named as example buyers are illustrations of buyer type only and have no involvement with Door Money. Real listings open with the first musicians.</p>
+    <div class="fnav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a></div>
+  </div>
+</footer>
+
+<script>
+function setMark(l,t){var m=l.querySelector("[data-mark]");if(m){m.textContent=t;m.className="mark r";}}
+function money(n){return "$"+n.toLocaleString("en-US");}
+var soldTotal=180;
+function recalc(){
+  var t=soldTotal;
+  document.querySelectorAll(".lot[data-bid]").forEach(function(l){
+    t+=parseInt(l.getAttribute("data-bid"),10)||0;
+  });
+  document.getElementById("total").textContent=money(t);
+}
+document.querySelectorAll(".lot[data-bid]").forEach(function(l){
+  var btn=l.querySelector("[data-btn]");if(!btn)return;
+  btn.addEventListener("click",function(){
+    var bn=parseInt(l.getAttribute("data-buynow")||"0",10);
+    var amtEl=l.querySelector("[data-amt]"),bidEl=l.querySelector("[data-bidder]");
+    if(bn){
+      l.setAttribute("data-bid",String(bn));
+      l.classList.add("sold");
+      bidEl.textContent="This patron";setMark(l,"TP");
+      btn.remove();
+      var s=document.createElement("div");s.className="soldstamp";s.textContent="SOLD";l.appendChild(s);
+      var cur=l.querySelector(".cur");if(cur)cur.textContent="won at";
+      recalc();return;
+    }
+    var step=parseInt(l.getAttribute("data-step"),10);
+    var b=parseInt(l.getAttribute("data-bid"),10)+step;
+    l.setAttribute("data-bid",String(b));
+    amtEl.textContent=money(b);
+    bidEl.textContent="This patron";setMark(l,"TP");
+    btn.textContent="Bid "+money(b+step);
+    recalc();
+  });
+});
+recalc();
+var end=Date.now()+(2*24*3600+19*3600+44*60+10)*1000;
+function tick(){
+  var s=Math.max(0,Math.floor((end-Date.now())/1000));
+  var d=Math.floor(s/86400);s-=d*86400;
+  var h=Math.floor(s/3600);s-=h*3600;
+  var m=Math.floor(s/60);var sec=s-m*60;
+  function p(n){return (n<10?"0":"")+n;}
+  document.getElementById("clock").textContent=d+"d "+p(h)+":"+p(m)+":"+p(sec);
+}
+tick();setInterval(tick,1000);
+</script>
+</body>
+</html>

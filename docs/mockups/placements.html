@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Door Money. The placements.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDE8DC;
+  --black:#000000;
+  --red:#E03A1E;
+  --tape:#F2C230;
+  --gray:#55524B;
+  --poster:'Anton',Impact,sans-serif;
+  --type:'Special Elite','Courier New',monospace;
+  --sans:'Archivo',Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--black);font-family:var(--sans);font-size:16.5px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto;padding:0 28px}
+.bar{border-bottom:3px solid var(--black);padding:14px 0}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+a.bm{font-family:var(--poster);font-size:20px;text-transform:uppercase;color:var(--black);text-decoration:none}
+a.bm span{color:var(--red)}
+.nav{display:flex;gap:18px;flex-wrap:wrap}
+.nav a{font-family:var(--poster);font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:var(--black);text-decoration:none;border-bottom:3px solid transparent;padding-bottom:2px}
+.nav a:hover{border-bottom-color:var(--red)}
+.nav a.on{border-bottom-color:var(--black)}
+.fnav{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap}
+.fnav a{font-family:var(--type);font-size:13px;color:var(--paper)}
+section{padding:80px 0;border-top:3px solid var(--black)}
+h2{font-family:var(--poster);font-weight:400;font-size:clamp(30px,4.4vw,50px);line-height:1;text-transform:uppercase;margin-bottom:14px}
+h3{font-family:var(--type);font-size:15px;color:var(--red);margin-bottom:12px}
+p{max-width:62ch}
+.muted{color:var(--gray)}
+.tape{display:inline-block;background:var(--tape);font-weight:700;font-size:13px;letter-spacing:0.04em;padding:6px 18px;transform:rotate(-1.5deg);box-shadow:2px 2px 0 rgba(0,0,0,0.25)}
+.btn{display:inline-block;font-family:var(--poster);font-size:19px;text-transform:uppercase;letter-spacing:0.03em;padding:14px 30px;border:3px solid var(--black);background:var(--red);color:#fff;text-decoration:none;box-shadow:5px 5px 0 var(--black);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--black)}
+.stamp{font-family:var(--type);color:var(--red);border:3px solid var(--red);border-radius:50%;width:118px;height:118px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px;line-height:1.25;transform:rotate(-8deg)}
+
+.hero{border-top:none;padding:88px 0 76px;position:relative}
+.hero .tape{margin-bottom:30px}
+.hero h1{font-family:var(--poster);font-size:clamp(52px,9vw,110px);line-height:0.9;text-transform:uppercase}
+.hero h1 span{color:var(--red)}
+.hero .sub{margin-top:24px;font-size:17px;max-width:56ch}
+.hero .stamp{position:absolute;right:28px;top:88px}
+@media(max-width:860px){.hero .stamp{display:none}}
+
+.howline{margin-top:30px;font-family:var(--type);font-size:15px;line-height:2;border-left:3px solid var(--black);padding-left:18px;max-width:56ch}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:26px;margin-top:36px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.pl{border:3px solid var(--black);background:#fff;box-shadow:7px 7px 0 var(--black);padding:26px 24px}
+.pl.hero-pl{grid-column:1 / -1;background:var(--black);color:var(--paper)}
+.pl .head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.pl .sn{font-family:var(--poster);font-size:24px;text-transform:uppercase;line-height:1.05}
+.pl.hero-pl .sn{font-size:clamp(26px,3.6vw,36px)}
+.pl .sp{font-family:var(--type);color:var(--red);font-size:15px;white-space:nowrap}
+.pl.hero-pl .sp{color:var(--tape)}
+.pl p{font-size:14.5px;color:var(--gray);line-height:1.65;margin-top:10px;max-width:none}
+.pl.hero-pl p{color:#C9C4B8}
+.meta{margin-top:14px;font-family:var(--type);font-size:12.5px;line-height:1.9;border-top:2px dashed #A79D8A;padding-top:10px}
+.pl.hero-pl .meta{border-top-color:#4A473F}
+.meta b{font-weight:400;color:var(--red)}
+.pl.hero-pl .meta b{color:var(--tape)}
+.zone-note{margin-top:24px;font-family:var(--type);font-size:13.5px;color:var(--gray)}
+
+.exc{margin-top:36px;border:3px solid var(--black);background:var(--tape);box-shadow:7px 7px 0 var(--black);padding:30px 28px;max-width:760px}
+.exc .sn{font-family:var(--poster);font-size:24px;text-transform:uppercase}
+.exc p{font-size:14.5px;margin-top:8px}
+
+.rules-mini{margin-top:30px;font-family:var(--type);font-size:15px;line-height:2.1;border:3px solid var(--black);background:#FFF9EE;box-shadow:7px 7px 0 var(--black);padding:26px 28px;max-width:560px}
+.rules-mini span{color:var(--red)}
+
+.cta{padding:80px 0 96px}
+.cta .btnrow{margin-top:30px;display:flex;gap:20px;flex-wrap:wrap}
+
+footer{padding:52px 0 76px;border-top:3px solid var(--black);background:var(--black);color:var(--paper)}
+footer .fw{font-family:var(--poster);font-size:26px;text-transform:uppercase}
+footer p{font-size:13px;color:#9B968A;margin-top:8px;line-height:1.7}
+
+.anat{margin-top:34px;border:3px solid var(--black);background:#fff;box-shadow:7px 7px 0 var(--black);padding:22px 22px 18px}
+.anat svg{display:block;width:100%;height:auto}
+.key{margin-top:16px;border-top:2px dashed #A79D8A;padding-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px 18px;font-family:var(--type);font-size:12.5px;color:var(--gray)}
+@media(max-width:700px){.key{grid-template-columns:repeat(2,1fr)}}
+.key b{font-family:var(--sans);font-weight:700;color:var(--red);margin-right:6px}
+.pv{margin-top:18px}
+.dia{border:3px solid var(--black);background:#fff;padding:6px}
+.dia svg{display:block;width:100%;height:auto}
+.pl.hero-pl .pl.hero-pl :focus-visible{outline:3px solid var(--red);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="wrap"><a class="bm" href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Door<span>Money</span></a><nav class="nav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a class="on" href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a><a href="https://claude.ai/code/artifact/145571bd-5285-45d3-932c-5cbfb9f3312f">Widget</a><a href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a></nav></div></div>
+
+<div class="wrap hero">
+  <span class="tape">For patrons and brands</span>
+  <h1>The <span>placements</span></h1>
+  <p class="sub">Every surface a band can offer, what it costs, and who sees it. Each band sets its own prices; the figures here are the standard card. Door Money holds the funds until the placement runs at a real show.</p>
+  <div class="howline">A patron picks a surface and puts the money up.<br>The band plays the run.<br>The money reaches the band as it happens.<br>The patron gets a record of where it went.</div>
+  <div class="stamp" aria-hidden="true">DOOR MONEY<br>PAID<br>AT THE DOOR</div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h3>Onstage</h3>
+    <h2>Every camera in the room finds these</h2>
+    <p>A name on these surfaces rides along in every fan photo, every phone video and every review shot, night after night, for the price of one print run. Each format matches the band's own artwork, and every one needs the band's yes before it ships.</p>
+    <div class="anat"><svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Head-on view of a stage with the five onstage placements marked" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><line x1="20" y1="352" x2="880" y2="352"/><line x1="20" y1="374" x2="880" y2="374" stroke="#8A8378" stroke-width="2"/><rect x="40" y="268" width="106" height="42"/><rect x="40" y="310" width="106" height="42"/><rect x="62" y="278" width="52" height="24" fill="#E03A1E" stroke="#E03A1E"/><rect x="182" y="256" width="96" height="96"/><rect x="194" y="268" width="72" height="72" stroke="#8A8378" stroke-width="2"/><rect x="194" y="292" width="72" height="26" fill="#E03A1E" stroke="#E03A1E"/><circle cx="330" cy="188" r="20"/><path d="M302 220 q28 -12 56 0 l10 132 h-76 z"/><path d="M304 218 L364 282" stroke="#E03A1E" stroke-width="12"/><ellipse cx="348" cy="280" rx="32" ry="23"/><line x1="372" y1="266" x2="418" y2="228"/><path d="M436 250 h112 l22 44 H414 z"/><rect x="414" y="294" width="156" height="24" fill="#E03A1E" stroke="#E03A1E"/><circle cx="492" cy="216" r="34"/><circle cx="492" cy="216" r="21" fill="#E03A1E" stroke="#E03A1E"/><rect x="446" y="184" width="22" height="18"/><rect x="516" y="184" width="22" height="18"/><line x1="410" y1="176" x2="444" y2="168"/><line x1="427" y1="172" x2="427" y2="250"/><circle cx="628" cy="188" r="20"/><path d="M600 220 q28 -12 56 0 l10 132 h-76 z"/><path d="M602 218 L662 282" stroke="#E03A1E" stroke-width="12"/><ellipse cx="646" cy="280" rx="32" ry="23"/><line x1="670" y1="266" x2="716" y2="228"/><rect x="722" y="256" width="96" height="96"/><rect x="734" y="268" width="72" height="72" stroke="#8A8378" stroke-width="2"/><rect x="734" y="292" width="72" height="26" fill="#E03A1E" stroke="#E03A1E"/><circle cx="492" cy="150" r="13" fill="#E03A1E" stroke="#E03A1E"/><text x="492" y="156" text-anchor="middle" fill="#fff" stroke="none" font-family="Archivo,Helvetica,sans-serif" font-size="16" font-weight="700">1</text><circle cx="93" cy="236" r="13" fill="#E03A1E" stroke="#E03A1E"/><text x="93" y="242" text-anchor="middle" fill="#fff" stroke="none" font-family="Archivo,Helvetica,sans-serif" font-size="16" font-weight="700">2</text><circle cx="300" cy="176" r="13" fill="#E03A1E" stroke="#E03A1E"/><text x="300" y="182" text-anchor="middle" fill="#fff" stroke="none" font-family="Archivo,Helvetica,sans-serif" font-size="16" font-weight="700">3</text><circle cx="230" cy="224" r="13" fill="#E03A1E" stroke="#E03A1E"/><text x="230" y="230" text-anchor="middle" fill="#fff" stroke="none" font-family="Archivo,Helvetica,sans-serif" font-size="16" font-weight="700">4</text><circle cx="492" cy="336" r="13" fill="#E03A1E" stroke="#E03A1E"/><text x="492" y="342" text-anchor="middle" fill="#fff" stroke="none" font-family="Archivo,Helvetica,sans-serif" font-size="16" font-weight="700">5</text></svg><div class="key"><div><b>1</b>Kick drum head</div><div><b>2</b>Road case spots</div><div><b>3</b>Guitar straps</div><div><b>4</b>Amp grilles</div><div><b>5</b>Riser fascia</div><div>Red marks the sold surface.</div></div></div>
+    <div class="grid">
+      <div class="pl hero-pl">
+        <div class="head"><div class="sn">Kick drum head</div><div class="sp">from $1,200 a tour</div></div>
+        <p>The most photographed surface on any stage. Front and center in every wide shot, every phone video, every review photo. The patron's mark goes on as a stamp within the band's own drum head design, printed once for the run. One patron holds it at a time.</p>
+        <div class="meta"><b>Seen by:</b> everyone in the room, every night, plus everyone who watches the footage.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><line x1="20" y1="132" x2="180" y2="132"/><circle cx="100" cy="88" r="42"/><circle cx="100" cy="88" r="26" fill="#E03A1E" stroke="#E03A1E"/><rect x="52" y="46" width="26" height="22" rx="2"/><rect x="122" y="46" width="26" height="22" rx="2"/><line x1="30" y1="42" x2="66" y2="34"/><line x1="48" y1="38" x2="48" y2="132"/><line x1="134" y1="34" x2="170" y2="42"/><line x1="152" y1="38" x2="152" y2="132"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Road case spots</div><div class="sp">from $150 a spot</div></div>
+        <p>A sticker on the flight cases, designed to match the band's own artwork so it blends in. Cases sit stage-side all night and travel everywhere the band does. Four spots make the full stack.</p>
+        <div class="meta"><b>Seen by:</b> the room, load-ins, and every backstage photo.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="52" y="86" width="96" height="42"/><rect x="52" y="48" width="96" height="38"/><rect x="52" y="22" width="96" height="26"/><rect x="70" y="56" width="46" height="22" fill="#E03A1E" stroke="#E03A1E"/><line x1="62" y1="86" x2="62" y2="128"/><line x1="138" y1="86" x2="138" y2="128"/><circle cx="70" cy="120" r="5"/><circle cx="130" cy="120" r="5"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Guitar straps</div><div class="sp">from $350 a run</div></div>
+        <p>Custom straps for the front line, with the patron's mark woven in. A strap crosses the player's chest in every front-on photo, and it looks like normal gear, because it is. The band keeps them after the run.</p>
+        <div class="meta"><b>Seen by:</b> every camera pointed at the stage.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><circle cx="100" cy="34" r="18"/><path d="M74 62 q26 -10 52 0 l8 66 h-68 z"/><path d="M76 60 L134 116" stroke="#E03A1E" stroke-width="11"/><ellipse cx="118" cy="112" rx="30" ry="22"/><line x1="140" y1="98" x2="182" y2="62"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Amp grilles</div><div class="sp">from $400 a pair</div></div>
+        <p>A mark on the amp cabinet grilles, stage left and right. Covers the side angles the kick drum head doesn't reach, and the amps are in every shot of the players.</p>
+        <div class="meta"><b>Seen by:</b> the room, side-stage photos, live video.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="18" y="46" width="76" height="76"/><rect x="106" y="46" width="76" height="76"/><rect x="28" y="56" width="56" height="56" stroke="#8A8378" stroke-width="2"/><rect x="116" y="56" width="56" height="56" stroke="#8A8378" stroke-width="2"/><rect x="28" y="72" width="56" height="24" fill="#E03A1E" stroke="#E03A1E"/><rect x="116" y="72" width="56" height="24" fill="#E03A1E" stroke="#E03A1E"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Riser fascia</div><div class="sp">from $200 a tour</div></div>
+        <p>The strip across the front of the drum riser. A small add-on that shows up in wide shots. Usually bought alongside the kick head, never instead of it.</p>
+        <div class="meta"><b>Seen by:</b> wide shots and video.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><line x1="10" y1="134" x2="190" y2="134"/><path d="M46 76 h108 l18 30 H28 z"/><rect x="28" y="106" width="144" height="20" fill="#E03A1E" stroke="#E03A1E"/><circle cx="100" cy="54" r="22"/><rect x="60" y="36" width="18" height="16"/><rect x="122" y="36" width="18" height="16"/></svg></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>The room</h3>
+    <h2>The longest look a patron gets</h2>
+    <p>The merch table and the tip jar hold a fan's attention longer than anything on the stage. People stop, read, and reach for a wallet, so a name in these spots earns more attention per dollar than any other surface a band owns. Residency placements live here too, priced monthly for house bands and resident acts.</p>
+    <div class="grid">
+      <div class="pl hero-pl">
+        <div class="head"><div class="sn">Tip jar card</div><div class="sp">from $250 a month</div></div>
+        <p>The residency placement. A printed card on the tip jar of a house band: the patron's name, the band, one line. Every eye in the room finds the tip jar, every night the band plays. The most popular option for local businesses supporting a nearby venue.</p>
+        <div class="meta"><b>Seen by:</b> the whole room, weekly, including the patron's own regulars.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M66 48 h68 l-8 82 h-52 z"/><line x1="62" y1="48" x2="138" y2="48"/><rect x="72" y="72" width="56" height="38" fill="#E03A1E" stroke="#E03A1E"/><path d="M88 34 q12 -12 24 0" stroke="#8A8378" stroke-width="2"/><line x1="26" y1="130" x2="174" y2="130"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Stage thank-you</div><div class="sp">from $200 a month</div></div>
+        <p>Once a set, from the mic, the band names the patron keeping the night going. It's a live read, delivered by someone the room already trusts. Residency only, worded by the band.</p>
+        <div class="meta"><b>Seen by:</b> heard by everyone present.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="84" y="24" width="32" height="52" rx="16"/><line x1="100" y1="76" x2="100" y2="128"/><line x1="72" y1="128" x2="128" y2="128"/><path d="M136 36 q22 34 0 68" stroke="#E03A1E"/><path d="M156 22 q32 46 0 96" stroke="#E03A1E"/><path d="M64 36 q-22 34 0 68" stroke="#E03A1E"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Merch table runner</div><div class="sp">from $500 a tour</div></div>
+        <p>The patron's mark on the table where fans spend two to five minutes deciding. Includes a small counter card. The surface fans spend the most time in front of.</p>
+        <div class="meta"><b>Seen by:</b> every fan who buys or browses.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><line x1="18" y1="70" x2="182" y2="70"/><line x1="30" y1="70" x2="30" y2="132"/><line x1="170" y1="70" x2="170" y2="132"/><rect x="18" y="70" width="164" height="22" fill="#E03A1E" stroke="#E03A1E"/><rect x="44" y="44" width="34" height="26"/><rect x="88" y="44" width="34" height="26"/><path d="M136 44 h30 v26 h-30 z"/><line x1="136" y1="54" x2="166" y2="54" stroke="#8A8378" stroke-width="2"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Hang tags</div><div class="sp">from $350 a tour</div></div>
+        <p>A tag on every piece of merch sold, the patron's name on the back of it. The only placement that goes home with the fan and stays there.</p>
+        <div class="meta"><b>Seen by:</b> every merch buyer, and everyone who sees them wear it.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M62 40 l14 -14 h48 l14 14 -18 14 v70 H80 V54 z"/><path d="M124 44 q18 6 20 24" stroke="#8A8378" stroke-width="2"/><path d="M136 68 h34 v30 h-34 l-10 -15 z" fill="#E03A1E" stroke="#E03A1E"/><circle cx="140" cy="83" r="3" fill="#fff" stroke="#fff"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Picks</div><div class="sp">from $200 a run</div></div>
+        <p>Branded picks, band on one face, the patron on the other. Played all night, thrown to the crowd at the end. Fans keep them, trade them, and post them.</p>
+        <div class="meta"><b>Seen by:</b> whoever catches one, and keeps it.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M34 44 h44 q6 30 -22 60 q-28 -30 -22 -60 z"/><path d="M96 44 h44 q6 30 -22 60 q-28 -30 -22 -60 z" fill="#E03A1E" stroke="#E03A1E"/><path d="M66 92 h44 q6 30 -22 60 q-28 -30 -22 -60 z" stroke="#8A8378" stroke-width="2"/></svg></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>Online and in print</h3>
+    <h2>Exposure that comes with numbers</h2>
+    <p>These placements carry their own numbers: post reach, email opens, video views. They travel past the room, and they make the easiest first buy for anyone who has never sponsored a band before.</p>
+    <div class="grid">
+      <div class="pl">
+        <div class="head"><div class="sn">Poster credit</div><div class="sp">from $300 a tour</div></div>
+        <p>A presented-by line on the tour poster and admat, everywhere the show is announced: venue walls, listings, the band's feed.</p>
+        <div class="meta"><b>Seen by:</b> everyone who sees the tour announced.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="44" y="16" width="112" height="120"/><line x1="58" y1="42" x2="142" y2="42" stroke-width="10"/><line x1="58" y1="60" x2="122" y2="60" stroke-width="10"/><line x1="58" y1="82" x2="142" y2="82" stroke="#8A8378" stroke-width="3"/><line x1="58" y1="94" x2="132" y2="94" stroke="#8A8378" stroke-width="3"/><rect x="58" y="108" width="84" height="16" fill="#E03A1E" stroke="#E03A1E"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Posts and email</div><div class="sp">from $400 a run</div></div>
+        <p>A named thank-you in the tour announcement post and the band's mailing list. Written by the band in their own voice, which is why it works.</p>
+        <div class="meta"><b>Seen by:</b> the band's full following.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="58" y="12" width="84" height="126" rx="8"/><rect x="68" y="34" width="64" height="46" stroke="#8A8378" stroke-width="2"/><line x1="68" y1="94" x2="132" y2="94" stroke="#8A8378" stroke-width="3"/><rect x="68" y="104" width="64" height="14" fill="#E03A1E" stroke="#E03A1E"/><line x1="86" y1="22" x2="114" y2="22" stroke-width="4"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Vlog logo card</div><div class="sp">from $250 a run</div></div>
+        <p>A card in the band's tour vlog or recap reel. Rolls with the footage fans actually rewatch.</p>
+        <div class="meta"><b>Seen by:</b> everyone who streams the recap.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="20" y="30" width="160" height="94"/><path d="M88 60 l30 17 -30 17 z" stroke="#8A8378" stroke-width="3"/><rect x="32" y="96" width="46" height="18" fill="#E03A1E" stroke="#E03A1E"/><line x1="20" y1="30" x2="180" y2="30" stroke-width="6"/></svg></div></div>
+      </div>
+      <div class="pl">
+        <div class="head"><div class="sn">Rig rundown</div><div class="sp">from $400</div></div>
+        <p>An integration in the band's gear walkthrough video. Watched almost exclusively by people who buy gear, which is why gear brands rate it above anything on the stage.</p>
+        <div class="meta"><b>Seen by:</b> players and gear buyers, the deepest-intent audience here.</div>
+        <div class="pv"><div class="dia"><svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" role="img" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="20" y="48" width="160" height="72" rx="4"/><rect x="34" y="62" width="38" height="44"/><rect x="82" y="62" width="38" height="44"/><rect x="130" y="62" width="38" height="44" fill="#E03A1E" stroke="#E03A1E"/><circle cx="53" cy="74" r="5"/><circle cx="101" cy="74" r="5"/><circle cx="149" cy="74" r="5" fill="#fff" stroke="#fff"/></svg></div></div>
+      </div>
+    </div>
+    <p class="zone-note">Bands price touring placements per tour, typically 15 to 25 shows, and residency placements per month. Longer runs and bigger venues scale per date, so nobody renegotiates.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>One name only</h3>
+    <h2>Exclusivity is for sale too</h2>
+    <div class="exc">
+      <div class="sn">Category exclusivity</div>
+      <p>By default a band can carry more than one patron. Being the only name in a category on a run, or the only patron on a whole tour, is a premium the band can choose to offer. Priced by the band, like everything else here.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>Before signing</h3>
+    <h2>The rules that keep it worth buying</h2>
+    <p>The rules that keep bands safe are the same ones that keep a placement worth having. A stage that doesn't look bought is the only kind worth being on.</p>
+    <div class="rules-mini">
+      <span>x</span> Nothing goes up without the band's yes.<br>
+      <span>x</span> Patrons put the money up before the first show.<br>
+      <span>x</span> Bands get paid every Friday. No chasing.<br>
+      <span>x</span> Patrons pay nothing for a placement that never runs.<br>
+      <span>x</span> No placements at weddings or private events.
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h3>Opening soon</h3>
+    <h2>Back a band that's already working</h2>
+    <p>Door Money opens in New York first. Patrons on the list see the first bands, rooms and circuits before anyone else.</p>
+    <div class="btnrow">
+      <a class="btn" href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964#signup">Become a patron</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fw">Door Money</div>
+    <p>Proof or it doesn't pay. Preview page. Standard-card prices shown; each band sets its own.</p>
+    <div class="fnav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

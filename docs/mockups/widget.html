@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The widget. Door Money.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDE8DC;
+  --black:#000000;
+  --red:#E03A1E;
+  --tape:#F2C230;
+  --gray:#55524B;
+  --poster:'Anton',Impact,sans-serif;
+  --type:'Special Elite','Courier New',monospace;
+  --sans:'Archivo',Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--black);font-family:var(--sans);font-size:16.5px;line-height:1.7}
+.wrap{max-width:1020px;margin:0 auto;padding:0 28px}
+.bar{border-bottom:3px solid var(--black);padding:14px 0}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+a.bm{font-family:var(--poster);font-size:20px;text-transform:uppercase;color:var(--black);text-decoration:none}
+a.bm span{color:var(--red)}
+.nav{display:flex;gap:18px;flex-wrap:wrap}
+.nav a{font-family:var(--poster);font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:var(--black);text-decoration:none;border-bottom:3px solid transparent;padding-bottom:2px}
+.nav a:hover{border-bottom-color:var(--red)}
+.nav a.on{border-bottom-color:var(--black)}
+section{padding:84px 0;border-top:3px solid var(--black)}
+h1{font-family:var(--poster);font-size:clamp(52px,9vw,110px);line-height:0.9;text-transform:uppercase}
+h1 span{color:var(--red)}
+h2{font-family:var(--poster);font-weight:400;font-size:clamp(32px,4.8vw,54px);line-height:1;text-transform:uppercase;margin-bottom:16px}
+h3{font-family:var(--type);font-size:15px;color:var(--red);margin-bottom:12px}
+p{max-width:62ch}
+.muted{color:var(--gray)}
+.tape{display:inline-block;background:var(--tape);color:var(--black);font-weight:700;font-size:13px;letter-spacing:0.04em;padding:6px 18px;transform:rotate(-1.5deg);box-shadow:2px 2px 0 rgba(0,0,0,0.25)}
+.btn{display:inline-block;font-family:var(--poster);font-size:19px;text-transform:uppercase;letter-spacing:0.03em;padding:14px 30px;border:3px solid var(--black);background:var(--red);color:#fff;text-decoration:none;box-shadow:5px 5px 0 var(--black);cursor:pointer;transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--black)}
+.btn.ghost{background:#fff;color:var(--black)}
+.hero{border-top:none;padding:88px 0 76px;position:relative}
+.hero .tape{margin-bottom:30px}
+.hero .sub{margin-top:24px;font-size:17px;max-width:56ch}
+.howline{margin-top:30px;font-family:var(--type);font-size:15px;line-height:2;border-left:3px solid var(--black);padding-left:18px;max-width:56ch}
+.ctas{margin-top:34px;display:flex;gap:22px;flex-wrap:wrap}
+
+/* fake artist site with the widget inside */
+.browser{margin-top:40px;border:3px solid var(--black);box-shadow:9px 9px 0 var(--black);background:#fff}
+.chrome{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:3px solid var(--black);background:#F4F1EA}
+.chrome i{width:12px;height:12px;border-radius:50%;border:2px solid var(--black);display:inline-block}
+.chrome .url{flex:1;margin-left:8px;font-family:var(--type);font-size:12.5px;color:var(--gray);border:2px solid var(--black);background:#fff;padding:4px 10px}
+.site{display:grid;grid-template-columns:1.25fr 1fr;gap:0}
+@media(max-width:760px){.site{grid-template-columns:1fr}}
+.band{padding:34px 30px;border-right:3px solid var(--black);background:#1A1814;color:#EDE8DC;min-height:100%}
+@media(max-width:760px){.band{border-right:none;border-bottom:3px solid var(--black)}}
+.band .bn{font-family:var(--poster);font-size:clamp(40px,6vw,64px);line-height:.9;text-transform:uppercase}
+.band .bn span{color:var(--tape)}
+.band .dates{margin-top:22px;font-family:var(--type);font-size:13.5px;color:#C9C4B8;line-height:1.9}
+.band .dates b{color:#EDE8DC;font-weight:400}
+.band .fake{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}
+.band .fake span{border:2px solid #6B655A;color:#C9C4B8;font-family:var(--poster);font-size:12px;text-transform:uppercase;padding:6px 12px;letter-spacing:.04em}
+.embed{padding:22px 22px 26px;background:#EDE8DC}
+.embed .note{font-family:var(--type);font-size:12px;color:var(--gray);margin-bottom:10px}
+
+/* the widget itself */
+.w{border:3px solid var(--black);background:#fff;box-shadow:6px 6px 0 var(--black);font-family:var(--sans);max-width:380px;margin:0 auto}
+.w .wh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:3px solid var(--black);background:var(--tape)}
+.w .wh b{font-family:var(--poster);font-size:17px;text-transform:uppercase;letter-spacing:.02em;font-weight:400}
+.w .wh .dm{font-family:var(--poster);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--red);border:2px solid var(--black);background:#fff;padding:3px 8px;transform:rotate(-3deg)}
+.w .run{padding:14px 16px 0}
+.w .run b{display:block;font-size:15px}
+.w .run span{font-family:var(--type);font-size:12.5px;color:var(--gray)}
+.w .bar2{margin:12px 16px 0;height:16px;border:2px solid var(--black);background:#fff;position:relative}
+.w .bar2 i{position:absolute;left:0;top:0;bottom:0;background:var(--red);width:59%}
+.w .amt{display:flex;justify-content:space-between;padding:6px 16px 0;font-family:var(--type);font-size:12.5px;color:var(--gray)}
+.w .tiers{display:grid;gap:8px;padding:14px 16px 0}
+.w .t{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;border:2px solid var(--black);padding:10px 12px;cursor:pointer;background:#fff;text-align:left;font-family:var(--sans)}
+.w .t:hover{background:#FFF9EE}
+.w .t.on{background:var(--tape);box-shadow:3px 3px 0 var(--black)}
+.w .t .pr{font-family:var(--poster);font-size:22px;line-height:1}
+.w .t .pr small{display:block;font-family:var(--type);font-size:10px;color:var(--gray);text-transform:none}
+.w .t b{display:block;font-size:13.5px;line-height:1.3}
+.w .t span{display:block;font-size:12px;color:var(--gray);line-height:1.4;margin-top:2px}
+.w .fields{padding:12px 16px 0;display:grid;gap:8px}
+.w .fields input{width:100%;border:2px solid var(--black);padding:9px 10px;font-family:var(--sans);font-size:14px;background:#fff}
+.w .fields input:focus{outline:none;box-shadow:3px 3px 0 var(--black)}
+.w .cardbox{border:2px dashed var(--black);padding:9px 10px;font-family:var(--type);font-size:12.5px;color:var(--gray);display:flex;align-items:center;gap:8px;background:#FAF8F3}
+.w .cardbox svg{flex:0 0 auto}
+.w .go{margin:14px 16px 0;width:calc(100% - 32px);font-family:var(--poster);font-size:18px;text-transform:uppercase;letter-spacing:.03em;padding:12px;border:3px solid var(--black);background:var(--red);color:#fff;box-shadow:4px 4px 0 var(--black);cursor:pointer}
+.w .go:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--black)}
+.w .wf{padding:12px 16px 14px;font-family:var(--type);font-size:11.5px;color:var(--gray);line-height:1.6;display:flex;gap:8px;align-items:flex-start}
+.w .wf svg{flex:0 0 auto;margin-top:2px}
+.w .done{display:none;padding:26px 16px 20px;text-align:center}
+.w .done .stamp{margin:0 auto 14px;font-family:var(--type);color:var(--red);border:3px solid var(--red);border-radius:50%;width:104px;height:104px;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1.25;transform:rotate(-8deg)}
+.w .done p{font-size:13.5px;line-height:1.6;max-width:none}
+
+/* install */
+.snip{margin-top:26px;background:var(--black);color:var(--paper);font-family:var(--type);font-size:14px;line-height:1.7;padding:22px 24px;border:3px solid var(--black);box-shadow:7px 7px 0 var(--red);overflow-x:auto;white-space:pre}
+.snip .k{color:var(--tape)}
+.snip .v{color:#FFB3A3}
+.steps{margin-top:34px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:16px 0;border-top:2px dashed var(--gray)}
+.step .n{font-family:var(--poster);font-size:26px;color:var(--red)}
+.step b{display:block;font-size:16px}
+.step p{font-size:14.5px;color:var(--gray);line-height:1.6;max-width:none}
+
+/* security explainer */
+.layers{margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start}
+@media(max-width:760px){.layers{grid-template-columns:1fr}}
+.layers svg{width:100%;height:auto;display:block;border:3px solid var(--black);background:#fff;box-shadow:7px 7px 0 var(--black)}
+.facts{list-style:none}
+.facts li{font-family:var(--type);font-size:15px;line-height:1.55;padding:12px 0;border-top:2px dashed #A79D8A;display:flex;gap:14px;align-items:baseline}
+.facts li:first-child{border-top:none}
+.facts li:before{content:"x";font-family:var(--poster);color:var(--red);font-size:14px}
+
+/* where it works */
+.where{margin-top:34px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media(max-width:700px){.where{grid-template-columns:1fr}}
+.wcard{background:#fff;border:3px solid var(--black);box-shadow:6px 6px 0 var(--black);padding:24px 22px}
+.wcard h4{font-family:var(--poster);font-size:22px;text-transform:uppercase;margin-bottom:8px}
+.wcard p{font-size:14.5px;color:var(--gray);line-height:1.6;max-width:none}
+.wcard .list{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.wcard .list span{font-family:var(--type);font-size:12px;border:2px solid var(--black);padding:4px 10px;background:#FFF9EE}
+.linkbtn{display:inline-flex;align-items:center;gap:10px;margin-top:16px;border:3px solid var(--black);background:var(--tape);padding:10px 16px;font-family:var(--poster);font-size:15px;text-transform:uppercase;letter-spacing:.03em;box-shadow:4px 4px 0 var(--black);color:var(--black);text-decoration:none}
+
+/* footer */
+footer{padding:56px 0 80px;border-top:3px solid var(--black);background:var(--black);color:var(--paper)}
+.fw{font-family:var(--poster);font-size:28px;text-transform:uppercase}
+footer p{font-size:13px;color:#9B968A;margin-top:10px;line-height:1.7}
+.fnav{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap}
+.fnav a{font-family:var(--type);font-size:13px;color:var(--paper)}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="wrap"><a class="bm" href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Door <span>Money</span></a><nav class="nav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a><a class="on" href="https://claude.ai/code/artifact/145571bd-5285-45d3-932c-5cbfb9f3312f">Widget</a><a href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a></nav></div></div>
+
+<div class="wrap hero">
+  <span class="tape">For every artist with a website</span>
+  <h1>The <span>widget</span></h1>
+  <p class="sub">One line of code puts a Door Money box on any artist's own site. Fans and local businesses back the act right there, on the page they already visit, without leaving for another platform. The money reaches the act on the same weekly schedule as everything else on Door Money.</p>
+  <div class="howline">The artist pastes one line into their site.<br>The widget shows the current run and takes the payment.<br>Door Money holds the money and pays the act weekly.<br>The act keeps every fan on their own page.</div>
+  <div class="ctas"><a class="btn" href="#demo">See it working</a><a class="btn ghost" href="#install">How to install</a></div>
+</div>
+
+<section id="demo">
+  <div class="wrap">
+    <h3>The demo</h3>
+    <h2>What it looks like on a band's site</h2>
+    <p class="muted">A sample band page with the widget dropped in. The tiers, totals and card field are pretend; picking a tier and pressing the button shows how it feels for a fan.</p>
+
+    <div class="browser">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">gutterhymns.band/tour</span></div>
+      <div class="site">
+        <div class="band">
+          <div class="bn">Gutter<br><span>Hymns</span></div>
+          <div class="dates">
+            <b>Fall run.</b> 18 shows, Oct 3 to Nov 2.<br>
+            Providence, Boston, Portland, Burlington, Albany, Kingston, Brooklyn, Philadelphia, Baltimore, Richmond, Asheville, Nashville, Louisville, Cincinnati, Columbus, Pittsburgh, Buffalo, Rochester.
+          </div>
+          <div class="fake"><span>Tickets</span><span>Merch</span><span>Listen</span><span>Mailing list</span></div>
+        </div>
+        <div class="embed">
+          <div class="note">Door Money widget, embedded in the page</div>
+          <div class="w" id="w">
+            <div class="wh"><b>Back the fall run</b><span class="dm">Door Money</span></div>
+            <div id="w-form">
+              <div class="run"><b>Gutter Hymns</b><span>18 shows. Oct 3 to Nov 2.</span></div>
+              <div class="bar2"><i></i></div>
+              <div class="amt"><span>$2,140 backed</span><span>of $3,600</span></div>
+              <div class="tiers" id="tiers">
+                <button class="t on" type="button" data-amt="25"><span class="pr">$25</span><span><b>Name on the tour thank-you</b><span>Listed on the band's end-of-run post and mailing list.</span></span></button>
+                <button class="t" type="button" data-amt="100"><span class="pr">$100</span><span><b>Name on the merch table card</b><span>Printed on the counter card at every show of the run.</span></span></button>
+                <button class="t" type="button" data-amt="500"><span class="pr">$500<small>and up</small></span><span><b>Take a placement</b><span>Kick head, cases, straps, posts. Opens the band's board on Door Money.</span></span></button>
+              </div>
+              <div class="fields">
+                <input type="text" placeholder="Name, as it should appear" aria-label="Name">
+                <input type="email" placeholder="Email" aria-label="Email">
+                <div class="cardbox"><svg width="16" height="18" viewBox="0 0 16 18" fill="none" stroke="#000" stroke-width="2"><rect x="2" y="8" width="12" height="9"/><path d="M5 8V5a3 3 0 0 1 6 0v3"/></svg>Card field, served by Door Money. Nothing typed here touches this site.</div>
+              </div>
+              <button class="go" type="button" id="w-go">Back for $25</button>
+              <div class="wf"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#55524B" stroke-width="2"><circle cx="7" cy="7" r="6"/><path d="M4 7l2 2 4-4"/></svg><span>Door Money holds the money and pays the band weekly through the run. Refunded in full if the run is cancelled.</span></div>
+            </div>
+            <div class="done" id="w-done">
+              <div class="stamp">BACKED</div>
+              <p><b id="w-msg">$25 to Gutter Hymns.</b><br>A receipt is on its way, and the name goes on the tour thank-you when the run wraps.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h3>The install</h3>
+    <h2>One line, on any site</h2>
+    <p class="muted">Every act on Door Money gets their own snippet. It goes wherever the site builder allows custom code: a page, a sidebar, a footer. Nothing else to configure.</p>
+    <div class="snip"><span class="k">&lt;script</span> src=<span class="v">"https://doormoney.co/embed.js"</span> data-act=<span class="v">"gutter-hymns"</span><span class="k">&gt;&lt;/script&gt;</span></div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><b>The act copies their snippet</b><p>It appears on the act's Door Money dashboard the moment their board is live. Same snippet for every page it goes on.</p></div></div>
+      <div class="step"><div class="n">2</div><div><b>The act pastes it into their site</b><p>Squarespace, WordPress, Wix, Webflow, Carrd, Shopify, a hand-built site. Anywhere that takes an embed block or custom HTML.</p></div></div>
+      <div class="step"><div class="n">3</div><div><b>The widget keeps itself current</b><p>When the run changes, the totals change, or a new board opens, the widget updates on its own. The act never touches the code again.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>The money</h3>
+    <h2>Why the artist's site never handles a card</h2>
+    <p class="muted">The widget takes payment on the artist's page without the artist's site ever seeing the card. Here is how the layers sit.</p>
+    <div class="layers">
+      <svg viewBox="0 0 440 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three nested boxes: the artist's site, the Door Money frame inside it, and the payment processor's card field inside that" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round">
+        <rect x="20" y="20" width="400" height="290"/>
+        <text x="36" y="48" fill="#000" stroke="none" font-family="Anton,Impact,sans-serif" font-size="18" letter-spacing="1">THE ARTIST'S SITE</text>
+        <text x="36" y="70" fill="#55524B" stroke="none" font-family="'Special Elite','Courier New',monospace" font-size="12">Shows the widget. Cannot read inside it.</text>
+        <rect x="60" y="92" width="320" height="196" stroke="#E03A1E"/>
+        <text x="76" y="120" fill="#E03A1E" stroke="none" font-family="Anton,Impact,sans-serif" font-size="18" letter-spacing="1">DOOR MONEY FRAME</text>
+        <text x="76" y="142" fill="#55524B" stroke="none" font-family="'Special Elite','Courier New',monospace" font-size="12">Served by Door Money. Holds the run, the tiers, the name.</text>
+        <rect x="100" y="164" width="240" height="100" fill="#F2C230"/>
+        <text x="116" y="192" fill="#000" stroke="none" font-family="Anton,Impact,sans-serif" font-size="18" letter-spacing="1">CARD FIELD</text>
+        <text x="116" y="214" fill="#000" stroke="none" font-family="'Special Elite','Courier New',monospace" font-size="12">Served by the payment processor.</text>
+        <text x="116" y="232" fill="#000" stroke="none" font-family="'Special Elite','Courier New',monospace" font-size="12">Card numbers stop here. Not the site,</text>
+        <text x="116" y="250" fill="#000" stroke="none" font-family="'Special Elite','Courier New',monospace" font-size="12">not Door Money's servers either.</text>
+      </svg>
+      <ul class="facts">
+        <li>The artist's site only holds one line of code. The widget itself lives on Door Money and loads into a frame the site cannot see into.</li>
+        <li>Inside that frame, the card field comes from the payment processor. The card number never reaches the artist's site and never reaches Door Money's servers. Only a token does.</li>
+        <li>Door Money holds every payment and releases it to the act weekly, exactly as it does for placements bought on Door Money itself.</li>
+        <li>If an artist's site is ever hacked or defaced, the widget stays untouched, because none of it is stored there.</li>
+        <li>Refunds, receipts and disputes run through Door Money, so the act never fields a payment question.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>Where it works</h3>
+    <h2>Every site, one way or another</h2>
+    <div class="where">
+      <div class="wcard">
+        <h4>The full widget</h4>
+        <p>Anywhere that accepts custom code or an embed block. Fans pay on the page, the run and the totals show live, and the act keeps the visitor on their own site.</p>
+        <div class="list"><span>Squarespace</span><span>WordPress</span><span>Wix</span><span>Webflow</span><span>Carrd</span><span>Shopify</span><span>Own code</span></div>
+      </div>
+      <div class="wcard">
+        <h4>The link button</h4>
+        <p>For platforms that only allow links: link-in-bio pages, Bandcamp, a Substack footer, an Instagram bio. The button sends the fan to the act's board on Door Money, where the same payment happens.</p>
+        <div class="list"><span>Linktree</span><span>Bandcamp</span><span>Instagram</span><span>Substack</span><span>Email signatures</span></div>
+        <a class="linkbtn" href="https://claude.ai/code/artifact/1cdefed4-4339-4577-b59e-0146a40bcc15"><span style="color:var(--red)">&#9679;</span> Back Gutter Hymns on Door Money</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>List an act</h3>
+    <h2>The widget comes with the board</h2>
+    <p class="muted">Every act that lists on Door Money gets the snippet and the link button on day one. Nothing extra to set up, nothing extra to pay.</p>
+    <div class="ctas"><a class="btn" href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a><a class="btn ghost" href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">See the placements</a></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fw">Door Money</div>
+    <p>Proof or it doesn't pay. Preview site. The widget shown here is a demo; the snippet, domain and tiers illustrate the idea only, until Door Money opens.</p>
+    <div class="fnav"><a href="https://claude.ai/code/artifact/f3d1cade-dcb1-458c-8c9d-9eb9b52a8964">Home</a><a href="https://claude.ai/code/artifact/5751b6c4-8c44-4883-b260-edd3ccf6d394">Placements</a><a href="https://claude.ai/code/artifact/2edbc76f-009f-4621-b67b-f430be329ba3">Live auctions</a><a href="https://claude.ai/code/artifact/145571bd-5285-45d3-932c-5cbfb9f3312f">Widget</a><a href="https://claude.ai/code/artifact/84dc0402-82e1-496e-9fdf-a4546b081f8f">List an act</a></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var amt=25, tiers=document.querySelectorAll("#tiers .t"), go=document.getElementById("w-go");
+  function money(n){return "$"+n.toLocaleString("en-US");}
+  tiers.forEach(function(t){
+    t.addEventListener("click",function(){
+      tiers.forEach(function(x){x.classList.remove("on");});
+      t.classList.add("on");
+      amt=parseInt(t.getAttribute("data-amt"),10);
+      go.textContent = amt>=500 ? "Open the board" : "Back for "+money(amt);
+    });
+  });
+  go.addEventListener("click",function(){
+    if(amt>=500){window.open("https://claude.ai/code/artifact/1cdefed4-4339-4577-b59e-0146a40bcc15","_blank");return;}
+    document.getElementById("w-form").style.display="none";
+    document.getElementById("w-done").style.display="block";
+    document.getElementById("w-msg").textContent=money(amt)+" to Gutter Hymns.";
+  });
+})();
+</script>
+</body>
+</html>
