@@ -201,3 +201,20 @@ export function recordReady(params: { to: string; patronName: string; actName: s
   ]);
   return { to: params.to, subject: `The record: ${params.actName}, ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
 }
+
+/** To a new address on the new-boards email. Says what arrives, how often, and how to stop it. */
+export function newsletterWelcome(params: { to: string; unsubscribeUrl: string }): Mail {
+  const lines = [
+    `This address is on the ${SITE.name} new-boards email.`,
+    `New musicians open boards on ${SITE.name} every week: a band about to tour, a house act starting a residency, a soloist booking a season. One short email says who they are, where they play and what is still open to back. Never more than once a week.`,
+    `Nothing to do now. The next one arrives the week a board opens.`,
+    `To stop the emails: ${params.unsubscribeUrl}`,
+  ];
+  const html = shell([
+    `This address is on the <b>${escape(SITE.name)} new-boards email</b>.`,
+    escape(lines[1]),
+    escape(lines[2]),
+    `To stop the emails: <a href="${escape(params.unsubscribeUrl)}" style="color:${BLUE}">unsubscribe</a>.`,
+  ]);
+  return { to: params.to, subject: `New boards on ${SITE.name}, by email`, text: lines.join("\n\n"), html };
+}

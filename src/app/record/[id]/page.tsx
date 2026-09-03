@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Eyebrow, Section, SectionHead } from "@/components/Brand";
 import { Page } from "@/components/Page";
+import { NewsletterCTA } from "@/components/Newsletter";
 import { themeFor } from "@/components/Theme";
 import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -181,6 +182,8 @@ export default async function RecordPage({ params }: Props) {
           <Eyebrow>Questions go to the board or to Door Money</Eyebrow>
         </div>
       </Section>
+
+      <NewsletterCTA source="record" eyebrow="The next run" title="The next run, before the placements go." />
     </Page>
   );
 }

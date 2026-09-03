@@ -45,7 +45,7 @@ Every page is a dark room with one colour of light in it. The room is the same o
 - Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
 - Bodoni Moda for H1s only, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for everything else: headings below the H1 (the `heading` utility, medium weight), body, and tracked caps labels (the `caps` utility). Nothing else.
 - Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`). The other themes carry public domain Gottlieb club photographs; credits in `public/hero/CREDITS.md`.
-- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`. Reuse them.
+- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`, `NewsletterCTA` and `NewsletterStrip` (the new-boards email: the band on patron pages, the strip in the footer). Reuse them.
 
 ## Engineering rules
 

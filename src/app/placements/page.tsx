@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Page } from "@/components/Page";
 import { Lines, Section, SectionHead } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
+import { NewsletterCTA } from "@/components/Newsletter";
 import { CATALOG, GROUPS, type Surface, type SurfaceGroup } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { HOUSE_RULES } from "@/lib/site";
@@ -112,6 +113,8 @@ export default function PlacementsPage() {
           ))}
         </ul>
       </Section>
+
+      <NewsletterCTA source="placements" />
 
       <Section className="pb-24">
         <SectionHead eyebrow="Opening soon">Back a musician who&apos;s already working</SectionHead>

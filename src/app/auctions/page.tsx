@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Page } from "@/components/Page";
 import { ButtonLink } from "@/components/Button";
 import { Countdown } from "@/components/Countdown";
+import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -79,6 +80,8 @@ export default async function AuctionsPage() {
           <ButtonLink href="/list" className="self-start">List an act</ButtonLink>
         </div>
       </div>
+
+      <NewsletterCTA source="auctions" eyebrow="The next board" />
     </Page>
   );
 }

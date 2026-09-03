@@ -4,6 +4,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { Eyebrow, Lines } from "@/components/Brand";
 import { HeroArt } from "@/components/HeroArt";
+import { NewsletterCTA } from "@/components/Newsletter";
 import { Theme, themeFor } from "@/components/Theme";
 import { getBoard, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
@@ -157,6 +158,8 @@ export default async function BoardPage({ params, searchParams }: Props) {
             />
           </div>
         </div>
+
+        <NewsletterCTA source={`board:${board.act.slug}`} eyebrow="The next board" />
       </main>
 
       <Footer note={showBackers ? BACKERS_DISCLAIMER : undefined} />

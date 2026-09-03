@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { LEGAL, NAV, SITE } from "@/lib/site";
 import { Logo } from "@/components/Logo";
+import { NewsletterStrip } from "@/components/Newsletter";
 
 export function Footer({ note }: { note?: string }) {
   return (
     <footer className="border-t border-line pb-12 pt-16">
       <div className="mx-auto max-w-[1120px] px-7">
-        <div className="grid gap-12 md:grid-cols-[1fr_auto_auto] md:gap-20">
+        <NewsletterStrip source="footer" />
+        <div className="grid gap-12 pt-12 md:grid-cols-[1fr_auto_auto] md:gap-20">
           <div>
             <Logo className="h-[64px] w-auto text-ink max-md:h-[52px]" />
             <p className="mt-4 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">

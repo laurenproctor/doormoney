@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/Button";
 import { HeroArt } from "@/components/HeroArt";
 import { Theme } from "@/components/Theme";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
@@ -112,6 +113,9 @@ export default async function HomePage() {
           </div>
         </Section>
       )}
+
+      {/* New boards by email */}
+      <NewsletterCTA source="home" />
 
       {/* How it works */}
       <Section>

@@ -15,14 +15,16 @@ export default async function AdminPage() {
   await requireAdmin();
   const db = supabaseAdmin();
 
-  const [acts, runs, lots, purchases, notes, waitlist] = await Promise.all([
+  const [acts, runs, lots, purchases, notes, waitlist, newsletter] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
     db.from("lots").select("id,run_id,surface_key,label,price_cents,mode,status"),
     db.from("purchases").select("id,lot_id,amount_cents,fee_cents,payment_status,mark_status,created_at").order("created_at", { ascending: false }),
     db.from("contact_messages").select("id,reason,name,organization,email,subject,message,status,created_at").order("created_at", { ascending: false }).limit(100),
     db.from("waitlist").select("id,role,name,email,city,act_type,created_at").order("created_at", { ascending: false }).limit(200),
+    db.from("newsletter").select("id,email,source,created_at,unsubscribed_at").order("created_at", { ascending: false }).limit(200),
   ]);
+  const subscribers = (newsletter.data ?? []).filter((n) => !n.unsubscribed_at);
 
   type ActRow = { id: string; slug: string; name: string; type: string; city: string; stripe_account_id: string | null; stripe_payouts_enabled: boolean; founding: boolean; created_at: string; profiles: { email: string } | null };
   const actRows = (acts.data ?? []) as unknown as ActRow[];
@@ -37,12 +39,13 @@ export default async function AdminPage() {
   return (
     <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Read only" title="Admin" accent="">
       <div className="grid gap-[30px]">
-        <dl className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        <dl className="grid grid-cols-2 gap-4 md:grid-cols-6">
           <Stat n={String(actRows.length)} label="acts" />
           <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="boards up" />
           <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
           <Stat n={formatMoney(held)} label="held" />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
+          <Stat n={String(subscribers.length)} label="get new boards" />
         </dl>
 
         <Card>
@@ -124,6 +127,14 @@ export default async function AdminPage() {
           <Table
             head={["When", "Role", "Name", "Email", "City", "Act type"]}
             rows={(waitlist.data ?? []).map((w) => [when.format(new Date(w.created_at)), w.role, w.name, w.email, w.city ?? "", w.act_type?.replace("_", " ") ?? ""])}
+          />
+        </Card>
+
+        <Card>
+          <CardHead eyebrow="New boards by email">{subscribers.length} addresses</CardHead>
+          <Table
+            head={["When", "Email", "From", "Status"]}
+            rows={(newsletter.data ?? []).map((n) => [when.format(new Date(n.created_at)), n.email, n.source ?? "", n.unsubscribed_at ? "unsubscribed" : "on"])}
           />
         </Card>
       </div>
