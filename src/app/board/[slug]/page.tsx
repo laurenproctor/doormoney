@@ -10,7 +10,8 @@ import { WidgetFrame } from "@/components/WidgetFrame";
 import { getBoard, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
-import { bidStepCents, formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/money";
+import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { BoardLots, type LotView } from "./BoardLots";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
@@ -77,20 +78,31 @@ export default async function BoardPage({ params, searchParams }: Props) {
   const showBackers = slug === "rosie-bassoon";
   const backers = board.backers ?? [];
 
+  const nowIso = new Date().toISOString();
   const lots: LotView[] = board.lots.map((l) => {
     const s = CATALOG.find((c) => c.key === l.surfaceKey);
+    const lotCloses = l.closesAt ?? closesAt ?? null;
     return {
       id: l.id,
       name: l.label ?? s?.name ?? l.surfaceKey,
       note: s ? `${firstSentence(s.blurb)} Shows up: ${s.seenBy}.` : "",
       mode: l.mode,
       sold: l.status === "sold",
+      soldCents: l.soldCents ?? null,
+      wonAtAuction: l.wonAtAuction ?? false,
       pending: l.status === "pending_funding",
+      awaitingFunding: l.mode === "auction" && l.status === "pending_funding",
+      closed: l.mode === "auction" && (l.status !== "open" || Boolean(lotCloses && lotCloses <= nowIso)),
       priceCents: l.priceCents,
       bidCents: l.topBid?.amountCents ?? null,
-      bidder: l.status === "sold" ? (l.soldTo ?? "a patron") : (l.topBid?.patronName ?? null),
+      // A patron who bid anonymously stays anonymous on the board after they win. The act sees the
+      // name on the dashboard, and the mark itself is not anonymous by definition.
+      bidder: l.status === "sold" ? (l.topBid?.anonymous ? "Anonymous patron" : (l.soldTo ?? "a patron")) : (l.topBid?.patronName ?? null),
       anonymous: l.topBid?.anonymous ?? false,
-      stepCents: bidStepCents(l.priceCents),
+      minimumCents: minimumBidCents(l.priceCents, l.topBid?.amountCents ?? null),
+      // The buy-it-now offer stands while the bidding is below it.
+      buyNowCents: buyNowOpen({ status: l.status, buy_now_cents: l.buyNowCents ?? null }, l.topBid?.amountCents ?? null) ? (l.buyNowCents ?? null) : null,
+      closesAt: lotCloses,
     };
   });
 

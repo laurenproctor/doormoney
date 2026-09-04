@@ -31,7 +31,7 @@ export default async function RunPage({ params }: Props) {
     .maybeSingle();
   if (!run) notFound();
 
-  const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status").eq("run_id", id).order("created_at");
+  const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", id).order("created_at");
   const { data: shows } = await sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", id).order("played_on");
   const surfaces = CATALOG.filter((s) => s.appliesTo.includes(act.type));
   const boardHref = `${SITE.url}/board/${act.slug}`;

@@ -6,9 +6,9 @@ import { Button } from "@/components/Button";
 import { GROUPS, type Surface, type SurfaceGroup } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 
-export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string };
+export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string; buy_now_cents: number | null };
 
-type RowState = { on: boolean; count: string; price: string; mode: "fixed" | "auction" };
+type RowState = { on: boolean; count: string; price: string; mode: "fixed" | "auction"; buyNow: string };
 
 const initial: LotsState = { ok: false };
 const dollars = (cents: number) => (cents / 100).toFixed(cents % 100 ? 2 : 0);
@@ -16,6 +16,7 @@ const dollars = (cents: number) => (cents / 100).toFixed(cents % 100 ? 2 : 0);
 /**
  * The standard card for this act type, each surface a row: on or off, how many spots,
  * the price, fixed or auction. Prices start at the card default; the act's number wins.
+ * An auction spot can also carry a take-it-now price, which ends the bidding when someone pays it.
  */
 export function LotsEditor({
   runId,
@@ -36,8 +37,8 @@ export function LotsEditor({
     for (const s of surfaces) {
       const mine = lots.filter((l) => l.surface_key === s.key);
       r[s.key] = mine.length
-        ? { on: true, count: String(mine.length), price: dollars(mine[0].price_cents), mode: mine[0].mode }
-        : { on: false, count: "1", price: dollars(s.defaultPriceCents), mode: "fixed" };
+        ? { on: true, count: String(mine.length), price: dollars(mine[0].price_cents), mode: mine[0].mode, buyNow: mine[0].buy_now_cents ? dollars(mine[0].buy_now_cents) : "" }
+        : { on: false, count: "1", price: dollars(s.defaultPriceCents), mode: "fixed", buyNow: "" };
     }
     return r;
   });
@@ -65,7 +66,7 @@ export function LotsEditor({
                 const r = rows[s.key];
                 const locked = lockedKeys.has(s.key);
                 return (
-                  <div key={s.key} className={`grid gap-3 border-b border-line p-4 last:border-b-0 md:grid-cols-[28px_1fr_90px_140px_150px] md:items-center ${r.on ? "" : "opacity-80"}`}>
+                  <div key={s.key} className={`grid gap-3 border-b border-line p-4 last:border-b-0 md:grid-cols-[28px_1fr_80px_120px_150px_130px] md:items-center ${r.on ? "" : "opacity-80"}`}>
                     <input
                       type="checkbox"
                       name={`on_${s.key}`}
@@ -120,6 +121,18 @@ export function LotsEditor({
                         <option value="fixed">Fixed price</option>
                         <option value="auction">Auction, price is the reserve</option>
                       </select>
+                    </label>
+                    <label className={`caps text-[14px] ${r.mode === "auction" ? "" : "max-md:hidden md:invisible"}`}>
+                      Take it now
+                      <input
+                        name={`buynow_${s.key}`}
+                        inputMode="decimal"
+                        value={r.buyNow}
+                        placeholder="Optional"
+                        disabled={!r.on || r.mode !== "auction"}
+                        onChange={(e) => set(s.key, { buyNow: e.target.value })}
+                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
+                      />
                     </label>
                   </div>
                 );

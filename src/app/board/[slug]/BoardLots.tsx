@@ -1,9 +1,12 @@
 "use client";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
 import { Eyebrow } from "@/components/Brand";
 import { Countdown } from "@/components/Countdown";
 import { LotCheckout } from "@/components/LotCheckout";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/money";
+import { BidForm } from "./BidForm";
 
 export type LotView = {
   id: string;
@@ -11,16 +14,26 @@ export type LotView = {
   note: string;
   mode: "fixed" | "auction";
   sold: boolean;
-  /** Somebody is mid-checkout on this lot. */
+  /** What it sold for, which is not always the top bid. */
+  soldCents: number | null;
+  /** Sold out of the bidding rather than taken at a set price. */
+  wonAtAuction: boolean;
+  /** Somebody is mid-checkout on this fixed-price spot, or a winning bidder is paying for this one. */
   pending: boolean;
+  /** The auction closed and the winner has not paid yet. */
+  awaitingFunding: boolean;
+  /** Bidding on this lot is over. */
+  closed: boolean;
   priceCents: number;
   bidCents: number | null;
   bidder: string | null;
   anonymous: boolean;
-  stepCents: number;
+  /** The smallest bid the lot will take now. */
+  minimumCents: number;
+  /** Set while an auction lot can still be taken outright at this price. */
+  buyNowCents: number | null;
+  closesAt: string | null;
 };
-
-type Live = { bidCents: number | null; bidder: string | null; mine: boolean; sold: boolean };
 
 /** Initials for the little mark next to a bidder: "Kettle St. Coffee" becomes "KS". */
 function initials(name: string) {
@@ -32,10 +45,8 @@ function initials(name: string) {
 }
 
 const MARK = {
-  /** Another patron holds the bid. */
+  /** A patron holds the bid. */
   bid: "border-accent/70 text-accent-ink",
-  /** This patron holds the bid. */
-  mine: "rounded-full border-accent bg-accent text-on-accent",
   /** Sold. */
   sold: "border-ink bg-ink text-ground",
   /** Nobody yet. */
@@ -51,9 +62,9 @@ function Mark({ text, kind }: { text: string; kind: keyof typeof MARK }) {
 }
 
 /**
- * The board total and the lot list. Fixed-price spots check out for real through LotCheckout.
- * Until Phase 5 ships real bidding, pressing a bid button raises the bid locally, as the mockup
- * does, so the board total responds.
+ * The board total and the lot list. Fixed-price spots check out here; auction lots take real bids
+ * through the bid form. The board watches the bids table over Realtime, so a bid anyone places
+ * shows up on every open board within a second.
  */
 export function BoardLots({
   lots,
@@ -66,27 +77,37 @@ export function BoardLots({
   closesLabel: string;
   heading: string;
 }) {
-  const [taking, setTaking] = useState<string | null>(null);
-  const [live, setLive] = useState<Record<string, Live>>(() =>
-    Object.fromEntries(lots.map((l) => [l.id, { bidCents: l.bidCents, bidder: l.bidder, mine: false, sold: l.sold }])),
-  );
+  const router = useRouter();
+  const [open, setOpen] = useState<{ id: string; kind: "take" | "bid" | "buyNow" } | null>(null);
+  const [justBid, setJustBid] = useState<Set<string>>(new Set());
 
-  const worth = lots.reduce((n, l) => {
-    const v = live[l.id];
-    return n + (v.sold ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? 0));
-  }, 0);
+  // The lots this board watches, as one stable string. The array itself is a new object on every
+  // render, so depending on it directly would tear the subscription down and build it again each time.
+  const watchKey = lots
+    .filter((l) => l.mode === "auction")
+    .map((l) => l.id)
+    .sort()
+    .join(",");
 
-  const press = (l: LotView) => {
-    if (l.mode === "fixed") {
-      setTaking((cur) => (cur === l.id ? null : l.id));
-      return;
-    }
-    setLive((prev) => {
-      const v = prev[l.id];
-      const next = (v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents;
-      return { ...prev, [l.id]: { ...v, bidCents: next, bidder: "This patron", mine: true } };
-    });
-  };
+  // Somebody bid, here or anywhere else. Re-read the board rather than patching it by hand, so the
+  // patron's name and the totals come from the same place they always do.
+  useEffect(() => {
+    if (!watchKey) return;
+    const ids = new Set(watchKey.split(","));
+    const sb = supabaseBrowser();
+    const channel = sb
+      .channel("board-bids")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, (payload) => {
+        const row = (payload.new ?? payload.old) as { lot_id?: string } | null;
+        if (row?.lot_id && ids.has(row.lot_id)) router.refresh();
+      })
+      .subscribe();
+    return () => {
+      sb.removeChannel(channel);
+    };
+  }, [watchKey, router]);
+
+  const worth = lots.reduce((n, l) => n + (l.sold ? (l.bidCents ?? l.priceCents) : (l.bidCents ?? 0)), 0);
 
   return (
     <>
@@ -110,51 +131,86 @@ export function BoardLots({
         <h2 className="heading mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
         <div className="grid gap-px bg-line">
           {lots.map((l, i) => {
-            const v = live[l.id];
-            const sold = v.sold;
-            const amount = sold || l.mode === "fixed" ? (v.bidCents ?? l.priceCents) : (v.bidCents ?? l.priceCents);
-            const label = sold ? "won at" : l.mode === "fixed" ? "fixed price" : v.bidCents ? "current bid" : "opening bid";
-            const bidder = l.pending && !sold ? "being taken right now" : (v.bidder ?? "open");
-            const markKind = v.mine ? "mine" : sold ? "sold" : v.bidder && !l.anonymous ? "bid" : "open";
-            const markText = v.mine ? "TP" : l.anonymous ? "?" : v.bidder ? initials(v.bidder) : "+";
-            const button = l.mode === "fixed" ? `Take this spot for ${formatMoney(l.priceCents)}` : `Bid ${formatMoney((v.bidCents ?? l.priceCents - l.stepCents) + l.stepCents)}`;
+            const auction = l.mode === "auction";
+            const amount = l.sold ? (l.soldCents ?? l.bidCents ?? l.priceCents) : (l.bidCents ?? l.priceCents);
+            const label = l.sold ? (l.wonAtAuction ? "won at" : "taken at") : !auction ? "fixed price" : l.bidCents ? "current bid" : "opening bid";
+            const bidder = l.awaitingFunding ? "won, paying now" : l.pending && !l.sold ? "being taken right now" : (l.bidder ?? "open");
+            const markKind = l.sold ? "sold" : l.bidder ? "bid" : "open";
+            const markText = l.sold || l.bidder ? (l.anonymous ? "?" : initials(l.bidder ?? "Patron")) : "+";
+            const canAct = !l.sold && !l.pending && !l.awaitingFunding && !(auction && l.closed);
+            const button = auction ? `Bid ${formatMoney(l.minimumCents)}` : `Take this spot for ${formatMoney(l.priceCents)}`;
+            const mine = justBid.has(l.id);
             return (
-              <div
-                key={l.id}
-                data-reveal
-                style={{ "--i": i } as CSSProperties}
-                className={`relative grid items-center gap-x-8 gap-y-3 px-7 py-6 max-md:px-5 min-[681px]:grid-cols-[1fr_auto] ${sold ? "bg-ground" : "bg-ground"}`}
-              >
+              <div key={l.id} data-reveal style={{ "--i": i } as CSSProperties} className="relative grid items-center gap-x-8 gap-y-3 bg-ground px-7 py-6 max-md:px-5 min-[681px]:grid-cols-[1fr_auto]">
                 <div>
-                  <div className={`heading text-[24px] leading-[1.1] ${sold ? "text-muted" : ""}`}>{l.name}</div>
+                  <div className={`heading text-[24px] leading-[1.1] ${l.sold ? "text-muted" : ""}`}>{l.name}</div>
                   <div className="mt-1.5 max-w-[60ch] text-[14.5px] leading-[1.55] text-muted">{l.note}</div>
+                  {auction && l.closesAt && !l.sold && !l.closed && (
+                    <div className="caps mt-2 text-[14px] text-muted">
+                      Closes in <Countdown closesAt={l.closesAt} className="text-accent-ink" />
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-[200px] min-[681px]:text-right">
                   <div className="caps text-[14px] text-muted">{label}</div>
-                  <div className={`heading mt-1 text-[30px] leading-none ${sold ? "text-muted" : "text-accent-ink"}`}>{formatMoney(amount)}</div>
+                  <div className={`heading mt-1 text-[30px] leading-none ${l.sold ? "text-muted" : "text-accent-ink"}`}>{formatMoney(amount)}</div>
                   <div className="mt-2 flex items-center gap-2 min-[681px]:justify-end">
                     <Mark text={markText} kind={markKind} />
                     <div className="caps text-[14px] text-muted">{bidder}</div>
                   </div>
-                  {!sold && !l.pending && (
-                    <button
-                      type="button"
-                      onClick={() => press(l)}
-                      aria-expanded={l.mode === "fixed" ? taking === l.id : undefined}
-                      className="caps mt-3 cursor-pointer border border-accent bg-accent px-5 py-3 text-[14px] tracking-[0.16em] text-on-accent transition-colors hover:border-accent-ink hover:bg-accent-ink"
-                    >
-                      {button}
-                    </button>
+                  {mine && <div className="caps mt-2 text-[14px] text-accent-ink">Bid placed</div>}
+                  {canAct && (
+                    <div className="mt-3 flex flex-wrap gap-2.5 min-[681px]:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setOpen((cur) => (cur?.id === l.id && cur.kind !== "buyNow" ? null : { id: l.id, kind: auction ? "bid" : "take" }))}
+                        aria-expanded={open?.id === l.id && open.kind !== "buyNow"}
+                        className="caps cursor-pointer border border-accent bg-accent px-5 py-3 text-[14px] tracking-[0.16em] text-on-accent transition-colors hover:border-accent-ink hover:bg-accent-ink"
+                      >
+                        {button}
+                      </button>
+                      {auction && l.buyNowCents !== null && (
+                        <button
+                          type="button"
+                          onClick={() => setOpen((cur) => (cur?.id === l.id && cur.kind === "buyNow" ? null : { id: l.id, kind: "buyNow" }))}
+                          aria-expanded={open?.id === l.id && open.kind === "buyNow"}
+                          className="caps cursor-pointer border border-accent px-5 py-3 text-[14px] tracking-[0.16em] text-accent-ink transition-colors hover:bg-accent hover:text-on-accent"
+                        >
+                          Take it now for {formatMoney(l.buyNowCents)}
+                        </button>
+                      )}
+                    </div>
                   )}
+                  {auction && l.closed && !l.sold && !l.awaitingFunding && <div className="caps mt-3 text-[14px] text-muted">Bidding closed</div>}
                 </div>
-                {taking === l.id && !sold && (
-                  <LotCheckout lotId={l.id} lotName={l.name.toLowerCase()} priceLabel={formatMoney(l.priceCents)} onClose={() => setTaking(null)} />
+
+                {open?.id === l.id && open.kind === "take" && (
+                  <LotCheckout lotId={l.id} lotName={l.name.toLowerCase()} priceLabel={formatMoney(l.priceCents)} onClose={() => setOpen(null)} />
                 )}
-                {sold && (
-                  <div className="caps absolute right-5 top-4 bg-accent px-2.5 py-1 text-[14px] text-on-accent min-[681px]:right-7 min-[681px]:top-6">
-                    Sold
-                  </div>
+                {open?.id === l.id && open.kind === "buyNow" && l.buyNowCents !== null && (
+                  <LotCheckout
+                    lotId={l.id}
+                    lotName={l.name.toLowerCase()}
+                    priceLabel={formatMoney(l.buyNowCents)}
+                    buyNow
+                    note="Taking it now ends the bidding on this spot. Anyone who bid is told, and nothing is charged to them."
+                    onClose={() => setOpen(null)}
+                  />
                 )}
+                {open?.id === l.id && open.kind === "bid" && (
+                  <BidForm
+                    lotId={l.id}
+                    lotName={l.name.toLowerCase()}
+                    minimumCents={l.minimumCents}
+                    onClose={() => setOpen(null)}
+                    onDone={() => {
+                      setOpen(null);
+                      setJustBid((prev) => new Set(prev).add(l.id));
+                      router.refresh();
+                    }}
+                  />
+                )}
+                {l.sold && <div className="caps absolute right-5 top-4 bg-accent px-2.5 py-1 text-[14px] text-on-accent min-[681px]:right-7 min-[681px]:top-6">Sold</div>}
               </div>
             );
           })}

@@ -16,7 +16,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] Data model designed and written as a Supabase migration
 - [x] Seed data: Gutter Hymns and Rosie, so every screen has something to render
 - [x] Supabase project created, migration applied, `.env.local` filled in
-- [ ] Stripe account in test mode, Connect enabled (Express accounts)
+- [x] Stripe account in test mode, Connect enabled (Express accounts). Proven 2026-09-03 with a throwaway act: hosted Express onboarding, `account.updated`, a transfer against a charge.
 - [x] Deployed to Vercel from `main`
 - [x] Resend (or equivalent) account for transactional email
 
@@ -52,7 +52,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 
 - [x] Auth: Supabase Auth with magic-link email. No passwords. Sign-in at `/login`, callback at `/auth/callback`, session refresh in `src/proxy.ts`. Auth emails go out through Resend SMTP.
 - [x] Act onboarding: name, slug, city, type (touring band, house act, soloist), photo. One act per account. Photos land in the public `acts` bucket.
-- [ ] Stripe Connect onboarding: Express account, hosted onboarding flow, webhook to mark the act as payable. Built in `src/app/actions/payouts.ts` and the `account.updated` webhook branch; untested until a Stripe key is in `.env.local`.
+- [x] Stripe Connect onboarding: Express account, hosted onboarding flow, webhook to mark the act as payable. `src/app/actions/payouts.ts` and the `account.updated` webhook branch. Tested end to end 2026-09-03 in test mode.
 - [x] Runs: a tour, a season, or a residency month, with start and end dates and a show count
 - [x] Lots: pick surfaces from the standard card, set a price, choose fixed or auction. Standard-card prices prefilled, editable. Up to six spots per surface; sold spots are never touched.
 - [x] Act dashboard: current run, lots, what's sold, what's pending
@@ -81,6 +81,8 @@ This is the phase that decides whether the business works, so it comes before au
 
 **Done when:** a test-mode patron backs a test-mode act, the money sits in the platform balance, and the Friday job moves it. Then run it with one real act and one real patron, for real money, before building anything else.
 
+The test-mode half is done, 2026-09-03. A throwaway act finished Express onboarding, a patron took a $200 spot and a fan backed $100 through the widget, and the Friday job sent ten transfers totalling $159.35, each with `source_transaction` on the right charge. Running it twice moved nothing the second time. Door Money's $45 stayed on the platform balance. The rehearsal data was deleted and both charges refunded afterwards. What remains is the same thing with real money.
+
 ---
 
 ## Phase 4. The widget
@@ -104,15 +106,18 @@ This is the phase that decides whether the business works, so it comes before au
 
 **Goal:** the live board with bidding, closing times, and the 48-hour funding window.
 
-- [ ] Bids table with a reserve and a close time per lot
-- [ ] Live updates on the board via Supabase Realtime
-- [ ] Proxy bidding or straight bidding: decide, then build one
-- [ ] Close job: at close time, mark the winner, start the 48-hour clock
-- [ ] Funding flow: winner gets an email and a checkout link; unpaid after 48 hours rolls to the next bid
-- [ ] Anonymous bidding option, shown as "Anonymous patron"
-- [ ] Outbid and closing-soon emails
+- [x] Bids table with a reserve and a close time per lot. The reserve is the lot's `price_cents`; migration 0011 adds `lots.closes_at`, which falls back to the run's `bidding_closes_at`.
+- [x] Live updates on the board via Supabase Realtime. `BoardLots` watches the `bids` table and re-reads the board, so names and totals stay server-rendered.
+- [x] Straight bidding, per `docs/DECISIONS.md`, decision 4. The next bid is the top bid plus `bidStepCents`, or the reserve when there are none. A bid ten times the asking price asks for confirmation first.
+- [x] Close job: `/api/cron/auctions` (`src/lib/auctions.ts`), every ten minutes in `vercel.json`. The top bid at or above the reserve wins and gets 48 hours; nothing at the reserve goes unsold and the act is told.
+- [x] Funding flow: the winner gets an email with a private link at `/claim/[token]`, and pays through the Phase 3 checkout at the bid amount. Unpaid after 48 hours, the bid is marked passed and the lot rolls to the next bid with a fresh window and a fresh link. The old link dies.
+- [x] Anonymous bidding option, shown as "Anonymous patron", on the board and after the sale. The act sees the name.
+- [x] Outbid and closing-soon emails, one per bid and one per lot.
+- [x] Take it now, added on request outside the original plan: an auction spot can carry a set price that ends the bidding. Migration 0012 adds `lots.buy_now_cents`, above the reserve by constraint, and the act sets it beside the reserve on the run page. The offer stands while the bidding is below it and disappears once a bid reaches it. Taking a spot charges immediately through the Phase 3 checkout, and everyone who bid is told the bidding is over and that nothing was charged to them.
 
 **Done when:** two test patrons bid against each other, one wins, doesn't pay, and the lot rolls to the other automatically.
+
+Done 2026-09-03, in test mode, on a throwaway board. Two patrons bid $120 and $150, a $110 bid was refused with the minimum, and a bid landing elsewhere reached an open board in about a second. The auction closed to the $180 top bid, the winner let the window lapse, and the job marked that bid passed and rolled the lot to $150 with a new link. The second bidder paid, the lot sold at the bid rather than the reserve, and four Friday slices were laid down. The rehearsal data was deleted and the charge refunded.
 
 ---
 

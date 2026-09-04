@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CATALOG } from "@/lib/catalog";
-import { payoutNotice, purchaseReceipt, saleNotice, sendEmail } from "@/lib/email";
+import { payoutNotice, purchaseReceipt, saleNotice, sendEmail, spotTaken } from "@/lib/email";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { SITE } from "@/lib/site";
 import { stripe } from "@/lib/stripe";
@@ -33,6 +33,9 @@ type PurchaseRow = {
     id: string;
     label: string | null;
     surface_key: string;
+    mode: string;
+    winner_bid_id: string | null;
+    buy_now_cents: number | null;
     runs: { id: string; title: string; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
   };
 };
@@ -40,7 +43,7 @@ type PurchaseRow = {
 async function loadPurchase(sb: Admin, id: string) {
   const { data, error } = await sb
     .from("purchases")
-    .select("id,amount_cents,fee_cents,payment_status,lot_id,patrons(name,contact_email),lots!inner(id,label,surface_key,runs!inner(id,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
+    .select("id,amount_cents,fee_cents,payment_status,lot_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`purchase ${id}: ${error.message}`);
@@ -82,7 +85,11 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
   if (error) throw new Error(`hold purchase ${p.id}: ${error.message}`);
   if (!updated?.length) return { ok: true as const, already: true };
 
-  await sb.from("lots").update({ status: "sold", funding_deadline: null }).eq("id", p.lot_id);
+  await sb.from("lots").update({ status: "sold", funding_deadline: null, funding_token: null }).eq("id", p.lot_id);
+
+  // Taken outright at the take-it-now price, with bids already on it. Everyone who bid is told the
+  // bidding is over, and that nothing was charged to them.
+  if (p.lots.mode === "auction" && !p.lots.winner_bid_id) await notifyBiddersSpotTaken(sb, p);
 
   // The schedule: the act's share, in equal Friday slices across the run.
   const run = p.lots.runs;
@@ -119,12 +126,42 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
 export async function releaseLot(sb: Admin, session: Stripe.Checkout.Session) {
   const purchaseId = session.metadata?.purchase_id;
   if (!purchaseId) return { ok: false as const, reason: "no purchase id on session" };
-  const { data: p } = await sb.from("purchases").select("id,lot_id,payment_status").eq("id", purchaseId).maybeSingle();
+  const { data: p } = await sb.from("purchases").select("id,lot_id,payment_status,lots!inner(mode,winner_bid_id)").eq("id", purchaseId).maybeSingle();
   if (!p) return { ok: true as const, already: true };
   if (p.payment_status !== "requires_payment") return { ok: true as const, already: true }; // paid after all; leave it
   await sb.from("purchases").delete().eq("id", p.id).eq("payment_status", "requires_payment");
-  await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", p.lot_id).eq("status", "pending_funding");
+  // A fixed-price spot goes straight back on the board, and so does an auction lot somebody was
+  // taking at its buy-it-now price. A lot won at auction stays with its winner: they still have the
+  // rest of their 48 hours, and the auction job rolls it on if they run out.
+  const lot = (p as unknown as { lots: { mode: string; winner_bid_id: string | null } }).lots;
+  if (lot.mode === "fixed" || !lot.winner_bid_id) await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", p.lot_id).eq("status", "pending_funding");
   return { ok: true as const, already: false };
+}
+
+type LosingBid = { amount_cents: number; patrons: { name: string; contact_email: string } | null };
+
+/** Tells everyone who bid that the spot went at the take-it-now price. One email each. */
+async function notifyBiddersSpotTaken(sb: Admin, p: PurchaseRow) {
+  const { data } = await sb.from("bids").select("amount_cents,patrons(name,contact_email)").eq("lot_id", p.lot_id).is("passed_at", null).order("amount_cents", { ascending: false });
+  const bids = (data ?? []) as unknown as LosingBid[];
+  const seen = new Set<string>();
+  for (const b of bids) {
+    const to = b.patrons?.contact_email;
+    if (!to || seen.has(to.toLowerCase())) continue;
+    seen.add(to.toLowerCase());
+    const r = await sendEmail(
+      spotTaken({
+        to,
+        patronName: b.patrons?.name ?? "A patron",
+        actName: p.lots.runs.acts.name,
+        lotName: lotName(p.lots),
+        yourCents: b.amount_cents,
+        takenAtCents: p.amount_cents,
+        boardUrl: `${SITE.url}/board/${p.lots.runs.acts.slug}`,
+      }),
+    );
+    if (!r.sent) console.error("spot taken notice not sent", p.lot_id, r.reason);
+  }
 }
 
 /** Sends the act a note about the slices that went out today. */

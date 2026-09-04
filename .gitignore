@@ -8,3 +8,6 @@ out
 next-env.d.ts
 .DS_Store
 supabase/.temp
+
+# Worktrees a Claude session opens for parallel work. Checkouts, not source.
+.claude/worktrees/

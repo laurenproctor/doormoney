@@ -58,6 +58,10 @@ Straight bidding (each bid is exactly what the patron pays) or proxy bidding (th
 
 **Default in code:** straight bidding. The `bids` table stores `amount` only; adding a `max_amount` column later is straightforward.
 
+**Settled 2026-09-03:** straight bidding, built in Phase 5. The next bid is the current top plus `bidStepCents` (5% of the list price, rounded up to $5, never under $5), or the reserve when nobody has bid. Sniping is untreated for now: there is no extension when a bid lands near the close.
+
+**Take it now, settled 2026-09-03:** an auction spot can carry an optional set price above the reserve. It stands while the bidding is below it and disappears once a bid reaches it, so nobody jumps a queue that has already passed the number. Taking a spot ends the bidding at once and charges the whole amount; the bidders are told and are never charged.
+
 ---
 
 ## 5. The domain

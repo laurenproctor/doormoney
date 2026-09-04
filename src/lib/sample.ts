@@ -8,8 +8,16 @@ export interface BoardLot {
   priceCents: number;
   mode: "fixed" | "auction";
   status: "open" | "pending_funding" | "sold" | "unsold" | "cancelled";
+  /** A lot can close on its own clock; without one it closes with the run. */
+  closesAt?: string | null;
+  /** An auction lot can also be taken outright at this price, while the bidding is below it. */
+  buyNowCents?: number | null;
   topBid?: { amountCents: number; patronName: string; anonymous: boolean } | null;
   soldTo?: string | null;
+  /** What a sold spot actually sold for, which is not always the top bid. */
+  soldCents?: number | null;
+  /** True when the sale came out of the bidding rather than a take-it-now. */
+  wonAtAuction?: boolean;
 }
 
 /** A fan who backed the run through the widget, as they asked to appear. */

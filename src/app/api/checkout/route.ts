@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { backingFee } from "@/lib/backings";
+import { patronFor } from "@/lib/patrons";
+import { buyNowOpen } from "@/lib/auctions";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
@@ -30,7 +32,16 @@ const Input = z.discriminatedUnion("kind", [
     /** The page the widget was embedded in, for the record. The frame reads it from document.referrer. */
     origin: z.string().trim().max(200).optional(),
   }),
-  z.object({ kind: z.literal("lot"), lotId: Id, patronName: z.string().trim().min(1).max(120), email: z.string().trim().email().max(200) }),
+  z.object({
+    kind: z.literal("lot"),
+    lotId: Id,
+    patronName: z.string().trim().min(1).max(120),
+    email: z.string().trim().email().max(200),
+    /** The winner's private token from the auction email. Required to pay for an auction lot. */
+    token: z.string().trim().min(16).max(64).optional(),
+    /** Taking an auction lot at its buy-it-now price instead of bidding. */
+    buyNow: z.boolean().optional(),
+  }),
 ]);
 
 const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
@@ -42,6 +53,10 @@ type LotRow = {
   price_cents: number;
   mode: "fixed" | "auction";
   status: string;
+  winner_bid_id: string | null;
+  funding_token: string | null;
+  funding_deadline: string | null;
+  buy_now_cents: number | null;
   runs: { id: string; title: string; status: string; act_id: string; acts: { id: string; slug: string; name: string } };
 };
 
@@ -56,16 +71,31 @@ export async function POST(req: Request) {
 
   const { data: lotData, error: lotError } = await sb
     .from("lots")
-    .select("id,label,surface_key,price_cents,mode,status,runs!inner(id,title,status,act_id,acts!inner(id,slug,name))")
+    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,runs!inner(id,title,status,act_id,acts!inner(id,slug,name))")
     .eq("id", input.lotId)
     .maybeSingle();
   if (lotError) return fail("That did not load. Try once more.", 500);
   const lot = lotData as unknown as LotRow | null;
   if (!lot) return fail("That spot is not on any board.", 404);
-  if (lot.mode !== "fixed") return fail("That spot is an auction. Bids open in a later phase.", 400);
   if (!["open", "live"].includes(lot.runs.status)) return fail("That board is closed.", 400);
   if (lot.status === "sold") return fail("That spot is already taken.", 409);
   if (lot.status !== "open" && lot.status !== "pending_funding") return fail("That spot is not for sale.", 400);
+
+  // Three ways to pay for a lot: a fixed price, an auction lot taken at its buy-it-now number, and
+  // an auction lot the patron won, through the private token in their email.
+  let amount = lot.price_cents;
+  if (lot.mode === "auction" && input.buyNow) {
+    const { data: topBid } = await sb.from("bids").select("amount_cents").eq("lot_id", lot.id).is("passed_at", null).order("amount_cents", { ascending: false }).limit(1).maybeSingle();
+    if (!buyNowOpen(lot, (topBid?.amount_cents as number | undefined) ?? null)) return fail("The bidding has passed that price, so it is up for auction now.", 409);
+    amount = lot.buy_now_cents!;
+  } else if (lot.mode === "auction") {
+    if (!input.token || input.token !== lot.funding_token) return fail("That spot is an auction. The winning bidder gets a link to pay.", 403);
+    if (lot.status !== "pending_funding" || !lot.winner_bid_id) return fail("That spot is not waiting on payment.", 400);
+    if (lot.funding_deadline && new Date(lot.funding_deadline) < new Date()) return fail("The 48 hours are up, so the spot went to the next bid.", 410);
+    const { data: winningBid } = await sb.from("bids").select("amount_cents").eq("id", lot.winner_bid_id).maybeSingle();
+    if (!winningBid) return fail("That spot is not waiting on payment.", 400);
+    amount = winningBid.amount_cents;
+  }
 
   // Somebody else may be mid-checkout on this lot. Their hold lasts CHECKOUT_MINUTES; after that it is stale.
   const { data: existing } = await sb.from("purchases").select("id,payment_status,created_at").eq("lot_id", lot.id).in("payment_status", ["requires_payment", "held", "released"]).maybeSingle();
@@ -82,7 +112,6 @@ export async function POST(req: Request) {
   if (!patronId) return fail("That did not save. Try once more.", 500);
 
   // The purchase. A partial unique index keeps one live purchase per lot, so two patrons racing cannot both get through.
-  const amount = lot.price_cents;
   const { data: purchase, error: purchaseError } = await sb
     .from("purchases")
     .insert({ lot_id: lot.id, patron_id: patronId, amount_cents: amount, fee_cents: lotFee(amount) })
@@ -90,8 +119,12 @@ export async function POST(req: Request) {
     .single();
   if (purchaseError || !purchase) return fail("Someone is taking that spot right now. Try again in a few minutes.", 409);
 
-  const deadline = new Date(Date.now() + CHECKOUT_MINUTES * 60_000).toISOString();
-  await sb.from("lots").update({ status: "pending_funding", funding_deadline: deadline }).eq("id", lot.id).in("status", ["open", "pending_funding"]);
+  // A spot being taken now is held for the checkout window. A lot already won at auction keeps the
+  // deadline from its email, so this leaves it alone.
+  if (lot.mode === "fixed" || input.buyNow) {
+    const deadline = new Date(Date.now() + CHECKOUT_MINUTES * 60_000).toISOString();
+    await sb.from("lots").update({ status: "pending_funding", funding_deadline: deadline }).eq("id", lot.id).eq("status", "open");
+  }
 
   const act = lot.runs.acts;
   const origin = process.env.NODE_ENV === "production" ? SITE.url : new URL(req.url).origin;
@@ -112,21 +145,12 @@ export async function POST(req: Request) {
     // Stripe said no. Give the lot back so the patron can try again.
     console.error("checkout session failed", e instanceof Error ? e.message : e);
     await sb.from("purchases").delete().eq("id", purchase.id);
-    await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", lot.id).eq("status", "pending_funding");
+    if (lot.mode === "fixed" || input.buyNow) await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", lot.id).eq("status", "pending_funding");
     return fail("Payment could not start. Try once more.", 502);
   }
 }
 
 type Admin = ReturnType<typeof supabaseAdmin>;
-
-/** One patron row per (name, email). A fan and a business are both patrons. */
-async function patronFor(sb: Admin, name: string, email: string) {
-  const { data: known } = await sb.from("patrons").select("id").ilike("contact_email", email).eq("name", name).maybeSingle();
-  if (known?.id) return known.id as string;
-  const { data: created, error } = await sb.from("patrons").insert({ name, contact_email: email }).select("id").single();
-  if (error || !created) return null;
-  return created.id as string;
-}
 
 /** A fan tier. The row goes in first so the webhook has something to fulfil; a never-paid row is harmless and dropped if Stripe cancels the intent. */
 async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { kind: "backing" }>) {

@@ -12,7 +12,27 @@ const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
  * page. The card never touches Door Money's servers; the money lands with Door Money and moves to the
  * act on Fridays. Fulfilment happens in the webhook, not here.
  */
-export function LotCheckout({ lotId, lotName, priceLabel, onClose }: { lotId: string; lotName: string; priceLabel: string; onClose: () => void }) {
+export function LotCheckout({
+  lotId,
+  lotName,
+  priceLabel,
+  token,
+  buyNow,
+  note,
+  onClose,
+}: {
+  lotId: string;
+  lotName: string;
+  priceLabel: string;
+  /** The winning bidder's private token, when this is an auction lot being claimed. */
+  token?: string;
+  /** Taking an auction lot outright at its buy-it-now price. */
+  buyNow?: boolean;
+  /** An extra line above the form, for anything the patron should know before paying. */
+  note?: string;
+  /** Null on the claim page, where there is nothing to go back to. */
+  onClose: (() => void) | null;
+}) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -31,7 +51,7 @@ export function LotCheckout({ lotId, lotName, priceLabel, onClose }: { lotId: st
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "lot", lotId, patronName: name, email }),
+        body: JSON.stringify({ kind: "lot", lotId, patronName: name, email, ...(token ? { token } : {}), ...(buyNow ? { buyNow: true } : {}) }),
       });
       const data = (await res.json().catch(() => ({}))) as { clientSecret?: string; error?: string };
       if (!res.ok || !data.clientSecret) throw new Error(data.error ?? "Payment could not start. Try once more.");
@@ -50,10 +70,14 @@ export function LotCheckout({ lotId, lotName, priceLabel, onClose }: { lotId: st
           <span className="caps text-[14px] text-accent-ink">Taking {lotName}</span>
           <span className="caps ml-3 text-[14px] text-muted">{priceLabel}</span>
         </div>
-        <button type="button" onClick={onClose} className="caps cursor-pointer text-[14px] text-muted hover:text-ink">
-          Cancel
-        </button>
+        {onClose && (
+          <button type="button" onClick={onClose} className="caps cursor-pointer text-[14px] text-muted hover:text-ink">
+            Cancel
+          </button>
+        )}
       </div>
+
+      {note && !clientSecret && <p className="mt-4 max-w-none text-[14.5px] leading-[1.6] text-accent-ink">{note}</p>}
 
       {clientSecret ? (
         <div className="mt-5 bg-white p-3">
@@ -75,7 +99,8 @@ export function LotCheckout({ lotId, lotName, priceLabel, onClose }: { lotId: st
             {pending ? "One second" : "Continue to payment"}
           </Button>
           <p className="max-w-none text-[14px] leading-[1.6] text-muted md:col-span-3">
-            Door Money holds the money and pays the musician every Friday through the run. The musician approves the mark before anything goes up. The spot is held for thirty minutes while payment goes through.
+            Door Money holds the money and pays the musician every Friday through the run. The musician approves the mark before anything goes up.
+            {!token && " The spot is held for thirty minutes while payment goes through."}
           </p>
           {error && (
             <p role="alert" className="text-[14.5px] text-accent-ink md:col-span-3">
