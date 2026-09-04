@@ -152,11 +152,11 @@ export default async function ListPage() {
       <Section id="list">
         <SectionHead eyebrow="List an act">Open a board</SectionHead>
         <p>
-          Sign in with an email link, describe the run, price the placements, publish. The board goes up at its own
-          address and on the live boards page, and the widget snippet is ready the same day.
+          Claim a username, describe the run, price the placements, publish. The username is the board address, so
+          the board goes up at its own address and on the live boards page, and the widget snippet is ready the same day.
         </p>
         <div className="mt-[34px]">
-          <ButtonLink href="/login?next=%2Fdashboard%2Fact%2Fnew" arrow>List an act</ButtonLink>
+          <ButtonLink href="/signup?next=%2Fdashboard%2Fact%2Fnew" arrow>List an act</ButtonLink>
         </div>
       </Section>
     </Page>

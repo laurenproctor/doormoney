@@ -93,3 +93,17 @@ Options: keep with the disclaimer, replace with invented names, or replace with 
 Both sample boards show "Anonymous patron" as a bidder. Anonymity is fine for the board but the act has to know who they're approving a mark for, and the mark itself is by definition not anonymous.
 
 **Default in code:** `bids.anonymous` hides the patron name on the public board only. The act always sees it.
+
+---
+
+## 8. What a musician signs in with
+
+**Blocks:** Phase 2 onwards
+
+Sign-in was a one-time email link and nothing else. Two things pushed against that: acts asked for a password, and the board address had no owner until an act was listed, so nothing reserved the word a musician wanted.
+
+**Decided (2026-09-04):** one word does both jobs. The username claimed at sign-up is the board address: whoever holds `gutter-hymns` signs in as that and their board is at `/board/gutter-hymns`. It lives on `profiles.username`, the board address stays on `acts.slug`, and two triggers in `0019_usernames.sql` keep the pair from drifting or from being claimed twice. `RESERVED_SLUGS` in `src/lib/slug.ts` is the one list guarding both, so it has to grow whenever a top-level route does.
+
+The email link stays as a second way in, for accounts that never set a password. Forgotten passwords go through `/forgot`, which reports the same thing whether or not the account exists.
+
+Open, and not settled here: whether changing the board address later should move the username with it. It does today, on the act page, which means a musician who renames the board also renames their sign-in. The alternative is to freeze the username at sign-up and let the board address drift, at the cost of the one-word promise.

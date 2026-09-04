@@ -14,11 +14,11 @@ const ACT_TYPES = [
 
 const initial: ActState = { ok: false };
 
-export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: string }) {
+export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; siteUrl: string; username?: string | null }) {
   const [state, action, pending] = useActionState(saveAct, initial);
   const [name, setName] = useState(act?.name ?? "");
-  const [slug, setSlug] = useState(act?.slug ?? "");
-  const [slugTouched, setSlugTouched] = useState(Boolean(act));
+  const [slug, setSlug] = useState(act?.slug ?? username ?? "");
+  const [slugTouched, setSlugTouched] = useState(Boolean(act) || Boolean(username));
   const shownSlug = slugTouched ? slug : slugify(name);
   const err = state.errors ?? {};
 
@@ -42,7 +42,7 @@ export function ActForm({ act, siteUrl }: { act: OwnedAct | null; siteUrl: strin
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
       </Field>
 
-      <Field label="Board address" error={err.slug} hint={`${siteUrl}/board/${shownSlug || "the-act"}`}>
+      <Field label="Board address and username" error={err.slug} hint={`${siteUrl}/board/${shownSlug || "the-act"}. The same word signs the act in.`}>
         <input
           name="slug"
           value={shownSlug}

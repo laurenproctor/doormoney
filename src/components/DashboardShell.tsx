@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/act", label: "The act" },
   { href: "/dashboard/payouts", label: "Payouts" },
+  { href: "/dashboard/account", label: "Account" },
 ] as const;
 
 /** The signed-in shell: public nav on top, a thin act bar under it, page content, footer. Always lit blue. */

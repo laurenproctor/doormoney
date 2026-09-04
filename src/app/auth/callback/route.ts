@@ -4,9 +4,9 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/auth";
 
 /**
- * Where the sign-in link lands. Supabase sends either a PKCE `code` or a
- * `token_hash` with a `type`; both become a session here, then the visitor
- * goes on to `next`.
+ * Where the sign-in link lands, and the reset link with it. Supabase sends either a
+ * PKCE `code` or a `token_hash` with a `type`; both become a session here, then the
+ * visitor goes on to `next`.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -29,6 +29,8 @@ export async function GET(req: Request) {
     failed = true;
   }
 
-  const to = new URL(failed ? "/login?error=link" : next, url.origin);
+  // A dead reset link belongs back at the reset form, not at sign-in.
+  const dead = next === "/reset" ? "/forgot?error=link" : "/login?error=link";
+  const to = new URL(failed ? dead : next, url.origin);
   return NextResponse.redirect(to);
 }

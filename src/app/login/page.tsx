@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: Props) {
       title="Sign"
       accent="in"
       intro={
-        <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">Acts sign in with an email link. No passwords to remember.</p>
+        <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">Acts sign in with a username and password, or with a one-time email link.</p>
       }
     >
       <div className="mx-auto grid max-w-[1120px] gap-[40px] px-7 pb-[90px] md:grid-cols-[1fr_1fr]">
@@ -32,9 +32,10 @@ export default async function LoginPage({ searchParams }: Props) {
           <h2 className="caps mb-3 text-[15px] text-accent-ink">How it goes</h2>
           <Lines
             lines={[
-              "Enter the email the act listed with.",
-              "Door Money sends a link. One tap signs the act in.",
-              "New here? The same link opens a fresh account.",
+              "The username is the act's board address. The password goes with it.",
+              "A forgotten password takes a reset link, sent to the email on the account.",
+              "The one-time email link still works, for anyone who never set a password.",
+              "New here? Open an account and claim the username first.",
             ]}
           />
         </div>

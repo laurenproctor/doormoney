@@ -12,10 +12,15 @@ export function slugify(input: string) {
 
 export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$/;
 
-/** Paths that already exist on the site, plus a few that should never be an act. */
+/**
+ * Paths that already exist on the site, plus a few that should never be an act.
+ * A username is a board address too, so this is the one list guarding both.
+ */
 export const RESERVED_SLUGS = new Set([
-  "admin", "api", "auth", "board", "contact", "dashboard", "embed", "list", "login", "new", "placements",
-  "privacy", "terms", "cookies", "accessibility", "auctions", "widget", "doormoney", "door-money", "test",
+  "accessibility", "account", "admin", "api", "auctions", "auth", "badge", "board", "claim", "contact",
+  "cookies", "dashboard", "door-money", "doormoney", "embed", "forgot", "icon", "list", "login", "mark",
+  "new", "newsletter", "placements", "privacy", "record", "refunds", "reset", "robots", "signup",
+  "sitemap", "terms", "test", "widget",
 ]);
 
 /** What the slug field does while someone is still typing: keep hyphens they just typed, drop everything else. */

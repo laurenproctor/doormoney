@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/** Nothing to do on these once somebody is already signed in. */
+const GUEST_ONLY = new Set(["/login", "/signup", "/forgot"]);
+
 /**
  * Keeps the Supabase session fresh on the pages that use it and sends
  * signed-out visitors from the dashboard to the sign-in page.
@@ -34,7 +37,7 @@ export async function proxy(request: NextRequest) {
     to.search = `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(to);
   }
-  if (user && path === "/login") {
+  if (user && GUEST_ONLY.has(path)) {
     const to = request.nextUrl.clone();
     to.pathname = "/dashboard";
     to.search = "";
@@ -44,5 +47,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/auth/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/signup", "/forgot", "/reset", "/auth/:path*"],
 };

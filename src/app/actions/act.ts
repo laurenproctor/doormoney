@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { RESERVED_SLUGS, SLUG_RE, slugify } from "@/lib/slug";
+import { usernameTaken } from "@/lib/username";
 
 export type ActField = "name" | "slug" | "type" | "city" | "bio" | "instagram" | "website" | "photo";
 export type ActState = { ok: boolean; errors?: Partial<Record<ActField | "form", string>> };
@@ -78,6 +79,18 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   const sb = await supabaseServer();
   const existing = await ownedAct(user.id);
   const row = { ...parsed.data, owner_id: user.id };
+
+  // The board address and the sign-in username are one word. Whoever holds it holds both,
+  // so check the whole namespace, then move the username first: the act's own trigger
+  // then sees the name already belongs to this account and lets the slug through.
+  const slug = parsed.data.slug;
+  if (slug !== existing?.slug) {
+    if (await usernameTaken(supabaseAdmin(), slug, user.id)) {
+      return { ok: false, errors: { slug: "That board address is taken. Pick another." } };
+    }
+  }
+  const { error: usernameError } = await sb.from("profiles").update({ username: slug }).eq("id", user.id);
+  if (usernameError) return { ok: false, errors: { slug: dbMessage(usernameError.code) } };
 
   let actId = existing?.id ?? null;
   if (existing) {
