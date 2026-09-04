@@ -3,8 +3,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { closeTimeOf, minimumBidCents, notifyOutbid } from "@/lib/auctions";
 import { formatMoney } from "@/lib/money";
-import { patronFor } from "@/lib/patrons";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { patronFor, payingProfileId } from "@/lib/patrons";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 
 /*
   Placing a bid. Straight bidding: the number a patron enters is what they pay if they win.
@@ -64,7 +64,11 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
   const minimum = minimumBidCents(lot.price_cents, topCents);
   if (amountCents < minimum) return { ok: false, error: `The next bid starts at ${formatMoney(minimum)}.` };
 
-  const patronId = await patronFor(sb, patronName, email);
+  // A bidder who happens to be signed in, under their own verified address, gets the patron row
+  // tied to their account. Bidding still needs no account, and the address typed here decides
+  // nothing on its own.
+  const { data: session } = await (await supabaseServer()).auth.getUser();
+  const patronId = await patronFor(sb, patronName, email, payingProfileId(session.user, email));
   if (!patronId) return { ok: false, error: "That did not save. Try once more." };
 
   const { data: bid, error: bidError } = await sb.from("bids").insert({ lot_id: lot.id, patron_id: patronId, amount_cents: amountCents, anonymous }).select("id").single();

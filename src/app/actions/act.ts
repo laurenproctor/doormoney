@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { RESERVED_SLUGS, SLUG_RE, slugify } from "@/lib/slug";
-import { usernameTaken } from "@/lib/username";
 
 export type ActField = "name" | "slug" | "type" | "city" | "bio" | "instagram" | "website" | "photo";
 export type ActState = { ok: boolean; errors?: Partial<Record<ActField | "form", string>> };
@@ -80,17 +79,30 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   const existing = await ownedAct(user.id);
   const row = { ...parsed.data, owner_id: user.id };
 
-  // The board address and the sign-in username are one word. Whoever holds it holds both,
-  // so check the whole namespace, then move the username first: the act's own trigger
-  // then sees the name already belongs to this account and lets the slug through.
+  // The board address and the sign-in username are one word, so claiming either claims both.
+  // claim_username (migration 0024) does it in one transaction: it checks the whole namespace,
+  // refuses a word somebody has retired, holds the twelve-month rule, and moves the act's slug
+  // with the handle. The old word goes to the history, which is what makes the old board URL
+  // redirect rather than break. See docs/DECISIONS.md, decision 12.
   const slug = parsed.data.slug;
-  if (slug !== existing?.slug) {
-    if (await usernameTaken(supabaseAdmin(), slug, user.id)) {
-      return { ok: false, errors: { slug: "That board address is taken. Pick another." } };
-    }
+  const previousSlug = existing?.slug ?? null;
+  const { data: claim, error: claimError } = await supabaseAdmin().rpc("claim_username", { p_user_id: user.id, p_username: slug });
+  if (claimError) {
+    console.error("board address claim failed:", claimError.message);
+    return { ok: false, errors: { slug: "That did not save. Try once more." } };
   }
-  const { error: usernameError } = await sb.from("profiles").update({ username: slug }).eq("id", user.id);
-  if (usernameError) return { ok: false, errors: { slug: dbMessage(usernameError.code) } };
+  if (claim !== "ok") return { ok: false, errors: { slug: claimMessage(claim as string) } };
+
+  // Listing an act makes this account a musician, whatever it ticked at sign-up. A role is only
+  // ever added: somebody who came here to back musicians and then started a band is both.
+  // Through the service role: 0022 leaves the browser no write on profiles beyond the handle,
+  // and a role is not something an account should be able to hand itself through PostgREST.
+  const admin = supabaseAdmin();
+  const { data: profile } = await admin.from("profiles").select("roles").eq("id", user.id).maybeSingle();
+  const roles: string[] = (profile as { roles?: string[] } | null)?.roles ?? [];
+  if (!roles.includes("musician")) {
+    await admin.from("profiles").update({ roles: [...roles, "musician"] }).eq("id", user.id);
+  }
 
   let actId = existing?.id ?? null;
   if (existing) {
@@ -117,11 +129,20 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
 
   revalidatePath("/dashboard");
   revalidatePath(`/board/${parsed.data.slug}`);
+  if (previousSlug && previousSlug !== slug) revalidatePath(`/board/${previousSlug}`);
   if (!existing) redirect("/dashboard");
   return { ok: true };
 }
 
 function dbMessage(code?: string) {
   if (code === "23505") return "That board address is taken. Pick another.";
+  return "That did not save. Try once more.";
+}
+
+/** What claim_username said, in words a musician can act on. */
+function claimMessage(code: string) {
+  if (code === "too_soon") return "A board address can move once every twelve months. The date it next can is on the profile page.";
+  if (code === "taken") return "That board address is taken. Pick another.";
+  if (code === "invalid") return "Letters, digits and hyphens only, starting and ending with a letter or digit.";
   return "That did not save. Try once more.";
 }

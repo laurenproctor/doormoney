@@ -6,6 +6,7 @@ import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { cancelRun as cancelRunForReal } from "@/lib/refunds";
 import { stripeConfigured } from "@/lib/stripe";
 import { requireUser, ownedAct } from "@/lib/auth";
+import { publishBlockers } from "@/lib/readiness";
 
 export type RunField = "kind" | "title" | "starts_on" | "ends_on" | "show_count" | "expected_attendance" | "bidding_closes_at";
 export type RunState = { ok: boolean; errors?: Partial<Record<RunField | "form", string>> };
@@ -74,7 +75,9 @@ export async function saveRun(_prev: RunState, form: FormData): Promise<RunState
   const runId = str(form, "id");
 
   if (runId) {
-    const { error } = await sb.from("runs").update(row).eq("id", runId);
+    // The id came from the form, so the act this account owns is part of the filter as well as
+    // part of the row. A run belonging to somebody else matches nothing and changes nothing.
+    const { error } = await sb.from("runs").update(row).eq("id", runId).eq("act_id", act.id);
     if (error) return { ok: false, errors: { form: "That did not save. Try once more." } };
     revalidatePath("/dashboard");
     revalidatePath(`/dashboard/runs/${runId}`);
@@ -88,24 +91,44 @@ export async function saveRun(_prev: RunState, form: FormData): Promise<RunState
   redirect(`/dashboard/runs/${data.id}`);
 }
 
-/** Draft to open: the board goes public. Needs at least one lot, and a close time if any lot is an auction. */
+/**
+ * Draft to open: the board goes public.
+ *
+ * The rules live in src/lib/readiness.ts, so the checklist on the run page and the answer from this
+ * button come from one place. Everything is read under the owner's session and filtered on the act
+ * this account owns: the run id comes from the page, but no act id or owner id ever comes from the
+ * client, and a run id belonging to somebody else matches no row.
+ *
+ * Payout setup is deliberately not on the list. Door Money holds every payment on the platform
+ * balance and transfers weekly, so a board can open before Stripe is finished and the money waits.
+ */
 export async function publishRun(runId: string): Promise<{ ok: boolean; error?: string }> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
   if (!act) return { ok: false, error: "No act on this account." };
 
   const sb = await supabaseServer();
-  const { data: run } = await sb.from("runs").select("id,status,bidding_closes_at").eq("id", runId).eq("act_id", act.id).maybeSingle();
+  const { data: run } = await sb
+    .from("runs")
+    .select("id,status,title,starts_on,ends_on,show_count,bidding_closes_at,verification_methods,verification_other")
+    .eq("id", runId)
+    .eq("act_id", act.id)
+    .maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
   if (run.status !== "draft") return { ok: false, error: "That run is already published." };
 
   const { data: lots } = await sb.from("lots").select("id,mode").eq("run_id", runId);
-  if (!lots || lots.length === 0) return { ok: false, error: "Add at least one spot before publishing." };
-  if (lots.some((l) => l.mode === "auction") && !run.bidding_closes_at) {
-    return { ok: false, error: "Auction spots need a bidding close time. Set one on the run." };
-  }
+  const all = lots ?? [];
+  const blockers = publishBlockers({
+    act,
+    run: { ...run, methods: run.verification_methods ?? [], other: run.verification_other ?? null },
+    lotCount: all.length,
+    auctionCount: all.filter((l) => l.mode === "auction").length,
+  });
+  if (blockers.length) return { ok: false, error: blockers.join(" ") };
 
-  const { error } = await sb.from("runs").update({ status: "open" }).eq("id", runId);
+  // Conditional on the state it expects, so a second click cannot republish a run someone else took down.
+  const { error } = await sb.from("runs").update({ status: "open" }).eq("id", runId).eq("act_id", act.id).eq("status", "draft");
   if (error) return { ok: false, error: "That did not publish. Try once more." };
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);

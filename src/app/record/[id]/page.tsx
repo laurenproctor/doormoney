@@ -223,6 +223,21 @@ export default async function RecordPage({ params }: Props) {
         </div>
       </Section>
 
+      {/* Optional, and after the record itself: nothing here interrupts a payment or a receipt. */}
+      <Section>
+        <SectionHead eyebrow="A patron page">Say what this patron listens for</SectionHead>
+        <p className="mb-8 max-w-[56ch] text-[15px] text-muted">
+          Patrons can keep a page at Door Money: a name, a few words, the music they turn up for, and whichever
+          runs they choose to name. It starts private, nothing appears on it without being put there, and no
+          amount is ever on it.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <ButtonLink href="/patron/signup" variant="ghost" arrow>
+            Open a patron account
+          </ButtonLink>
+        </div>
+      </Section>
+
       <NewsletterCTA source="record" eyebrow="The next run" title="The next run, before the placements go." />
     </Page>
   );

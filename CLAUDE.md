@@ -11,7 +11,8 @@ Read `docs/ROADMAP.md` for the phases and `docs/DECISIONS.md` for the open produ
 Use these words and only these words for these things. The idea behind all of it: Door Money is a patronage market for working musicians. Placements are the mechanism, not the point.
 
 - **Musician**: the supply side. Subtypes when the type matters: band, soloist, ensemble, house act. Never "artist" in product copy, never "creator", never "user". "Act" survives in the data model (`acts` table) and in the flow name "List an act"; in prose, say musician.
-- **Patron**: anyone who pays. Subtypes: fan, local business, brand. Never "sponsor", "advertiser", "customer", "buyer".
+- **Patron**: anyone who pays. Subtypes: fan, local business, brand. Never "sponsor", "advertiser", "customer", "buyer". A patron can hold an account and see what they have backed, at `/patron`; one account can be a musician and a patron at once (`profiles.roles`, decision 10), so never write copy that assumes an account is only one of them.
+- **Profile**: a patron's optional public page at `/patron/<username>`, managed at `/dashboard/profile`. Private until published, and per activity after that (decision 11). Never "supporter page", never "fan page", never "leaderboard". The list of what a patron listens for is **music preferences** in the dashboard and "Listening for" on the page; never "tags", never "genres", since a preference can be a scene, an instrument or a tradition.
 - **Run**: the period being funded. A tour, a residency, a season, a series of shows. Never "campaign".
 - **Board**: a musician's offering for one run. A musician opens a board for a run; patrons back placements on the board.
 - **Placement**: one opportunity on a board (a surface, on a run, at a price). "Lot" is the database word; in copy say placement, or "spot" informally.
@@ -30,7 +31,7 @@ These are firm. They apply to page copy, button labels, emails, error messages, 
 3. **Benefits before mechanics.** Lead with what sponsorship does for the act (gas, rooms, the difference between a run that happens and one that doesn't) and what a patron gets (attention, a name in the room, support they can point at). Mechanics (holds, weekly payouts, approvals) come second and stay short.
 4. **Plain words.** No insider phrasing, no jargon, no cleverness that needs decoding. "When Door Money opens," not "when doors open." "Attendance," not "through the door."
 5. **No em dashes.** Anywhere. Use a comma, a colon, a period, or parentheses.
-6. **No per-show proof language.** Don't describe nightly photos, geotags, timestamps or verification steps. The product tracks runs lightly (see Phase 6); the copy doesn't dwell on it.
+6. **No invented proof.** A board says what its musician actually ticked on the run, and nothing more. The verification methods live in `src/lib/verification.ts` and reach the page through `PlacementVerification`; never write proof language by hand into a page. Don't promise documentation from every show: the methods say "selected shows" because that is the promise. Don't imply Door Money inspected anything, so no "verified by Door Money", no "confirmed", no certification language. Documentation comes from the musician and Door Money passes it on. Keep the commitment the size it is (see `docs/DECISIONS.md`, decision 9).
 7. **Short sentences.** Cut the second clause when the first one already lands.
 
 ## Design system
@@ -41,11 +42,11 @@ Every page is a dark room with one colour of light in it. The room is the same o
 
 - The room: `ground` (page background), `ink` `#F4F0E8` (text), `muted` (secondary text), `line` (1px rules and borders), `panel` (a lifted, translucent block).
 - The light: `accent` (fills, glows, rules, display type at 24px and up), `accent-ink` (the tint of the accent that clears 4.5:1 on the ground; use it for any accent text under 24px), `on-accent` (text on an accent fill).
-- Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, dashboard, the embed), lime (placements), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). Boards take a colour by slug through `themeFor`, so each act keeps the same light.
+- Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, sign up, dashboard, the embed), lime (placements), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). Boards take a colour by slug through `themeFor`, so each act keeps the same light.
 - Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
 - Bodoni Moda for H1s only, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for everything else: headings below the H1 (the `heading` utility, medium weight), body, and tracked caps labels (the `caps` utility). Nothing else.
 - Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`). The other themes carry public domain Gottlieb club photographs; credits in `public/hero/CREDITS.md`.
-- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`, `NewsletterCTA` and `NewsletterStrip` (the new-boards email: the band on patron pages, the strip in the footer). Reuse them.
+- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`, `NewsletterCTA` and `NewsletterStrip` (the new-boards email: the band on patron pages, the strip in the footer), `PlacementVerification` (what a run promises patrons, on the board), `VerificationEditor` and `ReadinessChecklist` (the dashboard sides of the same thing), `AuthShell` and `AuthPoints` (sign up and sign in, which carry no nav and no footer), `ProfileForms` (the four forms behind a patron's public profile). Reuse them.
 
 ## Engineering rules
 
@@ -57,6 +58,10 @@ Every page is a dark room with one colour of light in it. The room is the same o
 - The widget at `/embed/[slug]` must be frameable by any origin; nothing else may be. See `next.config.ts` headers.
 - Standard-card surfaces and prices live in `src/lib/catalog.ts`. Prices there are defaults; the act's own price on a lot always wins.
 - Validate every API input with zod. Return typed errors, never raw exceptions.
+- Public reads of anything a patron owns go through a sanitised view (`public_patron_profiles`, `public_patron_activity`, `lot_buyers`, `run_backers`), granted to `anon` and selecting only public columns. Never open `profiles`, `purchases`, `backings`, `bids` or `patrons` to the browser: they hold email addresses, amounts and Stripe ids. Selecting a private column and hiding it in React is not privacy.
+- A patron's public profile and each item on it are off by default, in the database, and are turned on one at a time. An anonymous bid is never publishable, whatever a form says.
+- Usernames are claimed and changed through `claim_username` (migration 0024) and nowhere else. It holds the whole namespace (`profiles.username` and `acts.slug`), the twelve-month rule, the retired-word list, and the atomic move of a musician's board address. `RESERVED_SLUGS` in `src/lib/slug.ts` still has to grow whenever a top-level route does.
+- Patron profile photos live in the private `patron-photos` bucket and are only ever reached through a short-lived signed URL minted on the server. Act and show photos stay in their public buckets.
 - Prefer server actions for form posts from our own pages; route handlers for webhooks and for anything the widget calls cross-origin.
 
 ## Working with the mockups

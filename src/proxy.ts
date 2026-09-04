@@ -1,8 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Nothing to do on these once somebody is already signed in. */
-const GUEST_ONLY = new Set(["/login", "/signup", "/forgot"]);
+/** Nothing to do on these once somebody is already signed in, and where to send them instead. */
+const GUEST_ONLY: Record<string, string> = {
+  "/login": "/dashboard",
+  "/signup": "/dashboard",
+  "/forgot": "/dashboard",
+  // A patron who is already in belongs on their profile, not at the door they came through.
+  "/patron/signup": "/dashboard/profile",
+};
 
 /**
  * Keeps the Supabase session fresh on the pages that use it and sends
@@ -37,9 +43,9 @@ export async function proxy(request: NextRequest) {
     to.search = `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(to);
   }
-  if (user && GUEST_ONLY.has(path)) {
+  if (user && GUEST_ONLY[path]) {
     const to = request.nextUrl.clone();
-    to.pathname = "/dashboard";
+    to.pathname = GUEST_ONLY[path];
     to.search = "";
     return NextResponse.redirect(to);
   }
@@ -47,5 +53,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/signup", "/forgot", "/reset", "/auth/:path*"],
+  // /patron/signup only: /patron/<username> is a public page and stays out of the session refresh.
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/signup", "/patron/signup", "/forgot", "/reset", "/auth/:path*"],
 };

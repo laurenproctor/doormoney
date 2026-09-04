@@ -52,7 +52,10 @@ export function Footer({ note }: { note?: string }) {
                 </Link>
               ))}
               <Link href="/login" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
-                Musician sign-in
+                Sign in
+              </Link>
+              <Link href="/signup" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
+                Sign up
               </Link>
             </nav>
           </div>

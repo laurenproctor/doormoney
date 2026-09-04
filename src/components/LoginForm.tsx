@@ -12,8 +12,9 @@ const fieldClass = "edge mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px]";
 const labelClass = "caps mb-2 block text-[14px] text-muted";
 
 /**
- * Two ways in on one card: a username and password, or a one-time link by email.
- * The password is the first offer; the link stays for anyone who never set one.
+ * Two ways in on one card: a password, or a one-time link by email. The password is the first
+ * offer; the link stays for anyone who never set one. Musicians sign in with the board address
+ * or the email on the account, patrons with the email, and the field takes either.
  */
 export function LoginForm({ next, linkError }: { next: string; linkError?: boolean }) {
   const [mode, setMode] = useState<"password" | "link">("password");
@@ -54,7 +55,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError?: boole
   return (
     <form action={signInAction} noValidate>
       <input type="hidden" name="next" value={next} />
-      <label htmlFor="login-handle" className={labelClass}>Username or email</label>
+      <label htmlFor="login-handle" className={labelClass}>Email or username</label>
       <input id="login-handle" name="handle" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} required className={fieldClass} />
       <label htmlFor="login-password" className={labelClass}>Password</label>
       <input id="login-password" name="password" type="password" autoComplete="current-password" required className={fieldClass} />
@@ -74,7 +75,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError?: boole
           </button>
         </p>
         <p>
-          No account yet? <Link href="/signup" className="text-accent-ink underline underline-offset-4">Open one</Link>.
+          No account yet? <Link href="/signup" className="text-accent-ink underline underline-offset-4">Sign up</Link>.
         </p>
       </div>
     </form>

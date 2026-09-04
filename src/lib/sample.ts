@@ -28,8 +28,32 @@ export interface Backer {
 }
 
 export interface Board {
-  act: { slug: string; name: string; type: "touring_band" | "house_act" | "soloist"; city: string; bio: string | null; photoUrl?: string | null };
-  run: { id?: string; title: string; kind: string; startsOn: string; endsOn: string; showCount: number; expectedAttendance: number | null; biddingClosesAt: string | null };
+  act: {
+    slug: string;
+    name: string;
+    type: "touring_band" | "house_act" | "soloist";
+    city: string;
+    bio: string | null;
+    photoUrl?: string | null;
+    /** As the musician typed them. Both are sanitised in src/lib/links.ts before they reach an href. */
+    instagram?: string | null;
+    website?: string | null;
+  };
+  run: {
+    id?: string;
+    title: string;
+    kind: string;
+    startsOn: string;
+    endsOn: string;
+    showCount: number;
+    expectedAttendance: number | null;
+    biddingClosesAt: string | null;
+    /** Only set when the board came from the database. The samples are always open. */
+    status?: string;
+    /** Keys from src/lib/verification.ts. Empty on a run that predates placement verification. */
+    verificationMethods?: string[];
+    verificationOther?: string | null;
+  };
   lots: BoardLot[];
   /** Fan backings, oldest first. Absent on the in-memory samples. */
   backers?: Backer[];
@@ -37,8 +61,27 @@ export interface Board {
 
 export const SAMPLE_BOARDS: Record<string, Board> = {
   "gutter-hymns": {
-    act: { slug: "gutter-hymns", name: "Gutter Hymns", type: "touring_band", city: "New York", bio: "Four-piece out of Ridgewood. Loud, tight, and on the road for most of the fall." },
-    run: { title: "Fall run", kind: "tour", startsOn: "2026-10-03", endsOn: "2026-11-02", showCount: 18, expectedAttendance: 9400, biddingClosesAt: "2026-09-25T23:00:00-04:00" },
+    act: {
+      slug: "gutter-hymns",
+      name: "Gutter Hymns",
+      type: "touring_band",
+      city: "New York",
+      bio: "Four-piece out of Ridgewood. Loud, tight, and on the road for most of the fall.",
+      // The sample acts carry no links: an invented handle would point at a real stranger's account.
+      instagram: null,
+      website: null,
+    },
+    run: {
+      title: "Fall run",
+      kind: "tour",
+      startsOn: "2026-10-03",
+      endsOn: "2026-11-02",
+      showCount: 18,
+      expectedAttendance: 9400,
+      biddingClosesAt: "2026-09-25T23:00:00-04:00",
+      verificationMethods: ["selected_show_photos", "venue_date_record", "social_post_links", "end_of_run_record"],
+      verificationOther: null,
+    },
     lots: [
       { id: "a1", surfaceKey: "kick_head", label: null, priceCents: 120000, mode: "auction", status: "sold", soldTo: "Kettle St. Coffee" },
       { id: "a2", surfaceKey: "strap", label: null, priceCents: 45000, mode: "auction", status: "open", topBid: { amountCents: 52000, patronName: "Ridgewood Wine Co.", anonymous: false } },
@@ -52,8 +95,26 @@ export const SAMPLE_BOARDS: Record<string, Board> = {
     ],
   },
   "rosie-bassoon": {
-    act: { slug: "rosie-bassoon", name: "Rosie the Bassoonist", type: "soloist", city: "New York", bio: "Working bassoonist moving between rehearsals, services, chamber dates and sessions, with a feed where the bassoon does the talking." },
-    run: { title: "Fall season", kind: "season", startsOn: "2026-09-15", endsOn: "2026-12-20", showCount: 32, expectedAttendance: null, biddingClosesAt: "2026-09-13T21:00:00-04:00" },
+    act: {
+      slug: "rosie-bassoon",
+      name: "Rosie the Bassoonist",
+      type: "soloist",
+      city: "New York",
+      bio: "Working bassoonist moving between rehearsals, services, chamber dates and sessions, with a feed where the bassoon does the talking.",
+      instagram: null,
+      website: null,
+    },
+    run: {
+      title: "Fall season",
+      kind: "season",
+      startsOn: "2026-09-15",
+      endsOn: "2026-12-20",
+      showCount: 32,
+      expectedAttendance: null,
+      biddingClosesAt: "2026-09-13T21:00:00-04:00",
+      verificationMethods: ["venue_date_record", "attendance_estimates", "end_of_run_record", "other"],
+      verificationOther: "Rosie photographs the marked case lid and music stand at selected dates, with the room and the date beside each image.",
+    },
     lots: [
       { id: "b1", surfaceKey: "case_lid", label: "Case lid spot 1", priceCents: 6000, mode: "auction", status: "sold", soldTo: "Riverside Reeds" },
       { id: "b2", surfaceKey: "case_lid", label: "Case lid spot 2", priceCents: 4000, mode: "auction", status: "open", topBid: { amountCents: 4500, patronName: "Uptown Woodwind Repair", anonymous: false } },

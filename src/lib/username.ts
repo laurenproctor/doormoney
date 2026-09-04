@@ -2,9 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { RESERVED_SLUGS, SLUG_RE } from "@/lib/slug";
 
 /**
- * A musician's handle. It is the sign-in name and the board address at once:
- * whoever holds `gutter-hymns` signs in as that and their board is at /board/gutter-hymns.
- * So a handle has to pass the same rules a slug does, and the two share one namespace.
+ * A handle. For a musician it is the sign-in name and the board address at once: whoever holds
+ * `gutter-hymns` signs in as that and their board is at /board/gutter-hymns. For a patron it is the
+ * address of their public profile. One namespace either way, so a handle has to pass the same rules
+ * a slug does.
+ *
+ * Whether a word is free, and whether it may move yet, is decided by `claim_username` in migration
+ * 0024 rather than here: those two questions have to be answered and acted on in one transaction,
+ * or two people racing for one word can both be told yes.
  */
 
 export function normalizeUsername(input: string) {
@@ -18,21 +23,6 @@ export function usernameProblem(username: string) {
   if (!SLUG_RE.test(username)) return "Letters, digits and hyphens only, starting and ending with a letter or digit.";
   if (RESERVED_SLUGS.has(username)) return "That username is reserved. Pick another.";
   return null;
-}
-
-/**
- * Is the handle already somebody's, either as a sign-in name or as a board address?
- * Needs the service-role client: RLS shows an account only its own profile row.
- * `exceptUserId` lets an account keep the handle it already holds.
- */
-export async function usernameTaken(admin: SupabaseClient, username: string, exceptUserId?: string) {
-  const profiles = admin.from("profiles").select("id").eq("username", username).limit(1);
-  const acts = admin.from("acts").select("owner_id").eq("slug", username).limit(1);
-  const [{ data: profileRows }, { data: actRows }] = await Promise.all([profiles, acts]);
-
-  const heldByProfile = (profileRows ?? []).some((r) => r.id !== exceptUserId);
-  const heldByAct = (actRows ?? []).some((r) => !exceptUserId || r.owner_id !== exceptUserId);
-  return heldByProfile || heldByAct;
 }
 
 /** The address to sign in with, for a given handle. Null when nobody holds it. */

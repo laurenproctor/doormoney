@@ -5,13 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Eyebrow } from "@/components/Brand";
 import { Theme } from "@/components/Theme";
 import { signOut } from "@/app/actions/auth";
-
-const LINKS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/act", label: "The act" },
-  { href: "/dashboard/payouts", label: "Payouts" },
-  { href: "/dashboard/account", label: "Account" },
-] as const;
+import { DEFAULT_DASHBOARD_LINKS } from "@/lib/roles";
 
 /** The signed-in shell: public nav on top, a thin act bar under it, page content, footer. Always lit blue. */
 export function DashboardShell({
@@ -21,6 +15,7 @@ export function DashboardShell({
   title,
   accent,
   intro,
+  links,
   children,
 }: {
   current: string;
@@ -29,8 +24,11 @@ export function DashboardShell({
   title: string;
   accent: string;
   intro?: ReactNode;
+  /** From dashboardLinks. Left out, the bar shows the musician's pages, as it always has. */
+  links?: readonly { href: string; label: string }[];
   children: ReactNode;
 }) {
+  const bar = links ?? DEFAULT_DASHBOARD_LINKS;
   return (
     <Theme name="blue">
       <Nav />
@@ -38,7 +36,7 @@ export function DashboardShell({
         <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-7 py-3">
           <div className="caps text-[14px] text-accent-ink">{actName ? actName : "New act"}</div>
           <div className="flex flex-wrap items-center gap-[22px]">
-            {LINKS.map((l) => (
+            {bar.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -73,9 +71,13 @@ export function DashboardShell({
   );
 }
 
-/** A lifted panel with one thin line around it, used for every dashboard block. */
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`edge min-w-0 bg-panel p-6 ${className}`}>{children}</div>;
+/** A lifted panel with one thin line around it, used for every dashboard block. `id` anchors the checklist links. */
+export function Card({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
+  return (
+    <div id={id} className={`edge min-w-0 scroll-mt-8 bg-panel p-6 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 export function CardHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {

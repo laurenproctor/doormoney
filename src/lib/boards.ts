@@ -1,27 +1,77 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SAMPLE_BOARDS, type Backer, type Board, type BoardLot } from "@/lib/sample";
 
 const configured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+const ACT_COLUMNS = "id,slug,name,type,city,bio,photo_url,instagram,website";
+const RUN_COLUMNS = "id,title,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other";
+
+type ActRow = { id: string; slug: string; name: string; type: Board["act"]["type"]; city: string; bio: string | null; photo_url: string | null; instagram: string | null; website: string | null };
+type RunRow = {
+  id: string;
+  title: string;
+  kind: string;
+  starts_on: string;
+  ends_on: string;
+  show_count: number;
+  expected_attendance: number | null;
+  bidding_closes_at: string | null;
+  status: string;
+  verification_methods: string[] | null;
+  verification_other: string | null;
+};
 
 /** Load a public board by act slug. Falls back to the in-memory sample until Supabase is connected. */
 export async function getBoard(slug: string): Promise<Board | null> {
   if (!configured()) return SAMPLE_BOARDS[slug] ?? null;
 
   const sb = await supabaseServer();
-  const { data: actRow } = await sb.from("acts").select("id,slug,name,type,city,bio,photo_url").eq("slug", slug).single();
+  const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).single();
   if (!actRow) return null;
-  const { id: actId, photo_url, ...actRest } = actRow;
-  const act = { ...actRest, photoUrl: photo_url as string | null };
 
   const { data: run } = await sb
     .from("runs")
-    .select("id,title,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at")
-    .eq("act_id", actId)
+    .select(RUN_COLUMNS)
+    .eq("act_id", (actRow as ActRow).id)
     .in("status", ["open", "live"])
     .order("starts_on", { ascending: false })
     .limit(1)
     .single();
-  if (!run) return { act, run: null as never, lots: [] };
+  if (!run) return { act: shapeAct(actRow as ActRow), run: null as never, lots: [] };
+
+  return shapeBoard(sb, actRow as ActRow, run as RunRow);
+}
+
+/**
+ * The same board, for a run the signed-in musician owns, whatever its status.
+ *
+ * This is what the draft preview renders. Ownership is the caller's job and is done before this
+ * runs; the read then goes through the visitor's own session, so RLS refuses a run belonging to
+ * somebody else even if the id were guessed. Nothing here is reachable without a session.
+ */
+export async function getOwnedRunBoard(runId: string, actId: string): Promise<Board | null> {
+  if (!configured()) return null;
+
+  const sb = await supabaseServer();
+  const { data: run } = await sb.from("runs").select(RUN_COLUMNS).eq("id", runId).eq("act_id", actId).maybeSingle();
+  if (!run) return null;
+
+  const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("id", actId).maybeSingle();
+  if (!actRow) return null;
+
+  return shapeBoard(sb, actRow as ActRow, run as RunRow);
+}
+
+function shapeAct(actRow: ActRow): Board["act"] {
+  const { id: _id, photo_url, ...rest } = actRow;
+  void _id;
+  return { ...rest, photoUrl: photo_url };
+}
+
+/** Lots, bids, buyers and backers for one run, shaped the way every board renderer expects. */
+async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Promise<Board> {
+  const act = shapeAct(actRow);
 
   const { data: lots, error: lotsError } = await sb
     .from("lots")
@@ -83,7 +133,19 @@ export async function getBoard(slug: string): Promise<Board | null> {
 
   return {
     act,
-    run: { id: run.id, title: run.title, kind: run.kind, startsOn: run.starts_on, endsOn: run.ends_on, showCount: run.show_count, expectedAttendance: run.expected_attendance, biddingClosesAt: run.bidding_closes_at },
+    run: {
+      id: run.id,
+      title: run.title,
+      kind: run.kind,
+      startsOn: run.starts_on,
+      endsOn: run.ends_on,
+      showCount: run.show_count,
+      expectedAttendance: run.expected_attendance,
+      biddingClosesAt: run.bidding_closes_at,
+      status: run.status,
+      verificationMethods: run.verification_methods ?? [],
+      verificationOther: run.verification_other,
+    },
     lots: shaped,
     backers,
   };

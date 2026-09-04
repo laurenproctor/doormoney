@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { MarkDecision } from "@/components/MarkDecision";
-import { requireUser, ownedAct } from "@/lib/auth";
+import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
+import { hasRole, dashboardLinks } from "@/lib/roles";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { CATALOG } from "@/lib/catalog";
 import { SITE } from "@/lib/site";
@@ -17,8 +18,10 @@ const STATUS: Record<string, string> = { draft: "Draft", open: "Open", live: "Li
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
-  const act = await ownedAct(user.id);
-  if (!act) redirect("/dashboard/act/new");
+  const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
+  // No act yet. Somebody here to back musicians belongs on their own page, not in the middle of
+  // listing a band they never came to list. Anyone else is here to play, so carry on to step one.
+  if (!act) redirect(hasRole(profile?.roles, "patron") && !hasRole(profile?.roles, "musician") ? "/patron" : "/dashboard/act/new");
 
   const sb = await supabaseServer();
   const { data: runs } = await sb
@@ -79,6 +82,7 @@ export default async function DashboardPage() {
   return (
     <DashboardShell
       current="/dashboard"
+      links={dashboardLinks({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
       eyebrow={act.city}
       title={act.name}
