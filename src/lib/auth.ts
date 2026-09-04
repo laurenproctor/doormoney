@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 
 /** The signed-in auth user, or null. Server only. */
 export async function currentUser() {
@@ -26,11 +26,14 @@ export type Profile = {
 };
 
 /**
- * The signed-in account's own profile row. RLS shows an account only its own, so this is
- * safe under the visitor's session and needs no service role.
+ * The signed-in account's own profile row.
+ *
+ * Reads with the service role because profiles comes off the public Data API in 0022: it holds
+ * email addresses, and the column grant left behind covers only the handle. Safe on the same
+ * terms as ownedAct above: userId comes from a verified session, and it is the only filter.
  */
 export async function currentProfile(userId: string): Promise<Profile | null> {
-  const sb = await supabaseServer();
+  const sb = supabaseAdmin();
   const { data } = await sb.from("profiles").select("id,email,display_name,username,roles,username_set_at").eq("id", userId).maybeSingle();
   if (!data) return null;
   const row = data as Partial<Profile> & { id: string; email: string };

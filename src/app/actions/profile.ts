@@ -138,10 +138,12 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
 
 /** Keeping a role is doing the thing. Making a profile makes this account a patron, and nothing is taken away. */
 async function addPatronRole(userId: string) {
-  const sb = await supabaseServer();
-  const { data } = await sb.from("profiles").select("roles").eq("id", userId).maybeSingle();
+  // Service role for the same reason as the musician role in actions/act.ts: after 0022 the
+  // browser holds no write on profiles beyond the handle, and a role is not the client's to give.
+  const admin = supabaseAdmin();
+  const { data } = await admin.from("profiles").select("roles").eq("id", userId).maybeSingle();
   const roles: string[] = (data as { roles?: string[] } | null)?.roles ?? [];
-  if (!roles.includes("patron")) await sb.from("profiles").update({ roles: [...roles, "patron"] }).eq("id", userId);
+  if (!roles.includes("patron")) await admin.from("profiles").update({ roles: [...roles, "patron"] }).eq("id", userId);
 }
 
 // ---------------------------------------------------------------

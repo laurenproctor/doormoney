@@ -95,10 +95,13 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
 
   // Listing an act makes this account a musician, whatever it ticked at sign-up. A role is only
   // ever added: somebody who came here to back musicians and then started a band is both.
-  const { data: profile } = await sb.from("profiles").select("roles").eq("id", user.id).maybeSingle();
+  // Through the service role: 0022 leaves the browser no write on profiles beyond the handle,
+  // and a role is not something an account should be able to hand itself through PostgREST.
+  const admin = supabaseAdmin();
+  const { data: profile } = await admin.from("profiles").select("roles").eq("id", user.id).maybeSingle();
   const roles: string[] = (profile as { roles?: string[] } | null)?.roles ?? [];
   if (!roles.includes("musician")) {
-    await sb.from("profiles").update({ roles: [...roles, "musician"] }).eq("id", user.id);
+    await admin.from("profiles").update({ roles: [...roles, "musician"] }).eq("id", user.id);
   }
 
   let actId = existing?.id ?? null;
