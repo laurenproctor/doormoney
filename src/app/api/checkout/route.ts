@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { backingFee } from "@/lib/backings";
-import { patronFor } from "@/lib/patrons";
+import { patronFor, payingProfileId } from "@/lib/patrons";
 import { buyNowOpen } from "@/lib/auctions";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 
 /**
  * Starts a payment. Two kinds:
@@ -67,7 +67,15 @@ export async function POST(req: Request) {
 
   const input = parsed.data;
   const sb = supabaseAdmin();
-  if (input.kind === "backing") return startBacking(sb, input);
+
+  // A patron who is signed in and paying under their own verified address has the patron row tied
+  // to their account, so the placement turns up on their Backed page without a second claim. Null
+  // in a third-party frame, where no session cookie travels, and the payment is unaffected either
+  // way. The address on the form never decides this.
+  const { data: session } = await (await supabaseServer()).auth.getUser();
+  const profileId = payingProfileId(session.user, input.email);
+
+  if (input.kind === "backing") return startBacking(sb, input, profileId);
 
   const { data: lotData, error: lotError } = await sb
     .from("lots")
@@ -108,7 +116,7 @@ export async function POST(req: Request) {
 
   // The patron: the same business paying twice should be one patron row.
   const email = input.email.toLowerCase();
-  const patronId = await patronFor(sb, input.patronName, email);
+  const patronId = await patronFor(sb, input.patronName, email, profileId);
   if (!patronId) return fail("That did not save. Try once more.", 500);
 
   // The purchase. A partial unique index keeps one live purchase per lot, so two patrons racing cannot both get through.
@@ -153,7 +161,7 @@ export async function POST(req: Request) {
 type Admin = ReturnType<typeof supabaseAdmin>;
 
 /** A fan tier. The row goes in first so the webhook has something to fulfil; a never-paid row is harmless and dropped if Stripe cancels the intent. */
-async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { kind: "backing" }>) {
+async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { kind: "backing" }>, profileId: string | null) {
   const tier = widgetTier(input.tier);
   if (!tier) return fail("Invalid input", 400);
 
@@ -163,7 +171,7 @@ async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { k
   if (!run) return fail("That board is closed.", 400);
 
   const email = input.email.toLowerCase();
-  const patronId = await patronFor(sb, input.displayName, email);
+  const patronId = await patronFor(sb, input.displayName, email, profileId);
   if (!patronId) return fail("That did not save. Try once more.", 500);
 
   const { data: backing, error } = await sb

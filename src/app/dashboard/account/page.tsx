@@ -34,27 +34,42 @@ export default async function AccountPage() {
             lines={[
               <>Name: <b>{profile?.display_name ?? "not set yet"}</b></>,
               <>Email: <b>{user.email}</b></>,
-              <>Username: <b>{handle ?? "none, and none is needed"}</b></>,
-              handle ? (
+              <>Username: <b>{handle ?? "none yet, and none is needed"}</b></>,
+              act && handle ? (
                 <>
                   Board:{" "}
                   <Link href={`/board/${handle}`} className="text-accent-ink underline underline-offset-4">
                     {SITE.url.replace(/^https?:\/\//, "")}/board/{handle}
                   </Link>
                 </>
+              ) : handle ? (
+                <>
+                  Patron page:{" "}
+                  <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">
+                    {SITE.url.replace(/^https?:\/\//, "")}/patron/{handle}
+                  </Link>
+                </>
               ) : (
-                <>The board address is set when the act is listed.</>
+                <>The username is claimed with the board, or with a patron profile.</>
               ),
             ]}
           />
           <p className="mt-5 text-[14.5px] text-muted">
             {act || roles.includes("musician") ? (
               <>
-                A musician&apos;s username and board address are one word, claimed and changed together on{" "}
+                A musician&apos;s username and board address are one word, claimed together on{" "}
                 <Link href="/dashboard/act" className="text-accent-ink underline underline-offset-4">the act page</Link>.
+                It can move once every twelve months, and both addresses move with it. The date it next can, and the
+                same change for a patron page, are on{" "}
+                <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">the profile page</Link>.
               </>
             ) : (
-              <>A username comes with a board. Backing musicians needs only the email address above.</>
+              <>
+                Backing musicians needs only the email address above. A username comes with a board, or with an
+                optional{" "}
+                <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">patron profile</Link>,
+                and can move once every twelve months.
+              </>
             )}
           </p>
         </Card>

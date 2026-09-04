@@ -67,7 +67,10 @@ const MUSICIAN_LINKS = [
   { href: "/dashboard/payouts", label: "Payouts" },
 ] as const;
 
-const PATRON_LINK = { href: "/patron", label: "Backed" } as const;
+const PATRON_LINKS = [
+  { href: "/patron", label: "Backed" },
+  { href: "/dashboard/profile", label: "Profile" },
+] as const;
 const ACCOUNT_LINK = { href: "/dashboard/account", label: "Account" } as const;
 
 export type DashboardLink = { href: string; label: string };
@@ -75,14 +78,15 @@ export type DashboardLink = { href: string; label: string };
 /**
  * The pages an account can reach, from what it does rather than what it said at sign-up.
  *
- * An account that owns an act, or came here to play, gets the board pages. Backed is always
- * there: a musician who backs the band down the street should not have to change a setting to
- * see it, and for anyone who has backed nothing it reads as an invitation.
+ * An account that owns an act, or came here to play, gets the board pages. Backed and Profile are
+ * always there: a musician who backs the band down the street should not have to change a setting
+ * to see it, and for anyone who has backed nothing it reads as an invitation. The profile itself
+ * stays private until the patron publishes it.
  */
 export function dashboardLinks({ hasAct, roles }: { hasAct: boolean; roles: string[] }): DashboardLink[] {
   const musician = hasAct || roles.includes("musician");
-  return [...(musician ? MUSICIAN_LINKS : []), PATRON_LINK, ACCOUNT_LINK];
+  return [...(musician ? MUSICIAN_LINKS : []), ...PATRON_LINKS, ACCOUNT_LINK];
 }
 
 /** What a dashboard page shows when it has not worked out the account's roles. */
-export const DEFAULT_DASHBOARD_LINKS: DashboardLink[] = [...MUSICIAN_LINKS, PATRON_LINK, ACCOUNT_LINK];
+export const DEFAULT_DASHBOARD_LINKS: DashboardLink[] = [...MUSICIAN_LINKS, ...PATRON_LINKS, ACCOUNT_LINK];

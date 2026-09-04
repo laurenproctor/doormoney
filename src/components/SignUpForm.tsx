@@ -18,7 +18,7 @@ const labelClass = "caps mb-2 block text-[14px] text-muted";
  * answers can be both, and either can change later. No board address is asked for here; a
  * musician picks that when they list the act, which is the moment it means anything.
  */
-export function SignUpForm({ next }: { next: string }) {
+export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fixedRoles?: readonly string[]; submitLabel?: string }) {
   const [state, action, pending] = useActionState(signUp, initial);
   const [roles, setRoles] = useState<string[]>([]);
   const errors = state.errors ?? {};
@@ -40,6 +40,11 @@ export function SignUpForm({ next }: { next: string }) {
     <form action={action} noValidate>
       <input type="hidden" name="next" value={next} />
 
+      {/* A patron arriving through their own door has already answered the question, so the page
+          does not ask it again. The role rides along as it would have from the checkboxes. */}
+      {fixedRoles?.map((r) => <input key={r} type="hidden" name="roles" value={r} />)}
+
+      {!fixedRoles && (
       <fieldset className="mb-[22px]">
         <legend className={labelClass}>What brings you here</legend>
         <div className="grid gap-3">
@@ -72,6 +77,7 @@ export function SignUpForm({ next }: { next: string }) {
         <p className="mt-2.5 text-[14px] text-muted">Both is fine. Plenty of people are both.</p>
         {errors.roles && <p className="mt-1.5 text-[14.5px] text-accent-ink">{errors.roles}</p>}
       </fieldset>
+      )}
 
       <label htmlFor="signup-name" className={labelClass}>Name</label>
       <input id="signup-name" name="display_name" type="text" autoComplete="name" required className={fieldClass} />
@@ -97,7 +103,7 @@ export function SignUpForm({ next }: { next: string }) {
         <p className="mb-[22px] mt-2 text-[14px] text-muted">At least 10 characters.</p>
       )}
 
-      <Button type="submit" disabled={pending}>{pending ? "One second" : "Sign up"}</Button>
+      <Button type="submit" disabled={pending}>{pending ? "One second" : (submitLabel ?? "Sign up")}</Button>
       {errors.form && <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">{errors.form}</p>}
 
       <p className="mt-6 border-t border-line pt-5 text-[14.5px] text-muted">

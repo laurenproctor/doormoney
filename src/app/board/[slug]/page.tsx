@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getBoard } from "@/lib/boards";
+import { currentSlugFor } from "@/lib/patronprofile";
+import { normalizeUsername } from "@/lib/username";
 import { closeTimeOf, settleDueLots } from "@/lib/auctions";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { stripe, stripeConfigured } from "@/lib/stripe";
@@ -56,7 +58,13 @@ async function paidNotice(sessionId: string | undefined, slug: string): Promise<
 export default async function BoardPage({ params, searchParams }: Props) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   let board = await getBoard(slug);
-  if (!board || !board.run) notFound();
+  if (!board || !board.run) {
+    // A board address that moved keeps its old word pointing here. Retired words are never
+    // reissued (migration 0022), so this can only ever land on the musician who left it behind.
+    const moved = await currentSlugFor(normalizeUsername(slug));
+    if (moved && moved !== slug) permanentRedirect(`/board/${moved}`);
+    notFound();
+  }
 
   // An auction that has run out of time settles here rather than waiting for the next cron pass.
   // Both writes are conditional on the state they expect, so two readers at once cannot double up.

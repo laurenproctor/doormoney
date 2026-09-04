@@ -63,11 +63,31 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] The musician's own website and Instagram on the board, under the bio, sanitised server-side in `src/lib/links.ts`.
 - [x] One account for both sides: `profiles.roles` holds musician, patron, or both (migration 0021). Sign-up asks in plain words and takes both. Sign-up and sign-in lost the nav and footer and gained a reason column: benefits on the left, the form on the right. The board address moved off sign-up and onto the act page, where it means something.
 - [x] The patron's side at `/patron`: placements taken, runs backed, bids and how each one ended, and a link to the record behind every placement. An address that paid before it had an account picks its history up at sign-up.
-- [ ] The public supporter page. `profiles.public_profile` exists and is off for everybody; nothing reads it yet. See `docs/DECISIONS.md`, decision 10.
+- [x] The public patron profile at `/patron/[username]`: optional, private until published, and per-activity. See Phase 2b below and `docs/DECISIONS.md`, decision 11.
 
 **Done when:** a real act can go from signup to a live board without anyone at Door Money touching it.
 
 The whole path works without Door Money touching a page, 2026-09-04: sign in, act, run, spots, verification, preview, publish.
+
+---
+
+## Phase 2b. The public patron profile
+
+**Goal:** a patron can say who they are and name some of what they have put behind musicians, without a single number being visible and without anything being visible by accident.
+
+Private by default, twice over: the page is unpublished until the patron publishes it, and each placement and backing is off until it is put on, one at a time. See `docs/DECISIONS.md`, decisions 11 and 12.
+
+- [x] `patron_profiles`, `patron_profile_items` and `username_history` (migration 0022), with RLS, an immutable check on the music preferences, and two sanitised public views. `profiles` is never opened to the browser: it holds email addresses.
+- [x] The public page at `/patron/[username]`: photograph or initials, name, `@username`, region, bio, "Patron since", one optional https link, up to eight music preferences, the published activity and the totals counted from it. No amounts, anywhere.
+- [x] The management page at `/dashboard/profile`, reachable by an account that owns no act. Publish and hide, the details, a control per placement and per backing, and the username with the date it may next move.
+- [x] `/patron/signup`: the same account and the same auth as `/signup`, without asking a patron to pick a board address. Lands on the profile page.
+- [x] An optional invitation on the end-of-run record, after the record itself. Nothing on a payment path.
+- [x] Usernames move once every twelve months, in one transaction with the act's board address, with retired words kept for good and old URLs redirecting permanently (`claim_username`, migration 0022).
+- [x] Patron rows link to accounts on the verified auth address only, never on a typed one: at sign-up, on the profile page, and at the moment a signed-in patron pays under their own address.
+- [x] Profile photographs in a private Storage bucket, reached through short-lived signed links, so hiding a profile hides the photograph too.
+- [ ] One email-preference system covering musicians and patrons. Deferred deliberately: notification settings are not public profile fields, and Door Money needs one place for both sides rather than a patron-only toggle now and a musician one later. Nothing about it is in the interface yet, because a dead toggle is worse than no toggle.
+
+**Done when:** a patron with no act can open an account, publish a page, put one placement on it and leave the rest off, and a musician who renames their board keeps every old link working.
 
 ---
 

@@ -21,7 +21,8 @@ export type Profile = {
   display_name: string | null;
   username: string | null;
   roles: string[];
-  public_profile: boolean;
+  /** When the current username was claimed. The next change is allowed twelve months after it. */
+  username_set_at: string | null;
 };
 
 /**
@@ -30,7 +31,7 @@ export type Profile = {
  */
 export async function currentProfile(userId: string): Promise<Profile | null> {
   const sb = await supabaseServer();
-  const { data } = await sb.from("profiles").select("id,email,display_name,username,roles,public_profile").eq("id", userId).maybeSingle();
+  const { data } = await sb.from("profiles").select("id,email,display_name,username,roles,username_set_at").eq("id", userId).maybeSingle();
   if (!data) return null;
   const row = data as Partial<Profile> & { id: string; email: string };
   return {
@@ -39,7 +40,7 @@ export async function currentProfile(userId: string): Promise<Profile | null> {
     display_name: row.display_name ?? null,
     username: row.username ?? null,
     roles: row.roles ?? [],
-    public_profile: row.public_profile ?? false,
+    username_set_at: row.username_set_at ?? null,
   };
 }
 

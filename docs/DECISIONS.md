@@ -106,7 +106,7 @@ Sign-in was a one-time email link and nothing else. Two things pushed against th
 
 The email link stays as a second way in, for accounts that never set a password. Forgotten passwords go through `/forgot`, which reports the same thing whether or not the account exists.
 
-Open, and not settled here: whether changing the board address later should move the username with it. It does today, on the act page, which means a musician who renames the board also renames their sign-in. The alternative is to freeze the username at sign-up and let the board address drift, at the cost of the one-word promise.
+**Settled (2026-09-04):** changing the board address moves the username with it, and the pair is moved in one transaction rather than in two writes. Freezing one and letting the other drift would break the one-word promise, so neither drifts. What changed is that the word is no longer taken for good: see decision 12.
 
 **Amended (2026-09-04):** the word is still claimed, but not at sign-up. Sign-up asks for a name, an email address and a password, and nothing else; the board address is claimed on the act page, where it is the same field as the board address and means something. Two reasons. A patron has no board and should never be asked to invent an address for one. And the sign-up page was explaining a mechanism ("one username, one password, the username is the board address too") to somebody who had not yet decided to be here. Sign-in still takes either the email address or the username, so nothing a musician already types has changed. See decision 10.
 
@@ -151,4 +151,48 @@ That split was never true to the market. The bassoonist who backs the band down 
 
 Sign-up and sign-in lost the nav and the footer at the same time. There is nothing on those pages but the way in and the reasons to want one: what the account is worth on the left, the form on the right.
 
-Open, and not settled here: the public supporter page. A patron may want to show what they have backed, which is good for the musicians as much as the patron. `profiles.public_profile` exists and is off for everybody; nothing reads it yet. What it shows, and whether an amount is ever on it, is the next question.
+Settled since, in decision 11: the public patron profile. `profiles.public_profile` was the placeholder for it and was never read; publication now lives on `patron_profiles.published`.
+
+---
+
+## 11. The public patron profile
+
+**Blocks:** Phase 2, and the whole patron side
+
+Decision 10 left one question open: a patron may want to show what they have put behind musicians, which is good for the musicians as much as for the patron. `profiles.public_profile` was a placeholder for it and nothing read it. What such a page shows, and whether an amount is ever on it, is what this settles.
+
+**Decided (2026-09-04):** an optional page at `/patron/<username>`, private until the patron says otherwise, with no money on it anywhere.
+
+Privacy is the governing rule, and it is held in three separate places rather than one:
+
+- **Private by default.** A patron account needs no profile, a profile is unpublished when it is made, and an unpublished profile answers as though nobody is there. There is no page that says "private", because a page that says "private" says somebody is there. Publication is `patron_profiles.published`.
+- **Per activity, one at a time.** Publishing the page publishes nothing that was on it already. Each placement and each backing is its own row in `patron_profile_items`, absent by default; ticking one says nothing about the next, and unticking one takes only that one down. A patron may publish a page with no activity on it at all, and the page says so without implying they have never given anything.
+- **Never an amount.** Not on the page, not in the payload behind it, not in the control that publishes an item. The two public views (`public_patron_profiles`, `public_patron_activity`) carry no amount column to leak, and no email address, payment status, Stripe id, mark, record link or account id either. `profiles` is never opened to the browser, because it holds email addresses.
+
+What is on it: a photograph, a display name, the username, up to 240 characters of bio, an optional city or region, an optional https link, up to eight music preferences in the patron's own words, the year they started, and whichever placements and backings they published. What each of those says is the musician, the run, the kind of support and the month. Totals are counted from that public activity alone: "3 runs backed", "2 musicians supported".
+
+**Anonymity is not reversible here.** A spot won through a bid the patron asked to keep anonymous is not offered for publication and is refused again by the public view, whatever a form says. Decision 7 made anonymity a promise on the board; publishing a profile does not take it back. Reversing an anonymous transaction on the patron's say-so is a bigger question than this page, and the safe answer for now is that it cannot be done at all.
+
+Photographs sit in a private Storage bucket and reach the page as short-lived signed links, so hiding a profile hides its photograph within the hour rather than leaving a permanent public URL behind.
+
+Open, and not settled here: whether a musician should be able to see which patrons published a placement on their run, and whether a board should link back to a patron page. Nothing does today.
+
+---
+
+## 12. How often a username may move
+
+**Blocks:** decision 8, decision 11
+
+Decision 8 gave every account one word doing two jobs: the sign-in handle and the board address. It said nothing about changing it, and the copy around it read as though the word were taken for good. That was fine while only musicians had one. A patron's username is the address of a page about them, and a name somebody picked in a hurry should not be theirs for life.
+
+Letting it move freely is the other extreme: every board link, every printed sticker and every share of a patron page would rot, and a word given up in the morning could be taken by a stranger in the afternoon and inherit the traffic.
+
+**Decided (2026-09-04):** once every twelve calendar months, and the word left behind is never reissued.
+
+- Claiming a word starts the clock. `profiles.username_set_at` records it, so the next date is calculable rather than remembered, and it is shown before anybody tries.
+- Twelve **calendar** months, not 365 days: a word claimed on 29 February moves on 28 February.
+- The rule is held by `claim_username` in migration 0022, not by the form. It takes an advisory lock on the word, so two accounts racing for one cannot both win; the loser is told it is taken.
+- Every retired word goes to `username_history` and stays there. Nobody else can claim it, and `/patron/<old>` and `/board/<old>` redirect permanently to the current address.
+- An account with an act moves its handle and its board address in the same transaction, so the one-word promise from decision 8 holds through the change. The patron is told both addresses will move before it happens.
+
+Twelve months is a judgement, not a calculation. It is long enough that links are worth writing down and short enough that a bad first choice is not a life sentence.

@@ -163,6 +163,17 @@ export default async function PatronPage() {
           )}
         </div>
       )}
+
+      <Card className="mt-[30px] max-w-[720px]">
+        <CardHead eyebrow="The public profile">A page of their own</CardHead>
+        <p className="mb-6 max-w-none text-[15px] text-muted">
+          A patron can keep a public page: a name, a few words, the music they turn up for, and whichever runs they
+          choose to name. It starts private and stays private until it is published. No amount ever appears on it.
+        </p>
+        <ButtonLink href="/dashboard/profile" variant="ghost" arrow>
+          The patron profile
+        </ButtonLink>
+      </Card>
     </DashboardShell>
   );
 }
