@@ -15,6 +15,34 @@ export async function requireUser(next = "/dashboard") {
   return user;
 }
 
+export type Profile = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  username: string | null;
+  roles: string[];
+  public_profile: boolean;
+};
+
+/**
+ * The signed-in account's own profile row. RLS shows an account only its own, so this is
+ * safe under the visitor's session and needs no service role.
+ */
+export async function currentProfile(userId: string): Promise<Profile | null> {
+  const sb = await supabaseServer();
+  const { data } = await sb.from("profiles").select("id,email,display_name,username,roles,public_profile").eq("id", userId).maybeSingle();
+  if (!data) return null;
+  const row = data as Partial<Profile> & { id: string; email: string };
+  return {
+    id: row.id,
+    email: row.email,
+    display_name: row.display_name ?? null,
+    username: row.username ?? null,
+    roles: row.roles ?? [],
+    public_profile: row.public_profile ?? false,
+  };
+}
+
 export type OwnedAct = {
   id: string;
   slug: string;

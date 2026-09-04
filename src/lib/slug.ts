@@ -19,7 +19,7 @@ export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$/;
 export const RESERVED_SLUGS = new Set([
   "accessibility", "account", "admin", "api", "auctions", "auth", "badge", "board", "claim", "contact",
   "cookies", "dashboard", "door-money", "doormoney", "embed", "forgot", "icon", "list", "login", "mark",
-  "new", "newsletter", "placements", "privacy", "record", "refunds", "reset", "robots", "signup",
+  "new", "newsletter", "patron", "patrons", "placements", "privacy", "record", "refunds", "reset", "robots", "signup",
   "sitemap", "terms", "test", "widget",
 ]);
 

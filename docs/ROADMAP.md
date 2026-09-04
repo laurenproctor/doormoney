@@ -61,6 +61,9 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] Placement verification: the musician picks, per run, what patrons get back from a fixed list (dated photos from selected shows, a venue and date list, attendance estimates, post links, a short video, the end-of-run record, or a write-in). `VerificationEditor` on the run page, `PlacementVerification` on the board under the placements, migration 0020. Publishing needs at least one. See `docs/DECISIONS.md`, decision 9.
 - [x] Self-service publishing: a readiness checklist on the run page (profile, run, placements, verification, payouts, ready), one set of rules shared with `publishRun`, and a private draft preview at `/dashboard/runs/[id]/preview` that renders the real board component. Payout setup shows as incomplete and never blocks: Door Money holds the money either way.
 - [x] The musician's own website and Instagram on the board, under the bio, sanitised server-side in `src/lib/links.ts`.
+- [x] One account for both sides: `profiles.roles` holds musician, patron, or both (migration 0021). Sign-up asks in plain words and takes both. Sign-up and sign-in lost the nav and footer and gained a reason column: benefits on the left, the form on the right. The board address moved off sign-up and onto the act page, where it means something.
+- [x] The patron's side at `/patron`: placements taken, runs backed, bids and how each one ended, and a link to the record behind every placement. An address that paid before it had an account picks its history up at sign-up.
+- [ ] The public supporter page. `profiles.public_profile` exists and is off for everybody; nothing reads it yet. See `docs/DECISIONS.md`, decision 10.
 
 **Done when:** a real act can go from signup to a live board without anyone at Door Money touching it.
 

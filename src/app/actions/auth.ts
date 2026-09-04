@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 import { safeNext } from "@/lib/auth";
-import { emailForUsername, normalizeUsername, usernameProblem, usernameTaken } from "@/lib/username";
+import { emailForUsername, normalizeUsername } from "@/lib/username";
+import { RolesInput } from "@/lib/roles";
 
 /*
   Four ways in, one account behind them all:
@@ -16,7 +17,7 @@ import { emailForUsername, normalizeUsername, usernameProblem, usernameTaken } f
 
 export type LoginState = { ok: boolean; email?: string; error?: string };
 export type PasswordState = { error?: string };
-export type SignUpField = "username" | "email" | "password" | "form";
+export type SignUpField = "roles" | "display_name" | "email" | "password" | "form";
 export type SignUpState = { ok: boolean; email?: string; confirm?: boolean; errors?: Partial<Record<SignUpField, string>> };
 export type ResetState = { ok: boolean; error?: string };
 
@@ -67,12 +68,12 @@ export async function sendMagicLink(_prev: LoginState, form: FormData): Promise<
 // ---------------------------------------------------------------
 
 const SignInInput = z.object({
-  handle: z.string().trim().min(1, "Enter a username or email address."),
+  handle: z.string().trim().min(1, "Enter an email address or username."),
   password: z.string().min(1, "Enter the password."),
   next: z.string().optional(),
 });
 
-/** The handle field takes either a username or the email on the account. */
+/** The handle field takes either the email on the account or a musician's board address. */
 async function addressFor(handle: string) {
   if (handle.includes("@")) return handle.toLowerCase();
   return emailForUsername(supabaseAdmin(), normalizeUsername(handle));
@@ -110,20 +111,25 @@ export async function signIn(_prev: PasswordState, form: FormData): Promise<Pass
 // ---------------------------------------------------------------
 
 const SignUpInput = z.object({
-  username: z.string().trim().toLowerCase(),
+  // No board address here. A musician picks that on the act page, where it means something,
+  // and a patron never needs one at all. See docs/DECISIONS.md, decisions 8 and 10.
+  roles: RolesInput,
+  display_name: z.string().trim().min(2, "Enter a name.").max(80, "Keep the name under 80 characters."),
   email: z.string().trim().email("Enter a valid email address."),
   password: Password,
   next: z.string().optional(),
 });
 
 /**
- * Claims a handle and opens the account. The handle rides along in the auth user's
- * metadata so the profile row and its username are written together, which is what
- * stops two people claiming one word at the same moment.
+ * Opens the account. Two questions: what the person came here to do, and how to reach them.
+ * Both answers ride along in the auth user's metadata, so the profile row is written with its
+ * roles and its name in one go. A patron who has already paid for something under this address
+ * picks that history up at the same moment (claim_patron_rows, migration 0021).
  */
 export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUpState> {
   const parsed = SignUpInput.safeParse({
-    username: str(form, "username"),
+    roles: form.getAll("roles").filter((v) => typeof v === "string"),
+    display_name: str(form, "display_name"),
     email: str(form, "email"),
     password: str(form, "password"),
     next: str(form, "next"),
@@ -135,15 +141,6 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
     return { ok: false, errors };
   }
 
-  const username = normalizeUsername(parsed.data.username);
-  const problem = usernameProblem(username);
-  if (problem) return { ok: false, errors: { username: problem } };
-
-  const admin = supabaseAdmin();
-  if (await usernameTaken(admin, username)) {
-    return { ok: false, errors: { username: "That username is taken. Pick another." } };
-  }
-
   const email = parsed.data.email.toLowerCase();
   const next = safeNext(parsed.data.next);
   const sb = await supabaseServer();
@@ -151,16 +148,17 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
     email,
     password: parsed.data.password,
     options: {
-      data: { username },
+      // The profile trigger reads these: roles, the name, and any patron rows already paid
+      // for under this address.
+      data: { display_name: parsed.data.display_name, roles: parsed.data.roles },
       emailRedirectTo: `${SITE.url}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
   if (error) {
-    // The profile trigger raises a unique violation when a handle was claimed in the
-    // seconds since the check above. Supabase reports it as a database error.
-    if (/database error|username already taken|duplicate|unique/i.test(error.message)) {
-      return { ok: false, errors: { username: "That username was just taken. Pick another." } };
+    // Supabase reports a trigger failure as a plain database error.
+    if (/database error|duplicate|unique/i.test(error.message)) {
+      return { ok: false, errors: { form: "That did not save. Try once more." } };
     }
     if (/already registered|already exists/i.test(error.message)) {
       return { ok: false, errors: { email: "There is already an account for that email address." } };

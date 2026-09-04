@@ -92,6 +92,14 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   const { error: usernameError } = await sb.from("profiles").update({ username: slug }).eq("id", user.id);
   if (usernameError) return { ok: false, errors: { slug: dbMessage(usernameError.code) } };
 
+  // Listing an act makes this account a musician, whatever it ticked at sign-up. A role is only
+  // ever added: somebody who came here to back musicians and then started a band is both.
+  const { data: profile } = await sb.from("profiles").select("roles").eq("id", user.id).maybeSingle();
+  const roles: string[] = (profile as { roles?: string[] } | null)?.roles ?? [];
+  if (!roles.includes("musician")) {
+    await sb.from("profiles").update({ roles: [...roles, "musician"] }).eq("id", user.id);
+  }
+
   let actId = existing?.id ?? null;
   if (existing) {
     const { error } = await sb.from("acts").update(row).eq("id", existing.id);

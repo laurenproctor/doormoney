@@ -108,6 +108,8 @@ The email link stays as a second way in, for accounts that never set a password.
 
 Open, and not settled here: whether changing the board address later should move the username with it. It does today, on the act page, which means a musician who renames the board also renames their sign-in. The alternative is to freeze the username at sign-up and let the board address drift, at the cost of the one-word promise.
 
+**Amended (2026-09-04):** the word is still claimed, but not at sign-up. Sign-up asks for a name, an email address and a password, and nothing else; the board address is claimed on the act page, where it is the same field as the board address and means something. Two reasons. A patron has no board and should never be asked to invent an address for one. And the sign-up page was explaining a mechanism ("one username, one password, the username is the board address too") to somebody who had not yet decided to be here. Sign-in still takes either the email address or the username, so nothing a musician already types has changed. See decision 10.
+
 ---
 
 ## 9. What a board promises patrons
@@ -129,3 +131,24 @@ Verification belongs to the run rather than the musician on purpose: a band can 
 Publishing needs at least one method. A draft can sit unanswered.
 
 Open, and not settled here: whether a patron should be able to say the record never arrived, the way the Phase 6 flag lets them say the run never happened. Today the flag covers both.
+
+---
+
+## 10. One account, either job, or both
+
+**Blocks:** Phase 2 onwards, and the whole patron side
+
+Door Money had one kind of account. A musician signed up, claimed a handle and got a dashboard. A patron who took a placement or backed a run was a row in `patrons` keyed by an email address, with nothing to sign in to and nowhere to see what they had backed. The record at the end of a run reached them by email or not at all, and a bid in progress was invisible between the confirmation and the outcome.
+
+That split was never true to the market. The bassoonist who backs the band down the street is one person. So is the coffee roaster who plays Sundays at the same bar they sponsor.
+
+**Decided (2026-09-04):** one account, carrying what it came here to do.
+
+- `profiles.roles` holds `musician`, `patron`, or both (migration 0021). Sign-up asks the question in those words, "I play" and "I back musicians", and both can be ticked.
+- A role is added by doing the thing and never taken away. Listing an act adds `musician`. Signing up with an address that has already paid for something picks that history up, through `claim_patron_rows`.
+- What an account owns beats what it ticked: an account with an act lands on the board dashboard whether or not it ever called itself a musician.
+- The Backed page at `/patron` shows placements, backings and bids, with how each bid ended. It reads with the service role after the session is proven, because `purchases`, `backings` and `bids` have never been open to the browser and this is not the reason to open them.
+
+Sign-up and sign-in lost the nav and the footer at the same time. There is nothing on those pages but the way in and the reasons to want one: what the account is worth on the left, the form on the right.
+
+Open, and not settled here: the public supporter page. A patron may want to show what they have backed, which is good for the musicians as much as the patron. `profiles.public_profile` exists and is off for everybody; nothing reads it yet. What it shows, and whether an amount is ever on it, is the next question.
