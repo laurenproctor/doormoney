@@ -2,7 +2,7 @@
 import { useActionState, useState } from "react";
 import { saveVerification, type VerificationState } from "@/app/actions/verification";
 import { Button } from "@/components/Button";
-import { OTHER_KEY, OTHER_MAX, OTHER_MIN, VERIFICATION_METHODS } from "@/lib/verification";
+import { OTHER_KEY, OTHER_MAX, OTHER_MIN, VERIFICATION_METHODS, type VerificationField } from "@/lib/verification";
 
 const initial: VerificationState = { ok: false };
 
@@ -25,19 +25,46 @@ export function VerificationEditor({
   runStatus: string;
 }) {
   const [state, action, pending] = useActionState(saveVerification, initial);
-  const [picked, setPicked] = useState<string[]>(() => VERIFICATION_METHODS.filter((m) => methods.includes(m.key)).map((m) => m.key));
-  const [answer, setAnswer] = useState(other ?? "");
-  const err = state.errors ?? {};
-  const otherOn = picked.includes(OTHER_KEY);
-  const draft = runStatus === "draft";
 
-  const toggle = (key: string, on: boolean) => setPicked((prev) => (on ? [...prev, key] : prev.filter((k) => k !== key)));
-  const trimmed = answer.trim().length;
+  // A refusal comes back carrying what was sent. Remounting the fields on it puts the ticks and
+  // the typed answer back, which also keeps the message about the write-in above the box it talks
+  // about. This is what makes the form work with JavaScript off, where there is no state to keep.
+  const shown = state.submitted ?? { methods, other: other ?? "" };
+  const stamp = state.submitted ? `sent:${JSON.stringify(state.submitted)}` : `stored:${methods.join(",")}|${other ?? ""}`;
 
   return (
     <form action={action} noValidate>
       <input type="hidden" name="run_id" value={runId} />
+      <Fields key={stamp} startMethods={shown.methods} startOther={shown.other} errors={state.errors ?? {}} draft={runStatus === "draft"} ok={state.ok} saved={state.saved} pending={pending} />
+    </form>
+  );
+}
 
+function Fields({
+  startMethods,
+  startOther,
+  errors,
+  draft,
+  ok,
+  saved,
+  pending,
+}: {
+  startMethods: string[];
+  startOther: string;
+  errors: Partial<Record<VerificationField, string>>;
+  draft: boolean;
+  ok: boolean;
+  saved?: number;
+  pending: boolean;
+}) {
+  const [picked, setPicked] = useState<string[]>(() => VERIFICATION_METHODS.filter((m) => startMethods.includes(m.key)).map((m) => m.key));
+  const [answer, setAnswer] = useState(startOther);
+  const otherOn = picked.includes(OTHER_KEY);
+  const toggle = (key: string, on: boolean) => setPicked((prev) => (on ? [...prev, key] : prev.filter((k) => k !== key)));
+  const trimmed = answer.trim().length;
+
+  return (
+    <>
       <div className="edge bg-panel">
         {VERIFICATION_METHODS.map((m) => {
           const on = picked.includes(m.key);
@@ -70,7 +97,7 @@ export function VerificationEditor({
           );
         })}
       </div>
-      {err.methods && <p className="mt-2 text-[14.5px] text-accent-ink">{err.methods}</p>}
+      {errors.methods && <p className="mt-2 text-[14.5px] text-accent-ink">{errors.methods}</p>}
 
       {otherOn && (
         <div className="mt-6 max-w-[62ch]">
@@ -85,29 +112,29 @@ export function VerificationEditor({
             maxLength={OTHER_MAX}
             onChange={(e) => setAnswer(e.target.value)}
             aria-describedby="verification-other-count"
-            aria-invalid={err.other ? true : undefined}
+            aria-invalid={errors.other ? true : undefined}
             placeholder="The musician will photograph the marked music stand at selected performances and include the venue and date with each image."
             className="edge w-full bg-transparent px-3.5 py-3 text-[15px] leading-[1.6]"
           />
           <p id="verification-other-count" className="mt-1.5 text-[14px] text-muted">
             {trimmed} of {OTHER_MAX} characters. At least {OTHER_MIN}.
           </p>
-          {err.other && <p className="mt-1 text-[14.5px] text-accent-ink">{err.other}</p>}
+          {errors.other && <p className="mt-1 text-[14.5px] text-accent-ink">{errors.other}</p>}
         </div>
       )}
 
       <div className="mt-7 flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the verification"}</Button>
-        {state.ok && (
+        {ok && (
           <span className="text-[14.5px] text-muted">
-            Saved. {state.saved} {state.saved === 1 ? "method" : "methods"} on the board.
+            Saved. {saved} {saved === 1 ? "method" : "methods"} on the board.
           </span>
         )}
-        {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
-        {draft && picked.length === 0 && !state.ok && !err.methods && (
+        {errors.form && <span className="text-[14.5px] text-accent-ink">{errors.form}</span>}
+        {draft && picked.length === 0 && !ok && !errors.methods && (
           <span className="text-[14.5px] text-muted">A draft can wait. Publishing needs at least one.</span>
         )}
       </div>
-    </form>
+    </>
   );
 }

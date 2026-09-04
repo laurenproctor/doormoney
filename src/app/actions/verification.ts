@@ -9,6 +9,14 @@ export type VerificationState = {
   errors?: Partial<Record<VerificationField, string>>;
   /** How many methods the save left on the run, for the note beside the button. */
   saved?: number;
+  /**
+   * What was sent, echoed back on a refusal so the form can put it back.
+   *
+   * With JavaScript the editor's own state already holds it. Without, the component is rendered
+   * fresh from the run's stored values, which would drop the ticks, drop the write-in, and take
+   * the error message down with the textarea it lives under. So the answer comes back with it.
+   */
+  submitted?: { methods: string[]; other: string };
 };
 
 /**
@@ -24,18 +32,22 @@ export async function saveVerification(_prev: VerificationState, form: FormData)
   if (!act) return { ok: false, errors: { form: "No act on this account." } };
 
   const runId = form.get("run_id");
-  if (typeof runId !== "string" || !runId) return { ok: false, errors: { form: "That run is not on this account." } };
+  const sent = {
+    methods: form.getAll("methods").filter((v): v is string => typeof v === "string"),
+    other: typeof form.get("other") === "string" ? (form.get("other") as string) : "",
+  };
+  if (typeof runId !== "string" || !runId) return { ok: false, errors: { form: "That run is not on this account." }, submitted: sent };
 
   const sb = await supabaseServer();
   const { data: run } = await sb.from("runs").select("id,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
-  if (!run) return { ok: false, errors: { form: "That run is not on this account." } };
+  if (!run) return { ok: false, errors: { form: "That run is not on this account." }, submitted: sent };
 
-  const parsed = parseVerification({ methods: form.getAll("methods").filter((v) => typeof v === "string"), other: form.get("other") });
-  if (!parsed.ok) return { ok: false, errors: parsed.errors };
+  const parsed = parseVerification(sent);
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, submitted: sent };
 
   // A draft may sit with nothing chosen; a board already on the internet may not go back to nothing.
   if (parsed.value.methods.length === 0 && run.status !== "draft") {
-    return { ok: false, errors: { methods: "This board is public, so it needs at least one method. Pick one before saving." } };
+    return { ok: false, errors: { methods: "This board is public, so it needs at least one method. Pick one before saving." }, submitted: sent };
   }
 
   const { error } = await sb
@@ -43,7 +55,7 @@ export async function saveVerification(_prev: VerificationState, form: FormData)
     .update({ verification_methods: parsed.value.methods, verification_other: parsed.value.other })
     .eq("id", runId)
     .eq("act_id", act.id);
-  if (error) return { ok: false, errors: { form: "That did not save. Try once more." } };
+  if (error) return { ok: false, errors: { form: "That did not save. Try once more." }, submitted: sent };
 
   revalidatePath(`/dashboard/runs/${runId}`);
   revalidatePath(`/dashboard/runs/${runId}/preview`);
