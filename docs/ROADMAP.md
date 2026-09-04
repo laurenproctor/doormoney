@@ -147,7 +147,7 @@ The flag half is done, 2026-09-03. A purchase with four Friday slices still to g
 - [ ] Stripe review of the platform model, done before real money moves at scale
 - [ ] Manual outreach list: residencies, corner bars, neighborhood businesses
 - [x] Weekly digest email: the week in numbers to `ADMIN_EMAILS` (boards opened, spots sold, backings, money sent and held, open flags, new subscribers, notes). `src/lib/weekly.ts`.
-- [x] The new-boards email actually sends. The list had a signup, a welcome and an unsubscribe since Phase 1 but nothing that posted the weekly note. Boards that have opened since the last one go out to the list, each board announced once (`runs.announced_at`), never more than weekly. The sample boards ship marked as announced, so two invented musicians are never introduced to a real list.
+- [x] The new-boards email actually sends. The list had a signup, a welcome and an unsubscribe since Phase 1 but nothing that posted the weekly note. Boards that have opened since the last one go out to the list, each board announced once (`runs.announced_at`), never more than weekly. The sample boards go out like any other, by Lauren's call.
 
 **Done when:** ten acts have live boards and five have been paid.
 

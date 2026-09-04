@@ -98,9 +98,6 @@ insert into bids (id, lot_id, patron_id, amount_cents, anonymous) values
 update lots set winner_bid_id = 'd1000000-0000-0000-0000-000000000001' where id = 'a1000000-0000-0000-0000-000000000001';
 update lots set winner_bid_id = 'd1000000-0000-0000-0000-000000000002' where id = 'b1000000-0000-0000-0000-000000000001';
 
--- The sample boards count as already announced, so the new-boards email never introduces them to a
--- real list as though two invented musicians had just opened boards.
-update runs set announced_at = now() where act_id in ('11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333');
 
 insert into purchases (lot_id, patron_id, amount_cents, fee_cents, payment_status, mark_status) values
 ('a1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 120000, 18000, 'held', 'approved'),
