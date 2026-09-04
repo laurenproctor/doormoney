@@ -2,7 +2,7 @@
   The optional patron profile, in the parts that have no database in them: what the fields will
   take, what a music preference may be, and when the username is allowed to move.
 
-  The database repeats every one of these as a constraint (migration 0022). The last test in this
+  The database repeats every one of these as a constraint (migration 0023). The last test in this
   file reads that migration and checks the two public views select nothing private, because that is
   the one rule where being wrong is not a bug in a form but a leak.
 */
@@ -172,7 +172,7 @@ test("the totals count runs and musicians, and nothing else", () => {
 // ---------------------------------------------------------------
 
 const migration = readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "supabase", "migrations", "0022_patron_profiles.sql"),
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "supabase", "migrations", "0023_patron_profiles.sql"),
   "utf8",
 );
 

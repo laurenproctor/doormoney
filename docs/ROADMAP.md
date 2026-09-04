@@ -77,12 +77,12 @@ The whole path works without Door Money touching a page, 2026-09-04: sign in, ac
 
 Private by default, twice over: the page is unpublished until the patron publishes it, and each placement and backing is off until it is put on, one at a time. See `docs/DECISIONS.md`, decisions 11 and 12.
 
-- [x] `patron_profiles`, `patron_profile_items` and `username_history` (migration 0022), with RLS, an immutable check on the music preferences, and two sanitised public views. `profiles` is never opened to the browser: it holds email addresses.
+- [x] `patron_profiles`, `patron_profile_items` and `username_history` (migration 0023), with RLS, an immutable check on the music preferences, and two sanitised public views. `profiles` is never opened to the browser: it holds email addresses.
 - [x] The public page at `/patron/[username]`: photograph or initials, name, `@username`, region, bio, "Patron since", one optional https link, up to eight music preferences, the published activity and the totals counted from it. No amounts, anywhere.
 - [x] The management page at `/dashboard/profile`, reachable by an account that owns no act. Publish and hide, the details, a control per placement and per backing, and the username with the date it may next move.
 - [x] `/patron/signup`: the same account and the same auth as `/signup`, without asking a patron to pick a board address. Lands on the profile page.
 - [x] An optional invitation on the end-of-run record, after the record itself. Nothing on a payment path.
-- [x] Usernames move once every twelve months, in one transaction with the act's board address, with retired words kept for good and old URLs redirecting permanently (`claim_username`, migration 0022).
+- [x] Usernames move once every twelve months, in one transaction with the act's board address, with retired words kept for good and old URLs redirecting permanently (`claim_username`, migration 0023).
 - [x] Patron rows link to accounts on the verified auth address only, never on a typed one: at sign-up, on the profile page, and at the moment a signed-in patron pays under their own address.
 - [x] Profile photographs in a private Storage bucket, reached through short-lived signed links, so hiding a profile hides the photograph too.
 - [ ] One email-preference system covering musicians and patrons. Deferred deliberately: notification settings are not public profile fields, and Door Money needs one place for both sides rather than a patron-only toggle now and a musician one later. Nothing about it is in the interface yet, because a dead toggle is worse than no toggle.

@@ -191,7 +191,7 @@ Letting it move freely is the other extreme: every board link, every printed sti
 
 - Claiming a word starts the clock. `profiles.username_set_at` records it, so the next date is calculable rather than remembered, and it is shown before anybody tries.
 - Twelve **calendar** months, not 365 days: a word claimed on 29 February moves on 28 February.
-- The rule is held by `claim_username` in migration 0022, not by the form. It takes an advisory lock on the word, so two accounts racing for one cannot both win; the loser is told it is taken.
+- The rule is held by `claim_username` in migration 0023, not by the form. It takes an advisory lock on the word, so two accounts racing for one cannot both win; the loser is told it is taken.
 - Every retired word goes to `username_history` and stays there. Nobody else can claim it, and `/patron/<old>` and `/board/<old>` redirect permanently to the current address.
 - An account with an act moves its handle and its board address in the same transaction, so the one-word promise from decision 8 holds through the change. The patron is told both addresses will move before it happens.
 

@@ -8,7 +8,7 @@ import { RESERVED_SLUGS, SLUG_RE } from "@/lib/slug";
  * a slug does.
  *
  * Whether a word is free, and whether it may move yet, is decided by `claim_username` in migration
- * 0022 rather than here: those two questions have to be answered and acted on in one transaction,
+ * 0023 rather than here: those two questions have to be answered and acted on in one transaction,
  * or two people racing for one word can both be told yes.
  */
 

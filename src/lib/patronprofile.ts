@@ -7,7 +7,7 @@ import type { SupportKind } from "@/lib/profile";
  *
  * Two kinds of read live here and they are deliberately different.
  *
- * The public page reads the sanitised views from migration 0022 through the ordinary anon client.
+ * The public page reads the sanitised views from migration 0023 through the ordinary anon client.
  * Those views carry a username, a name, some words and some already-public activity, and nothing
  * else: no email address, no account id, no Stripe id, no payment status, no amount. There is no
  * private column to forget to drop, because no private column is ever selected.
@@ -134,7 +134,7 @@ export async function signedPhotoUrl(path: string | null): Promise<string | null
 /**
  * Where an old word points now, or null.
  *
- * Retired usernames are kept for good (migration 0022), so a link somebody wrote down a year ago
+ * Retired usernames are kept for good (migration 0023), so a link somebody wrote down a year ago
  * still lands on the right person. The map from an old word to an account is server-side only.
  */
 export async function currentUsernameFor(retired: string): Promise<string | null> {

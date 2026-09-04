@@ -246,7 +246,7 @@ export async function setActivityShown(_prev: ProfileState, form: FormData): Pro
 /**
  * Claims the word, or moves it.
  *
- * Every rule that matters is in claim_username (migration 0022) rather than here: one word across
+ * Every rule that matters is in claim_username (migration 0023) rather than here: one word across
  * profiles and acts, one change every twelve months, retired words never reissued, and a
  * musician's board address moving in the same transaction. This checks the shape and the reserved
  * list first so the common mistakes come back in words, then lets the database decide.

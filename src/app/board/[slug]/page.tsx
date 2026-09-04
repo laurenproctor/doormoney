@@ -60,7 +60,7 @@ export default async function BoardPage({ params, searchParams }: Props) {
   let board = await getBoard(slug);
   if (!board || !board.run) {
     // A board address that moved keeps its old word pointing here. Retired words are never
-    // reissued (migration 0022), so this can only ever land on the musician who left it behind.
+    // reissued (migration 0023), so this can only ever land on the musician who left it behind.
     const moved = await currentSlugFor(normalizeUsername(slug));
     if (moved && moved !== slug) permanentRedirect(`/board/${moved}`);
     notFound();
