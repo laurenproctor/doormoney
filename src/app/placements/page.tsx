@@ -117,13 +117,13 @@ export default function PlacementsPage() {
       <NewsletterCTA source="placements" />
 
       <Section className="pb-24">
-        <SectionHead eyebrow="Opening soon">Back a musician who&apos;s already working</SectionHead>
+        <SectionHead eyebrow="Get started">Back a musician who&apos;s already working</SectionHead>
         <p>
-          Door Money opens in New York first. Patrons on the list see the first musicians, rooms and circuits before
-          anyone else.
+          Every open board is on the live boards page: who is playing, what each placement costs, and when it closes.
+          Pick one and put the money behind it.
         </p>
         <div className="mt-[30px] flex flex-wrap gap-5">
-          <ButtonLink href="/#list">Become a patron</ButtonLink>
+          <ButtonLink href="/auctions" arrow>See the live boards</ButtonLink>
         </div>
       </Section>
     </Page>

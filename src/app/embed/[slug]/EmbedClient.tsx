@@ -205,7 +205,7 @@ export function EmbedClient(p: {
                 <div className="grid gap-2 px-4 pt-3">
                   <input className="edge w-full px-3 py-2.5 text-[15px]" value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="Name, as it should appear" aria-label="Name, as it should appear" autoComplete="name" />
                   <input className="edge w-full px-3 py-2.5 text-[15px]" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email, for the receipt" aria-label="Email, for the receipt" autoComplete="email" />
-                  {!p.paymentsOpen && <p className="max-w-none text-[14px] leading-[1.6] text-muted">Payments open when Door Money opens.</p>}
+                  {!p.paymentsOpen && <p className="max-w-none text-[14px] leading-[1.6] text-muted">Payments are unavailable right now. Try again shortly.</p>}
                 </div>
               )}
 

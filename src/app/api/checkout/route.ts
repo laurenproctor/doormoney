@@ -48,7 +48,7 @@ type LotRow = {
 export async function POST(req: Request) {
   const parsed = Input.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail("Invalid input", 400);
-  if (!stripeConfigured()) return fail("Payments are not open yet.", 503);
+  if (!stripeConfigured()) return fail("Payments are unavailable right now. Try again shortly.", 503);
 
   const input = parsed.data;
   const sb = supabaseAdmin();

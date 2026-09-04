@@ -29,7 +29,7 @@ const SECTIONS: LegalSection[] = [
         <p>Only what the marketplace needs to run. By where it comes from:</p>
         <Bullets
           items={[
-            <Term key="waitlist" name="The waitlist">Name, email address, whether the person is an act or a patron, and optionally their city and the kind of act.</Term>,
+            <Term key="newsletter" name="The new-boards email">Email address and the page it was entered on.</Term>,
             <Term key="accounts" name="Accounts">Email address and sign-in details. A name for the account.</Term>,
             <Term key="acts" name="Acts">Act name, the run&apos;s dates and venues, the show list, prices, and optionally a photo per show and a self-reported attendance figure. Stripe collects identity and bank details directly for payouts; {SITE.name} stores only the Stripe account reference.</Term>,
             <Term key="patrons" name="Patrons">Name or business name, email address, the mark (a name or a logo), what they bought or bid on, and the payment status. Card numbers go straight to Stripe and never touch {SITE.name}.</Term>,
@@ -56,7 +56,7 @@ const SECTIONS: LegalSection[] = [
         />
         <p>
           {SITE.name} does not sell personal information and does not use it for advertising. It sends marketing email only to
-          people who joined the waitlist, and only about {SITE.name} opening. Every such email has an unsubscribe link.
+          people who asked for the new-boards email, and only about boards on {SITE.name}. Every such email has an unsubscribe link.
         </p>
       </>
     ),
@@ -107,7 +107,7 @@ const SECTIONS: LegalSection[] = [
     body: (
       <Bullets
         items={[
-          "Waitlist entries: until Door Money opens and the person has been told, or until they ask to be removed.",
+          "New-boards email addresses: until the person unsubscribes or asks to be removed.",
           "Account details: while the account is open, then 30 days.",
           "Transactions, records and payout history: seven years after the run ends, as financial records law requires.",
           "Photos from a run: as long as the record they belong to.",

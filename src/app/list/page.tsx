@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Page } from "@/components/Page";
 import { Section, SectionHead, Steps } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
-import { ActWaitlistForm } from "@/components/WaitlistForm";
 import { getBoard } from "@/lib/boards";
 import { WIDGET_TIERS } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
@@ -11,7 +10,7 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "List an act",
-  description: "Get paid for the audience you're already building. Listing is free; Door Money earns 15% only when a placement sells.",
+  description: "Get paid for the audience you're already building. Door Money earns 15% when a placement sells, and nothing before that.",
 };
 
 // This page speaks to the musician directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
@@ -30,7 +29,7 @@ const BOARD: [string, string[]][] = [
 ];
 
 const MONEY: [string, string][] = [
-  ["Door Money makes money when you make money.", `Listing costs nothing. ${SITE.name} keeps ${SITE.feePercent}% of completed placements. If nothing sells, you owe nothing.`],
+  ["Door Money makes money when you make money.", `${SITE.name} keeps ${SITE.feePercent}% of completed placements and charges nothing else. If nothing sells, you owe nothing.`],
   ["When is the money real?", "The moment a placement sells. Winners put the money up within 48 hours, before a note is played, and it reaches you while the run is happening."],
   ["What if a patron asks for something you don't want?", "Every placement needs your yes before it ships, and that yes can become a no before anything goes up. Your board, your call."],
   ["What about regular income?", `Door, merch, tips and guarantees are yours and stay that way. ${SITE.name} only ever touches the patron money it brings in.`],
@@ -53,7 +52,7 @@ export default async function ListPage() {
             choose what to offer, what it costs and who appears beside your name.
           </p>
           <p className="caps mt-6 text-[14.5px] leading-[2] text-accent-ink">
-            Listing is free. {SITE.name} earns {SITE.feePercent}% only when something sells.
+            {SITE.name} earns {SITE.feePercent}% when something sells, and nothing before that.
           </p>
           <div className="mt-[30px]">
             <ButtonLink href="#list">List an act</ButtonLink>
@@ -151,13 +150,13 @@ export default async function ListPage() {
       </Section>
 
       <Section id="list">
-        <SectionHead eyebrow="Founding cohort">Join Door Money&apos;s first 50 musicians</SectionHead>
+        <SectionHead eyebrow="List an act">Open a board</SectionHead>
         <p>
-          {SITE.name} launches in {SITE.city}. Musicians who leave a name here get an email when listings go live, and
-          the founding cohort goes up first.
+          Sign in with an email link, describe the run, price the placements, publish. The board goes up at its own
+          address and on the live boards page, and the widget snippet is ready the same day.
         </p>
-        <div className="mt-[34px] max-w-[560px]">
-          <ActWaitlistForm />
+        <div className="mt-[34px]">
+          <ButtonLink href="/login?next=%2Fdashboard%2Fact%2Fnew" arrow>List an act</ButtonLink>
         </div>
       </Section>
     </Page>

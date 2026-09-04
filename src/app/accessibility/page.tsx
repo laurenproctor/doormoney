@@ -52,7 +52,7 @@ const SECTIONS: LegalSection[] = [
             "The payment form comes from Stripe. It is built to be accessible, and Door Money cannot change its internals.",
             "The widget lives in a frame on an act's own site. Door Money's snippet gives the frame a title, and the rest of that page is the act's.",
             "Photos an act adds to a record carry the description the act wrote. Door Money asks for one but cannot check it.",
-            "No outside auditor has reviewed the site yet. That review is planned before Door Money opens.",
+            "No outside auditor has reviewed the site yet. That review is planned.",
           ]}
         />
       </>

@@ -7,7 +7,6 @@ import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import type { Board } from "@/lib/sample";
-import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Live boards",
@@ -75,7 +74,7 @@ export default async function AuctionsPage() {
           <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">The next board is open</div>
           <div className="text-[14.5px] leading-[1.7] text-muted">
             Bands, house acts, soloists. Musicians choose what goes on the board, set the prices and keep the final
-            say. {SITE.name} is opening in {SITE.city} first.
+            say.
           </div>
           <ButtonLink href="/list" className="self-start">List an act</ButtonLink>
         </div>

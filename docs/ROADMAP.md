@@ -132,10 +132,10 @@ This is the phase that decides whether the business works, so it comes before au
 
 ## Phase 7. Launch New York
 
-**Goal:** the first fifty acts and the first fifty patrons, by hand.
+**Goal:** the first acts and the first patrons, by hand.
 
 - [~] Admin views at `/admin`: acts, runs, lots, payments, contact notes, waitlist. Read-only, gated by `ADMIN_EMAILS`. Flags arrive with Phase 6's patron flag; actions later.
-- [ ] Founding-act badge and free-forever listing for the first fifty
+- [ ] ~~Founding-act badge and free-forever listing for the first fifty~~ Dropped 2026-09-03: no cohort limits and no free claims anywhere on the site.
 - [ ] Terms of service and privacy policy, reviewed by a lawyer
 - [ ] Stripe review of the platform model, done before real money moves at scale
 - [ ] Manual outreach list: residencies, corner bars, neighborhood businesses

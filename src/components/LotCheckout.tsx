@@ -20,7 +20,7 @@ export function LotCheckout({ lotId, lotName, priceLabel, onClose }: { lotId: st
   const [pending, setPending] = useState(false);
 
   if (!stripePromise) {
-    return <p className="mt-4 max-w-none text-[14.5px] text-muted">Payments open when Door Money opens. The spot stays on the board until then.</p>;
+    return <p className="mt-4 max-w-none text-[14.5px] text-muted">Payments are unavailable right now. The spot stays on the board; try again shortly.</p>;
   }
 
   const start = async (e: React.FormEvent) => {

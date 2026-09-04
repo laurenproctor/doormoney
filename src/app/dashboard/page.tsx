@@ -70,7 +70,7 @@ export default async function DashboardPage() {
     <DashboardShell
       current="/dashboard"
       actName={act.name}
-      eyebrow={act.founding ? "Founding act" : `${act.city}`}
+      eyebrow={act.city}
       title={act.name}
       accent=""
       intro={

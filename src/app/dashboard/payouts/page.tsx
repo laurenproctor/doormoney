@@ -40,7 +40,7 @@ export default async function PayoutsPage({ searchParams }: Props) {
                 ? "The Stripe account exists but is missing something, usually a bank account or an ID check. Pick up where it left off."
                 : configured
                   ? "A few minutes with Stripe: a bank account, a name, and an ID check. The act keeps 85% of every placement."
-                  : "Payout setup is not open yet. Door Money will email listed acts the day it is. Boards and prices can be set up now."}
+                  : "Payout setup is unavailable right now. Boards and prices can be set up meanwhile; contact Door Money if it stays that way."}
           </p>
           {state !== "on" && <PayoutButton configured={configured} label={state === "partial" ? "Finish Stripe setup" : "Set up payouts with Stripe"} />}
           {state === "on" && <PayoutButton configured={configured} label="Update bank details" ghost />}

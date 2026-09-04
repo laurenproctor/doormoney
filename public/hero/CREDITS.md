@@ -1,6 +1,6 @@
 # Hero photographs
 
-All hero photographs except `saxophone.jpg` are by William P. Gottlieb, from the William P. Gottlieb Collection at the Library of Congress. Gottlieb placed the collection in the public domain in 2010, and the Library lists no known restrictions on publication. Each file is a centre crop of the Library's scan with the film border trimmed.
+All hero photographs except `saxophone.jpg` and `teal.jpg` are by William P. Gottlieb, from the William P. Gottlieb Collection at the Library of Congress. Gottlieb placed the collection in the public domain in 2010, and the Library lists no known restrictions on publication. Each file is a centre crop of the Library's scan with the film border trimmed.
 
 - `lime.jpg`: Portrait of Max Roach, Three Deuces, New York, N.Y., ca. Oct. 1947. https://www.loc.gov/item/2023868211/
 
@@ -8,7 +8,7 @@ All hero photographs except `saxophone.jpg` are by William P. Gottlieb, from the
 
 - `amber.jpg`: Portrait of Charlie Parker, Tommy Potter, Miles Davis, Duke Jordan, and Max Roach, Three Deuces, New York, N.Y., ca. Aug. 1947. https://www.loc.gov/item/2023868145/
 
-- `teal.jpg`: Portrait of Coleman Hawkins and Miles Davis, Three Deuces, New York, N.Y., ca. July 1947. https://www.loc.gov/item/2023868741/
+- `teal.jpg`: Moms Day lead guitarist live in concert, 2006, by Erik Albers (Dreirik), released under CC0 (public domain dedication) on Wikimedia Commons. Mirrored so the player faces the copy. https://commons.wikimedia.org/wiki/File:Moms_Day_lead_guitarist_live_in_concert.jpg
 
 - `violet.jpg`: Portrait of Duke Ellington, Aquarium, New York, N.Y., ca. Nov. 1946. https://www.loc.gov/item/2023867661/
 

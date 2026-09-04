@@ -6,7 +6,6 @@ import { Eyebrow, Section, SectionHead } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
 import { HeroArt } from "@/components/HeroArt";
 import { Theme } from "@/components/Theme";
-import { WaitlistForm } from "@/components/WaitlistForm";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
@@ -25,7 +24,7 @@ const KIND: Record<Board["act"]["type"], (city: string) => string> = {
 
 /*
   The page runs in this order: the idea, the musicians taking backing now, how it works for each
-  side, what can be backed, the musician's final say beside the house rules, then the founding cohort.
+  side, what can be backed, the musician's final say beside the house rules, then the two ways in.
 */
 export default async function HomePage() {
   const featured = HOME_SURFACES.map((k) => CATALOG.find((s) => s.key === k)!);
@@ -188,16 +187,17 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      {/* Founding cohort */}
+      {/* Two ways in */}
       <Section id="list" className="pool">
-        <SectionHead eyebrow="Founding cohort">The first 50 musicians. The first 50 patrons.</SectionHead>
+        <SectionHead eyebrow="Get started">Back a musician, or list an act</SectionHead>
         <p className="text-muted">
-          {SITE.name} launches in {SITE.city}, starting with the musicians already making the city&apos;s musical life
-          happen (bands, house acts, freelancers and soloists) and the people and businesses who want to keep them
-          working. Leave a name here for an email when it opens.
+          {SITE.name} runs in {SITE.city}: the bands, house acts, freelancers and soloists already making the city&apos;s
+          musical life happen, and the people and businesses who want to keep them working. Patrons pick a board and put
+          money behind a run. Musicians open a board in an afternoon.
         </p>
-        <div className="mt-9 max-w-[560px]">
-          <WaitlistForm />
+        <div className="mt-9 flex flex-wrap gap-4">
+          <ButtonLink href="/auctions" arrow>See the live boards</ButtonLink>
+          <ButtonLink href="/list" variant="ghost">List an act</ButtonLink>
         </div>
       </Section>
 

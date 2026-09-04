@@ -34,30 +34,6 @@ export async function sendEmail(mail: Mail): Promise<{ sent: boolean; reason?: s
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 
-/** The waitlist confirmation. Third person throughout, per the voice rules. */
-export function waitlistConfirmation(params: { to: string; name: string; role: "band" | "patron" }): Mail {
-  const who = params.role === "band" ? "a musician" : "a patron";
-  const next =
-    params.role === "band"
-      ? `When listings go live, musicians on the list go up first, as the founding cohort.`
-      : `When the first boards open, patrons on the list see the musicians, rooms and circuits before anyone else.`;
-  const lines = [
-    `${params.name} is on the ${SITE.name} list as ${who}.`,
-    `${SITE.name} opens in ${SITE.city} first. ${next}`,
-    `Nothing to do until then. Another email goes out the day it opens.`,
-    `${SITE.tagline}`,
-    `${SITE.url}`,
-  ];
-  const html = `<div style="font-family:Archivo,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#000;background:#EDE8DC;padding:32px">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border:3px solid #000;padding:28px">
-    <div style="font-family:Anton,Impact,sans-serif;font-size:26px;text-transform:uppercase;letter-spacing:.02em">Door <span style="color:#E03A1E">Money</span></div>
-    ${lines.slice(0, 3).map((l) => `<p style="margin:18px 0 0">${escape(l)}</p>`).join("")}
-    <p style="margin:24px 0 0;font-family:'Courier New',monospace;font-size:13px;color:#55524B">${escape(SITE.tagline)} <a href="${escape(SITE.url)}" style="color:#E03A1E">${escape(SITE.url)}</a></p>
-  </div>
-</div>`;
-  return { to: params.to, subject: `On the list at ${SITE.name}`, text: lines.join("\n\n"), html };
-}
-
 /** Internal notification for a note sent through /contact. Goes to CONTACT_TO_EMAIL; reply-to is the sender. */
 export function contactNotification(params: {
   to: string;
