@@ -311,3 +311,18 @@ grant execute on function public.claim_username(uuid, text) to service_role;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('patron-photos', 'patron-photos', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------
+-- The two words this migration spends: doormoney.com/patron and the profile pages under it.
+--
+-- reserved_handles is the database's copy of RESERVED_SLUGS in src/lib/slug.ts, and
+-- tests/reserved-names.test.ts keeps the two equal. It is created by the security boundary
+-- (migration 0022), which was written before these routes existed and so does not know about
+-- them. Created here as well, so this migration is correct whichever order the two land in:
+-- both use "if not exists" and "on conflict do nothing", and both orders end up the same.
+-- ---------------------------------------------------------------
+create table if not exists public.reserved_handles (name text primary key);
+alter table public.reserved_handles enable row level security;
+
+insert into public.reserved_handles (name) values ('patron'), ('patrons')
+on conflict (name) do nothing;
