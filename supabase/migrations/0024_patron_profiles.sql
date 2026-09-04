@@ -26,7 +26,7 @@ update profiles set username_set_at = created_at
 -- lives on patron_profiles.published, which is the row that knows what publishing would show. The
 -- column stays for now rather than being dropped under a running deployment; nothing reads it.
 comment on column profiles.public_profile is
-  'Superseded by patron_profiles.published (migration 0023). Unused.';
+  'Superseded by patron_profiles.published (migration 0024). Unused.';
 
 -- ---------------------------------------------------------------
 -- Retired usernames, kept for good.

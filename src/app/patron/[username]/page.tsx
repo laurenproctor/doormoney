@@ -29,7 +29,7 @@ import {
   says "private" says somebody is there.
 
   Nothing on this page came from a private column. The two reads go through the sanitised views in
-  migration 0023, which carry no email address, no payment status, no Stripe id and no amount.
+  migration 0024, which carry no email address, no payment status, no Stripe id and no amount.
 */
 
 export const dynamic = "force-dynamic";

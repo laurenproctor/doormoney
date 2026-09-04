@@ -80,7 +80,7 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   const row = { ...parsed.data, owner_id: user.id };
 
   // The board address and the sign-in username are one word, so claiming either claims both.
-  // claim_username (migration 0023) does it in one transaction: it checks the whole namespace,
+  // claim_username (migration 0024) does it in one transaction: it checks the whole namespace,
   // refuses a word somebody has retired, holds the twelve-month rule, and moves the act's slug
   // with the handle. The old word goes to the history, which is what makes the old board URL
   // redirect rather than break. See docs/DECISIONS.md, decision 12.

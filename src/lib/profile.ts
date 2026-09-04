@@ -3,7 +3,7 @@
  *
  * Pure on purpose: the same limits are read by the editor in the dashboard, by the server action
  * that writes the row, and by the tests, so what a patron is told and what the database will take
- * cannot drift. The database repeats every one of these as a constraint (migration 0023), because
+ * cannot drift. The database repeats every one of these as a constraint (migration 0024), because
  * a form is a courtesy and a constraint is the rule.
  *
  * Nothing here knows about money. No amount reaches a public profile, so no amount passes through
