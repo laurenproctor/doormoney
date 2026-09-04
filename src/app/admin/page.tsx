@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { requireAdmin } from "@/lib/admin";
+import { openFlags } from "@/lib/flags";
+import { ClearFlag } from "./FlagActions";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/money";
 import { formatDateRange } from "@/lib/dates";
@@ -15,6 +17,7 @@ export default async function AdminPage() {
   await requireAdmin();
   const db = supabaseAdmin();
 
+  const flags = await openFlags(db);
   const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
@@ -47,9 +50,41 @@ export default async function AdminPage() {
           <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="boards up" />
           <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
           <Stat n={formatMoney(held)} label="held" />
+          <Stat n={String(flags.length)} label={flags.length === 1 ? "flag open" : "flags open"} />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
           <Stat n={String(subscribers.length)} label="get new boards" />
         </dl>
+
+        {flags.length > 0 && (
+          <Card>
+            <CardHead eyebrow="Flagged by a patron">{flags.length} waiting on Door Money</CardHead>
+            <p className="mb-5 max-w-none text-[15px] text-muted">
+              Every payment still to go out on these is on hold. Releasing the hold puts the paused slices back in the queue for the next Friday. To send
+              the money back instead, cancel the run from the act&apos;s dashboard or refund the purchase in Stripe.
+            </p>
+            <ul className="divide-y divide-line">
+              {flags.map((f) => (
+                <li key={f.id} className="grid gap-4 py-4 md:grid-cols-[1fr_auto] md:items-center">
+                  <div>
+                    <b className="block text-[15px]">
+                      {f.patronName} holds {f.what} on {f.actName}&apos;s {f.runTitle.toLowerCase()}
+                    </b>
+                    <span className="caps text-[14px] text-muted">
+                      {when.format(new Date(f.flaggedAt))} · {formatMoney(f.amountCents)} paid · {formatMoney(f.pausedCents)} held
+                    </span>
+                    {f.note && <p className="mt-2 max-w-none whitespace-pre-wrap text-[15px]">{f.note}</p>}
+                    <p className="mt-1 text-[14px]">
+                      <Link href={`/record/${f.id}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+                        The record
+                      </Link>
+                    </p>
+                  </div>
+                  <ClearFlag source={f.source} id={f.id} />
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         <Card>
           <CardHead eyebrow="Acts">{actRows.length} listed</CardHead>

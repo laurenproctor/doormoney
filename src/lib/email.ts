@@ -94,6 +94,7 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
     `Door Money holds the money and pays ${params.actName} every Friday through the run. Nothing is charged again.`,
     `${params.actName} approves the mark before it goes on anything. Door Money emails when it is time to send one.`,
     `The record of the run lives at ${params.recordUrl} and fills in as the run goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    `If the run stops happening, saying so at ${params.recordUrl}/flag holds the rest of the money until Door Money looks.`,
     `The board: ${params.boardUrl}`,
   ];
   const html = shell([
@@ -101,6 +102,7 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
     escape(lines[1]),
     escape(lines[2]),
     `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record of the run</a> fills in as the run goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    `If the run stops happening, <a href="${escape(params.recordUrl)}/flag" style="color:${BLUE}">saying so</a> holds the rest of the money until Door Money looks.`,
     `The board: <a href="${escape(params.boardUrl)}" style="color:${BLUE}">${escape(params.boardUrl)}</a>`,
   ]);
   return { to: params.to, subject: `${params.lotName} on ${params.actName}'s ${params.runTitle.toLowerCase()}: paid`, text: lines.join("\n\n"), html };
@@ -299,6 +301,50 @@ export function auctionUnsold(params: { to: string; actName: string; lotName: st
     `The dashboard: <a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">${escape(params.dashboardUrl)}</a>`,
   ]);
   return { to: params.to, subject: `Unsold: the ${params.lotName.toLowerCase()}`, text: lines.join("\n\n"), html };
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Phase 6: the patron flag. One to Door Money, one back to the patron. The act is not told here;
+   Door Money looks first.
+   --------------------------------------------------------------------------------------------- */
+
+/** To Door Money, the moment a patron says a run is not happening. */
+export function flagRaised(params: { to: string; patronName: string; what: string; actName: string; runTitle: string; note: string | null; pausedCount: number; adminUrl: string; recordUrl: string }): Mail {
+  const held = params.pausedCount === 1 ? "one slice is on hold" : `${params.pausedCount} slices are on hold`;
+  const lines = [
+    `${params.patronName} does not think ${params.actName}'s ${params.runTitle.toLowerCase()} is running, and holds ${params.what}.`,
+    params.note ? `What they said: ${params.note}` : `They left no note.`,
+    `Nothing more moves on it: ${held}. Money already released stays released.`,
+    `The record: ${params.recordUrl}`,
+    `The queue: ${params.adminUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(params.patronName)}</b> does not think ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())} is running, and holds ${escape(params.what)}.`,
+    params.note ? `What they said: <b>${escape(params.note)}</b>` : escape(lines[1]),
+    `<b style="color:${BLUE}">${escape(lines[2])}</b>`,
+    `The record: <a href="${escape(params.recordUrl)}" style="color:${BLUE}">${escape(params.recordUrl)}</a>`,
+    `The queue: <a href="${escape(params.adminUrl)}" style="color:${BLUE}">${escape(params.adminUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `Flagged: ${params.actName}, ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
+}
+
+/** Back to the patron who raised it, so they know it landed and what happens next. */
+export function flagConfirmation(params: { to: string; patronName: string; what: string; actName: string; runTitle: string; pausedCount: number; recordUrl: string }): Mail {
+  const lines = [
+    `Door Money has ${params.patronName}'s note about ${params.actName}'s ${params.runTitle.toLowerCase()}.`,
+    params.pausedCount > 0
+      ? `Every payment still to go out on ${params.what} is on hold while Door Money looks. Nothing further reaches ${params.actName} until then.`
+      : `Nothing was left to send on ${params.what}, so there is nothing to hold. Door Money will look anyway.`,
+    `Someone will be in touch. If the run did not happen, the unreleased part goes back to the card it was paid with.`,
+    `The record: ${params.recordUrl}`,
+  ];
+  const html = shell([
+    `Door Money has <b>${escape(params.patronName)}</b>'s note about ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())}.`,
+    `<b style="color:${BLUE}">${escape(lines[1])}</b>`,
+    escape(lines[2]),
+    `The record: <a href="${escape(params.recordUrl)}" style="color:${BLUE}">${escape(params.recordUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `Door Money is looking into ${params.actName}'s ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
 }
 
 /** To a new address on the new-boards email. Says what arrives, how often, and how to stop it. */

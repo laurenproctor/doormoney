@@ -128,10 +128,12 @@ Done 2026-09-03, in test mode, on a throwaway board. Two patrons bid $120 and $1
 - [x] Show list per run: the act enters dates and venues once. On the run page in the dashboard.
 - [x] "Played" toggle per show on the act dashboard, one tap
 - [x] Optional photo per show, stored in Supabase Storage (public `shows` bucket). Shown on the end-of-run record once Phase 3 builds it.
-- [ ] Patron flag: "I don't think this ran." Pauses the next release for that lot until Door Money looks.
+- [x] Patron flag: "I don't think this ran." At `/record/[id]/flag`, reached from the record and from the receipt email, needing no account. Raising it pauses every slice not yet released on that placement or backing, mails Door Money and the patron, and tells nobody else: Door Money looks first. Slices already sent stay sent. `src/lib/flags.ts`, migration 0015.
 - [x] Attendance field per show, self-reported, optional
 
 **Done when:** the end-of-run record can show a real photo from a real show, and a flagged lot pauses correctly.
+
+The flag half is done, 2026-09-03. A purchase with four Friday slices still to go was flagged from the patron page: all four moved to paused, the payout job then moved nothing and reported no errors, and both emails went out. Releasing the hold from the admin queue put all four back to scheduled, after which the job tried to pay and failed only on the deliberately fake charge id. The rehearsal data was deleted.
 
 ---
 
@@ -139,7 +141,7 @@ Done 2026-09-03, in test mode, on a throwaway board. Two patrons bid $120 and $1
 
 **Goal:** the first acts and the first patrons, by hand.
 
-- [~] Admin views at `/admin`: acts, runs, lots, payments, contact notes, waitlist. Read-only, gated by `ADMIN_EMAILS`. Flags arrive with Phase 6's patron flag; actions later.
+- [~] Admin views at `/admin`: acts, runs, lots, payments, backings, contact notes, waitlist, and the flag queue, gated by `ADMIN_EMAILS`. Read-only apart from one action: releasing a patron's hold, which puts the paused slices back in the Friday queue. Refunding instead still goes through the act's cancel or the Stripe Dashboard.
 - [ ] ~~Founding-act badge and free-forever listing for the first fifty~~ Dropped 2026-09-03: no cohort limits and no free claims anywhere on the site.
 - [ ] Terms of service and privacy policy, reviewed by a lawyer
 - [ ] Stripe review of the platform model, done before real money moves at scale
