@@ -258,6 +258,17 @@ export async function notifyOutbid(sb: Admin, lotId: string, newTopBidId: string
   }
 }
 
+/**
+ * Closes and rolls whatever is due for one act, on the spot. The board calls this when it can see
+ * that something is overdue, so an auction ends on time whatever the cron schedule allows: Vercel's
+ * smaller plans only run a cron once a day, and a close cannot wait that long. Cheap, because the
+ * board only calls it when one of its own lots is actually past its time.
+ */
+export async function settleDueLots(sb: Admin, now = new Date()) {
+  await closeDueAuctions(sb, now);
+  await rollExpiredFunding(sb, now);
+}
+
 /** The whole auction pass: warn, close, roll. Safe to run as often as you like. */
 export async function runAuctionJob(sb: Admin, now = new Date()): Promise<AuctionSummary> {
   const summary: AuctionSummary = { ranAt: now.toISOString(), closed: 0, wonAndBilled: 0, rolled: 0, unsold: 0, closingSoonEmails: 0, errors: [] };

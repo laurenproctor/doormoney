@@ -11,7 +11,8 @@ import { getBoard, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
+import { buyNowOpen, closeTimeOf, minimumBidCents, settleDueLots } from "@/lib/auctions";
+import { supabaseAdmin } from "@/lib/supabase/server";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { BoardLots, type LotView } from "./BoardLots";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
@@ -32,6 +33,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** First sentence of a blurb, for the one-line note under a lot name. */
+
+/** Whether anything on this board is past its moment: bidding over, or a funding window run out. */
+async function hasOverdueLot(board: NonNullable<Awaited<ReturnType<typeof getBoard>>>) {
+  const nowIso = new Date().toISOString();
+  const closes = board.run?.biddingClosesAt ?? null;
+  const overdueBidding = board.lots.some((l) => {
+    if (l.mode !== "auction" || l.status !== "open") return false;
+    const at = closeTimeOf({ closes_at: l.closesAt ?? null }, { bidding_closes_at: closes });
+    return at !== null && at <= nowIso;
+  });
+  if (overdueBidding) return true;
+  // A funding deadline is not on the public board, so ask for the ones that matter.
+  const waiting = board.lots.filter((l) => l.mode === "auction" && l.status === "pending_funding").map((l) => l.id);
+  if (!waiting.length) return false;
+  const { data } = await supabaseAdmin().from("lots").select("id").in("id", waiting).lt("funding_deadline", nowIso).limit(1);
+  return Boolean(data?.length);
+}
 
 /** "an 18-show run", "a 32-gig season". */
 const article = (n: number) => (/^(8|11$|18$|8\d)/.test(String(n)) ? "an" : "a");
@@ -54,8 +72,15 @@ async function paidNotice(sessionId: string | undefined, slug: string) {
 
 export default async function BoardPage({ params, searchParams }: Props) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const board = await getBoard(slug);
+  let board = await getBoard(slug);
   if (!board || !board.run) notFound();
+
+  // An auction that has run out of time settles here rather than waiting for the next cron pass.
+  // Both writes are conditional on the state they expect, so two readers at once cannot double up.
+  if (await hasOverdueLot(board)) {
+    await settleDueLots(supabaseAdmin());
+    board = (await getBoard(slug)) ?? board;
+  }
   const { act, run } = board;
   const paid = await paidNotice(typeof sp.paid === "string" ? sp.paid : undefined, slug);
 
