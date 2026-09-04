@@ -40,6 +40,7 @@ export const NAV = [
 /** The house paper: legal and policy pages, linked from the footer. */
 export const LEGAL = [
   { href: "/terms", label: "Terms and conditions" },
+  { href: "/refunds", label: "Refunds and disputes" },
   { href: "/privacy", label: "Privacy policy" },
   { href: "/cookies", label: "Cookie policy" },
   { href: "/accessibility", label: "Accessibility" },

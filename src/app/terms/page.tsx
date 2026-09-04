@@ -172,6 +172,10 @@ const SECTIONS: LegalSection[] = [
           Refunds go back to the card the patron paid with. {SITE.name} returns its fee along with the rest whenever the
           placement never ran.
         </p>
+        <p>
+          The <Link href="/refunds">refunds and disputes policy</Link> works through the same ground in detail, including what
+          happens when a patron asks their bank instead. These terms govern if the two ever disagree.
+        </p>
       </>
     ),
   },

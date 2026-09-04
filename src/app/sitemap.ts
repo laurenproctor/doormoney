@@ -3,7 +3,7 @@ import { SITE } from "@/lib/site";
 import { listOpenBoards } from "@/lib/boards";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = ["", "/placements", "/auctions", "/widget", "/list", "/contact", "/terms", "/privacy", "/cookies", "/accessibility"];
+  const pages = ["", "/placements", "/auctions", "/widget", "/list", "/contact", "/terms", "/refunds", "/privacy", "/cookies", "/accessibility"];
   const boards = await listOpenBoards();
   return [
     ...pages.map((p) => ({ url: `${SITE.url}${p}`, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.7 })),
