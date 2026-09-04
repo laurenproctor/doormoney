@@ -47,17 +47,25 @@ export default async function DashboardPage() {
   // Marks waiting on the act's yes, across every run.
   const { data: marks } = await sb
     .from("purchases")
-    .select("id,mark_url,mark_text,created_at,lots!inner(label,surface_key,runs!inner(act_id)),patron_names(name)")
+    .select("id,mark_url,mark_text,mark_note,mark_submitted_at,created_at,lots!inner(label,surface_key,runs!inner(act_id)),patron_names(name)")
     .eq("mark_status", "submitted")
     .eq("lots.runs.act_id", act.id)
-    .order("created_at");
-  type MarkRow = { id: string; mark_url: string | null; mark_text: string | null; lots: { label: string | null; surface_key: string }; patron_names: { name: string } | null };
+    .order("mark_submitted_at");
+  type MarkRow = {
+    id: string;
+    mark_url: string | null;
+    mark_text: string | null;
+    mark_note: string | null;
+    lots: { label: string | null; surface_key: string };
+    patron_names: { name: string } | null;
+  };
   const waiting = ((marks ?? []) as unknown as MarkRow[]).map((m) => ({
     id: m.id,
     patron: m.patron_names?.name ?? "A patron",
     lot: m.lots.label ?? CATALOG.find((c) => c.key === m.lots.surface_key)?.name ?? m.lots.surface_key,
     url: m.mark_url,
     text: m.mark_text,
+    note: m.mark_note,
   }));
 
   const boardHref = `/board/${act.slug}`;
@@ -168,6 +176,8 @@ export default async function DashboardPage() {
                   <div>
                     <b className="block text-[15px]">{m.patron}</b>
                     <span className="caps text-[14.5px] text-muted">{m.lot}</span>
+                    {m.text && m.url && <span className="mt-1.5 block text-[14.5px]">Name to set: {m.text}</span>}
+                    {m.note && <p className="mt-1.5 max-w-[52ch] text-[14.5px] leading-[1.55] text-muted">&ldquo;{m.note}&rdquo;</p>}
                   </div>
                   <MarkDecision purchaseId={m.id} />
                 </li>

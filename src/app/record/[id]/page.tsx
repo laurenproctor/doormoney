@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Eyebrow, Section, SectionHead } from "@/components/Brand";
+import { ButtonLink } from "@/components/Button";
 import { Page } from "@/components/Page";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { themeFor } from "@/components/Theme";
 import { tierPlace } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
+import type { MarkStatus } from "@/lib/marks";
 import { formatMoney } from "@/lib/money";
 import { lotName } from "@/lib/purchases";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -37,7 +39,7 @@ type RunRow = {
 const RUN = "runs!inner(id,title,kind,status,starts_on,ends_on,show_count,closed_at,cancelled_at,acts!inner(slug,name,city,photo_url))";
 
 type Money = { id: string; amount_cents: number; fee_cents: number; payment_status: string; refunded_cents: number; created_at: string };
-type PurchaseRow = Money & { patrons: { name: string } | null; lots: { label: string | null; surface_key: string; runs: RunRow } };
+type PurchaseRow = Money & { mark_status: MarkStatus; patrons: { name: string } | null; lots: { label: string | null; surface_key: string; runs: RunRow } };
 type BackingRow = Money & { display_name: string; tier: string; runs: RunRow };
 
 /** A purchase and a backing, seen the same way. */
@@ -46,6 +48,8 @@ type RecordRow = Money & {
   patronName: string;
   /** "the kick drum head", "a name on the merch table card" */
   what: string;
+  /** Where the mark stands. Backings carry a name, not a mark, so they are always "none". */
+  markStatus: MarkStatus;
   runs: RunRow;
 };
 
@@ -56,18 +60,18 @@ const PAID = ["held", "released", "refunded", "partially_refunded"];
 async function loadRecord(sb: ReturnType<typeof supabaseAdmin>, id: string): Promise<RecordRow | null> {
   const { data: purchase } = await sb
     .from("purchases")
-    .select(`id,amount_cents,fee_cents,payment_status,refunded_cents,created_at,patrons(name),lots!inner(label,surface_key,${RUN})`)
+    .select(`id,amount_cents,fee_cents,payment_status,refunded_cents,created_at,mark_status,patrons(name),lots!inner(label,surface_key,${RUN})`)
     .eq("id", id)
     .in("payment_status", PAID)
     .maybeSingle();
   if (purchase) {
     const p = purchase as unknown as PurchaseRow;
-    return { ...p, kind: "purchase", patronName: p.patrons?.name ?? "A patron", what: `the ${lotName(p.lots).toLowerCase()}`, runs: p.lots.runs };
+    return { ...p, kind: "purchase", patronName: p.patrons?.name ?? "A patron", what: `the ${lotName(p.lots).toLowerCase()}`, markStatus: p.mark_status, runs: p.lots.runs };
   }
   const { data: backing } = await sb.from("backings").select(`id,amount_cents,fee_cents,payment_status,refunded_cents,created_at,display_name,tier,${RUN}`).eq("id", id).in("payment_status", PAID).maybeSingle();
   if (!backing) return null;
   const b = backing as unknown as BackingRow;
-  return { ...b, kind: "backing", patronName: b.display_name, what: `a name on ${tierPlace(b.tier)}`, runs: b.runs };
+  return { ...b, kind: "backing", patronName: b.display_name, what: `a name on ${tierPlace(b.tier)}`, markStatus: "none", runs: b.runs };
 }
 
 async function load(id: string) {
@@ -146,6 +150,25 @@ export default async function RecordPage({ params }: Props) {
         </>
       }
     >
+      {/* The one thing the patron may still owe: the mark. Stays up until the act decides. */}
+      {!backing && run.status !== "cancelled" && (p.markStatus === "none" || p.markStatus === "submitted") && (
+        <Section className="pool">
+          <SectionHead eyebrow={p.markStatus === "none" ? "Still to send" : "With the act"}>
+            {p.markStatus === "none" ? `${act.name} is waiting for the mark` : `${act.name} has the mark`}
+          </SectionHead>
+          <p className="max-w-[62ch] text-muted">
+            {p.markStatus === "none"
+              ? `The mark is the name or logo as it will appear on ${p.what}. Nothing goes up without ${act.name}'s yes, and nothing runs until the mark is in.`
+              : `${act.name} approves or declines it, and Door Money sends an email either way. It can still be replaced until they decide.`}
+          </p>
+          <div className="mt-8">
+            <ButtonLink href={`/mark/${p.id}`} arrow={p.markStatus === "none"} variant={p.markStatus === "none" ? "solid" : "ghost"}>
+              {p.markStatus === "none" ? "Send the mark" : "Replace the mark"}
+            </ButtonLink>
+          </div>
+        </Section>
+      )}
+
       <Section>
         <SectionHead eyebrow="Where it went">{backing ? "What the backing did" : "What the placement did"}</SectionHead>
         <div className="mt-8 flex flex-wrap gap-x-14 gap-y-6">
