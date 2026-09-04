@@ -118,36 +118,73 @@ no retry worker, and no staff-visible failure state.
 
 ### Funding tokens and Stripe account information are private
 
-**Violated.** Enforced by Phase 1.
+**Held** as of migration `0022`. Proved by `supabase/tests/permissions_test.sql` tests 1 to 3.
 
-`lots` carries `funding_token` (`supabase/migrations/0011_auctions.sql:8`) and its policy is
-`public read lots ... using (true)`. Any anonymous caller can read every funding token straight from
-the Data API. `acts` carries `stripe_account_id` and `stripe_payouts_enabled`
-(`supabase/migrations/0001_init.sql:44`) under `public read acts ... using (true)`, so Connect
-account ids are public too.
+It was violated: `lots.funding_token`, `acts.stripe_account_id` and `acts.stripe_payouts_enabled`
+were all readable by any anonymous caller, and all three were reproduced against a local stack
+before the fix. `0022` revokes the table-level select on `acts`, `lots` and `bids` and grants back an
+explicit column list, so these columns are no longer part of the Data API.
+
+Note for anyone tightening this further: a column-level `revoke` does nothing while a table-level
+`grant select` stands. Postgres treats the table grant as covering every column, present and future.
+The revoke has to be wholesale, with the allowed columns granted back by name.
 
 ### A musician cannot alter protected payout or auction state through PostgREST
 
-**Violated.** Enforced by Phase 1.
+**Held** as of migration `0022`. Proved by `supabase/tests/permissions_test.sql` tests 16 to 25.
 
-The owner policies are `own acts on acts for all using (auth.uid() = owner_id)` and
-`own profile on profiles for all using (auth.uid() = id)`. `FOR ALL` with no column privileges means
-an authenticated musician can write any column on their own row directly through the Data API,
-including `stripe_account_id`, `stripe_payouts_enabled` and `slug`, without ever touching a server
-action. Server actions are currently the only place these rules exist, and they are not a security
-boundary.
+It was violated: the `FOR ALL` owner policies plus full table privileges let an authenticated
+musician rewrite their own `stripe_account_id`, turn `stripe_payouts_enabled` on and grant themselves
+`founding`, straight through the Data API. All three were reproduced locally.
+
+`0022` splits the `FOR ALL` policies on `acts` and `profiles` into separate select, insert and update
+policies with no delete, and replaces the blanket write grants with explicit column lists. Row
+ownership decides which rows; column privileges decide which columns. A musician may still edit
+their act's description, publish and unpublish a run, and set a lot's commercial terms.
 
 ### Anonymous bidder identity is not publicly disclosed
 
-**Partly held.** Enforced by Phase 1.
+**Held** as of migration `0022`. Proved by `supabase/tests/permissions_test.sql` tests 4, 5, 13 to 15.
 
-`patrons` has RLS enabled and no policy, so anonymous callers cannot read patron rows and cannot
-join a bid to a name. But `public read bids ... using (true)` exposes `patron_id` on every bid,
-including bids marked `anonymous`. That id is a stable identifier: it links a patron's bids to each
-other across lots and boards, and it becomes a name the moment any future policy opens `patrons`.
-The `anonymous` flag hides the name on the board and nowhere else.
+It was violated, and this was the worst of the four. The `patrons` table was correctly locked, but
+`patron_names` (a `security_invoker = false` view granted to `anon`) plus `patron_id` on the publicly
+readable `bids` table meant one join named every anonymous bidder:
+
+```sql
+select b.amount_cents, pn.name from bids b join patron_names pn on pn.id = b.patron_id where b.anonymous;
+```
+
+Reproduced against a local stack with a realistic patron name. The seed hides it by naming those
+patrons "Anonymous patron"; production rows carry the real one. `src/lib/boards.ts` was also fetching
+the name for every bid and masking it afterwards in TypeScript, so the masking was never the thing
+protecting it.
+
+`0022` revokes `select` on `patron_names` from both roles, drops `patron_id` from the columns
+`bids` exposes, and adds `public_bids`, which resolves the name and masks it in the view. An
+anonymous bid now has no name to leak rather than a name a caller is trusted to hide.
 
 ---
+
+### Reserved names cannot be claimed as a handle or a board address
+
+**Held** as of migration `0022`. Proved by `supabase/tests/permissions_test.sql` tests 26 and 27, and
+by `tests/reserved-names.test.ts`, which keeps the database list and `RESERVED_SLUGS` equal.
+
+It was violated: `handle_new_user` copies `username` out of `raw_user_meta_data`, which the client
+controls at signup, and the reserved list lived only in TypeScript. Anyone could sign up as `admin`.
+
+### A lot with bids or payments on it cannot be deleted
+
+**Held** as of migration `0022`, via the `lots_refuse_delete_with_history` trigger. Proved by
+`supabase/tests/permissions_test.sql` test 32. Deleting such a lot would orphan money and erase an
+auction's history.
+
+### A musician cannot move a run to a state that is not theirs
+
+**Held** as of migration `0022`, via the `runs_status_transition` trigger. Proved by
+`supabase/tests/permissions_test.sql` tests 25 and 34. A musician moves a run between `draft` and
+`open`, which is publishing. `closed` and `cancelled` are settled by the service role, because they
+carry refunds with them.
 
 ## Identity
 
@@ -161,10 +198,8 @@ they sign in, and there is no slug history, so every published link to the old a
 
 ### One act per account
 
-**Violated.** Enforced by Phase 1.
-
-Nothing in the schema constrains `acts.owner_id` to one row per account. The application assumes one
-act per account throughout.
+**Held** as of migration `0022`, via the partial unique index `acts_one_per_owner`. Proved by
+`supabase/tests/permissions_test.sql` test 28.
 
 ---
 

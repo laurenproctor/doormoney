@@ -5,7 +5,7 @@ import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { MarkDecision } from "@/components/MarkDecision";
 import { requireUser, ownedAct } from "@/lib/auth";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { CATALOG } from "@/lib/catalog";
 import { SITE } from "@/lib/site";
 import { formatMoney } from "@/lib/money";
@@ -44,8 +44,10 @@ export default async function DashboardPage() {
   const showRows = shows ?? [];
   const playedCount = showRows.filter((s) => s.played).length;
 
-  // Marks waiting on the act's yes, across every run.
-  const { data: marks } = await sb
+  // Marks waiting on the act's yes, across every run. Read with the service role: the patron's
+  // name comes from patron_names, which came off the Data API in 0022. The query is still scoped
+  // to this act's own runs.
+  const { data: marks } = await supabaseAdmin()
     .from("purchases")
     .select("id,mark_url,mark_text,mark_note,mark_submitted_at,created_at,lots!inner(label,surface_key,runs!inner(act_id)),patron_names(name)")
     .eq("mark_status", "submitted")
