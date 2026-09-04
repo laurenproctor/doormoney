@@ -75,6 +75,32 @@ the production build passes, and no application behaviour, payment behaviour or 
 
 ## Phase 1: Supabase security boundary
 
+**Status: built and tested locally, not applied to the hosted project.** Branch
+`remediation-phase-1`, migration `0022_security_boundary.sql`. See `docs/PHASE_1_DEPLOYMENT.md` for
+the apply and token-rotation checklist.
+
+Four holes were reproduced against a local stack before anything was written, and all four are now
+closed and covered by `supabase/tests/permissions_test.sql` (34 assertions, all passing):
+
+1. `anon` could read every act's Connect account id and payout flag.
+2. `anon` could read every lot's funding token.
+3. `anon` could name any anonymous bidder by joining `bids.patron_id` to the `patron_names` view.
+4. An authenticated musician could rewrite their own `stripe_account_id`, enable payouts and grant
+   themselves `founding`, straight through the Data API.
+
+Two things learned in the doing, both written up in `docs/PHASE_1_DEPLOYMENT.md`:
+
+- A column-level `revoke` is a no-op while a table-level `grant select` stands. The first draft of
+  the migration looked right and changed nothing; the tests caught it.
+- Revoking `execute` on a `security definer` function that an RLS policy calls segfaults the backend
+  rather than denying the query. `0022` grants execute on `owns_run` and `owns_lot` for that reason.
+
+Still open from the original Phase 1 list, and deliberately not attempted here: moving the Stripe
+columns into a separate private table (the column grants achieve the same boundary with less schema
+churn), a full storage-policy review, and the `security definer` view audit beyond the three known
+views. `lot_buyers`, `patron_names` and `run_backers` are all `security_invoker = false` by design,
+so they can read locked base tables; only `patron_names` was over-exposed.
+
 Make the database and Data API safe when a caller ignores the UI and the server actions entirely.
 
 - Inventory every table, view, function, policy, table grant, column grant and storage policy, and

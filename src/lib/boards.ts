@@ -23,14 +23,31 @@ export async function getBoard(slug: string): Promise<Board | null> {
     .single();
   if (!run) return { act, run: null as never, lots: [] };
 
-  // lots and bids are linked twice (a bid belongs to a lot; a lot records its winning bid),
-  // so the join has to name the relationship. Patron names come through the patron_names view.
   const { data: lots, error: lotsError } = await sb
     .from("lots")
-    .select("id,surface_key,label,price_cents,mode,status,closes_at,buy_now_cents,winner_bid_id,bids!bids_lot_id_fkey(amount_cents,anonymous,passed_at,patron_names(name))")
+    .select("id,surface_key,label,price_cents,mode,status,closes_at,buy_now_cents,winner_bid_id")
     .eq("run_id", run.id)
     .order("created_at");
   if (lotsError) console.error("board lots query failed", lotsError.message);
+
+  // Bids come through public_bids (migration 0022), which resolves the patron's name and masks it
+  // for an anonymous bid. The base table no longer exposes patron_id, so a name cannot be joined
+  // back to a bid from outside. Fetched separately rather than embedded: the view carries no
+  // foreign key for PostgREST to embed through.
+  const lotIds = (lots ?? []).map((l) => l.id);
+  type BidRow = { lot_id: string; amount_cents: number; anonymous: boolean; passed_at: string | null; patron_name: string | null };
+  const bidsByLot = new Map<string, BidRow[]>();
+  if (lotIds.length) {
+    const { data: bidRows } = await sb
+      .from("public_bids")
+      .select("lot_id,amount_cents,anonymous,passed_at,patron_name")
+      .in("lot_id", lotIds);
+    for (const b of (bidRows ?? []) as BidRow[]) {
+      const list = bidsByLot.get(b.lot_id);
+      if (list) list.push(b);
+      else bidsByLot.set(b.lot_id, [b]);
+    }
+  }
 
   // purchases is locked too. Who bought a sold lot comes through the lot_buyers view (migration 0003).
   const soldIds = (lots ?? []).filter((l) => l.status === "sold").map((l) => l.id);
@@ -45,9 +62,8 @@ export async function getBoard(slug: string): Promise<Board | null> {
   const backers: Backer[] = ((fanRows ?? []) as { display_name: string; tier: string; amount_cents: number }[]).map((f) => ({ name: f.display_name, tier: f.tier, amountCents: f.amount_cents }));
 
   const shaped: BoardLot[] = (lots ?? []).map((l) => {
-    type BidRow = { amount_cents: number; anonymous: boolean; passed_at: string | null; patron_names: { name: string } | null };
     // A bid that won and then let the 48 hours run out is out of the running, so it is not the top bid.
-    const bids = ((l.bids ?? []) as unknown as BidRow[]).filter((b) => !b.passed_at).sort((a, b) => b.amount_cents - a.amount_cents);
+    const bids = (bidsByLot.get(l.id) ?? []).filter((b) => !b.passed_at).sort((a, b) => b.amount_cents - a.amount_cents);
     const top = bids[0];
     return {
       id: l.id,
@@ -58,7 +74,7 @@ export async function getBoard(slug: string): Promise<Board | null> {
       status: l.status,
       closesAt: l.closes_at,
       buyNowCents: l.buy_now_cents,
-      topBid: top ? { amountCents: top.amount_cents, patronName: top.anonymous ? "Anonymous patron" : top.patron_names?.name ?? "Patron", anonymous: top.anonymous } : null,
+      topBid: top ? { amountCents: top.amount_cents, patronName: top.anonymous ? "Anonymous patron" : top.patron_name ?? "Patron", anonymous: top.anonymous } : null,
       soldTo: buyers.get(l.id)?.name ?? null,
       soldCents: buyers.get(l.id)?.amountCents ?? null,
       wonAtAuction: Boolean(l.winner_bid_id),

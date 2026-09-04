@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { stripe } from "@/lib/stripe";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 
@@ -36,8 +36,9 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
       return { ok: false, error: "Stripe could not open the account. Try once more." };
     }
     accountId = created.id;
-    const sb = await supabaseServer();
-    const { error } = await sb.from("acts").update({ stripe_account_id: accountId }).eq("id", act.id);
+    // stripe_account_id is not writable through the Data API (migration 0022). The act is already
+    // established as this user's by ownedAct above, so the write is scoped by its id.
+    const { error } = await supabaseAdmin().from("acts").update({ stripe_account_id: accountId }).eq("id", act.id);
     if (error) return { ok: false, error: "That did not save. Try once more." };
   }
 
@@ -67,8 +68,7 @@ export async function syncStripeStatus(): Promise<void> {
   const account = await stripe.accounts.retrieve(act.stripe_account_id);
   const enabled = Boolean(account.payouts_enabled && account.charges_enabled !== false);
   if (enabled !== act.stripe_payouts_enabled) {
-    const sb = await supabaseServer();
-    await sb.from("acts").update({ stripe_payouts_enabled: enabled }).eq("id", act.id);
+    await supabaseAdmin().from("acts").update({ stripe_payouts_enabled: enabled }).eq("id", act.id);
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/payouts");
   }
