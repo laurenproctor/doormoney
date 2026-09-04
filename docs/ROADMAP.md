@@ -109,7 +109,7 @@ The test-mode half is done, 2026-09-03. A throwaway act finished Express onboard
 - [x] Bids table with a reserve and a close time per lot. The reserve is the lot's `price_cents`; migration 0011 adds `lots.closes_at`, which falls back to the run's `bidding_closes_at`.
 - [x] Live updates on the board via Supabase Realtime. `BoardLots` watches the `bids` table and re-reads the board, so names and totals stay server-rendered.
 - [x] Straight bidding, per `docs/DECISIONS.md`, decision 4. The next bid is the top bid plus `bidStepCents`, or the reserve when there are none. A bid ten times the asking price asks for confirmation first.
-- [x] Close job: `/api/cron/auctions` (`src/lib/auctions.ts`), every ten minutes in `vercel.json`. The top bid at or above the reserve wins and gets 48 hours; nothing at the reserve goes unsold and the act is told.
+- [x] Close job: `/api/cron/daily` (`src/lib/auctions.ts`), once a day in `vercel.json`, with boards settling their own overdue lots on sight. The top bid at or above the reserve wins and gets 48 hours; nothing at the reserve goes unsold and the act is told.
 - [x] Funding flow: the winner gets an email with a private link at `/claim/[token]`, and pays through the Phase 3 checkout at the bid amount. Unpaid after 48 hours, the bid is marked passed and the lot rolls to the next bid with a fresh window and a fresh link. The old link dies.
 - [x] Anonymous bidding option, shown as "Anonymous patron", on the board and after the sale. The act sees the name.
 - [x] Outbid and closing-soon emails, one per bid and one per lot.
@@ -146,7 +146,8 @@ The flag half is done, 2026-09-03. A purchase with four Friday slices still to g
 - [ ] Terms of service and privacy policy, reviewed by a lawyer
 - [ ] Stripe review of the platform model, done before real money moves at scale
 - [ ] Manual outreach list: residencies, corner bars, neighborhood businesses
-- [ ] Weekly digest email, once there are real numbers in it
+- [x] Weekly digest email: the week in numbers to `ADMIN_EMAILS` (boards opened, spots sold, backings, money sent and held, open flags, new subscribers, notes). `src/lib/weekly.ts`.
+- [x] The new-boards email actually sends. The list had a signup, a welcome and an unsubscribe since Phase 1 but nothing that posted the weekly note. Boards that have opened since the last one go out to the list, each board announced once (`runs.announced_at`), never more than weekly. The sample boards ship marked as announced, so two invented musicians are never introduced to a real list.
 
 **Done when:** ten acts have live boards and five have been paid.
 

@@ -18,7 +18,7 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
 
   const flags = await openFlags(db);
-  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter] = await Promise.all([
+  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
     db.from("lots").select("id,run_id,surface_key,label,price_cents,mode,status"),
@@ -27,6 +27,7 @@ export default async function AdminPage() {
     db.from("contact_messages").select("id,reason,name,organization,email,subject,message,status,created_at").order("created_at", { ascending: false }).limit(100),
     db.from("waitlist").select("id,role,name,email,city,act_type,created_at").order("created_at", { ascending: false }).limit(200),
     db.from("newsletter").select("id,email,source,created_at,unsubscribed_at").order("created_at", { ascending: false }).limit(200),
+    db.from("mail_runs").select("id,kind,sent_at,recipients,failures").order("sent_at", { ascending: false }).limit(20),
   ]);
   const subscribers = (newsletter.data ?? []).filter((n) => !n.unsubscribed_at);
 
@@ -182,6 +183,22 @@ export default async function AdminPage() {
           <Table
             head={["When", "Role", "Name", "Email", "City", "Act type"]}
             rows={(waitlist.data ?? []).map((w) => [when.format(new Date(w.created_at)), w.role, w.name, w.email, w.city ?? "", w.act_type?.replace("_", " ") ?? ""])}
+          />
+        </Card>
+
+        <Card>
+          <CardHead eyebrow="Mail sent on a schedule">{(mailRuns.data ?? []).length} runs</CardHead>
+          <p className="mb-5 max-w-none text-[15px] text-muted">
+            The new-boards email and this digest both go out weekly, from the daily job. Neither sends twice in a week, and a board is only ever in one of them.
+          </p>
+          <Table
+            head={["When", "What", "Sent", "Failed"]}
+            rows={(mailRuns.data ?? []).map((m) => [
+              when.format(new Date(m.sent_at)),
+              m.kind === "new_boards" ? "New boards" : "Digest",
+              String(m.recipients),
+              m.failures ? String(m.failures) : "",
+            ])}
           />
         </Card>
 

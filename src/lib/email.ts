@@ -347,6 +347,81 @@ export function flagConfirmation(params: { to: string; patronName: string; what:
   return { to: params.to, subject: `Door Money is looking into ${params.actName}'s ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
 }
 
+/* ---------------------------------------------------------------------------------------------
+   Phase 7: the mail that goes out on a schedule. One to the new-boards list, one to Door Money.
+   --------------------------------------------------------------------------------------------- */
+
+export type NewBoard = { actName: string; city: string; runTitle: string; showCount: number; dates: string; openSpots: number; fromCents: number | null; boardUrl: string };
+
+/** The new-boards email: the week's boards, to everyone on the list. */
+export function newBoardsEmail(params: { to: string; boards: NewBoard[]; unsubscribeUrl: string }): Mail {
+  const n = params.boards.length;
+  const heading = n === 1 ? `${params.boards[0].actName} opened a board on ${SITE.name}.` : `${n} musicians opened boards on ${SITE.name} this week.`;
+  const line = (b: NewBoard) => {
+    const open = b.openSpots === 1 ? "one placement open" : `${b.openSpots} placements open`;
+    const from = b.fromCents ? `, from ${money(b.fromCents)}` : "";
+    return `${b.actName}, ${b.city}. ${b.runTitle}, ${b.showCount} ${b.showCount === 1 ? "show" : "shows"}, ${b.dates}. ${open}${from}. ${b.boardUrl}`;
+  };
+  const lines = [heading, ...params.boards.map(line), `Backing a run puts money behind musicians who are already playing. Door Money holds it and pays them weekly through the run.`, `To stop these emails: ${params.unsubscribeUrl}`];
+  const html = shell([
+    `<b>${escape(heading)}</b>`,
+    ...params.boards.map((b) => {
+      const open = b.openSpots === 1 ? "one placement open" : `${b.openSpots} placements open`;
+      const from = b.fromCents ? `, from ${money(b.fromCents)}` : "";
+      return `<a href="${escape(b.boardUrl)}" style="color:${BLUE};font-weight:bold">${escape(b.actName)}</a>, ${escape(b.city)}.<br>${escape(b.runTitle)}, ${b.showCount} ${b.showCount === 1 ? "show" : "shows"}, ${escape(b.dates)}.<br>${escape(open)}${escape(from)}.`;
+    }),
+    escape(lines[lines.length - 2]),
+  ], `${SITE.tagline} <a href="${escape(params.unsubscribeUrl)}" style="color:${BLUE}">Unsubscribe</a>.`);
+  return { to: params.to, subject: n === 1 ? `New board: ${params.boards[0].actName}` : `${n} new boards on ${SITE.name}`, text: lines.join("\n\n"), html };
+}
+
+export type DigestNumbers = {
+  from: string;
+  to: string;
+  boardsOpened: number;
+  spotsSold: number;
+  soldCents: number;
+  backings: number;
+  backedCents: number;
+  paidOutCents: number;
+  heldCents: number;
+  openFlags: number;
+  newSubscribers: number;
+  newNotes: number;
+  actsTotal: number;
+  boardsLive: number;
+};
+
+/** The week in numbers, to Door Money. Nobody else gets this one. */
+export function weeklyDigest(params: { to: string; n: DigestNumbers; adminUrl: string }): Mail {
+  const n = params.n;
+  const rows: [string, string][] = [
+    ["Boards opened", String(n.boardsOpened)],
+    ["Placements sold", `${n.spotsSold} for ${money(n.soldCents)}`],
+    ["Fan backings", `${n.backings} for ${money(n.backedCents)}`],
+    ["Sent to musicians", money(n.paidOutCents)],
+    ["Held for later weeks", money(n.heldCents)],
+    ["Flags waiting", String(n.openFlags)],
+    ["New on the boards email", String(n.newSubscribers)],
+    ["Notes through contact", String(n.newNotes)],
+  ];
+  const lines = [
+    `${SITE.name}, the week to ${n.to}.`,
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    `Running total: ${n.actsTotal} ${n.actsTotal === 1 ? "act" : "acts"} listed, ${n.boardsLive} ${n.boardsLive === 1 ? "board" : "boards"} up.`,
+    `Everything: ${params.adminUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(SITE.name)}</b>, the week to ${escape(n.to)}.`,
+    `<table style="border-collapse:collapse;font-size:15px">${rows
+      .map(([k, v]) => `<tr><td style="padding:4px 18px 4px 0;color:#6b675f">${escape(k)}</td><td style="padding:4px 0"><b>${escape(v)}</b></td></tr>`)
+      .join("")}</table>`,
+    escape(lines[lines.length - 2]),
+    `Everything: <a href="${escape(params.adminUrl)}" style="color:${BLUE}">${escape(params.adminUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `${SITE.name}, week to ${n.to}`, text: lines.join("\n\n"), html };
+}
+
 /** To a new address on the new-boards email. Says what arrives, how often, and how to stop it. */
 export function newsletterWelcome(params: { to: string; unsubscribeUrl: string }): Mail {
   const lines = [
