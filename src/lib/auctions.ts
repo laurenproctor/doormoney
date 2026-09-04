@@ -150,10 +150,20 @@ export async function closeDueAuctions(sb: Admin, now = new Date(), summary?: Au
       const bids = (await bidsFor(sb, lot.id)).filter((b) => !b.passed_at);
       const top = bids.find((b) => b.amount_cents >= lot.price_cents) ?? null;
       if (!top) {
-        if (await markUnsold(sb, lot, { status: "open" })) summary && (summary.unsold += 1, summary.closed += 1);
+        if (await markUnsold(sb, lot, { status: "open" })) {
+          if (summary) {
+            summary.unsold += 1;
+            summary.closed += 1;
+          }
+        }
         continue;
       }
-      if (await offerTo(sb, lot, top, { status: "open", winnerBidId: null })) summary && (summary.wonAndBilled += 1, summary.closed += 1);
+      if (await offerTo(sb, lot, top, { status: "open", winnerBidId: null })) {
+        if (summary) {
+          summary.wonAndBilled += 1;
+          summary.closed += 1;
+        }
+      }
     } catch (e) {
       summary?.errors.push(`close ${lot.id}: ${e instanceof Error ? e.message : e}`);
     }
@@ -175,10 +185,14 @@ export async function rollExpiredFunding(sb: Admin, now = new Date(), summary?: 
       const remaining = (await bidsFor(sb, lot.id)).filter((b) => !b.passed_at && b.id !== lot.winner_bid_id && b.amount_cents >= lot.price_cents);
       const next = remaining[0];
       if (!next) {
-        if (await markUnsold(sb, lot, { status: "pending_funding" })) summary && (summary.unsold += 1);
+        if (await markUnsold(sb, lot, { status: "pending_funding" })) {
+          if (summary) summary.unsold += 1;
+        }
         continue;
       }
-      if (await offerTo(sb, lot, next, { status: "pending_funding", winnerBidId: lot.winner_bid_id })) summary && (summary.rolled += 1);
+      if (await offerTo(sb, lot, next, { status: "pending_funding", winnerBidId: lot.winner_bid_id })) {
+        if (summary) summary.rolled += 1;
+      }
     } catch (e) {
       summary?.errors.push(`roll ${lot.id}: ${e instanceof Error ? e.message : e}`);
     }
@@ -215,8 +229,11 @@ export async function warnClosingSoon(sb: Admin, now = new Date(), summary?: Auc
             boardUrl: `${SITE.url}/board/${lot.runs.acts.slug}`,
           }),
         );
-        if (r.sent) summary && (summary.closingSoonEmails += 1);
-        else console.error("closing soon not sent", lot.id, r.reason);
+        if (r.sent) {
+          if (summary) summary.closingSoonEmails += 1;
+        } else {
+          console.error("closing soon not sent", lot.id, r.reason);
+        }
       }
     } catch (e) {
       summary?.errors.push(`closing soon ${lot.id}: ${e instanceof Error ? e.message : e}`);

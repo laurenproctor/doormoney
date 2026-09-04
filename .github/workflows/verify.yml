@@ -1,0 +1,62 @@
+# The gate every change goes through: lint, types, unit tests, production build, from a clean
+# checkout on the Node version .nvmrc names.
+#
+# This workflow takes no secrets, on purpose. The app is built to run without them (sample data,
+# pretend forms), so a build here can never reach Supabase, Stripe or Resend. The two values below
+# are obvious CI-only placeholders. If a future change makes the build need a real credential,
+# fix the build, do not add a secret to this file.
+
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# One run per branch. A new push supersedes the one still going.
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Not a real origin. Only sets absolute links in the build output.
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+    steps:
+      - name: Check out the commit
+        uses: actions/checkout@v4
+
+      - name: Install the Node version .nvmrc names
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci` deletes node_modules and installs strictly from the lockfile, so a lockfile that
+      # has drifted from package.json fails here rather than in production.
+      - name: Install dependencies from the lockfile
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # Runs `next typegen` first: the generated route and layout types do not exist in a fresh
+      # checkout, and tsc fails without them.
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
