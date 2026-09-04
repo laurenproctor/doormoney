@@ -31,9 +31,12 @@ insert into acts (id, slug, name, type, city, bio, founding) values
 ('11111111-1111-1111-1111-111111111111', 'gutter-hymns', 'Gutter Hymns', 'touring_band', 'New York',
  'Four-piece out of Ridgewood. Loud, tight, and on the road for most of the fall.', true);
 
-insert into runs (id, act_id, kind, title, starts_on, ends_on, show_count, expected_attendance, bidding_closes_at, status) values
+insert into runs (id, act_id, kind, title, starts_on, ends_on, show_count, expected_attendance, bidding_closes_at, status, verification_methods) values
 ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'tour', 'Fall run',
- '2026-10-03', '2026-11-02', 18, 9400, '2026-09-25 23:00:00-04', 'open');
+ '2026-10-03', '2026-11-02', 18, 9400, '2026-09-25 23:00:00-04', 'open',
+ -- What this band promises patrons. Keys from src/lib/verification.ts; kept in step with
+ -- src/lib/sample.ts and the sample update at the end of migration 0020.
+ array['selected_show_photos', 'venue_date_record', 'social_post_links', 'end_of_run_record']);
 
 insert into lots (id, run_id, surface_key, label, price_cents, mode, status) values
 ('a1000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'kick_head',    null,               120000, 'auction', 'sold'),
@@ -53,9 +56,11 @@ insert into acts (id, slug, name, type, city, bio, founding) values
 ('33333333-3333-3333-3333-333333333333', 'rosie-bassoon', 'Rosie the Bassoonist', 'soloist', 'New York',
  'Working bassoonist moving between rehearsals, services, chamber dates and sessions, with a feed where the bassoon does the talking.', true);
 
-insert into runs (id, act_id, kind, title, starts_on, ends_on, show_count, bidding_closes_at, status) values
+insert into runs (id, act_id, kind, title, starts_on, ends_on, show_count, bidding_closes_at, status, verification_methods, verification_other) values
 ('44444444-4444-4444-4444-444444444444', '33333333-3333-3333-3333-333333333333', 'season', 'Fall season',
- '2026-09-15', '2026-12-20', 32, '2026-09-13 21:00:00-04', 'open');
+ '2026-09-15', '2026-12-20', 32, '2026-09-13 21:00:00-04', 'open',
+ array['venue_date_record', 'attendance_estimates', 'end_of_run_record', 'other'],
+ 'Rosie photographs the marked case lid and music stand at selected dates, with the room and the date beside each image.');
 
 insert into lots (id, run_id, surface_key, label, price_cents, mode, status) values
 ('b1000000-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 1',  6000, 'auction', 'sold'),

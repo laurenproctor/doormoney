@@ -58,8 +58,13 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] Act dashboard: current run, lots, what's sold, what's pending
 - [x] Public board at `/board/[slug]`, matching the sample board mockups. Draft runs stay private; publishing from the run page makes the board public.
 - [x] Approval flow: the patron sends the mark at `/mark/<purchase id>`, the act approves or declines it on the dashboard, and both sides are emailed. A no refunds in full and puts the spot back on the board.
+- [x] Placement verification: the musician picks, per run, what patrons get back from a fixed list (dated photos from selected shows, a venue and date list, attendance estimates, post links, a short video, the end-of-run record, or a write-in). `VerificationEditor` on the run page, `PlacementVerification` on the board under the placements, migration 0020. Publishing needs at least one. See `docs/DECISIONS.md`, decision 9.
+- [x] Self-service publishing: a readiness checklist on the run page (profile, run, placements, verification, payouts, ready), one set of rules shared with `publishRun`, and a private draft preview at `/dashboard/runs/[id]/preview` that renders the real board component. Payout setup shows as incomplete and never blocks: Door Money holds the money either way.
+- [x] The musician's own website and Instagram on the board, under the bio, sanitised server-side in `src/lib/links.ts`.
 
 **Done when:** a real act can go from signup to a live board without anyone at Door Money touching it.
+
+The whole path works without Door Money touching a page, 2026-09-04: sign in, act, run, spots, verification, preview, publish.
 
 ---
 
@@ -124,6 +129,8 @@ Done 2026-09-03, in test mode, on a throwaway board. Two patrons bid $120 and $1
 ## Phase 6. Run tracking
 
 **Goal:** enough evidence that the run happened to keep patrons confident, without the nightly-photo burden the copy no longer promises.
+
+What a patron is promised is now the musician's own answer, taken per run in Phase 2 and shown on the board (`docs/DECISIONS.md`, decision 9). This phase is the machinery behind the answers: the show list, the played toggle, the photos and the headcounts that fill the end-of-run record. Neither side promises a photograph from every night, and neither says Door Money went and looked.
 
 - [x] Show list per run: the act enters dates and venues once. On the run page in the dashboard.
 - [x] "Played" toggle per show on the act dashboard, one tap

@@ -73,9 +73,13 @@ export function DashboardShell({
   );
 }
 
-/** A lifted panel with one thin line around it, used for every dashboard block. */
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`edge min-w-0 bg-panel p-6 ${className}`}>{children}</div>;
+/** A lifted panel with one thin line around it, used for every dashboard block. `id` anchors the checklist links. */
+export function Card({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
+  return (
+    <div id={id} className={`edge min-w-0 scroll-mt-8 bg-panel p-6 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 export function CardHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {

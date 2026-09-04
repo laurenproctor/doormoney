@@ -107,3 +107,25 @@ Sign-in was a one-time email link and nothing else. Two things pushed against th
 The email link stays as a second way in, for accounts that never set a password. Forgotten passwords go through `/forgot`, which reports the same thing whether or not the account exists.
 
 Open, and not settled here: whether changing the board address later should move the username with it. It does today, on the act page, which means a musician who renames the board also renames their sign-in. The alternative is to freeze the username at sign-up and let the board address drift, at the cost of the one-word promise.
+
+---
+
+## 9. What a board promises patrons
+
+**Blocks:** Phase 2, and the copy rule in `CLAUDE.md`
+
+The copy was moved away from proof language early on (decision 2, option C), and rule 6 in `CLAUDE.md` banned it outright: no nightly photos, no timestamps, no verification steps. That was the right call against the original mockup mechanism, where every show owed a photograph. It was too wide. A patron paying $1,200 for a kick head still wants to know what comes back, and a blanket ban left the board silent about it.
+
+**Decided (2026-09-04):** a musician says what will come back, per run, from a fixed list. The list lives in `src/lib/verification.ts`, the choice on `runs.verification_methods` and `runs.verification_other` (migration 0020), and the board renders only what was ticked, through `PlacementVerification`.
+
+Three limits hold the promise to its size:
+
+- **Only what was chosen.** Nothing is on by default and nothing is written into a page by hand. A run with nothing ticked shows no section at all, which is what every board published before this does.
+- **Never every show.** The photo option says "selected shows" and stays that way. Door Money does not ask a musician to document a night to get paid; the release rule is still the calendar (decision 2, option A).
+- **Never Door Money's word.** The disclosure under the list says documentation comes from the musician and appears in the Door Money record. Door Money passes it on. It does not go and look, so nothing on the site may say it did.
+
+Verification belongs to the run rather than the musician on purpose: a band can photograph a music stand on a residency and send nothing but the end-of-run record on a tour, and neither is a broken promise.
+
+Publishing needs at least one method. A draft can sit unanswered.
+
+Open, and not settled here: whether a patron should be able to say the record never arrived, the way the Phase 6 flag lets them say the run never happened. Today the flag covers both.
