@@ -3,7 +3,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
-import { markOpen, markTarget } from "@/lib/marks";
+import { markApproved, markDeclined, markWaiting, sendEmail } from "@/lib/email";
+import { markOpen, markSurface, markTarget } from "@/lib/marks";
+import { ownerEmail } from "@/lib/purchases";
+import { SITE } from "@/lib/site";
 import { refundPurchase } from "@/lib/refunds";
 import { stripeConfigured } from "@/lib/stripe";
 
@@ -27,6 +30,7 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
   }
 
   const admin = supabaseAdmin();
+  let refundedCents: number | undefined;
   const { error } = await admin.from("purchases").update({ mark_status: decision }).eq("id", purchaseId).eq("mark_status", "submitted");
   if (error) return { ok: false, error: "That did not save. Try once more." };
 
@@ -34,9 +38,24 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
     // The placement never runs, so the patron gets everything back and the spot goes back up.
     const r = await refundPurchase(admin, p.id, "mark_declined");
     if (!r.ok) return { ok: false, error: "The mark is declined, but the refund did not go through. Door Money has the details." };
+    refundedCents = r.refundedCents;
     await admin.from("lots").update({ status: "open" }).eq("id", p.lot_id).eq("status", "sold");
     revalidatePath(`/board/${act.slug}`);
   }
+
+  // The patron hears the answer either way. A failed send is logged, never fatal: the decision stands.
+  const target = await markTarget(purchaseId);
+  const patronEmail = await patronAddress(admin, purchaseId);
+  if (target && patronEmail) {
+    const surface = markSurface(target);
+    const mail =
+      decision === "approved"
+        ? markApproved({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: surface, recordUrl: `${SITE.url}/record/${purchaseId}` })
+        : markDeclined({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: surface, refundedCents: refundedCents ?? 0, boardsUrl: `${SITE.url}/auctions` });
+    const r = await sendEmail(mail);
+    if (!r.sent) console.error("mark decision not sent", purchaseId, r.reason);
+  }
+
   revalidatePath("/dashboard");
   revalidatePath(`/mark/${purchaseId}`);
   return { ok: true };
@@ -117,8 +136,37 @@ export async function submitMark(_prev: MarkState, form: FormData): Promise<Mark
     return { ok: false, error: "That did not save. Try once more." };
   }
 
+  // The act hears that something is waiting. A failed send is logged: the mark is saved either way.
+  const owner = await actOwnerEmail(admin, purchase_id);
+  if (owner) {
+    const r = await sendEmail(
+      markWaiting({
+        to: owner,
+        actName: target.lots.runs.acts.name,
+        patronName: target.patrons?.name ?? "A patron",
+        lotName: markSurface(target),
+        note: mark_note || null,
+        dashboardUrl: `${SITE.url}/dashboard`,
+      }),
+    );
+    if (!r.sent) console.error("mark waiting notice not sent", purchase_id, r.reason);
+  }
+
   revalidatePath("/dashboard");
   revalidatePath(`/mark/${purchase_id}`);
   revalidatePath(`/record/${purchase_id}`);
   return { ok: true };
+}
+
+/** The email of the act that owns the board behind a purchase. */
+async function actOwnerEmail(admin: ReturnType<typeof supabaseAdmin>, purchaseId: string) {
+  const { data } = await admin.from("purchases").select("lots!inner(runs!inner(acts!inner(owner_id)))").eq("id", purchaseId).maybeSingle();
+  const ownerId = (data as unknown as { lots: { runs: { acts: { owner_id: string | null } } } } | null)?.lots.runs.acts.owner_id ?? null;
+  return ownerEmail(admin, ownerId);
+}
+
+/** The address that paid for a purchase. */
+async function patronAddress(admin: ReturnType<typeof supabaseAdmin>, purchaseId: string) {
+  const { data } = await admin.from("purchases").select("patrons(contact_email)").eq("id", purchaseId).maybeSingle();
+  return (data as unknown as { patrons: { contact_email: string } | null } | null)?.patrons?.contact_email ?? null;
 }

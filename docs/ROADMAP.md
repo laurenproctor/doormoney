@@ -57,7 +57,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 - [x] Lots: pick surfaces from the standard card, set a price, choose fixed or auction. Standard-card prices prefilled, editable. Up to six spots per surface; sold spots are never touched.
 - [x] Act dashboard: current run, lots, what's sold, what's pending
 - [x] Public board at `/board/[slug]`, matching the sample board mockups. Draft runs stay private; publishing from the run page makes the board public.
-- [~] Approval flow: the act's side is on the dashboard (approve or decline a submitted mark). The patron's upload arrives with checkout in Phase 3.
+- [x] Approval flow: the patron sends the mark at `/mark/<purchase id>`, the act approves or declines it on the dashboard, and both sides are emailed. A no refunds in full and puts the spot back on the board.
 
 **Done when:** a real act can go from signup to a live board without anyone at Door Money touching it.
 

@@ -1,5 +1,5 @@
 import { tierPlace } from "@/lib/catalog";
-import { recordReady, sendEmail } from "@/lib/email";
+import { payoutProblem, recordReady, sendEmail } from "@/lib/email";
 import { lotName, notifyPayout } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { transferSliceToAct } from "@/lib/stripe";
@@ -119,6 +119,13 @@ export async function runWeeklyPayouts(today = new Date()): Promise<PayoutSummar
   }
 
   for (const { act, cents, slices } of paidByAct.values()) await notifyPayout(sb, act, cents, slices);
+
+  // A transfer that failed is Door Money's problem to look at, not the act's to discover.
+  const staff = process.env.CONTACT_TO_EMAIL?.trim();
+  if (summary.errors.length && staff) {
+    const r = await sendEmail(payoutProblem({ to: staff, ranOn, failures: summary.errors, adminUrl: `${SITE.url}/admin` }));
+    if (!r.sent) console.error("payout problem notice not sent", r.reason);
+  }
 
   // The calendar moves runs along: open becomes live on the first date, live becomes closed after the last.
   const { data: live } = await sb.from("runs").update({ status: "live" }).eq("status", "open").lte("starts_on", ranOn).select("id");

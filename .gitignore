@@ -9,5 +9,8 @@ next-env.d.ts
 .DS_Store
 supabase/.temp
 
+# Local scratch: rendered email previews and anything else regenerated on demand.
+.tmp/
+
 # Worktrees a Claude session opens for parallel work. Checkouts, not source.
 .claude/worktrees/

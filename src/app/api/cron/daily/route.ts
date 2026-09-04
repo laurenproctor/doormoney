@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runAuctionJob } from "@/lib/auctions";
+import { sendMarkReminders } from "@/lib/marks";
 import { runWeeklyMail } from "@/lib/weekly";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -12,6 +13,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  *   is the backstop for a board nobody visits.
  * - The weekly mail: the new-boards email and Door Money's digest. Each decides for itself whether
  *   a week has passed, so calling this daily sends nothing extra.
+ * - One reminder to any patron whose spot is paid for but whose mark has not arrived.
  *
  * Vercel Cron calls it on the schedule in vercel.json with `Authorization: Bearer $CRON_SECRET`.
  * Everything here is idempotent, so running it early or twice is safe.
@@ -33,7 +35,14 @@ export async function GET(req: Request) {
       console.error("weekly mail failed", e instanceof Error ? e.message : e);
       mail = { error: "weekly mail failed" };
     }
-    return NextResponse.json({ auctions, mail });
+    let marks;
+    try {
+      marks = await sendMarkReminders(sb);
+    } catch (e) {
+      console.error("mark reminders failed", e instanceof Error ? e.message : e);
+      marks = { error: "mark reminders failed" };
+    }
+    return NextResponse.json({ auctions, mail, marks });
   } catch (e) {
     console.error("daily job failed", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "daily job failed" }, { status: 500 });

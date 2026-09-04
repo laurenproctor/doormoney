@@ -438,3 +438,130 @@ export function newsletterWelcome(params: { to: string; unsubscribeUrl: string }
   ]);
   return { to: params.to, subject: `New boards on ${SITE.name}, by email`, text: lines.join("\n\n"), html };
 }
+
+/* ---------------------------------------------------------------------------------------------
+   The mark, both directions. The act's yes or no decides whether a placement runs at all, so
+   neither side should have to check a dashboard to find out where it stands.
+   --------------------------------------------------------------------------------------------- */
+
+/** To the act, the moment a patron sends a mark. */
+export function markWaiting(params: { to: string; actName: string; patronName: string; lotName: string; note: string | null; dashboardUrl: string }): Mail {
+  const lines = [
+    `${params.patronName} sent the mark for the ${params.lotName.toLowerCase()} on ${params.actName}'s board.`,
+    ...(params.note ? [`Their note: "${params.note}"`] : []),
+    `Nothing goes on the ${params.lotName.toLowerCase()} until ${params.actName} says yes. A no refunds the patron in full and puts the spot back on the board.`,
+    `Approve or decline it here: ${params.dashboardUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(params.patronName)}</b> sent the mark for the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s board.`,
+    ...(params.note ? [`Their note: <i>${escape(params.note)}</i>`] : []),
+    escape(`Nothing goes on the ${params.lotName.toLowerCase()} until ${params.actName} says yes. A no refunds the patron in full and puts the spot back on the board.`),
+    `<a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">Approve or decline it</a>`,
+  ]);
+  return { to: params.to, subject: `A mark to look at: ${params.patronName} on the ${params.lotName.toLowerCase()}`, text: lines.join("\n\n"), html };
+}
+
+/** To the patron, when the act says yes. */
+export function markApproved(params: { to: string; patronName: string; actName: string; lotName: string; recordUrl: string }): Mail {
+  const lines = [
+    `${params.actName} approved the mark for the ${params.lotName.toLowerCase()}.`,
+    `It stays on the ${params.lotName.toLowerCase()} for the whole run. Nothing else is needed.`,
+    `The record fills in as the run goes on: the shows, the rooms, the attendance where it is known, and where the money went. ${params.recordUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(params.actName)}</b> approved the mark for the ${escape(params.lotName.toLowerCase())}.`,
+    escape(lines[1]),
+    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record of the run</a> fills in as the run goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+  ]);
+  return { to: params.to, subject: `${params.actName} approved the mark`, text: lines.join("\n\n"), html };
+}
+
+/** To the patron, when the act says no. The placement never runs, so the money goes back. */
+export function markDeclined(params: { to: string; patronName: string; actName: string; lotName: string; refundedCents: number; boardsUrl: string }): Mail {
+  const lines = [
+    `${params.actName} declined the mark for the ${params.lotName.toLowerCase()}, so the placement never runs.`,
+    `${money(params.refundedCents)} goes back to the card it was paid with. Refunds take five to ten business days to show up, depending on the bank.`,
+    `Every musician keeps the final say on what appears beside their name. That rule is what makes a placement worth having.`,
+    `The open boards: ${params.boardsUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(params.actName)}</b> declined the mark for the ${escape(params.lotName.toLowerCase())}, so the placement never runs.`,
+    `<b style="color:${BLUE}">${money(params.refundedCents)}</b> goes back to the card it was paid with. Refunds take five to ten business days to show up, depending on the bank.`,
+    escape(lines[2]),
+    `The <a href="${escape(params.boardsUrl)}" style="color:${BLUE}">open boards</a>`,
+  ]);
+  return { to: params.to, subject: `${params.actName} declined the mark, and the money went back`, text: lines.join("\n\n"), html };
+}
+
+/** To the patron whose spot is paid for but whose mark has not arrived. Sent once. */
+export function markReminder(params: { to: string; patronName: string; actName: string; lotName: string; runTitle: string; markUrl: string }): Mail {
+  const lines = [
+    `${params.patronName} holds the ${params.lotName.toLowerCase()} on ${params.actName}'s ${params.runTitle.toLowerCase()}, paid for and waiting on one thing.`,
+    `The mark is the name or logo as it will appear. Until it arrives, ${params.actName} has nothing to approve and nothing can go up.`,
+    `A logo file, a name, or both: ${params.markUrl}`,
+    `This is the only reminder Door Money sends.`,
+  ];
+  const html = shell([
+    `<b>${escape(params.patronName)}</b> holds the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())}, paid for and waiting on one thing.`,
+    escape(lines[1]),
+    `A logo file, a name, or both: <a href="${escape(params.markUrl)}" style="color:${BLUE}">send the mark</a>`,
+    escape(lines[3]),
+  ]);
+  return { to: params.to, subject: `The ${params.lotName.toLowerCase()} is paid for. The mark is still to come.`, text: lines.join("\n\n"), html };
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Money moving, or failing to.
+   --------------------------------------------------------------------------------------------- */
+
+/** To the act, when Stripe finishes onboarding and payouts switch on. */
+export function payoutsOn(params: { to: string; actName: string; dashboardUrl: string }): Mail {
+  const lines = [
+    `Stripe has what it needs. Payouts are on for ${params.actName}.`,
+    `Money from every placement reaches ${params.actName} every Friday through the run, straight to the bank account Stripe holds. Door Money keeps ${SITE.feePercent}% of what sells and nothing else.`,
+    `Nothing to chase and no invoices to send. The dashboard shows what is scheduled: ${params.dashboardUrl}`,
+  ];
+  const html = shell([
+    `Stripe has what it needs. <b style="color:${BLUE}">Payouts are on</b> for ${escape(params.actName)}.`,
+    escape(lines[1]),
+    `Nothing to chase and no invoices to send. The <a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">dashboard</a> shows what is scheduled.`,
+  ]);
+  return { to: params.to, subject: `Payouts are on for ${params.actName}`, text: lines.join("\n\n"), html };
+}
+
+/** To the patron, when money goes back outside the cancel and decline paths (a refund made by hand). */
+export function refundIssued(params: { to: string; patronName: string; actName: string; what: string; refundedCents: number; full: boolean; recordUrl: string }): Mail {
+  const lines = [
+    `Door Money refunded ${money(params.refundedCents)} on ${params.what} for ${params.actName}.`,
+    params.full
+      ? `That is the whole amount. It goes back to the card it was paid with, and takes five to ten business days depending on the bank.`
+      : `It goes back to the card it was paid with, and takes five to ten business days depending on the bank. The rest paid for the weeks the run played.`,
+    `The record of the run: ${params.recordUrl}`,
+  ];
+  const html = shell([
+    `Door Money refunded <b style="color:${BLUE}">${money(params.refundedCents)}</b> on ${escape(params.what)} for ${escape(params.actName)}.`,
+    escape(lines[1]),
+    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record of the run</a>`,
+  ]);
+  return { to: params.to, subject: `${money(params.refundedCents)} went back`, text: lines.join("\n\n"), html };
+}
+
+/** To Door Money, when the Friday run could not send something. Nobody else gets this one. */
+export function payoutProblem(params: { to: string; ranOn: string; failures: { payoutId: string; message: string }[]; adminUrl: string }): Mail {
+  const n = params.failures.length;
+  const head = `${n} ${n === 1 ? "transfer" : "transfers"} failed in the payout run on ${params.ranOn}.`;
+  const detail = params.failures.map((f) => `${f.payoutId}: ${f.message}`);
+  const lines = [
+    head,
+    `The rows are still scheduled, so the next run tries them again. A transfer that keeps failing usually means the act's Stripe account cannot receive yet.`,
+    ...detail,
+    params.adminUrl,
+  ];
+  const html = shell([
+    `<b style="color:${BLUE}">${escape(head)}</b>`,
+    escape(lines[1]),
+    `<span style="font-family:'Courier New',monospace;font-size:13px">${detail.map(escape).join("<br />")}</span>`,
+    `<a href="${escape(params.adminUrl)}" style="color:${BLUE}">${escape(params.adminUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `Payout run ${params.ranOn}: ${n} ${n === 1 ? "failure" : "failures"}`, text: lines.join("\n\n"), html };
+}
