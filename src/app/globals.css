@@ -114,6 +114,14 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
+/* The widget's document shows the host page through; only the card itself is painted. The colour
+   scheme goes back to normal too: a dark-scheme frame inside a light-scheme page is painted opaque
+   by the browser, whatever its background says. */
+html:has([data-embed]),
+body:has([data-embed]) {
+  background: transparent;
+  color-scheme: normal;
+}
 
 p { max-width: 62ch; }
 

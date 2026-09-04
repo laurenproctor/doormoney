@@ -1,5 +1,5 @@
 import { supabaseServer } from "@/lib/supabase/server";
-import { SAMPLE_BOARDS, type Board, type BoardLot } from "@/lib/sample";
+import { SAMPLE_BOARDS, type Backer, type Board, type BoardLot } from "@/lib/sample";
 
 const configured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -40,6 +40,10 @@ export async function getBoard(slug: string): Promise<Board | null> {
     for (const b of (data ?? []) as { lot_id: string; name: string }[]) buyers.set(b.lot_id, b.name);
   }
 
+  // Fans who backed the run through the widget, through the run_backers view (migration 0010).
+  const { data: fanRows } = await sb.from("run_backers").select("display_name,tier,amount_cents,created_at").eq("run_id", run.id).order("created_at");
+  const backers: Backer[] = ((fanRows ?? []) as { display_name: string; tier: string; amount_cents: number }[]).map((f) => ({ name: f.display_name, tier: f.tier, amountCents: f.amount_cents }));
+
   const shaped: BoardLot[] = (lots ?? []).map((l) => {
     type BidRow = { amount_cents: number; anonymous: boolean; patron_names: { name: string } | null };
     const bids = ((l.bids ?? []) as unknown as BidRow[]).sort((a, b) => b.amount_cents - a.amount_cents);
@@ -58,8 +62,9 @@ export async function getBoard(slug: string): Promise<Board | null> {
 
   return {
     act,
-    run: { title: run.title, kind: run.kind, startsOn: run.starts_on, endsOn: run.ends_on, showCount: run.show_count, expectedAttendance: run.expected_attendance, biddingClosesAt: run.bidding_closes_at },
+    run: { id: run.id, title: run.title, kind: run.kind, startsOn: run.starts_on, endsOn: run.ends_on, showCount: run.show_count, expectedAttendance: run.expected_attendance, biddingClosesAt: run.bidding_closes_at },
     lots: shaped,
+    backers,
   };
 }
 
@@ -74,6 +79,16 @@ export async function listOpenBoards() {
 /** What a board is worth right now: sold lots at their price, open lots at the top bid. */
 export function boardWorth(b: Board) {
   return b.lots.reduce((n, l) => n + (l.status === "sold" ? l.priceCents : (l.topBid?.amountCents ?? 0)), 0);
+}
+
+/** What the fans have put in through the widget. */
+export function fanWorth(b: Board) {
+  return (b.backers ?? []).reduce((n, f) => n + f.amountCents, 0);
+}
+
+/** What the board is asking for in total: every lot at its list price. The widget's bar fills against this. */
+export function boardAsking(b: Board) {
+  return b.lots.reduce((n, l) => n + l.priceCents, 0);
 }
 
 export function openSpots(b: Board) {

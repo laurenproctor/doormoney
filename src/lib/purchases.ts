@@ -48,7 +48,7 @@ async function loadPurchase(sb: Admin, id: string) {
 }
 
 /** Email of the person who owns an act, for notices. Null for seeded acts nobody has claimed. */
-async function ownerEmail(sb: Admin, ownerId: string | null) {
+export async function ownerEmail(sb: Admin, ownerId: string | null) {
   if (!ownerId) return null;
   const { data } = await sb.from("profiles").select("email").eq("id", ownerId).maybeSingle();
   return data?.email ?? null;

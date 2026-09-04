@@ -84,6 +84,17 @@ export const WIDGET_TIERS = [
   { key: "merch_card", amountCents: 10000, title: "Name on the merch table card", blurb: "Printed on the counter card at every show of the run." },
 ] as const;
 
+export type WidgetTierKey = (typeof WIDGET_TIERS)[number]["key"];
+
+export function widgetTier(key: string) {
+  return WIDGET_TIERS.find((t) => t.key === key) ?? null;
+}
+
+/** Where a fan's name goes, for copy: "the tour thank-you", "the merch table card". */
+export function tierPlace(key: string) {
+  return key === "merch_card" ? "the merch table card" : "the tour thank-you";
+}
+
 export function surfacesFor(type: ActType) {
   return CATALOG.filter((s) => s.appliesTo.includes(type));
 }

@@ -42,6 +42,9 @@ const BOX = {
   mark: `${MARK_BOX.x} ${MARK_BOX.y} ${MARK_BOX.w} ${MARK_BOX.h}`,
 } as const;
 
+/** The monogram's path data and the transform that rights it, for anything that draws the mark outside React (the badge SVGs). */
+export const LOGO_MARK = { paths: MARK, transform: FLIP, box: MARK_BOX } as const;
+
 export function Logo({
   variant = "lockup",
   className = "",

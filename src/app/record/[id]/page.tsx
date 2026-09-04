@@ -4,6 +4,7 @@ import { Eyebrow, Section, SectionHead } from "@/components/Brand";
 import { Page } from "@/components/Page";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { themeFor } from "@/components/Theme";
+import { tierPlace } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { lotName } from "@/lib/purchases";
@@ -11,8 +12,9 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 
 /*
   The record: what a patron receives at the end of a run. Every show the placement ran at, the rooms,
-  the attendance where the act counted it, and where the money went. The URL is the purchase id, which
-  nobody can guess; it is emailed to the patron with the receipt and again when the run closes.
+  the attendance where the act counted it, and where the money went. The URL is the purchase id (or the
+  backing id, for a fan who came in through the widget), which nobody can guess; it is emailed to the
+  patron with the receipt and again when the run closes.
   Nothing on this page is private beyond the patron's own name and amount, which they already know.
 */
 
@@ -20,48 +22,62 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
-type Row = {
+type RunRow = {
   id: string;
-  amount_cents: number;
-  fee_cents: number;
-  payment_status: string;
-  refunded_cents: number;
-  created_at: string;
-  patrons: { name: string } | null;
-  lots: {
-    label: string | null;
-    surface_key: string;
-    runs: {
-      id: string;
-      title: string;
-      kind: string;
-      status: string;
-      starts_on: string;
-      ends_on: string;
-      show_count: number;
-      closed_at: string | null;
-      cancelled_at: string | null;
-      acts: { slug: string; name: string; city: string; photo_url: string | null };
-    };
-  };
+  title: string;
+  kind: string;
+  status: string;
+  starts_on: string;
+  ends_on: string;
+  show_count: number;
+  closed_at: string | null;
+  cancelled_at: string | null;
+  acts: { slug: string; name: string; city: string; photo_url: string | null };
+};
+const RUN = "runs!inner(id,title,kind,status,starts_on,ends_on,show_count,closed_at,cancelled_at,acts!inner(slug,name,city,photo_url))";
+
+type Money = { id: string; amount_cents: number; fee_cents: number; payment_status: string; refunded_cents: number; created_at: string };
+type PurchaseRow = Money & { patrons: { name: string } | null; lots: { label: string | null; surface_key: string; runs: RunRow } };
+type BackingRow = Money & { display_name: string; tier: string; runs: RunRow };
+
+/** A purchase and a backing, seen the same way. */
+type RecordRow = Money & {
+  kind: "purchase" | "backing";
+  patronName: string;
+  /** "the kick drum head", "a name on the merch table card" */
+  what: string;
+  runs: RunRow;
 };
 
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const PAID = ["held", "released", "refunded", "partially_refunded"];
+
+async function loadRecord(sb: ReturnType<typeof supabaseAdmin>, id: string): Promise<RecordRow | null> {
+  const { data: purchase } = await sb
+    .from("purchases")
+    .select(`id,amount_cents,fee_cents,payment_status,refunded_cents,created_at,patrons(name),lots!inner(label,surface_key,${RUN})`)
+    .eq("id", id)
+    .in("payment_status", PAID)
+    .maybeSingle();
+  if (purchase) {
+    const p = purchase as unknown as PurchaseRow;
+    return { ...p, kind: "purchase", patronName: p.patrons?.name ?? "A patron", what: `the ${lotName(p.lots).toLowerCase()}`, runs: p.lots.runs };
+  }
+  const { data: backing } = await sb.from("backings").select(`id,amount_cents,fee_cents,payment_status,refunded_cents,created_at,display_name,tier,${RUN}`).eq("id", id).in("payment_status", PAID).maybeSingle();
+  if (!backing) return null;
+  const b = backing as unknown as BackingRow;
+  return { ...b, kind: "backing", patronName: b.display_name, what: `a name on ${tierPlace(b.tier)}`, runs: b.runs };
+}
+
 async function load(id: string) {
   if (!ID.test(id)) return null;
   const sb = supabaseAdmin();
-  const { data } = await sb
-    .from("purchases")
-    .select("id,amount_cents,fee_cents,payment_status,refunded_cents,created_at,patrons(name),lots!inner(label,surface_key,runs!inner(id,title,kind,status,starts_on,ends_on,show_count,closed_at,cancelled_at,acts!inner(slug,name,city,photo_url)))")
-    .eq("id", id)
-    .in("payment_status", ["held", "released", "refunded", "partially_refunded"])
-    .maybeSingle();
-  if (!data) return null;
-  const p = data as unknown as Row;
+  const p = await loadRecord(sb, id);
+  if (!p) return null;
   const [{ data: shows }, { data: slices }] = await Promise.all([
-    sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", p.lots.runs.id).order("played_on"),
-    sb.from("payout_schedule").select("due_on,amount_cents,status").eq("purchase_id", p.id).order("due_on"),
+    sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", p.runs.id).order("played_on"),
+    sb.from("payout_schedule").select("due_on,amount_cents,status").eq(p.kind === "purchase" ? "purchase_id" : "backing_id", p.id).order("due_on"),
   ]);
   return { p, shows: shows ?? [], slices: slices ?? [] };
 }
@@ -70,7 +86,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const r = await load(id);
   if (!r) return { title: "Record", robots: { index: false } };
-  return { title: `${r.p.lots.runs.acts.name}, record of the ${r.p.lots.runs.title.toLowerCase()}`, robots: { index: false, follow: false } };
+  return { title: `${r.p.runs.acts.name}, record of the ${r.p.runs.title.toLowerCase()}`, robots: { index: false, follow: false } };
 }
 
 const day = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -80,8 +96,9 @@ export default async function RecordPage({ params }: Props) {
   const r = await load(id);
   if (!r) notFound();
   const { p, shows, slices } = r;
-  const run = p.lots.runs;
+  const run = p.runs;
   const act = run.acts;
+  const backing = p.kind === "backing";
   const season = run.kind === "season";
   const unit = season ? "gigs" : "shows";
 
@@ -122,7 +139,7 @@ export default async function RecordPage({ params }: Props) {
             {run.title}. {run.show_count} {unit}, {formatDateRange(run.starts_on, run.ends_on)}. {act.city}.
           </p>
           <p className="mt-5">
-            <b>{p.patrons?.name ?? "A patron"}</b> holds the {lotName(p.lots).toLowerCase()} on this run: {formatMoney(p.amount_cents)}, paid on{" "}
+            <b>{p.patronName}</b> {backing ? `backs this ${season ? "season" : "run"}, ${p.what}` : `holds ${p.what} on this ${season ? "season" : "run"}`}: {formatMoney(p.amount_cents)}, paid on{" "}
             {new Date(p.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
             {p.refunded_cents > 0 && ` ${formatMoney(p.refunded_cents)} of it went back when the run was cancelled.`}
           </p>
@@ -130,7 +147,7 @@ export default async function RecordPage({ params }: Props) {
       }
     >
       <Section>
-        <SectionHead eyebrow="Where it went">What the placement did</SectionHead>
+        <SectionHead eyebrow="Where it went">{backing ? "What the backing did" : "What the placement did"}</SectionHead>
         <div className="mt-8 flex flex-wrap gap-x-14 gap-y-6">
           {facts.map(([value, label]) => (
             <div key={label}>
@@ -142,7 +159,7 @@ export default async function RecordPage({ params }: Props) {
       </Section>
 
       <Section>
-        <SectionHead eyebrow={`The ${unit}`}>Every date the mark was in the room</SectionHead>
+        <SectionHead eyebrow={`The ${unit}`}>{backing ? `Every date on the ${season ? "season" : "run"}` : "Every date the mark was in the room"}</SectionHead>
         {shows.length === 0 ? (
           <p className="text-muted">{act.name} has not entered the dates yet. They appear here as the run goes on.</p>
         ) : (

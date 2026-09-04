@@ -37,6 +37,9 @@ export default async function DashboardPage() {
   const pending = allLots.filter((l) => l.status === "pending_funding");
   const open = allLots.filter((l) => l.status === "open");
   const worth = sold.reduce((n, l) => n + l.price_cents, 0);
+  const { data: fanRows } = current ? await sb.from("run_backers").select("display_name,amount_cents").eq("run_id", current.id) : { data: [] as { display_name: string; amount_cents: number }[] };
+  const fans = fanRows ?? [];
+  const fanCents = fans.reduce((n, f) => n + f.amount_cents, 0);
   const { data: shows } = current ? await sb.from("shows").select("id,played").eq("run_id", current.id) : { data: [] as { id: string; played: boolean }[] };
   const showRows = shows ?? [];
   const playedCount = showRows.filter((s) => s.played).length;
@@ -60,6 +63,8 @@ export default async function DashboardPage() {
   const boardHref = `/board/${act.slug}`;
   const boardLive = current && (current.status === "open" || current.status === "live");
   const snippet = `<script src="${SITE.url}/embed.js" data-act="${act.slug}"></script>`;
+  const buttonSrc = `${SITE.url}/badge/button.svg?act=${encodeURIComponent(act.name)}`;
+  const buttonSnippet = `<a href="${SITE.url}${boardHref}"><img src="${buttonSrc}" alt="Back ${act.name} on Door Money" height="44"></a>`;
 
   return (
     <DashboardShell
@@ -90,11 +95,17 @@ export default async function DashboardPage() {
               <p className="mb-4 text-[15px]">
                 {STATUS[current.status]}. {current.show_count} {current.kind === "season" ? "gigs" : "shows"}, {formatDateRange(current.starts_on, current.ends_on)}.
               </p>
-              <dl className="mb-6 grid grid-cols-3 gap-3 border-y border-line py-3">
+              <dl className="mb-6 grid grid-cols-2 gap-3 border-y border-line py-3 sm:grid-cols-4">
                 <Fact n={String(sold.length)} label="sold" />
                 <Fact n={String(open.length + pending.length)} label="open" />
-                <Fact n={formatMoney(worth)} label="sold so far" />
+                <Fact n={String(fans.length)} label={fans.length === 1 ? "fan" : "fans"} />
+                <Fact n={formatMoney(worth + fanCents)} label="backed so far" />
               </dl>
+              {fans.length > 0 && (
+                <p className="-mt-2 mb-5 max-w-none text-[14.5px] text-muted">
+                  Fans, as their names should appear: {fans.map((f) => f.display_name).join(", ")}.
+                </p>
+              )}
               {showRows.length > 0 && (
                 <p className="-mt-2 mb-5 text-[14.5px] text-muted">
                   {playedCount} of {showRows.length} shows played.
@@ -168,10 +179,44 @@ export default async function DashboardPage() {
         {boardLive && (
           <Card className="md:col-span-2">
             <CardHead eyebrow="The widget">One line for the act&apos;s own site</CardHead>
-            <p className="mb-4 max-w-none text-[15px] text-muted">Paste this where the widget should sit. It shows the run, the tiers, and a button to back it.</p>
+            <p className="mb-4 max-w-none text-[15px] text-muted">
+              Paste this where the widget should sit: an embed block, a code block, a footer. It shows the run, the fan tiers and a button to back it, and takes the payment on the page.
+            </p>
             <pre className="edge max-w-full overflow-x-auto bg-panel p-4 font-mono text-[14.5px] leading-[1.6] text-ink">
               <code>{snippet}</code>
             </pre>
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
+              <div>
+                <h3 className="heading mb-2 text-[18px]">The link button</h3>
+                <p className="mb-4 max-w-none text-[14.5px] text-muted">
+                  For platforms that only allow links: a link-in-bio page, Bandcamp, a newsletter footer, an Instagram bio. It sends the fan to the board, where the same payment happens.
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={buttonSrc} alt={`Back ${act.name} on Door Money`} height={44} className="mb-4 block h-11 w-auto max-w-full" />
+                <pre className="edge max-w-full overflow-x-auto bg-panel p-4 font-mono text-[14px] leading-[1.6] text-ink">
+                  <code>{buttonSnippet}</code>
+                </pre>
+                <p className="mt-3 max-w-none text-[14px] text-muted">
+                  Or the address alone: <span className="break-all text-ink">{SITE.url}{boardHref}</span>
+                </p>
+              </div>
+              <div>
+                <h3 className="heading mb-2 text-[18px]">The badge</h3>
+                <p className="mb-4 max-w-none text-[14.5px] text-muted">&quot;Backed on Door Money&quot;, for a website footer, a poster credit or a merch table card. Dark and light.</p>
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/badge/dark.svg" alt="Backed on Door Money, dark badge" width={236} height={48} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/badge/light.svg" alt="Backed on Door Money, light badge" width={236} height={48} />
+                </div>
+                <p className="mt-4 max-w-none text-[14px] text-muted">
+                  Download:{" "}
+                  <a href="/badge/dark.svg" download="backed-on-door-money-dark.svg" className="text-accent-ink underline decoration-1 underline-offset-4">dark</a>,{" "}
+                  <a href="/badge/light.svg" download="backed-on-door-money-light.svg" className="text-accent-ink underline decoration-1 underline-offset-4">light</a>,{" "}
+                  <a href={`/badge/button.svg?act=${encodeURIComponent(act.name)}`} download="back-on-door-money-button.svg" className="text-accent-ink underline decoration-1 underline-offset-4">the button</a>.
+                </p>
+              </div>
+            </div>
           </Card>
         )}
       </div>

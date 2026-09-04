@@ -202,6 +202,40 @@ export function recordReady(params: { to: string; patronName: string; actName: s
   return { to: params.to, subject: `The record: ${params.actName}, ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
 }
 
+/** To the fan, the moment a backing is paid. */
+export function backingReceipt(params: { to: string; displayName: string; actName: string; runTitle: string; place: string; amountCents: number; boardUrl: string; recordUrl: string }): Mail {
+  const lines = [
+    `${params.displayName} backs ${params.actName}'s ${params.runTitle.toLowerCase()}. ${money(params.amountCents)}, paid.`,
+    `The name goes on ${params.place} when the run wraps, exactly as it was typed.`,
+    `Door Money holds the money and pays ${params.actName} every Friday through the run. Nothing is charged again. Refunded in full if the run is cancelled.`,
+    `The record of the run lives at ${params.recordUrl} and fills in as the run goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    `The board: ${params.boardUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(params.displayName)}</b> backs ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())}. <b style="color:${BLUE}">${money(params.amountCents)}</b>, paid.`,
+    escape(lines[1]),
+    escape(lines[2]),
+    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record of the run</a> fills in as the run goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    `The board: <a href="${escape(params.boardUrl)}" style="color:${BLUE}">${escape(params.boardUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `Backing ${params.actName}'s ${params.runTitle.toLowerCase()}: paid`, text: lines.join("\n\n"), html };
+}
+
+/** To the act, the moment a fan backs the run. */
+export function backingNotice(params: { to: string; actName: string; displayName: string; place: string; amountCents: number; netCents: number; dashboardUrl: string }): Mail {
+  const lines = [
+    `${params.displayName} backed ${params.actName}'s run for ${money(params.amountCents)}. The name goes on ${params.place}.`,
+    `${params.actName}'s share is ${money(params.netCents)} after Door Money's ${SITE.feePercent}%. It arrives in Friday slices through the run.`,
+    `Every backer's name is on the dashboard: ${params.dashboardUrl}`,
+  ];
+  const html = shell([
+    `<b>${escape(params.displayName)}</b> backed ${escape(params.actName)}'s run for <b style="color:${BLUE}">${money(params.amountCents)}</b>. The name goes on ${escape(params.place)}.`,
+    escape(lines[1]),
+    `Every backer's name is on the dashboard: <a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">${escape(params.dashboardUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `Backed: ${params.displayName}, ${money(params.amountCents)}`, text: lines.join("\n\n"), html };
+}
+
 /** To a new address on the new-boards email. Says what arrives, how often, and how to stop it. */
 export function newsletterWelcome(params: { to: string; unsubscribeUrl: string }): Mail {
   const lines = [

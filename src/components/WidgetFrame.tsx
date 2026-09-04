@@ -1,8 +1,25 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-/** Frames /embed/[slug] the way embed.js does on an act's site, including the resize message. */
-export function WidgetFrame({ slug, actName }: { slug: string; actName: string }) {
+/**
+ * Frames /embed/[slug] the way embed.js does on an act's own site, including the resize message.
+ * `source` tells the embed where the backing came from ("board" when the board itself frames it).
+ */
+export function WidgetFrame({
+  slug,
+  actName,
+  source = "widget",
+  theme,
+}: {
+  slug: string;
+  actName: string;
+  source?: "widget" | "board";
+  /** The board's own light, so the frame matches the page around it. */ theme?: string;
+}) {
+  const query = new URLSearchParams();
+  if (source === "board") query.set("source", "board");
+  if (theme) query.set("theme", theme);
+  const qs = query.toString();
   const ref = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(560);
 
@@ -19,7 +36,7 @@ export function WidgetFrame({ slug, actName }: { slug: string; actName: string }
   return (
     <iframe
       ref={ref}
-      src={`/embed/${slug}`}
+      src={`/embed/${slug}${qs ? `?${qs}` : ""}`}
       title={`Back ${actName} on Door Money`}
       allow="payment"
       style={{ height }}

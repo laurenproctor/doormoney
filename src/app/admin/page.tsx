@@ -15,11 +15,12 @@ export default async function AdminPage() {
   await requireAdmin();
   const db = supabaseAdmin();
 
-  const [acts, runs, lots, purchases, notes, waitlist, newsletter] = await Promise.all([
+  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
     db.from("lots").select("id,run_id,surface_key,label,price_cents,mode,status"),
     db.from("purchases").select("id,lot_id,amount_cents,fee_cents,payment_status,mark_status,created_at").order("created_at", { ascending: false }),
+    db.from("backings").select("id,run_id,tier,amount_cents,fee_cents,payment_status,display_name,source,origin,created_at").order("created_at", { ascending: false }).limit(200),
     db.from("contact_messages").select("id,reason,name,organization,email,subject,message,status,created_at").order("created_at", { ascending: false }).limit(100),
     db.from("waitlist").select("id,role,name,email,city,act_type,created_at").order("created_at", { ascending: false }).limit(200),
     db.from("newsletter").select("id,email,source,created_at,unsubscribed_at").order("created_at", { ascending: false }).limit(200),
@@ -34,7 +35,9 @@ export default async function AdminPage() {
   for (const l of lotRows) lotsByRun.set(l.run_id, [...(lotsByRun.get(l.run_id) ?? []), l]);
   const actName = new Map(actRows.map((a) => [a.id, a.name]));
 
-  const held = (purchases.data ?? []).filter((p) => p.payment_status === "held").reduce((n, p) => n + p.amount_cents, 0);
+  const backingRows = backings.data ?? [];
+  const runTitle = new Map(runRows.map((r) => [r.id, `${actName.get(r.act_id) ?? ""}, ${r.title}`]));
+  const held = [...(purchases.data ?? []), ...backingRows].filter((p) => p.payment_status === "held").reduce((n, p) => n + p.amount_cents, 0);
 
   return (
     <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Read only" title="Admin" accent="">
@@ -97,6 +100,23 @@ export default async function AdminPage() {
               })}
             />
           )}
+        </Card>
+
+        <Card>
+          <CardHead eyebrow="Fan backings">{backingRows.length} through the widget</CardHead>
+          <Table
+            head={["Run", "Name", "Tier", "Amount", "Fee", "Status", "From", "When"]}
+            rows={backingRows.map((b) => [
+              runTitle.get(b.run_id) ?? "",
+              b.display_name,
+              b.tier.replace("_", " "),
+              formatMoney(b.amount_cents),
+              formatMoney(b.fee_cents),
+              b.payment_status.replace("_", " "),
+              b.origin ? b.origin.replace(/^https?:\/\//, "") : b.source,
+              when.format(new Date(b.created_at)),
+            ])}
+          />
         </Card>
 
         <Card>

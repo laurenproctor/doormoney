@@ -1,24 +1,35 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { WIDGET_TIERS } from "@/lib/catalog";
-import { feeCents } from "@/lib/money";
+import { backingFee } from "@/lib/backings";
+import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
-import { CHECKOUT_MINUTES, createLotCheckoutSession, stripe, stripeConfigured } from "@/lib/stripe";
+import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 /**
  * Starts a payment. Two kinds:
  * - `lot`: a fixed-price spot on a board. Creates the purchase, holds the lot for the patron for
  *   CHECKOUT_MINUTES, and returns the client secret for an embedded Checkout Session.
- * - `backing`: a fan tier through the widget. Phase 4 finishes this branch.
- * Called from the widget cross-origin, so it's a route handler, not a server action.
+ * - `backing`: a fan tier through the widget. Creates the backing row and a PaymentIntent for the
+ *   Payment Element inside the widget's frame; fulfilment happens in the webhook.
+ * The widget lives on Door Money's origin inside a frame, so this is same-origin; it is a route handler
+ * rather than a server action because the widget is a client island with no page of its own to post to.
  */
 // Seeded ids are not RFC 4122 UUIDs, so a plain shape check rather than zod's strict .uuid().
 const Id = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 
 const Input = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("backing"), slug: z.string(), tier: z.enum(["thank_you", "merch_card"]), displayName: z.string().min(1).max(80), email: z.string().email() }),
+  z.object({
+    kind: z.literal("backing"),
+    slug: z.string().trim().min(1).max(80),
+    tier: z.enum(WIDGET_TIERS.map((t) => t.key) as [string, ...string[]]),
+    displayName: z.string().trim().min(1).max(80),
+    email: z.string().trim().email().max(200),
+    source: z.enum(["widget", "board"]).default("widget"),
+    /** The page the widget was embedded in, for the record. The frame reads it from document.referrer. */
+    origin: z.string().trim().max(200).optional(),
+  }),
   z.object({ kind: z.literal("lot"), lotId: Id, patronName: z.string().trim().min(1).max(120), email: z.string().trim().email().max(200) }),
 ]);
 
@@ -40,19 +51,9 @@ export async function POST(req: Request) {
   if (!stripeConfigured()) return fail("Payments are not open yet.", 503);
 
   const input = parsed.data;
-  if (input.kind === "backing") {
-    // Phase 4 replaces this with a Checkout Session and a backings row. Kept so the widget keeps compiling.
-    const tier = WIDGET_TIERS.find((t) => t.key === input.tier)!;
-    const pi = await stripe.paymentIntents.create({
-      amount: tier.amountCents,
-      currency: "usd",
-      receipt_email: input.email,
-      metadata: { kind: "backing", slug: input.slug, tier: input.tier, displayName: input.displayName, feeCents: String(feeCents(tier.amountCents)) },
-    });
-    return NextResponse.json({ clientSecret: pi.client_secret });
-  }
-
   const sb = supabaseAdmin();
+  if (input.kind === "backing") return startBacking(sb, input);
+
   const { data: lotData, error: lotError } = await sb
     .from("lots")
     .select("id,label,surface_key,price_cents,mode,status,runs!inner(id,title,status,act_id,acts!inner(id,slug,name))")
@@ -77,13 +78,8 @@ export async function POST(req: Request) {
 
   // The patron: the same business paying twice should be one patron row.
   const email = input.email.toLowerCase();
-  const { data: knownPatron } = await sb.from("patrons").select("id").ilike("contact_email", email).eq("name", input.patronName).maybeSingle();
-  let patronId = knownPatron?.id as string | undefined;
-  if (!patronId) {
-    const { data: created, error } = await sb.from("patrons").insert({ name: input.patronName, contact_email: email }).select("id").single();
-    if (error || !created) return fail("That did not save. Try once more.", 500);
-    patronId = created.id;
-  }
+  const patronId = await patronFor(sb, input.patronName, email);
+  if (!patronId) return fail("That did not save. Try once more.", 500);
 
   // The purchase. A partial unique index keeps one live purchase per lot, so two patrons racing cannot both get through.
   const amount = lot.price_cents;
@@ -117,6 +113,58 @@ export async function POST(req: Request) {
     console.error("checkout session failed", e instanceof Error ? e.message : e);
     await sb.from("purchases").delete().eq("id", purchase.id);
     await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", lot.id).eq("status", "pending_funding");
+    return fail("Payment could not start. Try once more.", 502);
+  }
+}
+
+type Admin = ReturnType<typeof supabaseAdmin>;
+
+/** One patron row per (name, email). A fan and a business are both patrons. */
+async function patronFor(sb: Admin, name: string, email: string) {
+  const { data: known } = await sb.from("patrons").select("id").ilike("contact_email", email).eq("name", name).maybeSingle();
+  if (known?.id) return known.id as string;
+  const { data: created, error } = await sb.from("patrons").insert({ name, contact_email: email }).select("id").single();
+  if (error || !created) return null;
+  return created.id as string;
+}
+
+/** A fan tier. The row goes in first so the webhook has something to fulfil; a never-paid row is harmless and dropped if Stripe cancels the intent. */
+async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { kind: "backing" }>) {
+  const tier = widgetTier(input.tier);
+  if (!tier) return fail("Invalid input", 400);
+
+  const { data: act } = await sb.from("acts").select("id,slug,name").eq("slug", input.slug).maybeSingle();
+  if (!act) return fail("That musician is not on Door Money.", 404);
+  const { data: run } = await sb.from("runs").select("id,title").eq("act_id", act.id).in("status", ["open", "live"]).order("starts_on", { ascending: false }).limit(1).maybeSingle();
+  if (!run) return fail("That board is closed.", 400);
+
+  const email = input.email.toLowerCase();
+  const patronId = await patronFor(sb, input.displayName, email);
+  if (!patronId) return fail("That did not save. Try once more.", 500);
+
+  const { data: backing, error } = await sb
+    .from("backings")
+    .insert({ run_id: run.id, patron_id: patronId, tier: tier.key, amount_cents: tier.amountCents, fee_cents: backingFee(tier.amountCents), display_name: input.displayName, source: input.source, origin: input.origin ?? null })
+    .select("id")
+    .single();
+  if (error || !backing) return fail("That did not save. Try once more.", 500);
+
+  try {
+    const pi = await createBackingIntent({
+      backingId: backing.id,
+      runId: run.id,
+      actId: act.id,
+      actSlug: act.slug,
+      tier: tier.key,
+      amountCents: tier.amountCents,
+      description: `${tier.title}, ${act.name}, ${run.title}`,
+      fanEmail: email,
+    });
+    await sb.from("backings").update({ stripe_payment_intent_id: pi.id }).eq("id", backing.id);
+    return NextResponse.json({ clientSecret: pi.client_secret, backingId: backing.id });
+  } catch (e) {
+    console.error("backing intent failed", e instanceof Error ? e.message : e);
+    await sb.from("backings").delete().eq("id", backing.id).eq("payment_status", "requires_payment");
     return fail("Payment could not start. Try once more.", 502);
   }
 }

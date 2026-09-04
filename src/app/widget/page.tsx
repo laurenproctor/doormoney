@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/Button";
 import { getBoard } from "@/lib/boards";
 import { formatDateRange } from "@/lib/dates";
 import { SITE } from "@/lib/site";
-import { WidgetFrame } from "./WidgetFrame";
+import { WidgetFrame } from "@/components/WidgetFrame";
 
 export const metadata: Metadata = {
   title: "The widget",

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dropBacking, fulfilBacking } from "@/lib/backings";
 import { fulfilLotPurchase, releaseLot } from "@/lib/purchases";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
         // With delayed payment methods `completed` arrives while the session is still unpaid; the
         // async_payment_succeeded event follows once the money is real. Fulfil on whichever is paid.
         if (session.payment_status === "unpaid") break;
-        if (session.metadata?.kind !== "lot") break; // fan backings land in Phase 4
+        if (session.metadata?.kind !== "lot") break; // fan backings come through payment_intent.succeeded
         const r = await fulfilLotPurchase(sb, session);
         if (!r.ok) console.error("fulfil", event.id, r.reason);
         break;
@@ -48,17 +49,36 @@ export async function POST(req: Request) {
         await releaseLot(sb, session);
         break;
       }
+      case "payment_intent.succeeded": {
+        // A fan backing through the widget. Lot purchases also raise this event; they are fulfilled from the session above.
+        const pi = event.data.object;
+        if (pi.metadata?.kind !== "backing") break;
+        const r = await fulfilBacking(sb, pi);
+        if (!r.ok) console.error("fulfil backing", event.id, r.reason);
+        break;
+      }
+      case "payment_intent.canceled": {
+        const pi = event.data.object;
+        if (pi.metadata?.kind !== "backing") break;
+        await dropBacking(sb, pi);
+        break;
+      }
       case "charge.refunded": {
         // A refund happened, here or in the Dashboard. Mirror the amount; a full refund also stops the slices.
+        // The charge belongs to a lot purchase or a fan backing; look in both places.
         const charge = event.data.object;
-        const { data: p } = await sb.from("purchases").select("id,amount_cents,refunded_cents").eq("stripe_charge_id", charge.id).maybeSingle();
-        if (!p || charge.amount_refunded <= p.refunded_cents) break;
-        const full = charge.amount_refunded >= p.amount_cents;
-        await sb
-          .from("purchases")
-          .update({ refunded_cents: charge.amount_refunded, refunded_at: new Date().toISOString(), payment_status: full ? "refunded" : "partially_refunded" })
-          .eq("id", p.id);
-        if (full) await sb.from("payout_schedule").update({ status: "skipped", paused_reason: "refunded" }).eq("purchase_id", p.id).in("status", ["scheduled", "paused"]);
+        for (const table of ["purchases", "backings"] as const) {
+          const { data: p } = await sb.from(table).select("id,amount_cents,refunded_cents").eq("stripe_charge_id", charge.id).maybeSingle();
+          if (!p) continue;
+          if (charge.amount_refunded <= p.refunded_cents) break;
+          const full = charge.amount_refunded >= p.amount_cents;
+          await sb
+            .from(table)
+            .update({ refunded_cents: charge.amount_refunded, refunded_at: new Date().toISOString(), payment_status: full ? "refunded" : "partially_refunded" })
+            .eq("id", p.id);
+          if (full) await sb.from("payout_schedule").update({ status: "skipped", paused_reason: "refunded" }).eq(table === "purchases" ? "purchase_id" : "backing_id", p.id).in("status", ["scheduled", "paused"]);
+          break;
+        }
         break;
       }
       case "transfer.created": {

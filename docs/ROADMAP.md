@@ -87,14 +87,14 @@ This is the phase that decides whether the business works, so it comes before au
 
 **Goal:** one line of code on an artist's site, taking payment inline.
 
-- [ ] `/embed/[slug]`: the widget page, designed to live in an iframe. No nav, no footer, tight layout.
-- [ ] `/embed.js`: the loader. Injects the iframe, listens for a resize message, nothing else.
-- [ ] Payment Element inside the iframe, same checkout code as Phase 3
-- [ ] Fan tiers on the widget (see decision 3): $25 and $100 with recognition, and a "take a placement" option that opens the board in a new tab
-- [ ] Content Security Policy headers on `/embed/*` so the widget can be framed anywhere, and on everything else so it can't be
-- [ ] Link button and "Backed on Door Money" badge as downloadable assets for link-only platforms
-- [ ] Widget snippet and assets shown on the act dashboard the moment the board is live
-- [ ] Test on Squarespace, WordPress, Wix, Webflow and Carrd. Document any platform-specific quirks.
+- [x] `/embed/[slug]`: the widget page, designed to live in an iframe. No nav, no footer, tight layout. The board itself frames it too, in the "Fans" section.
+- [x] `/embed.js`: the loader. Injects the iframe, listens for a resize message, nothing else.
+- [x] Payment Element inside the iframe. A backing is a PaymentIntent confirmed in the frame (Checkout cannot be nested in another site's iframe); the charge lands on the platform balance and the webhook (`payment_intent.succeeded`) fulfils it through `src/lib/backings.ts`. Same Friday schedule, same refunds, same record as a lot purchase.
+- [x] Fan tiers on the widget (see decision 3): $25 and $100 with recognition, and a "take a placement" option that opens the board in a new tab. `backings` table (migration 0010 adds the charge and refund columns and the public `run_backers` view).
+- [x] Content Security Policy headers on `/embed/*` so the widget can be framed anywhere, and on everything else so it can't be
+- [x] Link button and "Backed on Door Money" badge as downloadable assets for link-only platforms: `/badge/dark.svg`, `/badge/light.svg`, `/badge/button.svg?act=<name>`
+- [x] Widget snippet and assets shown on the act dashboard the moment the board is live
+- [~] Test on Squarespace, WordPress, Wix, Webflow and Carrd. Document any platform-specific quirks. Verified on a hand-built site on another origin (frame, resize, origin recorded, transparent on a light page); the builder platforms are still to try on throwaway accounts. Notes and expected quirks in `docs/WIDGET_INSTALL.md`.
 
 **Done when:** the snippet works on a throwaway Squarespace site and a payment from it lands in the platform balance.
 

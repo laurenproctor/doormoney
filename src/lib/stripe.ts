@@ -51,6 +51,35 @@ export async function createLotCheckoutSession(params: {
   });
 }
 
+/**
+ * A fan backing through the widget. Same charge model as a lot, but a PaymentIntent confirmed by the
+ * Payment Element inside the widget's frame, since Checkout cannot be nested in another site's iframe.
+ * The charge lands on the platform balance; the Friday job moves the act's share out.
+ */
+export async function createBackingIntent(params: {
+  backingId: string;
+  runId: string;
+  actId: string;
+  actSlug: string;
+  tier: string;
+  amountCents: number;
+  /** "Name on the merch table card, Gutter Hymns, Fall run" */
+  description: string;
+  fanEmail: string;
+}) {
+  const metadata = { kind: "backing", backing_id: params.backingId, run_id: params.runId, act_id: params.actId, act_slug: params.actSlug, tier: params.tier };
+  return stripe.paymentIntents.create({
+    amount: params.amountCents,
+    currency: "usd",
+    // Cards, with Apple Pay and Google Pay where the browser offers them. Not Link and not bank debits:
+    // a fan backing is small and quick, and Link's phone prompt and the bank tab only get in the way.
+    payment_method_types: ["card"],
+    receipt_email: params.fanEmail,
+    description: params.description,
+    metadata,
+  });
+}
+
 /** One weekly slice to an act. The idempotency key is the payout row id, so a retried job never pays twice. */
 export async function transferSliceToAct(params: {
   amountCents: number;

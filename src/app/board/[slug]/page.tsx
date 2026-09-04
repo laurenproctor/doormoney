@@ -6,6 +6,7 @@ import { Eyebrow, Lines } from "@/components/Brand";
 import { HeroArt } from "@/components/HeroArt";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { Theme, themeFor } from "@/components/Theme";
+import { WidgetFrame } from "@/components/WidgetFrame";
 import { getBoard, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
@@ -74,6 +75,7 @@ export default async function BoardPage({ params, searchParams }: Props) {
         run.expectedAttendance ? `, putting roughly ${run.expectedAttendance.toLocaleString("en-US")} people in front of the same stage setup` : ""
       }.`;
   const showBackers = slug === "rosie-bassoon";
+  const backers = board.backers ?? [];
 
   const lots: LotView[] = board.lots.map((l) => {
     const s = CATALOG.find((c) => c.key === l.surfaceKey);
@@ -136,6 +138,28 @@ export default async function BoardPage({ params, searchParams }: Props) {
             </div>
           )}
           <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Back the season" : "Back the run"} />
+        </div>
+
+        <div id="fans" className="border-t border-line py-16">
+          <div className="mx-auto grid max-w-[1120px] items-start gap-12 px-7 md:grid-cols-[1fr_400px]">
+            <div>
+              <Eyebrow className="mb-5">Fans</Eyebrow>
+              <h2 className="heading mb-6 text-[clamp(28px,4vw,46px)] leading-[1.02]">Back the {season ? "season" : "run"} for $25 or $100</h2>
+              <p>
+                Fans back a {season ? "season" : "run"} without taking a placement: a name on the tour thank-you, or on the merch table card at every{" "}
+                {season ? "gig" : "show"}. Door Money holds the money and pays {act.name} weekly, the same as a placement.
+              </p>
+              {backers.length > 0 && (
+                <>
+                  <p className="caps mt-8 text-[14px] text-muted">
+                    {backers.length} {backers.length === 1 ? "fan" : "fans"} so far
+                  </p>
+                  <p className="mt-3 max-w-[60ch] text-[15px] leading-[1.7]">{backers.map((b) => b.name).join(", ")}</p>
+                </>
+              )}
+            </div>
+            <WidgetFrame slug={slug} actName={act.name} source="board" theme={theme} />
+          </div>
         </div>
 
         {showBackers && <RosieBackers />}
