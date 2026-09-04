@@ -62,9 +62,14 @@ export type OwnedAct = {
   founding: boolean;
 };
 
-/** The act this user owns, if any. One act per account for now. */
+/**
+ * The act this user owns, if any. One act per account, enforced by acts_one_per_owner (0022).
+ *
+ * Reads with the service role because stripe_account_id and stripe_payouts_enabled came off the
+ * public Data API in 0022. Safe: userId comes from a verified session, and it is the only filter.
+ */
 export async function ownedAct(userId: string): Promise<OwnedAct | null> {
-  const sb = await supabaseServer();
+  const sb = supabaseAdmin();
   const { data } = await sb
     .from("acts")
     .select("id,slug,name,type,city,bio,photo_url,instagram,website,stripe_account_id,stripe_payouts_enabled,founding")

@@ -14,3 +14,7 @@ supabase/.temp
 
 # Worktrees a Claude session opens for parallel work. Checkouts, not source.
 .claude/worktrees/
+
+# supabase cli local state
+supabase/.branches/
+supabase/.temp/
