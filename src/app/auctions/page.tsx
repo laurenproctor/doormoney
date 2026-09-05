@@ -19,6 +19,13 @@ export const metadata: Metadata = {
 // Fundraisers, and not everything on it is an auction: each sponsorship is fixed price or open to
 // bids, and the musician decides which. See docs/DECISIONS.md, decision 14.
 
+/** What the shows are called, by the period being funded. Never "the run": decision 14. */
+const PERIOD: Record<Board["run"]["kind"], string> = {
+  tour: "shows on the tour",
+  season: "gigs a season",
+  residency: "nights of the residency",
+};
+
 const KIND: Record<Board["act"]["type"], (city: string) => string> = {
   touring_band: () => "Band, touring",
   house_act: (city) => `House act, ${city}`,
@@ -56,11 +63,11 @@ export default async function AuctionsPage() {
               </div>
               <div className="flex flex-wrap gap-[26px] border-t border-line pt-3.5">
                 <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />
-                <Stat value={String(openSpots(b))} label="placements open" />
+                <Stat value={String(openSpots(b))} label="sponsorship options open" />
                 {b.run.expectedAttendance ? (
                   <Stat value={`~${b.run.expectedAttendance.toLocaleString("en-US")}`} label="expected attendance" />
                 ) : (
-                  <Stat value={String(b.run.showCount)} label={gigs ? "gigs a season" : "shows on the run"} />
+                  <Stat value={String(b.run.showCount)} label={PERIOD[b.run.kind]} />
                 )}
               </div>
               {b.run.biddingClosesAt && (
