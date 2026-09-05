@@ -58,8 +58,13 @@ export function AuthShell({
             left 173px for the heading, less than a display H1's longest word, so the fixed track
             pushed the page sideways. It only showed on the pages with a long heading, which is why
             sign in looked fine while sign up did not.
+
+            The rows are auto then 1fr so that the form, which spans both and is usually the taller
+            column, pushes its extra height below the reasons instead of between them and the
+            heading. Without it a long form held the two left blocks apart: 143px of nothing on
+            sign up against 40px on sign in, from the same markup.
           */}
-          <div className="hero-in mt-12 grid items-start gap-x-[64px] gap-y-10 md:mt-16 lg:grid-cols-[1fr_460px]">
+          <div className="hero-in mt-12 grid items-start gap-x-[64px] gap-y-10 md:mt-16 lg:grid-cols-[1fr_460px] lg:grid-rows-[auto_1fr] lg:gap-y-8">
             <div className="lg:col-start-1 lg:row-start-1">
               <Eyebrow className="mb-7">{eyebrow}</Eyebrow>
               <h1 className="display max-w-[12ch] text-[clamp(40px,6.4vw,84px)] leading-[0.98]">
