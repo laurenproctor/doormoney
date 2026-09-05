@@ -52,7 +52,7 @@ export function NewsletterForm({ source, compact = false }: { source: string; co
           className={`edge min-w-[200px] flex-1 bg-panel px-3.5 text-[15px] focus:border-accent focus:outline-none ${compact ? "py-2.5" : "py-3"}`}
         />
         <Button type="submit" variant={compact ? "ghost" : "solid"} disabled={pending} className={compact ? "px-5 py-2.5" : ""}>
-          {pending ? "One second" : "Get the new boards"}
+          {pending ? "One second" : "Get the newsletter"}
         </Button>
       </div>
       {state.error && (
