@@ -77,7 +77,11 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     upload = { bytes: await photo.arrayBuffer(), ext, type: photo.type };
   }
 
+  // Read under the account's own session, so row level security scopes it to one row. Write with
+  // the service role: the browser holds no write grant on this table (migration 0029), because a
+  // profile row carries `published` and `patron_since`, neither of which is settable by hand.
   const sb = await supabaseServer();
+  const admin = supabaseAdmin();
   const { data: existing } = await sb.from("patron_profiles").select("photo_path").eq("profile_id", user.id).maybeSingle();
   const previousPhoto = (existing as { photo_path: string | null } | null)?.photo_path ?? null;
 
@@ -86,7 +90,6 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   let photoPath = previousPhoto;
   if (upload) {
     const path = `${user.id}/${randomUUID()}.${upload.ext}`;
-    const admin = supabaseAdmin();
     const { error } = await admin.storage.from(PHOTO_BUCKET).upload(path, upload.bytes, { contentType: upload.type, upsert: false });
     if (error) {
       console.error("patron photo upload failed:", error.message);
@@ -106,7 +109,7 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   };
 
   if (existing) {
-    const { error } = await sb.from("patron_profiles").update(row).eq("profile_id", user.id);
+    const { error } = await admin.from("patron_profiles").update(row).eq("profile_id", user.id);
     if (error) {
       console.error("patron profile save failed:", error.message);
       return { ok: false, errors: { form: "That did not save. Try once more." } };
@@ -116,7 +119,7 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     // thing it paid for, or the day it opened. Only the year is ever shown.
     await linkPatronRows(user.id, email);
     const since = await patronSinceFor(user.id, email, user.created_at ?? new Date().toISOString());
-    const { error } = await sb.from("patron_profiles").insert({ profile_id: user.id, ...row, published: false, patron_since: since });
+    const { error } = await admin.from("patron_profiles").insert({ profile_id: user.id, ...row, published: false, patron_since: since });
     if (error) {
       console.error("patron profile create failed:", error.message);
       return { ok: false, errors: { form: "That did not save. Try once more." } };
@@ -127,7 +130,7 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   // The old photograph is only dropped once the new one is on the row, so nothing is ever lost
   // between two writes. Only this account's own object is touched.
   if (upload && previousPhoto && previousPhoto !== photoPath && previousPhoto.startsWith(`${user.id}/`)) {
-    const { error } = await supabaseAdmin().storage.from(PHOTO_BUCKET).remove([previousPhoto]);
+    const { error } = await admin.storage.from(PHOTO_BUCKET).remove([previousPhoto]);
     if (error) console.error("old patron photo not removed:", error.message);
   }
 
@@ -174,7 +177,9 @@ export async function setProfileVisibility(_prev: ProfileState, form: FormData):
     return { ok: false, errors: { form: "Claim a username first. It is the address of the page." } };
   }
 
-  const { error } = await sb
+  // Publication is a server decision: it is what decides whether the page exists at all, and it
+  // is refused above without a username. The browser cannot reach this column (migration 0029).
+  const { error } = await supabaseAdmin()
     .from("patron_profiles")
     .update(publish ? { published: true, published_at: new Date().toISOString() } : { published: false })
     .eq("profile_id", user.id);
@@ -211,22 +216,28 @@ export async function setActivityShown(_prev: ProfileState, form: FormData): Pro
   if (!parsed.success) return { ok: false, errors: { form: "That did not save. Try once more." } };
   const { kind, id, show } = parsed.data;
 
-  const eligible = await eligibleActivity(user.id, verifiedEmail(user));
+  // Tie this account's paid rows to it first, on the verified address alone. What the account can
+  // publish and what owns_patron_activity (migration 0029) will allow are then the same set,
+  // rather than one being a superset of the other.
+  const email = verifiedEmail(user);
+  await linkPatronRows(user.id, email);
+
+  const eligible = await eligibleActivity(user.id, email);
   const item = eligible.find((e) => e.kind === kind && e.id === id);
   if (!item) return { ok: false, errors: { form: "That is not on this account." } };
   if (item.anonymous) return { ok: false, errors: { form: "That spot was won anonymously, so it stays off the page." } };
 
-  const sb = await supabaseServer();
+  const admin = supabaseAdmin();
   const column = kind === "placement" ? "purchase_id" : "backing_id";
   if (show === "yes") {
-    const { error } = await sb.from("patron_profile_items").insert({ profile_id: user.id, [column]: id });
+    const { error } = await admin.from("patron_profile_items").insert({ profile_id: user.id, [column]: id });
     // Already there: two clicks on the same row is not an error.
     if (error && error.code !== "23505") {
       console.error("showing an activity failed:", error.message);
       return { ok: false, errors: { form: "That did not save. Try once more." } };
     }
   } else {
-    const { error } = await sb.from("patron_profile_items").delete().eq("profile_id", user.id).eq(column, id);
+    const { error } = await admin.from("patron_profile_items").delete().eq("profile_id", user.id).eq(column, id);
     if (error) {
       console.error("hiding an activity failed:", error.message);
       return { ok: false, errors: { form: "That did not save. Try once more." } };
