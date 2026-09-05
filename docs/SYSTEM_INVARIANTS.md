@@ -201,6 +201,24 @@ they sign in, and there is no slug history, so every published link to the old a
 **Held** as of migration `0022`, via the partial unique index `acts_one_per_owner`. Proved by
 `supabase/tests/permissions_test.sql` test 28.
 
+### An account only reaches a patron's paid history if the person owns the email address
+
+**Held today, by email confirmation. Turning confirmation off violates it.**
+
+`handle_new_user` calls `claim_patron_rows(new.id, new.email)` (migration `0021`, rewritten in
+`0027`). That hands every unclaimed `patrons` row carrying the same address to the new account:
+what was backed, what was paid, and the record behind each one. The trigger fires when the
+`auth.users` row is inserted, which is at sign-up, before anything has been confirmed. So the
+linking already happens for an address somebody merely typed.
+
+What confirmation buys is the session, not the linking. An impostor can create the row today, but
+cannot sign in, so cannot read any of it. With `mailer_autoconfirm` on, sign-up returns a session
+straight away and whoever typed the address reaches `/patron` as its owner.
+
+Before Door Money is public, one of two things has to be true: confirmation is back on, or the
+claim moves out of `handle_new_user` and behind something that actually proves the address, and
+sign-up stops linking history it cannot vouch for.
+
 ---
 
 ## Rendering

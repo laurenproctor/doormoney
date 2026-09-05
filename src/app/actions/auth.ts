@@ -5,7 +5,7 @@ import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 import { safeNext } from "@/lib/auth";
 import { emailForUsername, normalizeUsername } from "@/lib/username";
-import { RolesInput } from "@/lib/roles";
+import { RolesInput, homeFor } from "@/lib/roles";
 
 /*
   Four ways in, one account behind them all:
@@ -146,7 +146,18 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
   }
 
   const email = parsed.data.email.toLowerCase();
-  const next = safeNext(parsed.data.next);
+  /*
+    Where a new account lands, when nothing sent it here with a destination of its own.
+
+    A patron who never ticked "musician" has no act and no board pages, so the musician dashboard
+    is the wrong first screen for them; homeFor already decides this on sign-in, and decides it the
+    same way here. hasAct is false because the account is seconds old. An explicit next still wins,
+    which is what keeps /patron/signup landing on the profile page.
+
+    This only shows once email confirmation is off. While it is on, sign-up ends on "check the
+    inbox" and the destination rides on the confirmation link instead.
+  */
+  const next = safeNext(parsed.data.next, homeFor({ roles: parsed.data.roles, hasAct: false }));
   const sb = await supabaseServer();
   const { data, error } = await sb.auth.signUp({
     email,
