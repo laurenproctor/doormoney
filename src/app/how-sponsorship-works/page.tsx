@@ -88,7 +88,7 @@ const STEPS: [string, string][] = [
     "A fan, a local business or a brand picks an option and pays Door Money. Some options carry a fixed price and some are open to bids; the musician decides which.",
   ],
   [
-    "The musician approves the mark",
+    "The musician approves the logo",
     "The sponsor sends the name or logo as it will appear. Nothing goes up without the musician's yes, and a musician who declines refunds the sponsor in full.",
   ],
   [
@@ -108,7 +108,7 @@ const TERMS: [string, string][] = [
 const CONTROL: string[] = [
   "Choose which sponsorship options to offer.",
   "Set the price on every one of them.",
-  "Approve or decline the mark before it goes up.",
+  "Approve or decline the logo before it goes up.",
   "Choose how the placement will be documented.",
   "Decline anything that is not a fit. The sponsor is refunded in full.",
 ];

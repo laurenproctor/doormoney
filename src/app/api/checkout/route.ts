@@ -85,8 +85,8 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (lotError) return fail("That did not load. Try once more.", 500);
   const lot = lotData as unknown as LotRow | null;
-  if (!lot) return fail("That spot is not on any board.", 404);
-  if (!["open", "live"].includes(lot.runs.status)) return fail("That board is closed.", 400);
+  if (!lot) return fail("That spot is not on any fundraiser.", 404);
+  if (!["open", "live"].includes(lot.runs.status)) return fail("That fundraiser is closed.", 400);
   if (lot.status === "sold") return fail("That spot is already taken.", 409);
   if (lot.status !== "open" && lot.status !== "pending_funding") return fail("That spot is not for sale.", 400);
 
@@ -169,7 +169,7 @@ async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { k
   const { data: act } = await sb.from("acts").select("id,slug,name").eq("slug", input.slug).maybeSingle();
   if (!act) return fail("That musician is not on Door Money.", 404);
   const { data: run } = await sb.from("runs").select("id,title").eq("act_id", act.id).in("status", ["open", "live"]).order("starts_on", { ascending: false }).limit(1).maybeSingle();
-  if (!run) return fail("That board is closed.", 400);
+  if (!run) return fail("That fundraiser is closed.", 400);
 
   const email = input.email.toLowerCase();
   const patronId = await patronFor(sb, input.displayName, email, profileId);

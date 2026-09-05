@@ -7,7 +7,7 @@ import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "The act" };
+export const metadata: Metadata = { title: "The musician" };
 
 export default async function EditActPage() {
   const user = await requireUser("/dashboard/act");

@@ -25,7 +25,7 @@ export const GROUPS: Record<SurfaceGroup, { eyebrow: string; heading: string }> 
 export const CATALOG: Surface[] = [
   { key: "kick_head", name: "Kick drum head", group: "onstage", appliesTo: ["touring_band", "house_act"], defaultPriceCents: 120000, period: "run",
     seenBy: "the whole room, every show, most crowd photos",
-    blurb: "The surface that turns up most in crowd photos: front and center, every night of the run. One patron at a time." },
+    blurb: "The surface that turns up most in crowd photos: front and center, every night. One patron at a time." },
   { key: "case_sticker", name: "Road case spots", group: "onstage", appliesTo: ["touring_band"], defaultPriceCents: 35000, period: "run",
     seenBy: "load-in, stage-side, photos of the stack",
     blurb: "A sticker on the flight cases, designed to match the band's own artwork so it blends in." },
@@ -55,10 +55,10 @@ export const CATALOG: Surface[] = [
     blurb: "Branded picks, band on one face, the patron on the other. Played all night, thrown to the crowd at the end." },
   { key: "poster_credit", name: "Poster credit", group: "online", appliesTo: ["touring_band", "house_act"], defaultPriceCents: 30000, period: "run",
     seenBy: "every wall and window the poster goes on",
-    blurb: "A credit line on the run's poster and digital admat. Reaches every wall, window and feed the poster ends up on." },
+    blurb: "A credit line on the poster and digital admat. Reaches every wall, window and feed the poster ends up on." },
   { key: "posts_email", name: "Posts and email", group: "online", appliesTo: ["touring_band", "house_act", "soloist"], defaultPriceCents: 40000, period: "run",
     seenBy: "the musician's followers and mailing list",
-    blurb: "A named thank-you in the run announcement post and the musician's mailing list, written by the musician in their own voice. Reach, opens and clicks come with it." },
+    blurb: "A named thank-you in the announcement post and the musician's mailing list, written by the musician in their own voice. Reach, opens and clicks come with it." },
   { key: "vlog_card", name: "Vlog logo card", group: "online", appliesTo: ["touring_band", "soloist"], defaultPriceCents: 25000, period: "run",
     seenBy: "the musician's video audience",
     blurb: "A logo card at the top of every tour vlog, with the view counts to go with it." },
@@ -81,7 +81,7 @@ export const CATALOG: Surface[] = [
 
 export const WIDGET_TIERS = [
   { key: "thank_you", amountCents: 2500, title: "Name on the tour thank-you", blurb: "Listed on the musician's end-of-run post and mailing list." },
-  { key: "merch_card", amountCents: 10000, title: "Name on the merch table card", blurb: "Printed on the counter card at every show of the run." },
+  { key: "merch_card", amountCents: 10000, title: "Name on the merch table card", blurb: "Printed on the counter card at every show." },
 ] as const;
 
 export type WidgetTierKey = (typeof WIDGET_TIERS)[number]["key"];

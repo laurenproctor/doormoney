@@ -17,13 +17,13 @@ export default async function LoginPage({ searchParams }: Props) {
       eyebrow="Musicians and patrons"
       title="Sign"
       accent="in"
-      intro={<p>One account, both sides of the room. Musicians land on their board, patrons on what they have backed.</p>}
+      intro={<p>One account, both sides of the room. Musicians land on their fundraiser, patrons on what they have backed.</p>}
       aside={
         <AuthPoints
           heading="What is waiting inside"
           points={[
-            "The board: spots, prices, what has sold, and the marks waiting on a yes.",
-            "Every placement and backing, with the record of the run behind it.",
+            "The fundraiser: spots, prices, what has sold, and the logos waiting on a yes.",
+            "Every sponsorship and backing, with the record behind it.",
             "Bids in progress, and the ones that won.",
             "Payouts: what has been sent, and what is still to come.",
           ]}

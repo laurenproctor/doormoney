@@ -30,7 +30,7 @@ The company is not "an advertising marketplace" or "an influencer platform". The
 
 Addresses outlive words: routes and columns keep their names even where the copy changes. `/placements` becoming `/how-sponsorship-works` was the one exception, done while nothing was public.
 
-Only `/how-sponsorship-works` is written in this vocabulary so far. Every other page still carries the old one. Convert a page when you touch it, and never run a repo-wide replace, least of all on `src/components/Logo.tsx`, where "mark" means the wordmark and nothing else.
+The site is written in this vocabulary, apart from the four legal pages, which wait for the Phase 7 lawyer review. `tests/vocabulary.test.ts` holds the line: it sweeps the app for the retired words and fails with the file, the line and the sentence. Convert a page when you touch it, and never run a repo-wide replace, least of all on `src/components/Logo.tsx`, where "mark" means the wordmark and nothing else. When that test fails it is usually right; the fix is the word, not the test.
 
 ## Voice rules for anything user-facing
 

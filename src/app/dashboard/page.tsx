@@ -196,7 +196,7 @@ export default async function DashboardPage() {
 
         {boardLive && (
           <Card className="md:col-span-2">
-            <CardHead eyebrow="The widget">One line for the act&apos;s own site</CardHead>
+            <CardHead eyebrow="The widget">One line for your own site</CardHead>
             <p className="mb-4 max-w-none text-[15px] text-muted">
               Paste this where the widget should sit: an embed block, a code block, a footer. It shows the run, the fan tiers and a button to back it, and takes the payment on the page.
             </p>

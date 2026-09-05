@@ -197,7 +197,7 @@ export default async function WidgetPage() {
               href={demo?.run ? runPath(DEMO_SLUG, demo.run.slug) : actPath(DEMO_SLUG)}
               className="caps mt-4 inline-flex items-center gap-2.5 border border-accent bg-accent px-4 py-2.5 text-[14px] text-on-accent no-underline"
             >
-              <span aria-hidden="true" className="text-on-accent">&#9679;</span> Back {demo?.act.name ?? "the act"} on Door Money
+              <span aria-hidden="true" className="text-on-accent">&#9679;</span> Back {demo?.act.name ?? "the musician"} on Door Money
             </a>
           </div>
         </div>
