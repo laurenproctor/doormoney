@@ -160,7 +160,7 @@ export default async function HomePage() {
           patrons put the money up before the first show.
         </p>
         <div className="mt-7">
-          <ButtonLink href="/placements" variant="ghost" arrow>All placements and prices</ButtonLink>
+          <ButtonLink href="/how-sponsorship-works" variant="ghost" arrow>How sponsorship works</ButtonLink>
         </div>
       </Section>
 

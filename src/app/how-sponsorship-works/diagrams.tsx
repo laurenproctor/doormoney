@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 /**
  * Schematic line drawings from docs/mockups/placements.html, verbatim.
- * Red marks the sold surface. Keyed by the surface key in src/lib/catalog.ts.
+ * The filled shapes are the sponsored placement, in the page's accent. Keyed by the surface key in src/lib/catalog.ts.
  */
 
 const shared = { fill: "none", stroke: "var(--ink)", strokeWidth: 3, strokeLinejoin: "round", strokeLinecap: "round" } as const;

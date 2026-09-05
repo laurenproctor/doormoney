@@ -42,6 +42,6 @@ src/app/embed.js/         the one-line loader
 
 Open the folder and start with something like:
 
-> Port docs/mockups/placements.html into src/app/placements/page.tsx, following CLAUDE.md. Reuse the shared components and the catalog. Keep the schematic SVGs.
+> Port docs/mockups/placements.html into src/app/how-sponsorship-works/page.tsx, following CLAUDE.md. Reuse the shared components and the catalog. Keep the schematic SVGs.
 
 Each page in `src/app/` that still shows a yellow "Not yet ported" note in dev is waiting for exactly that.

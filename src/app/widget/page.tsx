@@ -211,7 +211,7 @@ export default async function WidgetPage() {
         </p>
         <div className="mt-[34px] flex flex-wrap gap-[22px]">
           <ButtonLink href="/list">List an act</ButtonLink>
-          <ButtonLink href="/placements" variant="ghost">See the placements</ButtonLink>
+          <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works</ButtonLink>
         </div>
       </Section>
     </Page>

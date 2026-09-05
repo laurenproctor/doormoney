@@ -100,7 +100,7 @@ const SECTIONS: LegalSection[] = [
           ]}
         />
         <p>
-          The standard card on the <Link href="/placements">placements page</Link> lists default prices. The act&apos;s own price on
+          The standard card on the <Link href="/how-sponsorship-works">sponsorship page</Link> lists default prices. The act&apos;s own price on
           a lot always wins. {SITE.name} charges no listing fee and takes its fee only from lots and backings that sell.
         </p>
       </>

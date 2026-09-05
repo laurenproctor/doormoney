@@ -41,7 +41,7 @@ test("a segment carrying something that is not a slug is refused", () => {
 
 test("every top-level route the site serves is reserved, so no act page can shadow one", () => {
   // The act page is the catch-all at the root: whatever the static routes do not claim lands there.
-  for (const path of ["login", "signup", "dashboard", "auctions", "placements", "widget", "list", "contact", "patron", "embed", "board", "claim", "mark", "record"]) {
+  for (const path of ["login", "signup", "dashboard", "auctions", "how-sponsorship-works", "widget", "list", "contact", "patron", "embed", "board", "claim", "mark", "record"]) {
     assert.ok(RESERVED_SLUGS.has(path), `${path} is a route and has to be reserved`);
   }
 });
