@@ -53,11 +53,11 @@ export const LEGAL = [
   { href: "/accessibility", label: "Accessibility" },
 ] as const;
 
-/** The house rules. Shown on Home and on Placements; keep one copy. */
+/** The house rules, in the words decision 14 settled. Shown on Home; keep one copy. */
 export const HOUSE_RULES = [
   "Nothing goes up without the musician's yes.",
   "Patrons put the money up before the first show.",
   "Musicians get paid every Friday. No chasing.",
-  "Patrons pay nothing for a placement that never runs.",
-  "No placements at weddings or private events.",
+  "Patrons pay nothing for a sponsorship that never runs.",
+  "No sponsorships at weddings or private events.",
 ] as const;

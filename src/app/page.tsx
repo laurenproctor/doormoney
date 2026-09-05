@@ -24,8 +24,8 @@ const KIND: Record<Board["act"]["type"], (city: string) => string> = {
 };
 
 /*
-  The page runs in this order: the idea, the musicians taking backing now, how it works for each
-  side, what can be backed, the musician's final say beside the house rules, then the two ways in.
+  The page runs in this order: the idea, the musicians raising now, how it works for each side,
+  what can be sponsored, the musician's final say beside the house rules, then the two ways in.
 */
 export default async function HomePage() {
   const featured = HOME_SURFACES.map((k) => CATALOG.find((s) => s.key === k)!);
@@ -46,8 +46,8 @@ export default async function HomePage() {
           </h1>
           <p className="caps mt-9 max-w-[52ch] text-[14.5px] leading-[2]">{SITE.taglineSecond}</p>
           <p className="mt-5 max-w-[52ch] text-[16px] leading-[1.7] text-muted">
-            Door Money lets businesses, brands and fans back musicians through placements attached to the work they are
-            already doing: the kick drum and the road cases, the merch table, the mailing list and the music stand.
+            Door Money lets businesses, brands and fans sponsor musicians in the places the work already happens: the
+            kick drum and the road cases, the merch table, the mailing list and the music stand.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <ButtonLink href="/auctions" arrow>Back a musician</ButtonLink>
@@ -79,10 +79,10 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      {/* Live boards */}
+      {/* Open fundraisers */}
       {boards.length > 0 && (
         <Section className="pool">
-          <SectionHead eyebrow="Live boards">Musicians accepting backing now</SectionHead>
+          <SectionHead eyebrow="Open fundraisers">Musicians raising now</SectionHead>
           <div className="mt-10 grid gap-px bg-line md:grid-flow-col md:auto-cols-fr">
             {boards.map((b, i) => {
               const gigs = b.run.kind === "season";
@@ -101,20 +101,20 @@ export default async function HomePage() {
                   </span>
                   <span className="mt-2 flex flex-wrap gap-x-7 gap-y-3 border-t border-line pt-4">
                     <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />
-                    <Stat value={String(openSpots(b))} label="placements open" />
+                    <Stat value={String(openSpots(b))} label="sponsorship options open" />
                   </span>
-                  <span className="caps mt-1 text-[14px] text-accent-ink">See the board &rarr;</span>
+                  <span className="caps mt-1 text-[14px] text-accent-ink">See the fundraiser &rarr;</span>
                 </Link>
               );
             })}
           </div>
           <div className="mt-7">
-            <ButtonLink href="/auctions" variant="ghost" arrow>All live boards</ButtonLink>
+            <ButtonLink href="/auctions" variant="ghost" arrow>All fundraisers</ButtonLink>
           </div>
         </Section>
       )}
 
-      {/* New boards by email */}
+      {/* New fundraisers by email */}
       <NewsletterCTA source="home" />
 
       {/* How it works */}
@@ -124,17 +124,17 @@ export default async function HomePage() {
           <Steps
             audience="For musicians"
             steps={[
-              ["Musicians decide what they want to offer", "A kick drum. A road case. A thank-you post. A music stand. Musicians choose what belongs on the board, set the price and approve every patron."],
-              ["Someone backs the run", "A local business, brand or fan chooses a placement and funds it before the shows begin."],
-              ["The musician gets paid while they play", "Door Money holds the money and pays it to the musician in weekly slices as the run happens. No invoices, no chasing, no waiting on a check."],
+              ["Musicians decide what they want to offer", "A kick drum. A road case. A thank-you post. A music stand. Musicians choose what goes into the fundraiser, set the price and approve every sponsor."],
+              ["A patron puts money behind it", "A local business, brand or fan picks a sponsorship and pays for it before the first show."],
+              ["The musician gets paid while they play", "Door Money holds the money and pays it to the musician in weekly slices as the shows happen. No invoices, no chasing, no waiting on a check."],
             ]}
           />
           <Steps
             audience="For patrons"
             steps={[
-              ["Back someone you want to keep playing", "Choose a touring act, house band, freelancer or neighborhood musician."],
-              ["Fund something real", "Choose a placement and put the money behind a specific run, residency or season. Door Money holds it and releases it only as the run happens. A placement that never runs costs nothing."],
-              ["See what your support made possible", "Follow the shows, rooms and audience the placement traveled through, and know exactly where the money went."],
+              ["Back a musician worth keeping on stage", "A touring band, a house act, a freelancer, or the soloist down the street."],
+              ["Fund something real", "Pick a sponsorship and put the money behind one tour, residency or season. Door Money holds it and releases it only as the shows happen. A sponsorship that never runs costs nothing."],
+              ["See what the money made possible", "The shows, the rooms and the audience the placement traveled through, and where every dollar went."],
             ]}
           />
         </div>
@@ -142,8 +142,8 @@ export default async function HomePage() {
 
       {/* What can be backed */}
       <Section className="pool">
-        <SectionHead eyebrow="What can be backed">Ways to back the work</SectionHead>
-        <p className="text-muted">A musician has more to sponsor than a social post. Standard-card prices; each musician sets their own.</p>
+        <SectionHead eyebrow="What can be sponsored">Ways to back the work</SectionHead>
+        <p className="text-muted">A musician has more to offer than a social post. The prices here are suggestions; each musician sets their own.</p>
         <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((s, i) => (
             <div key={s.key} data-reveal style={{ "--i": i } as CSSProperties} className="lift flex flex-col bg-ground p-7">
@@ -156,8 +156,8 @@ export default async function HomePage() {
           ))}
         </div>
         <p className="mt-7 max-w-[62ch] text-[15px] text-muted">
-          Each musician sets their own prices, per run or per month. Every placement needs the musician&apos;s yes, and
-          patrons put the money up before the first show.
+          Each musician sets their own prices, per fundraiser or per month. Every sponsorship needs the
+          musician&apos;s yes, and patrons put the money up before the first show.
         </p>
         <div className="mt-7">
           <ButtonLink href="/how-sponsorship-works" variant="ghost" arrow>How sponsorship works</ButtonLink>
@@ -170,8 +170,8 @@ export default async function HomePage() {
           <div>
             <SectionHead eyebrow="The musician's call">The musician always has the final say</SectionHead>
             <p className="text-muted">
-              Musicians choose what goes on their board, set the prices, approve every patron and decide what appears
-              beside their name. The marketplace works because neither side gets to exploit the other.
+              Musicians choose what goes into their fundraiser, set the prices, approve every sponsor and decide what
+              appears beside their name. The marketplace works because neither side gets to exploit the other.
             </p>
           </div>
           <div>
@@ -193,11 +193,11 @@ export default async function HomePage() {
         <SectionHead eyebrow="Get started">Back a musician, or list an act</SectionHead>
         <p className="text-muted">
           {SITE.name} runs in {SITE.city}: the bands, house acts, freelancers and soloists already making the city&apos;s
-          musical life happen, and the people and businesses who want to keep them working. Patrons pick a board and put
-          money behind a run. Musicians open a board in an afternoon.
+          musical life happen, and the people and businesses who want to keep them working. Patrons pick a fundraiser
+          and put money behind it. Musicians open one in an afternoon.
         </p>
         <div className="mt-9 flex flex-wrap gap-4">
-          <ButtonLink href="/auctions" arrow>See the live boards</ButtonLink>
+          <ButtonLink href="/auctions" arrow>See the fundraisers</ButtonLink>
           <ButtonLink href="/list" variant="ghost">List an act</ButtonLink>
         </div>
       </Section>
