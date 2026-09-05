@@ -7,6 +7,7 @@ import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { normalizeUsername, usernameProblem } from "@/lib/username";
 import { ProfileDetails, parseInterests, type ProfileField } from "@/lib/profile";
 import { eligibleActivity, patronSinceFor, linkPatronRows } from "@/lib/patronprofile";
+import { actPath } from "@/lib/urls";
 
 /*
   A patron's public profile: the writes.
@@ -283,10 +284,10 @@ export async function changeUsername(_prev: UsernameState, form: FormData): Prom
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard/account");
   revalidatePath(`/patron/${wanted}`);
-  revalidatePath(`/board/${wanted}`);
+  revalidatePath(actPath(wanted));
   if (before?.username && before.username !== wanted) {
     revalidatePath(`/patron/${before.username}`);
-    revalidatePath(`/board/${before.username}`);
+    revalidatePath(actPath(before.username));
   }
   return { ok: true, message: `The address is now /patron/${wanted}.` };
 }

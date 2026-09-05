@@ -3,6 +3,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
+import { actPath, runPath } from "@/lib/urls";
 
 export type ShowState = { ok: boolean; error?: string };
 
@@ -19,19 +20,23 @@ const str = (form: FormData, key: string) => {
   return typeof v === "string" ? v : "";
 };
 
+/** A show, with the word its run answers to, so a change can stale the right board. */
+type ShowRow = { id: string; run_id: string; runs: { slug: string } };
+
 async function ownRun(runId: string) {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
   if (!act) return null;
   const sb = await supabaseServer();
-  const { data } = await sb.from("runs").select("id").eq("id", runId).eq("act_id", act.id).maybeSingle();
-  return data ? { sb, act, runId } : null;
+  const { data } = await sb.from("runs").select("id,slug").eq("id", runId).eq("act_id", act.id).maybeSingle();
+  return data ? { sb, act, runId, runSlug: (data as { slug: string }).slug } : null;
 }
 
-const touch = (runId: string, slug: string) => {
+const touch = (runId: string, slug: string, runSlug: string) => {
   revalidatePath(`/dashboard/runs/${runId}`);
   revalidatePath("/dashboard");
-  revalidatePath(`/board/${slug}`);
+  revalidatePath(actPath(slug));
+  revalidatePath(runPath(slug, runSlug));
 };
 
 /** One more date on the run. */
@@ -42,7 +47,7 @@ export async function addShow(_prev: ShowState, form: FormData): Promise<ShowSta
   if (!own) return { ok: false, error: "That run is not on this account." };
   const { error } = await own.sb.from("shows").insert(parsed.data);
   if (error) return { ok: false, error: "That show did not save. Try once more." };
-  touch(own.runId, own.act.slug);
+  touch(own.runId, own.act.slug, own.runSlug);
   return { ok: true };
 }
 
@@ -55,11 +60,11 @@ export async function markShow(showId: string, patch: { played?: boolean; attend
     return { ok: false, error: "Attendance is a whole number." };
   }
   const sb = await supabaseServer();
-  const { data: show } = await sb.from("shows").select("id,run_id").eq("id", showId).maybeSingle();
+  const { data: show } = (await sb.from("shows").select("id,run_id,runs!inner(slug)").eq("id", showId).maybeSingle()) as { data: ShowRow | null };
   if (!show) return { ok: false, error: "That show is not on this account." };
   const { error } = await sb.from("shows").update(patch).eq("id", showId);
   if (error) return { ok: false, error: "That did not save. Try once more." };
-  touch(show.run_id, act.slug);
+  touch(show.run_id, act.slug, show.runs.slug);
   return { ok: true };
 }
 
@@ -68,11 +73,11 @@ export async function removeShow(showId: string): Promise<ShowState> {
   const act = await ownedAct(user.id);
   if (!act) return { ok: false, error: "No act on this account." };
   const sb = await supabaseServer();
-  const { data: show } = await sb.from("shows").select("id,run_id").eq("id", showId).maybeSingle();
+  const { data: show } = (await sb.from("shows").select("id,run_id,runs!inner(slug)").eq("id", showId).maybeSingle()) as { data: ShowRow | null };
   if (!show) return { ok: false, error: "That show is not on this account." };
   const { error } = await sb.from("shows").delete().eq("id", showId);
   if (error) return { ok: false, error: "That did not save. Try once more." };
-  touch(show.run_id, act.slug);
+  touch(show.run_id, act.slug, show.runs.slug);
   return { ok: true };
 }
 
@@ -92,7 +97,7 @@ export async function uploadShowPhoto(_prev: ShowState, form: FormData): Promise
   const act = await ownedAct(user.id);
   if (!act) return { ok: false, error: "No act on this account." };
   const sb = await supabaseServer();
-  const { data: show } = await sb.from("shows").select("id,run_id").eq("id", showId).maybeSingle();
+  const { data: show } = (await sb.from("shows").select("id,run_id,runs!inner(slug)").eq("id", showId).maybeSingle()) as { data: ShowRow | null };
   if (!show) return { ok: false, error: "That show is not on this account." };
 
   const admin = supabaseAdmin();
@@ -105,6 +110,6 @@ export async function uploadShowPhoto(_prev: ShowState, form: FormData): Promise
   const { data: pub } = admin.storage.from("shows").getPublicUrl(path);
   const { error } = await sb.from("shows").update({ photo_url: pub.publicUrl }).eq("id", showId);
   if (error) return { ok: false, error: "That did not save. Try once more." };
-  touch(show.run_id, act.slug);
+  touch(show.run_id, act.slug, show.runs.slug);
   return { ok: true };
 }

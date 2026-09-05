@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { parseVerification, type VerificationField } from "@/lib/verification";
+import { actPath, runPath } from "@/lib/urls";
 
 export type VerificationState = {
   ok: boolean;
@@ -39,7 +40,7 @@ export async function saveVerification(_prev: VerificationState, form: FormData)
   if (typeof runId !== "string" || !runId) return { ok: false, errors: { form: "That run is not on this account." }, submitted: sent };
 
   const sb = await supabaseServer();
-  const { data: run } = await sb.from("runs").select("id,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
+  const { data: run } = await sb.from("runs").select("id,slug,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, errors: { form: "That run is not on this account." }, submitted: sent };
 
   const parsed = parseVerification(sent);
@@ -60,6 +61,7 @@ export async function saveVerification(_prev: VerificationState, form: FormData)
   revalidatePath(`/dashboard/runs/${runId}`);
   revalidatePath(`/dashboard/runs/${runId}/preview`);
   revalidatePath("/dashboard");
-  revalidatePath(`/board/${act.slug}`);
+  revalidatePath(actPath(act.slug));
+  revalidatePath(runPath(act.slug, run.slug));
   return { ok: true, saved: parsed.value.methods.length };
 }

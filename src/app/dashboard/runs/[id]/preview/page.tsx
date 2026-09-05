@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { getOwnedRunBoard } from "@/lib/boards";
-import { BoardView } from "@/app/board/[slug]/BoardView";
+import { BoardView } from "@/app/[slug]/[run]/BoardView";
 
 type Props = { params: Promise<{ id: string }> };
 

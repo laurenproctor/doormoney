@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { RESERVED_SLUGS, SLUG_RE, slugify } from "@/lib/slug";
+import { actPath } from "@/lib/urls";
 
 export type ActField = "name" | "slug" | "type" | "city" | "bio" | "instagram" | "website" | "photo";
 export type ActState = { ok: boolean; errors?: Partial<Record<ActField | "form", string>> };
@@ -128,8 +129,8 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   }
 
   revalidatePath("/dashboard");
-  revalidatePath(`/board/${parsed.data.slug}`);
-  if (previousSlug && previousSlug !== slug) revalidatePath(`/board/${previousSlug}`);
+  revalidatePath(actPath(parsed.data.slug));
+  if (previousSlug && previousSlug !== slug) revalidatePath(actPath(previousSlug));
   if (!existing) redirect("/dashboard");
   return { ok: true };
 }

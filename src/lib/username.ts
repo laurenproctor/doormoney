@@ -3,7 +3,7 @@ import { RESERVED_SLUGS, SLUG_RE } from "@/lib/slug";
 
 /**
  * A handle. For a musician it is the sign-in name and the board address at once: whoever holds
- * `gutter-hymns` signs in as that and their board is at /board/gutter-hymns. For a patron it is the
+ * `gutter-hymns` signs in as that and their page is at /gutter-hymns. For a patron it is the
  * address of their public profile. One namespace either way, so a handle has to pass the same rules
  * a slug does.
  *

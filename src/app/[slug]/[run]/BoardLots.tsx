@@ -93,8 +93,10 @@ export function BoardLots({
   // patron's name and the totals come from the same place they always do.
   useEffect(() => {
     if (!watchKey) return;
-    const ids = new Set(watchKey.split(","));
     const sb = supabaseBrowser();
+    // No Supabase, no live bids to watch: the board is rendering from the samples.
+    if (!sb) return;
+    const ids = new Set(watchKey.split(","));
     const channel = sb
       .channel("board-bids")
       .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, (payload) => {

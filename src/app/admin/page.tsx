@@ -7,6 +7,7 @@ import { ClearFlag } from "./FlagActions";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/money";
 import { formatDateRange } from "@/lib/dates";
+import { actPath } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -92,7 +93,7 @@ export default async function AdminPage() {
           <Table
             head={["Act", "Owner", "Type", "City", "Stripe", "Runs", "Listed"]}
             rows={actRows.map((a) => [
-              <Link key="n" href={`/board/${a.slug}`} className="text-accent-ink underline decoration-1 underline-offset-4">{a.name}</Link>,
+              <Link key="n" href={actPath(a.slug)} className="text-accent-ink underline decoration-1 underline-offset-4">{a.name}</Link>,
               a.profiles?.email ?? "",
               a.type.replace("_", " "),
               a.city,

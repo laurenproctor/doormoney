@@ -41,6 +41,8 @@ export interface Board {
   };
   run: {
     id?: string;
+    /** The run's own word. The path adds "support-" in front of it (src/lib/urls.ts). */
+    slug: string;
     title: string;
     kind: string;
     startsOn: string;
@@ -72,6 +74,7 @@ export const SAMPLE_BOARDS: Record<string, Board> = {
       website: null,
     },
     run: {
+      slug: "fall-run",
       title: "Fall run",
       kind: "tour",
       startsOn: "2026-10-03",
@@ -105,6 +108,7 @@ export const SAMPLE_BOARDS: Record<string, Board> = {
       website: null,
     },
     run: {
+      slug: "fall-season",
       title: "Fall season",
       kind: "season",
       startsOn: "2026-09-15",

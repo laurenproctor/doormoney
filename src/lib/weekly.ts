@@ -3,6 +3,7 @@ import { adminEmails } from "@/lib/admin";
 import { formatDateRange } from "@/lib/dates";
 import { newBoardsEmail, sendEmail, weeklyDigest, type DigestNumbers, type NewBoard } from "@/lib/email";
 import { SITE } from "@/lib/site";
+import { runUrl } from "@/lib/urls";
 
 /*
   The mail that goes out on a schedule (docs/ROADMAP.md, Phase 7).
@@ -35,6 +36,7 @@ type RunRow = {
   starts_on: string;
   ends_on: string;
   show_count: number;
+  slug: string;
   acts: { name: string; slug: string; city: string };
 };
 
@@ -42,7 +44,7 @@ type RunRow = {
 async function unannouncedBoards(sb: Admin): Promise<{ runs: RunRow[]; boards: NewBoard[] }> {
   const { data } = await sb
     .from("runs")
-    .select("id,title,kind,starts_on,ends_on,show_count,acts!inner(name,slug,city)")
+    .select("id,slug,title,kind,starts_on,ends_on,show_count,acts!inner(name,slug,city)")
     .is("announced_at", null)
     .in("status", ["open", "live"])
     .order("created_at");
@@ -59,7 +61,7 @@ async function unannouncedBoards(sb: Admin): Promise<{ runs: RunRow[]; boards: N
       dates: formatDateRange(r.starts_on, r.ends_on),
       openSpots: open.length,
       fromCents: open.length ? Math.min(...open.map((l) => l.price_cents as number)) : null,
-      boardUrl: `${SITE.url}/board/${r.acts.slug}`,
+      boardUrl: runUrl(r.acts.slug, r.slug),
     });
   }
   return { runs, boards };

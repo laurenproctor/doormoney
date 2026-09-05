@@ -6,6 +6,7 @@ import { getBoard } from "@/lib/boards";
 import { formatDateRange } from "@/lib/dates";
 import { SITE } from "@/lib/site";
 import { WidgetFrame } from "@/components/WidgetFrame";
+import { actPath, runPath } from "@/lib/urls";
 
 export const metadata: Metadata = {
   title: "The widget",
@@ -193,7 +194,7 @@ export default async function WidgetPage() {
             </p>
             <Platforms list={LINK} />
             <a
-              href={`/board/${DEMO_SLUG}`}
+              href={demo?.run ? runPath(DEMO_SLUG, demo.run.slug) : actPath(DEMO_SLUG)}
               className="caps mt-4 inline-flex items-center gap-2.5 border border-accent bg-accent px-4 py-2.5 text-[14px] text-on-accent no-underline"
             >
               <span aria-hidden="true" className="text-on-accent">&#9679;</span> Back {demo?.act.name ?? "the act"} on Door Money

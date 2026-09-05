@@ -9,8 +9,8 @@ import { VerificationEditor } from "@/components/VerificationEditor";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { CATALOG } from "@/lib/catalog";
-import { SITE } from "@/lib/site";
 import { formatDateRange } from "@/lib/dates";
+import { runUrl } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "The run" };
 
@@ -27,7 +27,7 @@ export default async function RunPage({ params }: Props) {
   const sb = await supabaseServer();
   const { data: run } = await sb
     .from("runs")
-    .select("id,kind,title,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other")
+    .select("id,slug,kind,title,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other")
     .eq("id", id)
     .eq("act_id", act.id)
     .maybeSingle();
@@ -36,7 +36,7 @@ export default async function RunPage({ params }: Props) {
   const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", id).order("created_at");
   const { data: shows } = await sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", id).order("played_on");
   const surfaces = CATALOG.filter((s) => s.appliesTo.includes(act.type));
-  const boardHref = `${SITE.url}/board/${act.slug}`;
+  const boardHref = runUrl(act.slug, run.slug);
   const allLots = lots ?? [];
   const methods: string[] = run.verification_methods ?? [];
   const settled = run.status === "closed" || run.status === "cancelled";

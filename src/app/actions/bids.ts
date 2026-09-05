@@ -5,6 +5,7 @@ import { closeTimeOf, minimumBidCents, notifyOutbid } from "@/lib/auctions";
 import { formatMoney } from "@/lib/money";
 import { patronFor, payingProfileId } from "@/lib/patrons";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
+import { runPath } from "@/lib/urls";
 
 /*
   Placing a bid. Straight bidding: the number a patron enters is what they pay if they win.
@@ -32,7 +33,7 @@ type LotRow = {
   mode: string;
   status: string;
   closes_at: string | null;
-  runs: { status: string; bidding_closes_at: string | null; acts: { slug: string } };
+  runs: { slug: string; status: string; bidding_closes_at: string | null; acts: { slug: string } };
 };
 
 export async function placeBid(input: z.input<typeof Input>): Promise<BidResult> {
@@ -44,7 +45,7 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
   const sb = supabaseAdmin();
   const { data, error } = await sb
     .from("lots")
-    .select("id,price_cents,mode,status,closes_at,runs!inner(status,bidding_closes_at,acts!inner(slug))")
+    .select("id,price_cents,mode,status,closes_at,runs!inner(slug,status,bidding_closes_at,acts!inner(slug))")
     .eq("id", lotId)
     .maybeSingle();
   if (error) return { ok: false, error: "That did not load. Try once more." };
@@ -81,6 +82,6 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
     console.error("outbid notices failed", lot.id, e instanceof Error ? e.message : e);
   }
 
-  revalidatePath(`/board/${lot.runs.acts.slug}`);
+  revalidatePath(runPath(lot.runs.acts.slug, lot.runs.slug));
   return { ok: true, amountCents, nextMinimumCents: minimumBidCents(lot.price_cents, amountCents) };
 }

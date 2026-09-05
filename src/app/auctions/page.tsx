@@ -7,6 +7,7 @@ import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import type { Board } from "@/lib/sample";
+import { runPath } from "@/lib/urls";
 
 export const metadata: Metadata = {
   title: "Live boards",
@@ -64,7 +65,7 @@ export default async function AuctionsPage() {
                   {clockOf(b.run.biddingClosesAt)}
                 </div>
               )}
-              <ButtonLink href={`/board/${b.act.slug}`} className="self-start">See the board</ButtonLink>
+              <ButtonLink href={runPath(b.act.slug, b.run.slug)} className="self-start">See the board</ButtonLink>
             </div>
           );
         })}

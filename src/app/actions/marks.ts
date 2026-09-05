@@ -9,6 +9,7 @@ import { ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { refundPurchase } from "@/lib/refunds";
 import { stripeConfigured } from "@/lib/stripe";
+import { actPath } from "@/lib/urls";
 
 /**
  * The act's yes or no on a patron's mark. Nothing publishes without the yes.
@@ -40,7 +41,7 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
     if (!r.ok) return { ok: false, error: "The mark is declined, but the refund did not go through. Door Money has the details." };
     refundedCents = r.refundedCents;
     await admin.from("lots").update({ status: "open" }).eq("id", p.lot_id).eq("status", "sold");
-    revalidatePath(`/board/${act.slug}`);
+    revalidatePath(actPath(act.slug));
   }
 
   // The patron hears the answer either way. A failed send is logged, never fatal: the decision stands.

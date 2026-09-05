@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { SITE } from "@/lib/site";
+import { actUrl } from "@/lib/urls";
 
 /**
  * Sends the act into Stripe's hosted Express onboarding. Creates the connected
@@ -17,7 +18,7 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
   if (!process.env.STRIPE_SECRET_KEY) return { ok: false, error: "Payout setup is unavailable right now. Try again shortly, or contact Door Money." };
 
   // Stripe will not take a board address it cannot reach, so the URL is left off in development.
-  const boardUrl = SITE.url.startsWith("https://") ? `${SITE.url}/board/${act.slug}` : undefined;
+  const boardUrl = SITE.url.startsWith("https://") ? actUrl(act.slug) : undefined;
 
   let accountId = act.stripe_account_id;
   if (!accountId) {

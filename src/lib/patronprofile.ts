@@ -146,14 +146,25 @@ export async function currentUsernameFor(retired: string): Promise<string | null
   return (profile as { username: string | null } | null)?.username ?? null;
 }
 
-/** The board address an old one became, or null. Handle and board address move together. */
+/**
+ * The board address an old one became, or null. Handle and board address move together.
+ *
+ * Every word the site does not otherwise serve reaches the act page, so this runs on plain typos
+ * and on anything a crawler invents. It answers null rather than throwing when it cannot answer at
+ * all: a lookup that fails is not a redirect, and the caller's next move is the 404 either way.
+ */
 export async function currentSlugFor(retired: string): Promise<string | null> {
-  const admin = supabaseAdmin();
-  const { data } = await admin.from("username_history").select("profile_id").eq("username", retired).maybeSingle();
-  const profileId = (data as { profile_id: string } | null)?.profile_id;
-  if (!profileId) return null;
-  const { data: act } = await admin.from("acts").select("slug").eq("owner_id", profileId).order("created_at").limit(1).maybeSingle();
-  return (act as { slug: string } | null)?.slug ?? null;
+  try {
+    const admin = supabaseAdmin();
+    const { data } = await admin.from("username_history").select("profile_id").eq("username", retired).maybeSingle();
+    const profileId = (data as { profile_id: string } | null)?.profile_id;
+    if (!profileId) return null;
+    const { data: act } = await admin.from("acts").select("slug").eq("owner_id", profileId).order("created_at").limit(1).maybeSingle();
+    return (act as { slug: string } | null)?.slug ?? null;
+  } catch (e) {
+    console.error("moved-handle lookup failed", retired, e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------
