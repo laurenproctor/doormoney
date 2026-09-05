@@ -7,7 +7,7 @@ import { CONTACT_REASONS } from "@/lib/contact";
 
 const initial: ContactState = { ok: false };
 
-const inputClass = "edge w-full bg-ground px-3.5 py-3 text-[15px] focus:border-accent";
+const inputClass = "field w-full bg-ground px-3.5 py-3 text-[15px]";
 
 /**
  * The form on /contact. It records when it mounted and sends that along; the action rejects

@@ -66,7 +66,7 @@ export function MarkForm({
             type="file"
             accept="image/png,image/jpeg,image/webp"
             onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
-            className="block w-full text-[15px] file:mr-4 file:cursor-pointer file:border file:border-line file:bg-transparent file:px-4 file:py-2.5 file:text-[14px] file:uppercase file:tracking-[0.14em] file:text-ink"
+            className="block w-full text-[15px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink file:mr-4 file:cursor-pointer file:border file:border-field-line file:bg-transparent file:px-4 file:py-2.5 file:text-[14px] file:uppercase file:tracking-[0.14em] file:text-ink"
           />
           <p className="mt-2 max-w-none text-[14px] leading-[1.6] text-muted">
             PNG, JPG or WebP, under 5MB. A PNG with a transparent background prints and screens best.
@@ -92,7 +92,7 @@ export function MarkForm({
             maxLength={80}
             defaultValue={currentText ?? ""}
             placeholder="Kettle St. Coffee"
-            className="edge w-full px-3.5 py-3 text-[15px]"
+            className="field w-full px-3.5 py-3 text-[15px]"
           />
           <p className="mt-2 max-w-none text-[14px] leading-[1.6] text-muted">
             Used where a logo will not fit: a thank-you post, a merch table card, a program credit.
@@ -111,7 +111,7 @@ export function MarkForm({
           maxLength={300}
           defaultValue={currentNote ?? ""}
           placeholder="The white version on anything dark. No tagline."
-          className="edge w-full px-3.5 py-3 text-[15px] leading-[1.6]"
+          className="field w-full px-3.5 py-3 text-[15px] leading-[1.6]"
         />
       </div>
 

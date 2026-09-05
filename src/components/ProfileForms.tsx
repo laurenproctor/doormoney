@@ -129,7 +129,7 @@ export function ProfileDetailsForm({ profile, photo }: { profile: OwnProfile | n
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photo} alt="The photo on the profile now" width={96} height={96} className="edge mb-3 h-[96px] w-[96px] rounded-full object-cover" />
             )}
-            <input {...props} name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block text-[15px]" />
+            <input {...props} name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block text-[15px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink" />
           </>
         )}
       </Field>

@@ -116,7 +116,7 @@ export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lot
         <form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-[140px_1fr_1fr_auto] md:items-end">
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Bid</span>
-            <div className="edge flex items-center gap-1 px-3.5 py-3">
+            <div className="field flex items-center gap-1 px-3.5 py-3">
               <span className="text-[15px] text-muted">$</span>
               <input
                 value={amount}
@@ -134,11 +134,11 @@ export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lot
           </label>
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Name, as it should appear</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="organization" className="edge w-full px-3.5 py-3 text-[15px]" />
+            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="organization" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Email</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="edge w-full px-3.5 py-3 text-[15px]" />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
           <Button type="submit" disabled={pending} arrow>
             {pending ? "One second" : confirmed ? "Confirm the bid" : stripePromise ? "Continue" : "Place the bid"}

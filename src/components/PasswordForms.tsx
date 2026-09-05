@@ -7,7 +7,7 @@ import { Stamp } from "@/components/Brand";
 
 const initial: ResetState = { ok: false };
 
-const fieldClass = "edge mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px]";
+const fieldClass = "field mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px]";
 const labelClass = "caps mb-2 block text-[14px] text-muted";
 
 /** Asks for the reset link. Says the same thing either way, so it cannot be used to find accounts. */

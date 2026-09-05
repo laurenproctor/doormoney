@@ -96,7 +96,7 @@ function ShowLine({ show }: { show: ShowRow }) {
             const n = attendance === "" ? null : Number(attendance);
             if (n !== (show.attendance ?? null)) run(() => markShow(show.id, { attendance: n }));
           }}
-          className="edge mt-0.5 w-full bg-ground px-2 py-1 text-[15px]"
+          className="field mt-0.5 w-full bg-ground px-2 py-1 text-[15px]"
         />
       </label>
       <div className="flex flex-wrap items-center gap-3">

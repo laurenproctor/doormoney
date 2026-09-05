@@ -89,11 +89,11 @@ export function LotCheckout({
         <form onSubmit={start} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Name, as it should appear</span>
-            <input name="patronName" value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="organization" className="edge w-full px-3.5 py-3 text-[15px]" />
+            <input name="patronName" value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="organization" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Email for the record</span>
-            <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="edge w-full px-3.5 py-3 text-[15px]" />
+            <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
           <Button type="submit" disabled={pending} arrow>
             {pending ? "One second" : "Continue to payment"}

@@ -23,15 +23,11 @@ const labelClass = "caps mb-2 block text-[14px] text-ink";
 const helpClass = "mt-2 text-[14px] leading-[1.5] text-muted";
 
 /**
- * A field's border. Two pixels and the accent when the value is wrong, so the state is carried by
- * weight as well as by color; the message underneath adds a third signal that does not depend on
- * either. src/lib/signup.ts holds the rules, aria-invalid and aria-describedby carry the same
- * state to anything that is not looking at the page.
+ * The `field` utility in globals.css carries the border, the focus ring and the invalid state, the
+ * last of it driven by aria-invalid so what a screen reader is told and what the eye sees cannot
+ * drift apart. src/lib/signup.ts holds the rules that decide which it is.
  */
-const field = (invalid: boolean) =>
-  `w-full bg-ground px-3.5 py-3 text-[15px] text-ink outline-none transition-colors focus-visible:border-accent-ink focus-visible:ring-2 focus-visible:ring-accent-ink/70 ${
-    invalid ? "border-2 border-accent-ink" : "border border-line focus-visible:border-accent-ink"
-  }`;
+const fieldClass = "field w-full bg-ground px-3.5 py-3 text-[15px] text-ink";
 
 /**
  * Opens an account.
@@ -252,7 +248,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
             onChange={(e) => revalidate({ first_name: e.target.value })}
             aria-invalid={errors.first_name ? true : undefined}
             aria-describedby={describedBy("first_name", "signup-name-help")}
-            className={field(Boolean(errors.first_name))}
+            className={fieldClass}
           />
           {errors.first_name && <FieldError id={errorId("first_name")}>{errors.first_name}</FieldError>}
         </div>
@@ -268,7 +264,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
             onChange={(e) => revalidate({ last_name: e.target.value })}
             aria-invalid={errors.last_name ? true : undefined}
             aria-describedby={describedBy("last_name", "signup-name-help")}
-            className={field(Boolean(errors.last_name))}
+            className={fieldClass}
           />
           {errors.last_name && <FieldError id={errorId("last_name")}>{errors.last_name}</FieldError>}
         </div>
@@ -289,7 +285,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
         onChange={(e) => revalidate({ email: e.target.value })}
         aria-invalid={errors.email ? true : undefined}
         aria-describedby={describedBy("email", "signup-email-help")}
-        className={field(Boolean(errors.email))}
+        className={fieldClass}
       />
       {errors.email && <FieldError id={errorId("email")}>{errors.email}</FieldError>}
       <p id="signup-email-help" className={`${helpClass} mb-[18px]`}>Used for account notices, receipts and payout updates.</p>
@@ -307,7 +303,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
           onChange={(e) => revalidate({ password: e.target.value })}
           aria-invalid={errors.password ? true : undefined}
           aria-describedby={describedBy("password", "signup-password-help")}
-          className={`${field(Boolean(errors.password))} pr-[86px]`}
+          className={`${fieldClass} pr-[86px]`}
         />
         {/*
           The button's name is the whole state: "Show password" while it is hidden, "Hide password"
