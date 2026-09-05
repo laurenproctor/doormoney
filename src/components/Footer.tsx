@@ -6,8 +6,8 @@ import { ButtonLink } from "@/components/Button";
 
 /** The two ways in, repeated at the foot of every page. */
 const WAYS = [
-  { href: "/auctions", label: "Back a musician", blurb: "Pick a board, take a placement, put the money behind a run." },
-  { href: "/list", label: "List an act", blurb: "Open a board in an afternoon. Weekly payouts through the run." },
+  { href: "/auctions", label: "Back a musician", blurb: "Pick a fundraiser, take a sponsorship, put the money behind the music." },
+  { href: "/list", label: "List an act", blurb: "Open a fundraiser in an afternoon. Paid every Friday while it runs." },
 ] as const;
 
 export function Footer({ note }: { note?: string }) {
@@ -38,8 +38,8 @@ export function Footer({ note }: { note?: string }) {
             <Logo className="h-[64px] w-auto text-ink max-lg:max-w-full max-md:h-[52px]" />
             <p className="mt-5 max-w-[40ch] text-[15px] leading-[1.7]">{SITE.tagline}</p>
             <p className="mt-3 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">
-              A patronage market for working musicians. Local businesses, brands and fans put money behind a run; Door
-              Money holds it and pays the musician every Friday through the run.
+              A patronage market for working musicians. Local businesses, brands and fans put money behind the work;
+              Door Money holds it and pays the musician every Friday through the fundraiser.
               {note ? ` ${note}` : ""}
             </p>
           </div>
