@@ -9,14 +9,16 @@ import { tierPlace } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import type { MarkStatus } from "@/lib/marks";
 import { formatMoney } from "@/lib/money";
+import { periodOf } from "@/lib/periods";
 import { lotName } from "@/lib/purchases";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 /*
-  The record: what a patron receives at the end of a run. Every show the placement ran at, the rooms,
-  the attendance where the act counted it, and where the money went. The URL is the purchase id (or the
+  The record: what a patron receives at the end of a fundraiser. Every show the logo was in the room
+  for, the rooms, the attendance where the musician counted it, and where the money went. The URL is
+  the purchase id (or the
   backing id, for a fan who came in through the widget), which nobody can guess; it is emailed to the
-  patron with the receipt and again when the run closes.
+  patron with the receipt and again when the fundraiser closes.
   Nothing on this page is private beyond the patron's own name and amount, which they already know.
 */
 
@@ -48,7 +50,7 @@ type RecordRow = Money & {
   patronName: string;
   /** "the kick drum head", "a name on the merch table card" */
   what: string;
-  /** Where the mark stands. Backings carry a name, not a mark, so they are always "none". */
+  /** Where the logo stands. Backings carry a name, not a logo, so they are always "none". */
   markStatus: MarkStatus;
   runs: RunRow;
 };
@@ -103,8 +105,8 @@ export default async function RecordPage({ params }: Props) {
   const run = p.runs;
   const act = run.acts;
   const backing = p.kind === "backing";
-  const season = run.kind === "season";
-  const unit = season ? "gigs" : "shows";
+  // The period by name, never "the run": docs/DECISIONS.md, decision 14.
+  const period = periodOf(run.kind);
 
   const played = shows.filter((s) => s.played);
   const counted = played.filter((s) => s.attendance != null);
@@ -115,15 +117,15 @@ export default async function RecordPage({ params }: Props) {
 
   const state =
     run.status === "cancelled"
-      ? "The run was cancelled"
+      ? `The ${period.noun} was cancelled`
       : run.status === "closed"
-        ? "The run is over"
+        ? `The ${period.noun} is over`
         : run.status === "live"
-          ? "The run is on"
-          : "The run has not started";
+          ? `The ${period.noun} is on`
+          : `The ${period.noun} has not started`;
 
   const facts: [string, string][] = [
-    [String(played.length), `of ${run.show_count} ${unit} played`],
+    [String(played.length), `of ${run.show_count} ${period.units} played`],
     ...(rooms ? [[String(rooms), rooms === 1 ? "room" : "rooms"] as [string, string]] : []),
     ...(counted.length ? [[attendance.toLocaleString("en-US"), `people across ${counted.length} counted ${counted.length === 1 ? "show" : "shows"}`] as [string, string]] : []),
     [formatMoney(paidCents), `of ${formatMoney(netCents)} reached ${act.name}`],
@@ -133,44 +135,44 @@ export default async function RecordPage({ params }: Props) {
     <Page
       theme={themeFor(act.slug)}
       current="/auctions"
-      eyebrow="Record of the run"
+      eyebrow={`Record of the ${period.noun}`}
       title={act.name}
       accent=""
       strap={state}
       intro={
         <>
           <p className="caps text-[14.5px] leading-[2]">
-            {run.title}. {run.show_count} {unit}, {formatDateRange(run.starts_on, run.ends_on)}. {act.city}.
+            {run.title}. {run.show_count} {period.units}, {formatDateRange(run.starts_on, run.ends_on)}. {act.city}.
           </p>
           <p className="mt-5">
-            <b>{p.patronName}</b> {backing ? `backs this ${season ? "season" : "run"}, ${p.what}` : `holds ${p.what} on this ${season ? "season" : "run"}`}: {formatMoney(p.amount_cents)}, paid on{" "}
+            <b>{p.patronName}</b> {backing ? `backs this ${period.noun}, ${p.what}` : `holds ${p.what} on this ${period.noun}`}: {formatMoney(p.amount_cents)}, paid on{" "}
             {new Date(p.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
-            {p.refunded_cents > 0 && ` ${formatMoney(p.refunded_cents)} of it went back when the run was cancelled.`}
+            {p.refunded_cents > 0 && ` ${formatMoney(p.refunded_cents)} of it went back when the ${period.noun} was cancelled.`}
           </p>
         </>
       }
     >
-      {/* The one thing the patron may still owe: the mark. Stays up until the act decides. */}
+      {/* The one thing the patron may still owe: the logo. Stays up until the musician decides. */}
       {!backing && run.status !== "cancelled" && (p.markStatus === "none" || p.markStatus === "submitted") && (
         <Section className="pool">
-          <SectionHead eyebrow={p.markStatus === "none" ? "Still to send" : "With the act"}>
-            {p.markStatus === "none" ? `${act.name} is waiting for the mark` : `${act.name} has the mark`}
+          <SectionHead eyebrow={p.markStatus === "none" ? "Still to send" : "With the musician"}>
+            {p.markStatus === "none" ? `${act.name} is waiting for the logo` : `${act.name} has the logo`}
           </SectionHead>
           <p className="max-w-[62ch] text-muted">
             {p.markStatus === "none"
-              ? `The mark is the name or logo as it will appear on ${p.what}. Nothing goes up without ${act.name}'s yes, and nothing runs until the mark is in.`
+              ? `The logo is the name or image as it will appear on ${p.what}. Nothing goes up without ${act.name}'s yes, and nothing runs until it is in.`
               : `${act.name} approves or declines it, and Door Money sends an email either way. It can still be replaced until they decide.`}
           </p>
           <div className="mt-8">
             <ButtonLink href={`/mark/${p.id}`} arrow={p.markStatus === "none"} variant={p.markStatus === "none" ? "solid" : "ghost"}>
-              {p.markStatus === "none" ? "Send the mark" : "Replace the mark"}
+              {p.markStatus === "none" ? "Send the logo" : "Replace the logo"}
             </ButtonLink>
           </div>
         </Section>
       )}
 
       <Section>
-        <SectionHead eyebrow="Where it went">{backing ? "What the backing did" : "What the placement did"}</SectionHead>
+        <SectionHead eyebrow="Where it went">{backing ? "What the backing did" : "What the sponsorship did"}</SectionHead>
         <div className="mt-8 flex flex-wrap gap-x-14 gap-y-6">
           {facts.map(([value, label]) => (
             <div key={label}>
@@ -182,9 +184,9 @@ export default async function RecordPage({ params }: Props) {
       </Section>
 
       <Section>
-        <SectionHead eyebrow={`The ${unit}`}>{backing ? `Every date on the ${season ? "season" : "run"}` : "Every date the mark was in the room"}</SectionHead>
+        <SectionHead eyebrow={`The ${period.units}`}>{backing ? `Every date on the ${period.noun}` : "Every date the logo was in the room"}</SectionHead>
         {shows.length === 0 ? (
-          <p className="text-muted">{act.name} has not entered the dates yet. They appear here as the run goes on.</p>
+          <p className="text-muted">{act.name} has not entered the dates yet. They appear here as the ${period.noun} goes on.</p>
         ) : (
           <ol className="mt-8 grid gap-px bg-line">
             {shows.map((s) => (
@@ -201,13 +203,13 @@ export default async function RecordPage({ params }: Props) {
             ))}
           </ol>
         )}
-        <p className="mt-6 max-w-[62ch] text-[14.5px] text-muted">Attendance is the act&apos;s own count where they kept one. Door Money tracks runs lightly and says so.</p>
+        <p className="mt-6 max-w-[62ch] text-[14.5px] text-muted">Attendance is the musician&apos;s own count where they kept one. Door Money tracks fundraisers lightly and says so.</p>
       </Section>
 
       <Section>
         <SectionHead eyebrow="The money">Week by week</SectionHead>
         <p className="text-muted">
-          Door Money held {formatMoney(p.amount_cents)}, kept {formatMoney(p.fee_cents)}, and moves the rest to {act.name} in Friday slices through the run.
+          Door Money held {formatMoney(p.amount_cents)}, kept {formatMoney(p.fee_cents)}, and moves the rest to {act.name} in Friday slices through the {period.noun}.
         </p>
         <ol className="mt-8 grid max-w-[560px] gap-px bg-line">
           {slices.map((s) => (
@@ -219,7 +221,7 @@ export default async function RecordPage({ params }: Props) {
           ))}
         </ol>
         <div className="mt-8">
-          <Eyebrow>Questions go to the board or to Door Money</Eyebrow>
+          <Eyebrow>Questions go to the musician or to Door Money</Eyebrow>
         </div>
       </Section>
 
@@ -228,7 +230,7 @@ export default async function RecordPage({ params }: Props) {
         <SectionHead eyebrow="A patron page">Say what this patron listens for</SectionHead>
         <p className="mb-8 max-w-[56ch] text-[15px] text-muted">
           Patrons can keep a page at Door Money: a name, a few words, the music they turn up for, and whichever
-          runs they choose to name. It starts private, nothing appears on it without being put there, and no
+          fundraisers they choose to name. It starts private, nothing appears on it without being put there, and no
           amount is ever on it.
         </p>
         <div className="flex flex-wrap gap-3">
@@ -238,7 +240,7 @@ export default async function RecordPage({ params }: Props) {
         </div>
       </Section>
 
-      <NewsletterCTA source="record" eyebrow="The next run" title="The next run, before the placements go." />
+      <NewsletterCTA source="record" eyebrow="The next fundraiser" title="The next fundraiser, before the sponsorships go." />
     </Page>
   );
 }

@@ -48,7 +48,7 @@ test("an address collected before names were asked for gets no greeting, not a f
     const mail = newBoardsEmail({ to: "d@example.test", firstName, boards: BOARDS, unsubscribeUrl: "https://example.test/u" });
     assert.doesNotMatch(mail.text, /^\s*,/, "no empty greeting");
     assert.doesNotMatch(mail.text, /there,|Hi,/i, "no placeholder greeting");
-    assert.match(mail.text, /^Gutter Hymns opened a board/);
+    assert.match(mail.text, /^Gutter Hymns opened a fundraiser/);
   }
 });
 
@@ -59,8 +59,8 @@ test("the welcome email greets by name and still reads without one", () => {
   const plain = newsletterWelcome({ to: "d@example.test", unsubscribeUrl: "https://example.test/u" });
   assert.match(plain.text, /^This address is on the/);
   for (const mail of [named, plain]) {
-    assert.match(mail.html, /new-boards email/);
-    assert.match(mail.html, /New musicians open boards/);
+    assert.match(mail.html, /new-fundraisers email/);
+    assert.match(mail.html, /New musicians open fundraisers/);
     assert.match(mail.html, /Nothing to do now/);
   }
 });

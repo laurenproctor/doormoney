@@ -42,7 +42,8 @@ export type FlagTarget = Row & {
   actSlug: string;
   runTitle: string;
   runStatus: string;
-  season: boolean;
+  /** runs.kind, so the pages can name the period rather than call it "the run". */
+  kind: string;
 };
 
 const RUN = "runs!inner(title,kind,status,acts!inner(name,slug))";
@@ -70,7 +71,7 @@ export async function flagTarget(sb: Admin, id: string): Promise<FlagTarget | nu
       actSlug: run.acts.slug,
       runTitle: run.title,
       runStatus: run.status,
-      season: run.kind === "season",
+      kind: run.kind,
     };
   }
   const { data: b } = await sb
@@ -91,7 +92,7 @@ export async function flagTarget(sb: Admin, id: string): Promise<FlagTarget | nu
     actSlug: row.runs.acts.slug,
     runTitle: row.runs.title,
     runStatus: row.runs.status,
-    season: row.runs.kind === "season",
+    kind: row.runs.kind,
   };
 }
 
