@@ -2,8 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
 import { auctionUnsold, auctionWon, closingSoon, outbidNotice, sendEmail } from "@/lib/email";
 import { bidStepCents } from "@/lib/money";
-import { lotName, ownerEmail } from "@/lib/purchases";
+import { holdPurchase, lotFee, lotName, ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
+import { chargeSavedCard, stripeConfigured } from "@/lib/stripe";
 import { runUrl } from "@/lib/urls";
 
 /*
@@ -65,19 +66,27 @@ type LotRow = {
   winner_bid_id: string | null;
   funding_deadline: string | null;
   closing_soon_sent_at: string | null;
-  runs: { id: string; slug: string; title: string; status: string; bidding_closes_at: string | null; acts: { name: string; slug: string; owner_id: string | null } };
+  runs: { id: string; slug: string; title: string; status: string; act_id: string; bidding_closes_at: string | null; acts: { id: string; name: string; slug: string; owner_id: string | null } };
 };
 
-type BidRow = { id: string; amount_cents: number; anonymous: boolean; passed_at: string | null; created_at: string; patrons: { name: string; contact_email: string } | null };
+type BidRow = {
+  id: string;
+  amount_cents: number;
+  anonymous: boolean;
+  passed_at: string | null;
+  created_at: string;
+  stripe_payment_method_id: string | null;
+  patrons: { id: string; name: string; contact_email: string; stripe_customer_id: string | null } | null;
+};
 
 const LOT_SELECT =
-  "id,label,surface_key,price_cents,status,closes_at,winner_bid_id,funding_deadline,closing_soon_sent_at,runs!inner(id,slug,title,status,bidding_closes_at,acts!inner(name,slug,owner_id))";
+  "id,label,surface_key,price_cents,status,closes_at,winner_bid_id,funding_deadline,closing_soon_sent_at,runs!inner(id,slug,title,status,act_id,bidding_closes_at,acts!inner(id,name,slug,owner_id))";
 
 /** Every bid on a lot, highest first, newest first on a tie. */
 async function bidsFor(sb: Admin, lotId: string) {
   const { data } = await sb
     .from("bids")
-    .select("id,amount_cents,anonymous,passed_at,created_at,patrons(name,contact_email)")
+    .select("id,amount_cents,anonymous,passed_at,created_at,stripe_payment_method_id,patrons(id,name,contact_email,stripe_customer_id)")
     .eq("lot_id", lotId)
     .order("amount_cents", { ascending: false })
     .order("created_at", { ascending: true });
@@ -120,6 +129,70 @@ async function offerTo(sb: Admin, lot: LotRow, bid: BidRow, expect: { status: st
   return true;
 }
 
+/**
+ * Charges the winner's saved card, with nobody at the keyboard.
+ *
+ * Returns true when the money is in and the lot is sold. Returns false for every other outcome,
+ * including a bid that saved no card, and the caller then falls back to the emailed claim link and
+ * the 48-hour clock, which is exactly what every auction did before cards were taken at bid time.
+ *
+ * A failure here is not evidence of bad faith. A card needing 3-D Secure cannot be authenticated
+ * with the patron absent, a balance can be short, a card can expire between the bid and the close.
+ * So the reason is recorded and the patron still gets their 48 hours.
+ */
+async function chargeWinner(sb: Admin, lot: LotRow, bid: BidRow): Promise<boolean> {
+  const customerId = bid.patrons?.stripe_customer_id;
+  if (!bid.stripe_payment_method_id || !customerId || !stripeConfigured()) return false;
+
+  // The purchase row first: the partial unique index on lots allows one live purchase per lot, so
+  // this is also the lock that stops a second close from charging the same bid twice.
+  const { data: purchase, error } = await sb
+    .from("purchases")
+    .insert({ lot_id: lot.id, patron_id: bid.patrons?.id, amount_cents: bid.amount_cents, fee_cents: lotFee(bid.amount_cents) })
+    .select("id")
+    .single();
+  if (error || !purchase) return false;
+
+  try {
+    const pi = await chargeSavedCard({
+      purchaseId: purchase.id as string,
+      lotId: lot.id,
+      actId: lot.runs.acts.id,
+      actSlug: lot.runs.acts.slug,
+      customerId,
+      paymentMethodId: bid.stripe_payment_method_id,
+      amountCents: bid.amount_cents,
+      description: `${lotName(lot)}, ${lot.runs.acts.name}, ${lot.runs.title}`,
+      patronEmail: bid.patrons?.contact_email ?? "",
+    });
+    // Anything short of "succeeded" needs the patron present, which is the fallback's whole job.
+    if (pi.status !== "succeeded") throw new Error(`payment intent ${pi.status}`);
+
+    await sb.from("bids").update({ charged_purchase_id: purchase.id }).eq("id", bid.id);
+    await sb.from("lots").update({ winner_bid_id: bid.id }).eq("id", lot.id).is("winner_bid_id", null);
+    const r = await holdPurchase(sb, { purchaseId: purchase.id as string, paymentIntentId: pi.id, patronEmail: bid.patrons?.contact_email ?? null });
+    if (!r.ok) throw new Error(r.reason);
+    return true;
+  } catch (e) {
+    const reason = e instanceof Error ? e.message : String(e);
+    console.error("bid card charge failed", lot.id, bid.id, reason);
+    // Take the row back out so the lot is free for the claim link, and keep the reason: it is the
+    // difference between a patron who could not pay and one who never meant to.
+    await sb.from("purchases").delete().eq("id", purchase.id).eq("payment_status", "requires_payment");
+    await sb.from("lots").update({ funding_charge_error: reason.slice(0, 300) }).eq("id", lot.id);
+    return false;
+  }
+}
+
+/**
+ * Hands a won lot to a bidder: the card on the bid if it clears, the emailed claim link if not.
+ * One place, so closing an auction and rolling a lapsed one behave identically.
+ */
+async function settleWinner(sb: Admin, lot: LotRow, bid: BidRow, expect: { status: string; winnerBidId: string | null }) {
+  if (await chargeWinner(sb, lot, bid)) return true;
+  return offerTo(sb, lot, bid, expect);
+}
+
 /** Nobody is going to pay for this one. Tell the act and take it off the board. */
 async function markUnsold(sb: Admin, lot: LotRow, expect: { status: string }) {
   const { data: marked } = await sb
@@ -159,7 +232,7 @@ export async function closeDueAuctions(sb: Admin, now = new Date(), summary?: Au
         }
         continue;
       }
-      if (await offerTo(sb, lot, top, { status: "open", winnerBidId: null })) {
+      if (await settleWinner(sb, lot, top, { status: "open", winnerBidId: null })) {
         if (summary) {
           summary.wonAndBilled += 1;
           summary.closed += 1;
@@ -191,7 +264,7 @@ export async function rollExpiredFunding(sb: Admin, now = new Date(), summary?: 
         }
         continue;
       }
-      if (await offerTo(sb, lot, next, { status: "pending_funding", winnerBidId: lot.winner_bid_id })) {
+      if (await settleWinner(sb, lot, next, { status: "pending_funding", winnerBidId: lot.winner_bid_id })) {
         if (summary) summary.rolled += 1;
       }
     } catch (e) {

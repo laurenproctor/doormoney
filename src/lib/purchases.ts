@@ -65,11 +65,35 @@ export async function ownerEmail(sb: Admin, ownerId: string | null) {
 export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Session) {
   const purchaseId = session.metadata?.purchase_id;
   if (!purchaseId) return { ok: false as const, reason: "no purchase id on session" };
-  const p = await loadPurchase(sb, purchaseId);
+  const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+  return holdPurchase(sb, {
+    purchaseId,
+    paymentIntentId: piId,
+    checkoutSessionId: session.id,
+    patronEmail: session.customer_details?.email ?? null,
+  });
+}
+
+/**
+ * The money arrived. Mark the purchase held, the lot sold, lay down the weekly schedule, and send
+ * the receipt and the sale notice.
+ *
+ * Two ways in, one body: a patron finishing an embedded Checkout Session, and a won bid whose saved
+ * card was charged off-session at the close. The schedule and the emails are the same either way,
+ * so they are written once here rather than twice.
+ *
+ * Idempotent. The state change is conditional on requires_payment, so a duplicate webhook, a second
+ * close, or a close racing a webhook all end with one held purchase and one schedule.
+ */
+export async function holdPurchase(
+  sb: Admin,
+  params: { purchaseId: string; paymentIntentId: string | null; checkoutSessionId?: string | null; patronEmail?: string | null },
+) {
+  const p = await loadPurchase(sb, params.purchaseId);
   if (!p) return { ok: false as const, reason: "purchase not found" };
   if (p.payment_status !== "requires_payment") return { ok: true as const, already: true };
 
-  const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+  const piId = params.paymentIntentId;
   let chargeId: string | null = null;
   if (piId) {
     const pi = await stripe.paymentIntents.retrieve(piId);
@@ -79,7 +103,7 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
   // The state change. Conditional on requires_payment so a duplicate event is a no-op.
   const { data: updated, error } = await sb
     .from("purchases")
-    .update({ payment_status: "held", stripe_payment_intent_id: piId, stripe_charge_id: chargeId, stripe_checkout_session_id: session.id })
+    .update({ payment_status: "held", stripe_payment_intent_id: piId, stripe_charge_id: chargeId, ...(params.checkoutSessionId ? { stripe_checkout_session_id: params.checkoutSessionId } : {}) })
     .eq("id", p.id)
     .eq("payment_status", "requires_payment")
     .select("id");
@@ -106,7 +130,7 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
   const act = run.acts;
   const name = lotName(p.lots);
   const boardUrl = runUrl(act.slug, run.slug);
-  const patronEmail = session.customer_details?.email ?? p.patrons?.contact_email ?? null;
+  const patronEmail = params.patronEmail ?? p.patrons?.contact_email ?? null;
   const patronName = p.patrons?.name ?? "A patron";
   if (patronEmail) {
     const r = await sendEmail(purchaseReceipt({ to: patronEmail, patronName, lotName: name, actName: act.name, runTitle: run.title, amountCents: p.amount_cents, boardUrl, recordUrl: `${SITE.url}/record/${p.id}` }));

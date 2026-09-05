@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(35);
+select plan(37);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -68,6 +68,16 @@ select throws_ok(
   'select name from patron_names limit 1', '42501',
   null, 'anon cannot read the patron roster');
 
+-- A bid carries the card that pays it if it wins (migration 0028). The grant on bids names its
+-- columns one by one, so these were never added to it; this is the assertion that keeps it so.
+select throws_ok(
+  'select stripe_payment_method_id from bids limit 1', '42501',
+  null, 'anon cannot read the card saved against a bid');
+
+select throws_ok(
+  'select stripe_customer_id from patrons limit 1', '42501',
+  null, 'anon cannot read a patron''s Stripe customer');
+
 -- The boards render off this one. Migration 0022 revoked acts.owner_id from anon, and the owner
 -- policy on runs from 0005 asked its question inline, so it needed that column to evaluate at all;
 -- Postgres has to evaluate every permissive policy before it can OR them, so "public read runs"
@@ -89,9 +99,12 @@ select lives_ok(
   'select amount_cents, anonymous from bids',
   'anon can still read bid amounts for the board');
 
-select is(
-  (select count(*)::int from patrons), 0,
-  'anon reads no rows from the patrons table');
+-- Stronger than it was. This used to assert that anon read zero rows, which was true because of
+-- RLS while the table grant stayed wide open. Migration 0028 revoked the grant, so the read is now
+-- refused outright and a future policy cannot quietly hand out an email address or a customer id.
+select throws_ok(
+  'select count(*) from patrons', '42501',
+  null, 'anon cannot read the patrons table at all');
 
 select is(
   (select count(*)::int from purchases), 0,
