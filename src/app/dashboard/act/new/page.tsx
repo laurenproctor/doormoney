@@ -22,7 +22,7 @@ export default async function NewActPage() {
       eyebrow="Step one of three"
       title="Name the"
       accent="act"
-      intro={<p>The name, the board address and a photo. Everything here can change later. The run and the prices come next.</p>}
+      intro={<p>The name, the address and a photo. Everything here can change later. The fundraiser and the prices come next.</p>}
     >
       <Card className="max-w-[720px]">
         <ActForm act={null} siteUrl={SITE.url} username={username} />

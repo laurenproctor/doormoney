@@ -11,6 +11,7 @@ import { CATALOG } from "@/lib/catalog";
 import { SITE } from "@/lib/site";
 import { formatMoney } from "@/lib/money";
 import { formatDateRange } from "@/lib/dates";
+import { periodOf } from "@/lib/periods";
 import { actPath, runPath } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -48,7 +49,7 @@ export default async function DashboardPage() {
   const showRows = shows ?? [];
   const playedCount = showRows.filter((s) => s.played).length;
 
-  // Marks waiting on the act's yes, across every run. Read with the service role: the patron's
+  // Logos waiting on a yes, across every fundraiser. Read with the service role: the patron's
   // name comes from patron_names, which came off the Data API in 0022. The query is still scoped
   // to this act's own runs.
   const { data: marks } = await supabaseAdmin()
@@ -92,23 +93,23 @@ export default async function DashboardPage() {
         <p className="caps">
           {boardLive ? (
             <>
-              The board is up at <Link href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{SITE.url}{boardHref}</Link>.
+              The fundraiser is up at <Link href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{SITE.url}{boardHref}</Link>.
             </>
           ) : current ? (
-            "The board is private until the run is published."
+            "The page stays private until the fundraiser is published."
           ) : (
-            "No run yet. Describe one and the board follows."
+            "No fundraiser yet. Describe one and the page follows."
           )}
         </p>
       }
     >
       <div className="grid gap-[30px] md:grid-cols-2">
         <Card>
-          <CardHead eyebrow="The run">{current ? current.title : "Start a run"}</CardHead>
+          <CardHead eyebrow="The fundraiser">{current ? current.title : "Start a fundraiser"}</CardHead>
           {current ? (
             <>
               <p className="mb-4 text-[15px]">
-                {STATUS[current.status]}. {current.show_count} {current.kind === "season" ? "gigs" : "shows"}, {formatDateRange(current.starts_on, current.ends_on)}.
+                {STATUS[current.status]}. {current.show_count} {periodOf(current.kind).units}, {formatDateRange(current.starts_on, current.ends_on)}.
               </p>
               <dl className="mb-6 grid grid-cols-2 gap-3 border-y border-line py-3 sm:grid-cols-4">
                 <Fact n={String(sold.length)} label="sold" />
@@ -128,11 +129,11 @@ export default async function DashboardPage() {
               )}
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href={`/dashboard/runs/${current.id}`}>{current.status === "draft" ? "Price and publish" : "Edit the spots"}</ButtonLink>
-                {boardLive && <ButtonLink href={boardHref} variant="ghost">See the board</ButtonLink>}
+                {boardLive && <ButtonLink href={boardHref} variant="ghost">See the page</ButtonLink>}
               </div>
               {runs && runs.length > 1 && (
                 <p className="mt-5 max-w-none text-[14px] text-muted">
-                  Earlier runs:{" "}
+                  Earlier fundraisers:{" "}
                   {runs.slice(1).map((r, i) => (
                     <span key={r.id}>
                       {i > 0 && ", "}
@@ -145,7 +146,7 @@ export default async function DashboardPage() {
           ) : (
             <>
               <p className="mb-6 max-w-none text-[15px] text-muted">A tour, a season, or a residency month. Dates, a show count, then prices on the spots.</p>
-              <ButtonLink href="/dashboard/runs/new">Describe the run</ButtonLink>
+              <ButtonLink href="/dashboard/runs/new">Describe the fundraiser</ButtonLink>
             </>
           )}
         </Card>
@@ -154,10 +155,10 @@ export default async function DashboardPage() {
           <CardHead eyebrow="Payouts">{act.stripe_payouts_enabled ? "Payouts on" : "Getting paid"}</CardHead>
           <p className="mb-6 max-w-none text-[15px] text-muted">
             {act.stripe_payouts_enabled
-              ? "Door Money pays every Friday through the run. Nothing to chase."
+              ? "Door Money pays every Friday while the shows happen. Nothing to chase."
               : act.stripe_account_id
                 ? "Stripe still needs a few details before money can move."
-                : "Door Money holds every payment and pays the act weekly through Stripe. Setup takes a few minutes."}
+                : "Door Money holds every payment and pays you weekly through Stripe. Setup takes a few minutes."}
           </p>
           <ButtonLink href="/dashboard/payouts" variant={act.stripe_payouts_enabled ? "ghost" : "solid"}>
             {act.stripe_payouts_enabled ? "Payout details" : act.stripe_account_id ? "Finish Stripe setup" : "Set up payouts"}
@@ -165,9 +166,9 @@ export default async function DashboardPage() {
         </Card>
 
         <Card className="md:col-span-2">
-          <CardHead eyebrow="Marks waiting on a yes">{waiting.length ? `${waiting.length} to look at` : "Nothing waiting"}</CardHead>
+          <CardHead eyebrow="Logos waiting on a yes">{waiting.length ? `${waiting.length} to look at` : "Nothing waiting"}</CardHead>
           {waiting.length === 0 ? (
-            <p className="max-w-none text-[15px] text-muted">When a patron sends a mark for a spot they bought, it shows here. Nothing goes on the gear without the act&apos;s yes.</p>
+            <p className="max-w-none text-[15px] text-muted">When a patron sends a logo for a spot they bought, it shows here. Nothing goes on the gear without your yes.</p>
           ) : (
             <ul className="divide-y divide-line">
               {waiting.map((m) => (
@@ -175,7 +176,7 @@ export default async function DashboardPage() {
                   <div className="edge flex h-[100px] w-[120px] items-center justify-center bg-ground p-2">
                     {m.url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.url} alt={`${m.patron} mark`} className="max-h-full max-w-full object-contain" />
+                      <img src={m.url} alt={`${m.patron} logo`} className="max-h-full max-w-full object-contain" />
                     ) : (
                       <span className="caps text-center text-[15px] leading-tight">{m.text ?? m.patron}</span>
                     )}

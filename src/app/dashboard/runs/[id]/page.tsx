@@ -10,13 +10,14 @@ import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { CATALOG } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
+import { periodOf } from "@/lib/periods";
 import { runUrl } from "@/lib/urls";
 
-export const metadata: Metadata = { title: "The run" };
+export const metadata: Metadata = { title: "The fundraiser" };
 
 type Props = { params: Promise<{ id: string }> };
 
-const STATUS_LABEL: Record<string, string> = { draft: "Draft, not public", open: "Open, taking bids and orders", live: "Live, the run is on", closed: "Closed", cancelled: "Cancelled" };
+const STATUS_LABEL: Record<string, string> = { draft: "Draft, not public", open: "Open, taking bids and orders", live: "Live, the shows are on", closed: "Closed", cancelled: "Cancelled" };
 
 export default async function RunPage({ params }: Props) {
   const { id } = await params;
@@ -56,7 +57,7 @@ export default async function RunPage({ params }: Props) {
     >
       {!settled && (
         <Card className="mb-10 max-w-[860px]">
-          <CardHead eyebrow="Where this stands">{run.status === "draft" ? "Before the board goes up" : "The board is up"}</CardHead>
+          <CardHead eyebrow="Where this stands">{run.status === "draft" ? "Before it goes up" : "The fundraiser is up"}</CardHead>
           <ReadinessChecklist
             input={{
               act,
@@ -72,7 +73,7 @@ export default async function RunPage({ params }: Props) {
       <Card id="placements" className="mb-10">
         <CardHead eyebrow="Step three of four">Price the spots</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
-          The standard card for this kind of act. Card prices are a starting point; the act&apos;s own number always wins. Sold spots stay as they are.
+          The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold spots stay as they are.
         </p>
         <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={allLots as ExistingLot[]} boardHref={boardHref} />
       </Card>
@@ -80,22 +81,22 @@ export default async function RunPage({ params }: Props) {
       <Card id="verification" className="mb-10 max-w-[860px]">
         <CardHead eyebrow="Step four of four">How the placements will be recorded</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
-          Select what patrons will receive or be able to review after the placement runs. Only the methods chosen here go on the board, and the board never
+          Select what patrons will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
           claims more than that.
         </p>
         <VerificationEditor runId={run.id} methods={methods} other={run.verification_other ?? null} runStatus={run.status} />
       </Card>
 
       <Card className="mb-10">
-        <CardHead eyebrow="The shows">Every date on the run</CardHead>
+        <CardHead eyebrow="The shows">Every date on the {periodOf(run.kind).noun}</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
-          Enter the dates once. Through the run, one tap marks a show played. A photo and a headcount are optional and go on the record patrons get at the end.
+          Enter the dates once. As they happen, one tap marks a show played. A photo and a headcount are optional and go on the record patrons get at the end.
         </p>
         <ShowsPanel runId={run.id} shows={(shows ?? []) as ShowRow[]} defaultCity={act.city} />
       </Card>
 
       <Card id="run-details" className="max-w-[760px]">
-        <CardHead eyebrow="The run">Dates and details</CardHead>
+        <CardHead eyebrow="The fundraiser">Dates and details</CardHead>
         <RunForm run={run as RunInput} actType={act.type} />
       </Card>
     </DashboardShell>

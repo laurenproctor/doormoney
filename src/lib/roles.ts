@@ -63,7 +63,7 @@ export function homeFor({ roles, hasAct }: { roles: string[] | null | undefined;
 
 const MUSICIAN_LINKS = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/act", label: "The act" },
+  { href: "/dashboard/act", label: "Musician" },
   { href: "/dashboard/payouts", label: "Payouts" },
   // The widget, named for what it does. Dropped from the site nav (decision 14) and kept here,
   // because it is only worth anything to somebody who already has a fundraiser to embed. The
@@ -73,7 +73,7 @@ const MUSICIAN_LINKS = [
 
 const PATRON_LINKS = [
   { href: "/patron", label: "Backed" },
-  { href: "/dashboard/profile", label: "Profile" },
+  { href: "/dashboard/profile", label: "Patron profile" },
 ] as const;
 const ACCOUNT_LINK = { href: "/dashboard/account", label: "Account" } as const;
 

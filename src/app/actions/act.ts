@@ -24,8 +24,8 @@ const Input = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .min(3, "The board address needs at least 3 characters.")
-    .max(40, "Keep the board address under 40 characters.")
+    .min(3, "The address needs at least 3 characters.")
+    .max(40, "Keep the address under 40 characters.")
     .regex(SLUG_RE, "Letters, digits and hyphens only.")
     .refine((s) => !RESERVED_SLUGS.has(s), "That address is reserved. Pick another."),
   type: z.enum(["touring_band", "house_act", "soloist"], { error: "Pick an act type." }),
@@ -89,7 +89,7 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   const previousSlug = existing?.slug ?? null;
   const { data: claim, error: claimError } = await supabaseAdmin().rpc("claim_username", { p_user_id: user.id, p_username: slug });
   if (claimError) {
-    console.error("board address claim failed:", claimError.message);
+    console.error("address claim failed:", claimError.message);
     return { ok: false, errors: { slug: "That did not save. Try once more." } };
   }
   if (claim !== "ok") return { ok: false, errors: { slug: claimMessage(claim as string) } };
@@ -136,14 +136,14 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
 }
 
 function dbMessage(code?: string) {
-  if (code === "23505") return "That board address is taken. Pick another.";
+  if (code === "23505") return "That address is taken. Pick another.";
   return "That did not save. Try once more.";
 }
 
 /** What claim_username said, in words a musician can act on. */
 function claimMessage(code: string) {
-  if (code === "too_soon") return "A board address can move once every twelve months. The date it next can is on the profile page.";
-  if (code === "taken") return "That board address is taken. Pick another.";
+  if (code === "too_soon") return "An address can move once every twelve months. The date it next can is on the profile page.";
+  if (code === "taken") return "That address is taken. Pick another.";
   if (code === "invalid") return "Letters, digits and hyphens only, starting and ending with a letter or digit.";
   return "That did not save. Try once more.";
 }

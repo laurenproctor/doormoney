@@ -48,7 +48,7 @@ export async function saveVerification(_prev: VerificationState, form: FormData)
 
   // A draft may sit with nothing chosen; a board already on the internet may not go back to nothing.
   if (parsed.value.methods.length === 0 && run.status !== "draft") {
-    return { ok: false, errors: { methods: "This board is public, so it needs at least one method. Pick one before saving." }, submitted: sent };
+    return { ok: false, errors: { methods: "This fundraiser is public, so it needs at least one method. Pick one before saving." }, submitted: sent };
   }
 
   const { error } = await sb

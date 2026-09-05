@@ -16,10 +16,10 @@ export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInp
     <>
       <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
         {!draft
-          ? "The board is public. Everything below can still change while spots are open."
+          ? "The fundraiser is public. Everything below can still change while spots are open."
           : left === 0
-            ? "Everything is in place. Look the board over, then publish it at the end of the spots."
-            : `${left} ${left === 1 ? "thing is" : "things are"} still missing. The board stays private until they are done.`}
+            ? "Everything is in place. Look it over, then publish it at the end of the spots."
+            : `${left} ${left === 1 ? "thing is" : "things are"} still missing. The fundraiser stays private until they are done.`}
       </p>
 
       <ul className="mb-7 divide-y divide-line border-y border-line">
@@ -57,7 +57,7 @@ export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInp
           Preview the board
         </ButtonLink>
         <span className="max-w-[46ch] text-[14.5px] text-muted">
-          {draft ? "The preview is the real board, private to this account until it is published." : "The same page the public sees."}
+          {draft ? "The preview is the real page, private to this account until it is published." : "The same page the public sees."}
         </span>
       </div>
     </>

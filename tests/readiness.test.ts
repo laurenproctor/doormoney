@@ -66,7 +66,7 @@ test("no spots, no bio, no dates: every missing thing is named at once", () => {
   });
   assert.equal(blockers.length, 4);
   assert.match(blockers.join(" "), /short bio/);
-  assert.match(blockers.join(" "), /Finish the run/);
+  assert.match(blockers.join(" "), /Finish the fundraiser/);
   assert.match(blockers.join(" "), /at least one spot/);
   assert.match(blockers.join(" "), /at least one way/);
 });
@@ -94,7 +94,7 @@ test("payout setup never blocks publishing, and shows as optional on the checkli
   assert.ok(payouts);
   assert.equal(payouts.done, false);
   assert.equal(payouts.optional, true);
-  assert.match(payouts.note, /board can open first/);
+  assert.match(payouts.note, /fundraiser can open first/);
 });
 
 test("the checklist is the six rows, in order, and agrees with the publish gate", () => {
@@ -104,7 +104,7 @@ test("the checklist is the six rows, in order, and agrees with the publish gate"
   assert.deepEqual(rows.map((r) => r.key), ["profile", "run", "lots", "verification", "payouts", "publish"]);
   assert.deepEqual(
     rows.map((r) => r.label),
-    ["Musician profile", "Run details", "Placements", "Placement verification", "Payout setup", "Ready to publish"],
+    ["Musician profile", "Fundraiser details", "Sponsorships", "Placement verification", "Payout setup", "Ready to publish"],
   );
   const verification = rows.find((r) => r.key === "verification");
   const publish = rows.find((r) => r.key === "publish");
@@ -120,5 +120,5 @@ test("a published run reads as published even while something else is unfinished
   input.act.bio = null;
   const publish = readiness(input).find((r) => r.key === "publish");
   assert.equal(publish?.done, true);
-  assert.equal(publish?.note, "The board is public.");
+  assert.equal(publish?.note, "The fundraiser is public.");
 });

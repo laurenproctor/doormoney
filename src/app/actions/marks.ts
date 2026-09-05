@@ -24,7 +24,7 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
 
   const sb = await supabaseServer();
   const { data: p } = await sb.from("purchases").select("id,mark_status,lot_id,payment_status").eq("id", purchaseId).maybeSingle();
-  if (!p) return { ok: false, error: "That mark is not on this account's board." };
+  if (!p) return { ok: false, error: "That logo is not on this account's fundraiser." };
   if (p.mark_status !== "submitted") return { ok: false, error: "That mark has already been decided." };
   if (decision === "declined" && ["held", "released"].includes(p.payment_status) && !stripeConfigured()) {
     return { ok: false, error: "Declining refunds the patron, and refunds are not switched on yet. Contact Door Money." };
@@ -38,7 +38,7 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
   if (decision === "declined") {
     // The placement never runs, so the patron gets everything back and the spot goes back up.
     const r = await refundPurchase(admin, p.id, "mark_declined");
-    if (!r.ok) return { ok: false, error: "The mark is declined, but the refund did not go through. Door Money has the details." };
+    if (!r.ok) return { ok: false, error: "The logo is declined, but the refund did not go through. Door Money has the details." };
     refundedCents = r.refundedCents;
     await admin.from("lots").update({ status: "open" }).eq("id", p.lot_id).eq("status", "sold");
     revalidatePath(actPath(act.slug));
@@ -110,7 +110,7 @@ export async function submitMark(_prev: MarkState, form: FormData): Promise<Mark
   if (!target) return { ok: false, error: "That link is not right." };
   if (!markOpen(target)) {
     if (target.mark_status === "approved") return { ok: false, error: "That mark is already approved. Contact Door Money to change it." };
-    if (target.mark_status === "declined") return { ok: false, error: "That placement was declined and refunded." };
+    if (target.mark_status === "declined") return { ok: false, error: "That sponsorship was declined and refunded." };
     return { ok: false, error: "That run was cancelled." };
   }
   if (!upload && !mark_text && !target.mark_url) return { ok: false, error: "Add a logo file, a name, or both." };

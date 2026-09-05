@@ -18,7 +18,7 @@ export default async function NewRunPage() {
       eyebrow="Step two of three"
       title="Describe the"
       accent="run"
-      intro={<p>The dates, the number of shows, and a name for the board. Patrons back the run, not a single night.</p>}
+      intro={<p>The dates, the number of shows, and a name for it. Patrons back the whole stretch, not a single night.</p>}
     >
       <Card className="max-w-[760px]">
         <RunForm run={null} actType={act.type} />

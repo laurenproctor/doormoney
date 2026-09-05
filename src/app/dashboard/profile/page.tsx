@@ -110,7 +110,7 @@ export default async function ProfileSettingsPage() {
         <Card>
           <CardHead eyebrow="The address">The username</CardHead>
           <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-            The username is the address of the public page{act ? " and the address of the board" : ""}. It can move
+            The username is the address of the public page{act ? " and the address of the musician page" : ""}. It can move
             once every twelve months, and the word it leaves behind keeps pointing here rather than going back into
             circulation.
           </p>

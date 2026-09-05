@@ -166,7 +166,7 @@ export function LotsEditor({
                   })
                 }
               >
-                {publishing ? "Publishing" : "Publish the board"}
+                {publishing ? "Publishing" : "Publish the fundraiser"}
               </Button>
               {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
             </div>
@@ -177,7 +177,7 @@ export function LotsEditor({
             {cancelled && cancelled.patrons > 0 ? `, and ${formatMoney(cancelled.refundedCents)} went back to ${cancelled.patrons === 1 ? "one patron" : `${cancelled.patrons} patrons`}` : ""}.
           </p>
         ) : runStatus === "closed" ? (
-          <p className="max-w-[56ch] text-[15px]">This run is over. Patrons have their records, and the board is down.</p>
+          <p className="max-w-[56ch] text-[15px]">This fundraiser is over. Patrons have their records, and the page is down.</p>
         ) : (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
@@ -228,7 +228,7 @@ export function LotsEditor({
                       })
                     }
                   >
-                    {publishing ? "Cancelling" : "Yes, cancel the run"}
+                    {publishing ? "Cancelling" : "Yes, cancel the fundraiser"}
                   </Button>
                   <button type="button" onClick={() => setConfirmCancel(false)} className="caps cursor-pointer text-[14px] text-muted hover:text-ink">
                     Keep it
