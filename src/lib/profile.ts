@@ -157,9 +157,12 @@ export function yearOf(iso: string): string {
 
 export type SupportKind = "placement" | "backing";
 
-/** Door Money's words for the two ways a patron puts money behind a run. */
+/**
+ * Door Money's words for the two ways a patron puts money behind a fundraiser. The keys are the
+ * discriminant the database and the forms pass around; the values are what a reader sees.
+ */
 export const SUPPORT_LABEL: Record<SupportKind, string> = {
-  placement: "Placement",
+  placement: "Sponsorship",
   backing: "Backing",
 };
 
@@ -174,13 +177,13 @@ export function initialsFor(name: string): string {
   return letters.toUpperCase();
 }
 
-/** "3 runs backed", "2 musicians supported": the only totals a public profile carries. */
+/** "3 fundraisers backed", "2 musicians supported": the only totals a public profile carries. */
 export function impactTotals(activity: { actSlug: string; runTitle: string; actName: string }[]): string[] {
   if (activity.length === 0) return [];
   const runs = new Set(activity.map((a) => `${a.actSlug}::${a.runTitle}`)).size;
   const acts = new Set(activity.map((a) => a.actSlug)).size;
   return [
-    `${runs} ${runs === 1 ? "run" : "runs"} backed`,
+    `${runs} ${runs === 1 ? "fundraiser" : "fundraisers"} backed`,
     `${acts} ${acts === 1 ? "musician" : "musicians"} supported`,
   ];
 }

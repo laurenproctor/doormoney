@@ -21,7 +21,7 @@ import type { EligibleItem, OwnProfile } from "@/lib/patronprofile";
   The patron's own side of the public profile.
 
   Four forms, deliberately apart. The details say who the patron is, the publish control decides
-  whether anyone can see the page at all, and each placement or backing carries its own control, so
+  whether anyone can see the page at all, and each sponsorship or backing carries its own control, so
   turning one on never turns another on. The username sits on its own because it moves the address
   of both this page and, for a musician, their board.
 
@@ -176,7 +176,7 @@ export function PublishForm({ published, ready }: { published: boolean; ready: b
 }
 
 // ---------------------------------------------------------------
-// One placement, one backing, one control
+// One sponsorship, one backing, one control
 // ---------------------------------------------------------------
 
 export function ActivityList({ items }: { items: EligibleItem[] }) {
@@ -188,7 +188,7 @@ export function ActivityList({ items }: { items: EligibleItem[] }) {
   if (items.length === 0) {
     return (
       <p className="max-w-[62ch] text-[15px] text-muted">
-        Nothing to show here yet. Placements and backings appear on this list once the payment is held, and each
+        Nothing to show here yet. Sponsorships and backings appear on this list once the payment is held, and each
         one stays off the public page until it is put on.
       </p>
     );
@@ -298,7 +298,7 @@ export function UsernameForm({
           {allowed
             ? "The username can move once every twelve months. Changing it now starts a fresh twelve months."
             : `The username can move once every twelve months. The next change is allowed on ${nextChange}.`}
-          {hasAct && " It is the board address too, so the board moves with it. The old addresses redirect to the new ones."}
+          {hasAct && " It is the musician address too, so that page moves with it. The old addresses redirect to the new ones."}
         </p>
       )}
 

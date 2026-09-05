@@ -130,7 +130,7 @@ test("a word claimed on a leap day lands on the last day of February, not on 1 M
   assert.equal(next?.toISOString().slice(0, 10), "2029-02-28");
 });
 
-test("a username has to pass the same rules a board address does, and patron is reserved", () => {
+test("a username has to pass the same rules a musician address does, and patron is reserved", () => {
   assert.equal(usernameProblem("lauren"), null);
   assert.match(usernameProblem("ab") ?? "", /3 characters/);
   assert.match(usernameProblem("x".repeat(41)) ?? "", /under 40/);
@@ -163,8 +163,8 @@ test("the totals count runs and musicians, and nothing else", () => {
     { actSlug: "gutter-hymns", actName: "Gutter Hymns", runTitle: "Spring run" },
     { actSlug: "rosie", actName: "Rosie", runTitle: "October" },
   ];
-  assert.deepEqual(impactTotals(activity), ["3 runs backed", "2 musicians supported"]);
-  assert.deepEqual(impactTotals(activity.slice(0, 1)), ["1 run backed", "1 musician supported"]);
+  assert.deepEqual(impactTotals(activity), ["3 fundraisers backed", "2 musicians supported"]);
+  assert.deepEqual(impactTotals(activity.slice(0, 1)), ["1 fundraiser backed", "1 musician supported"]);
 });
 
 // ---------------------------------------------------------------

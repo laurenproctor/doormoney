@@ -16,7 +16,7 @@ import { eligibleActivity, linkPatronRows, ownProfile, signedPhotoUrl } from "@/
   reaches it without being sent through musician onboarding, and a musician who also backs the band
   down the street reaches the same page.
 
-  Nothing here is on by default. The profile is private until published, and every placement and
+  Nothing here is on by default. The profile is private until published, and every sponsorship and
   backing is off until it is put on, one at a time. No amount is read, shown or sent to the browser.
 */
 
@@ -51,7 +51,7 @@ export default async function ProfileSettingsPage() {
       intro={
         <p>
           A patron page is optional and starts private. Nothing on it is public until it is published, and no
-          placement or backing appears until it is put there one at a time. Amounts never appear at all.
+          sponsorship or backing appears until it is put there one at a time. Amounts never appear at all.
         </p>
       }
     >
@@ -101,7 +101,7 @@ export default async function ProfileSettingsPage() {
         <Card>
           <CardHead eyebrow="Public support">What appears on the page</CardHead>
           <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-            Each one is its own decision. Putting a placement on the page says nothing about the next one, and no
+            Each one is its own decision. Putting one on the page says nothing about the next, and no
             amount is ever shown, here or there.
           </p>
           <ActivityList items={activity} />
