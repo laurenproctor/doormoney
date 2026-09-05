@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(61);
+select plan(70);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -348,6 +348,60 @@ select throws_ok(
   $$insert into patron_profile_items (profile_id, purchase_id)
     values (auth.uid(), (select id from purchases where patron_id='c1000000-0000-0000-0000-000000000004'))$$,
   '42501', null, 'a patron cannot publish anything through the Data API');
+
+reset role;
+
+-- ===============================================================
+-- Views are read-only, and nothing bypasses a policy (0030)
+-- ===============================================================
+select tests.as_anon();
+
+-- The two that were auto-updatable. A write through either reached the base table with row level
+-- security switched off, because a definer view runs as its owner and the owner is not policed.
+select throws_ok(
+  $$update patron_names set name='OWNED'$$, '42501',
+  null, 'anon cannot rewrite every patron''s name through patron_names');
+
+select throws_ok(
+  $$delete from run_backers$$, '42501',
+  null, 'anon cannot delete every fan backing through run_backers');
+
+select throws_ok(
+  $$insert into run_backers (run_id, display_name, tier, amount_cents) values (null, 'x', 'thank_you', 1)$$,
+  '42501', null, 'anon cannot invent a backing through run_backers');
+
+-- The other four refuse one step earlier, with 55000 rather than 42501: they join or union, so
+-- Postgres will not update through them at all and never reaches the privilege check. That is a
+-- shape rather than a decision, which is why the grant is gone too. The count below is the part
+-- that holds if one of them is ever simplified into an updatable view.
+select throws_ok(
+  $$update lot_buyers set name='OWNED'$$, '55000',
+  null, 'anon cannot write through lot_buyers');
+
+select throws_ok(
+  $$update public_bids set patron_name='OWNED'$$, '55000',
+  null, 'anon cannot write through public_bids');
+
+select throws_ok(
+  $$update public_patron_profiles set bio='OWNED'$$, '55000',
+  null, 'anon cannot write through public_patron_profiles');
+
+-- TRUNCATE consults no policy at all, so a grant on it is not defended by one.
+select throws_ok(
+  $$truncate table bids$$, '42501',
+  null, 'anon cannot truncate a table past every policy on it');
+
+select is(
+  (select count(*)::int from information_schema.table_privileges
+    where table_schema='public' and grantee in ('anon','authenticated')
+      and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE')
+      and table_name in ('lot_buyers','run_backers','public_bids','patron_names','public_patron_profiles','public_patron_activity')),
+  0, 'no view carries a write privilege for a browser, whatever its shape');
+
+select is(
+  (select count(*)::int from information_schema.table_privileges
+    where table_schema='public' and grantee in ('anon','authenticated') and privilege_type='TRUNCATE'),
+  0, 'nothing in the schema can be truncated by a browser');
 
 reset role;
 
