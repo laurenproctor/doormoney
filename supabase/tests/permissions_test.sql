@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(60);
+select plan(61);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -319,6 +319,13 @@ select throws_ok('select * from username_history limit 1', '42501', null, 'a sig
 select throws_ok('select * from patron_profile_items limit 1', '42501', null, 'a signed-in account cannot read the published-activity table');
 
 -- The profile itself: readable, and only ever one row of it.
+-- The exact column list ownProfile() in src/lib/patronprofile.ts selects. If the grant and the
+-- query ever drift apart, the management page stops filling its form in, and this says so first.
+select lives_ok(
+  $$select display_name, bio, location, website, interests, photo_path, published, patron_since
+      from patron_profiles where profile_id = auth.uid()$$,
+  'a patron reads every column the management page asks for');
+
 select is(
   (select display_name from patron_profiles), 'Kettle St. Coffee',
   'a patron reads their own profile row');
