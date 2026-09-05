@@ -35,7 +35,7 @@ Only `/how-sponsorship-works` is written in this vocabulary so far. Every other 
 
 These are firm. They apply to page copy, button labels, emails, error messages, empty states and placeholder text.
 
-1. **No second person by default.** Write about musicians, patrons and fans in the third person. "Musicians set their own prices," not "you set your prices." Button labels are imperative or nominal: "List an act", "Back a musician", "Get on the list". The exceptions, settled in the 2026-09 copy brief: the hero's second line, the patron steps on the home page, and the pages that speak to musicians directly (List an act, the widget).
+1. **The second person only where "you" can mean one person.** The site serves musicians and the people funding them, usually on the same page, so editorial copy stays in the third person and names the side it means: "Musicians set their own prices," not "you set your prices." That covers home, how sponsorship works, the fundraiser index, an act's page, a fundraiser's page and the legal pages. Transactional surfaces go the other way: sign up, sign in, the password flows, the dashboard, the patron pages behind an account, form labels, helper text, validation messages, the record and any email about somebody's own money are written to the person doing the thing, in the second person. A marketing page with only one audience (List an act, the widget) may use either, and both use the second person today. Button labels are imperative or nominal everywhere: "List an act", "Back a musician", "Create free account". Settled in `docs/DECISIONS.md`, decision 15.
 2. **Active voice.** Name who does what. "Door Money holds the money," not "the money is held." "Patrons put the money up," not "the money is put up."
 3. **Benefits before mechanics.** Lead with what sponsorship does for the musician (gas, rooms, the difference between a tour that happens and one that doesn't) and what a sponsor gets (attention, a name in the room, support they can point at). Mechanics (holds, weekly payouts, approvals) come second and stay short.
 4. **Plain words.** No insider phrasing, no jargon, no cleverness that needs decoding. "When Door Money opens," not "when doors open." "Attendance," not "through the door."
@@ -88,4 +88,4 @@ Every page is a dark room with one color of light in it. The room is the same on
 - Add a light mode. The dark room and the colored light are the brand.
 - Add analytics scripts, chat widgets or third-party embeds to the marketing pages without asking.
 - Store card numbers, ever. Stripe Elements only.
-- Write "you" anywhere a person will read it.
+- Write "you" on a page that talks to musicians and the people funding them at once. The second person belongs on the pages somebody uses, not the pages that describe the market. See voice rule 1.
