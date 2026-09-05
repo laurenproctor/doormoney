@@ -1,4 +1,7 @@
--- What the Data API allows and refuses, for each kind of caller. Run with `supabase test db`.
+-- What the Data API allows and refuses, for each kind of caller.
+--
+-- Run with `npm run test:db:docker` (one throwaway Postgres, no Supabase stack, and what CI runs)
+-- or with `supabase test db` against a local stack.
 --
 -- These are the Phase 1 gate. Every "refuses" test here failed before migration 0022: each one is a
 -- hole that was reproduced against a local stack, not a hypothetical.
@@ -11,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(34);
+select plan(35);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -64,6 +67,15 @@ select throws_ok(
 select throws_ok(
   'select name from patron_names limit 1', '42501',
   null, 'anon cannot read the patron roster');
+
+-- The boards render off this one. Migration 0022 revoked acts.owner_id from anon, and the owner
+-- policy on runs from 0005 asked its question inline, so it needed that column to evaluate at all;
+-- Postgres has to evaluate every permissive policy before it can OR them, so "public read runs"
+-- never got a look in and every board went to 404. Migration 0023 moved the policy behind
+-- owns_act(), a security definer. This is the assertion that was missing when that shipped.
+select lives_ok(
+  'select id, slug, title from runs',
+  'anon can still read a run, which is what makes a board render');
 
 select lives_ok(
   'select slug, name, city from acts',
