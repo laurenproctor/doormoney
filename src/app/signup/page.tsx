@@ -13,24 +13,26 @@ export default async function SignUpPage({ searchParams }: Props) {
 
   return (
     <AuthShell
-      eyebrow="Musicians and patrons"
-      title="Sign"
-      accent="up"
+      eyebrow="Musicians and sponsors"
+      title="Create your"
+      accent="account"
+      // A beam crossing behind the form would otherwise change what its labels sit on.
+      panelClass="bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))]"
       intro={
         <p>
-          One account for both sides of the room. Play, back the musicians playing, or do both from
-          the same place.
+          Raise money for your music, support musicians you care about, or do both from one free
+          account.
         </p>
       }
       aside={
         <AuthPoints
-          heading="What an account is for"
+          heading="One account. More ways to move music forward."
           points={[
-            "Musicians open a board, set their own prices, and keep the final say on every mark.",
-            "Door Money holds the money and pays the act every Friday through the run.",
-            "Patrons keep a record of every placement and backing: the shows, the rooms, the money.",
-            "Bids, wins and near misses all sit in one place, so nothing has to be chased by email.",
-            "Signing up costs nothing and commits to nothing.",
+            "Raise money for upcoming shows, tours, releases and creative work already in motion.",
+            "Turn sponsorship opportunities into meaningful income, without chasing agreements, payments or updates across email.",
+            "Support musicians directly and see what your money is helping make possible.",
+            "Keep every fundraiser, sponsorship, payment and backing organized in one place.",
+            "Join free. Start raising or giving support whenever you are ready.",
           ]}
         />
       }

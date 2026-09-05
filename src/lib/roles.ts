@@ -13,15 +13,15 @@ export const ROLES = [
   {
     key: "musician",
     /** On the sign-up card. What the person is, not what the system calls them. */
-    label: "I play",
-    blurb: "Open a board, price the spots, get paid weekly through the run.",
+    label: "I’m a musician",
+    blurb: "Create fundraisers, offer sponsorship opportunities and receive payouts.",
     /** Where an account with this role and nothing else belongs after signing in. */
     home: "/dashboard",
   },
   {
     key: "patron",
-    label: "I back musicians",
-    blurb: "Take a placement or back a run, and keep a record of every one.",
+    label: "I want to support musicians",
+    blurb: "Back fundraisers, sponsor opportunities and keep a record of your support.",
     home: "/patron",
   },
 ] as const;

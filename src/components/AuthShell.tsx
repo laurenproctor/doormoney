@@ -18,6 +18,7 @@ export function AuthShell({
   intro,
   aside,
   children,
+  panelClass = "bg-panel",
 }: {
   eyebrow: string;
   title: string;
@@ -27,6 +28,11 @@ export function AuthShell({
   aside: ReactNode;
   /** The right column: the form itself. */
   children: ReactNode;
+  /**
+   * The panel behind the form. Defaults to the translucent block every page uses. Sign-up passes
+   * an opaque one, because a beam crossing behind a form changes what its labels are sitting on.
+   */
+  panelClass?: string;
 }) {
   return (
     <Theme name="blue">
@@ -57,7 +63,7 @@ export function AuthShell({
               <div className="mt-7 max-w-[46ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{intro}</div>
             </div>
 
-            <div id="form" className="glow bg-panel p-7 max-md:p-6 md:col-start-2 md:row-span-2 md:row-start-1">
+            <div id="form" className={`glow p-7 max-md:p-6 md:col-start-2 md:row-span-2 md:row-start-1 ${panelClass}`}>
               {children}
             </div>
 
