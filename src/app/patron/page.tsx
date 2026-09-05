@@ -66,13 +66,13 @@ export default async function PatronPage() {
     >
       {nothing ? (
         <Card className="max-w-[720px]">
-          <CardHead eyebrow="Nothing here yet">Pick a board</CardHead>
+          <CardHead eyebrow="Nothing here yet">Pick a fundraiser</CardHead>
           <p className="mb-6 max-w-none text-[15px] text-muted">
             Every placement and backing shows up here: what was paid, what the musician did with it, and the record at
             the end of the run. Bids sit here too, from the moment one is placed.
           </p>
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/auctions">See the live boards</ButtonLink>
+            <ButtonLink href="/auctions">See the fundraisers</ButtonLink>
             <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works</ButtonLink>
           </div>
         </Card>
@@ -80,7 +80,7 @@ export default async function PatronPage() {
         <div className="grid gap-[30px]">
           {backed.placements.length > 0 && (
             <Card>
-              <CardHead eyebrow="Placements">
+              <CardHead eyebrow="Sponsorships">
                 {backed.placements.length} {backed.placements.length === 1 ? "spot taken" : "spots taken"}
               </CardHead>
               <ul className="divide-y divide-line border-y border-line">
@@ -113,7 +113,7 @@ export default async function PatronPage() {
           {backed.runs.length > 0 && (
             <Card>
               <CardHead eyebrow="Backings">
-                {backed.runs.length} {backed.runs.length === 1 ? "run backed" : "runs backed"}
+                {backed.runs.length} {backed.runs.length === 1 ? "fundraiser backed" : "fundraisers backed"}
               </CardHead>
               <ul className="divide-y divide-line border-y border-line">
                 {backed.runs.map((r) => (

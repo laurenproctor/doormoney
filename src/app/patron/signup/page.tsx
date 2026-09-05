@@ -36,10 +36,10 @@ export default async function PatronSignUpPage({ searchParams }: Props) {
         <AuthPoints
           heading="What a patron account is for"
           points={[
-            "Every placement and backing in one place, with the record of the run behind it.",
+            "Every sponsorship and backing in one place, with the record behind it.",
             "Bids in progress, and how each one ended.",
             "An optional public page, private until it is published, with no amounts on it ever.",
-            "Door Money holds the money and pays the musician weekly through the run.",
+            "Door Money holds the money and pays the musician weekly while the shows happen.",
             "Opening an account costs nothing and commits to nothing.",
           ]}
         />

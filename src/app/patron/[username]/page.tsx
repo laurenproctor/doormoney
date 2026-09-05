@@ -25,7 +25,7 @@ import { actPath } from "@/lib/urls";
   A patron's public page.
 
   Everything here was chosen twice: once when the patron published the profile, and once for each
-  placement or backing they put on it. A profile nobody published, and a username nobody holds,
+  sponsorship or backing they put on it. A profile nobody published, and a username nobody holds,
   read the same from outside: not found. There is no page that says "private", because a page that
   says "private" says somebody is there.
 
@@ -134,7 +134,7 @@ export default async function PatronProfilePage({ params }: Props) {
           {activity.length === 0 ? (
             <p className="max-w-[56ch] text-[15px] text-muted">
               {profile.displayName} has not put anything on this page yet. What a patron shows here is their own
-              choice, one placement or backing at a time.
+              choice, one sponsorship or backing at a time.
             </p>
           ) : (
             <>
@@ -153,14 +153,14 @@ export default async function PatronProfilePage({ params }: Props) {
         </Section>
 
         <Section>
-          <SectionHead eyebrow="The live boards">Back a run</SectionHead>
+          <SectionHead eyebrow="Open fundraisers">Back a musician</SectionHead>
           <p className="mb-8 max-w-[56ch] text-[15px] text-muted">
-            Every open board names its run, its rooms and its prices. Door Money holds the money and pays the
-            musician weekly through the run.
+            Every open fundraiser names its dates, its rooms and its prices. Door Money holds the money and pays
+            the musician weekly while the shows happen.
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/auctions" arrow>
-              See the live boards
+              See the fundraisers
             </ButtonLink>
             <ButtonLink href="/how-sponsorship-works" variant="ghost">
               How sponsorship works

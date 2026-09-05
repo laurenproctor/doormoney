@@ -105,7 +105,7 @@ export async function getPublicActivity(username: string): Promise<PublicActivit
     actSlug: r.act_slug,
     runTitle: r.run_title,
     runStatus: r.run_status,
-    detail: r.kind === "backing" ? `A name on ${tierPlace(r.detail ?? "")}` : (r.detail ?? "Placement"),
+    detail: r.kind === "backing" ? `A name on ${tierPlace(r.detail ?? "")}` : (r.detail ?? "Sponsorship"),
     supportedAt: r.supported_at,
   }));
 }
@@ -271,7 +271,7 @@ const surfaceName = (label: string | null, key: string) => label ?? CATALOG.find
 /**
  * Everything this account could show, and whether each one is showing.
  *
- * Held or paid out only: a checkout nobody finished and a refunded placement are not support and
+ * Held or paid out only: a checkout nobody finished and a refunded sponsorship are not support and
  * do not belong on a page about support. No amount is read, so none can be leaked to the browser.
  */
 export async function eligibleActivity(userId: string, verifiedEmail: string | null): Promise<EligibleItem[]> {
