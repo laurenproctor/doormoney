@@ -6,12 +6,12 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Door Money about listing as a musician, backing a run, partnerships, press, or another question.",
+  description: "Contact Door Money about listing as a musician, backing a fundraiser, partnerships, press, or another question.",
 };
 
 const WHAT_HELPS = [
   "The musician, business, venue, or publication name",
-  "The run or placement involved, when applicable",
+  "The fundraiser or sponsorship involved, when applicable",
   "A clear question or proposed next step",
   "A deadline, when one is real",
 ];

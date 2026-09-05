@@ -27,10 +27,10 @@ export interface VerificationMethod {
 export const VERIFICATION_METHODS: readonly VerificationMethod[] = [
   { key: "selected_show_photos", label: "Dated photos from selected shows", note: "Photos from some of the shows, each carrying its date." },
   { key: "venue_date_record", label: "Venue and performance-date list", note: "The rooms played and the night each one was played." },
-  { key: "attendance_estimates", label: "Attendance estimates", note: "A rough headcount for the shows on the run." },
-  { key: "social_post_links", label: "Links to placement-related posts", note: "Links to the posts the mark appeared in." },
+  { key: "attendance_estimates", label: "Attendance estimates", note: "A rough headcount for the shows." },
+  { key: "social_post_links", label: "Links to placement-related posts", note: "Links to the posts the logo appeared in." },
   { key: "short_video", label: "Short performance or backstage video", note: "One clip from a show, or from the hour before it." },
-  { key: "end_of_run_record", label: "End-of-run placement record", note: "The record Door Money sends every patron when the run ends." },
+  { key: "end_of_run_record", label: "End-of-run placement record", note: "The record Door Money sends every patron when the fundraiser ends." },
   { key: OTHER_KEY, label: "Another verification method", note: "Something else, in the musician's own words." },
 ] as const;
 

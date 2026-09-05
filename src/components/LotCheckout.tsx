@@ -40,7 +40,7 @@ export function LotCheckout({
   const [pending, setPending] = useState(false);
 
   if (!stripePromise) {
-    return <p className="mt-4 max-w-none text-[14.5px] text-muted">Payments are unavailable right now. The spot stays on the board; try again shortly.</p>;
+    return <p className="mt-4 max-w-none text-[14.5px] text-muted">Payments are unavailable right now. The spot stays open; try again shortly.</p>;
   }
 
   const start = async (e: React.FormEvent) => {

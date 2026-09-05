@@ -21,11 +21,11 @@ export function NewsletterForm({ source, compact = false }: { source: string; co
 
   if (state.ok) {
     return compact ? (
-      <p role="status" className="caps text-[14px] text-accent-ink">Done. The next new board arrives by email the week it opens.</p>
+      <p role="status" className="caps text-[14px] text-accent-ink">Done. The next new fundraiser arrives by email the week it opens.</p>
     ) : (
       <div role="status" className="flex items-center gap-6">
         <Stamp>FIRST<br />TO<br />HEAR</Stamp>
-        <p className="max-w-[32ch]">Done. The next new board arrives by email the week it opens.</p>
+        <p className="max-w-[32ch]">Done. The next new fundraiser arrives by email the week it opens.</p>
       </div>
     );
   }

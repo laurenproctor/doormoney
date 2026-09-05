@@ -68,7 +68,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
         <input name="website" type="url" defaultValue={act?.website ?? ""} placeholder="https://" className={inputClass} />
       </Field>
 
-      <Field label="Bio" error={err.bio} hint="Two or three sentences. Shows on the board.">
+      <Field label="Bio" error={err.bio} hint="Two or three sentences. Shows on your page.">
         <textarea name="bio" rows={4} defaultValue={act?.bio ?? ""} className={inputClass} />
       </Field>
 
@@ -81,7 +81,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the act" : "Create the act"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the details" : "Create the page"}</Button>
         {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
         {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>

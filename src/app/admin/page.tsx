@@ -49,12 +49,12 @@ export default async function AdminPage() {
       <div className="grid gap-[30px]">
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-6">
           <Stat n={String(actRows.length)} label="acts" />
-          <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="boards up" />
+          <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="fundraisers up" />
           <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
           <Stat n={formatMoney(held)} label="held" />
           <Stat n={String(flags.length)} label={flags.length === 1 ? "flag open" : "flags open"} />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
-          <Stat n={String(subscribers.length)} label="get new boards" />
+          <Stat n={String(subscribers.length)} label="get new fundraisers" />
         </dl>
 
         {flags.length > 0 && (
@@ -196,7 +196,7 @@ export default async function AdminPage() {
             head={["When", "What", "Sent", "Failed"]}
             rows={(mailRuns.data ?? []).map((m) => [
               when.format(new Date(m.sent_at)),
-              m.kind === "new_boards" ? "New boards" : "Digest",
+              m.kind === "new_boards" ? "New fundraisers" : "Digest",
               String(m.recipients),
               m.failures ? String(m.failures) : "",
             ])}
@@ -204,7 +204,7 @@ export default async function AdminPage() {
         </Card>
 
         <Card>
-          <CardHead eyebrow="New boards by email">{subscribers.length} addresses</CardHead>
+          <CardHead eyebrow="New fundraisers by email">{subscribers.length} addresses</CardHead>
           <Table
             head={["When", "Email", "From", "Status"]}
             rows={(newsletter.data ?? []).map((n) => [when.format(new Date(n.created_at)), n.email, n.source ?? "", n.unsubscribed_at ? "unsubscribed" : "on"])}

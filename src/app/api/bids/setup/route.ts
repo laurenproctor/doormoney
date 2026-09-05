@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     .eq("id", parsed.data.lotId)
     .maybeSingle();
   const lot = data as unknown as { id: string; mode: string; status: string; closes_at: string | null; runs: { status: string; bidding_closes_at: string | null } } | null;
-  if (!lot) return fail("That spot is not on any board.", 404);
+  if (!lot) return fail("That spot is not on any fundraiser.", 404);
   if (lot.mode !== "auction") return fail("That spot is a fixed price, not an auction.");
   if (!["open", "live"].includes(lot.runs.status) || lot.status !== "open") return fail("Bidding on that spot is over.", 409);
   const closesAt = closeTimeOf(lot, lot.runs);

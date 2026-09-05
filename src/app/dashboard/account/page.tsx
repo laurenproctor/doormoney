@@ -60,7 +60,7 @@ export default async function AccountPage() {
             {act || roles.includes("musician") ? (
               <>
                 A musician&apos;s username and board address are one word, claimed together on{" "}
-                <Link href="/dashboard/act" className="text-accent-ink underline underline-offset-4">the act page</Link>.
+                <Link href="/dashboard/act" className="text-accent-ink underline underline-offset-4">the musician page</Link>.
                 It can move once every twelve months, and both addresses move with it. The date it next can, and the
                 same change for a patron page, are on{" "}
                 <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">the profile page</Link>.

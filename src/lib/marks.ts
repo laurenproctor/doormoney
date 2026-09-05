@@ -4,8 +4,9 @@ import { SITE } from "@/lib/site";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 /*
-  The mark: the patron's name or logo, as it will appear. The act's side (approve or decline) lives
-  on the dashboard. The patron's side is the page at /mark/<purchase id>, which needs no account:
+  The logo: the patron's name or image, as it will appear. The musician's side (approve or decline)
+  lives on the dashboard. The patron's side is the page at /mark/<purchase id>, which needs no
+  account:
   the id is an unguessable UUID, the same trust model as the record page. Nothing reachable through
   that link can move money or change a price.
 */

@@ -57,9 +57,9 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
     .maybeSingle();
   if (error) return { ok: false, error: "That did not load. Try once more." };
   const lot = data as unknown as LotRow | null;
-  if (!lot) return { ok: false, error: "That spot is not on any board." };
+  if (!lot) return { ok: false, error: "That spot is not on any fundraiser." };
   if (lot.mode !== "auction") return { ok: false, error: "That spot is a fixed price, not an auction." };
-  if (!["open", "live"].includes(lot.runs.status)) return { ok: false, error: "That board is closed." };
+  if (!["open", "live"].includes(lot.runs.status)) return { ok: false, error: "That fundraiser is closed." };
   if (lot.status !== "open") return { ok: false, error: "Bidding on that spot is over." };
 
   const closesAt = closeTimeOf(lot, lot.runs);

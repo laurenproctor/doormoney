@@ -45,7 +45,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
       accent={done ? "emails." : "has expired."}
       intro={
         done ? (
-          <p>This address no longer gets the new-boards email from Door Money. Any address can join again from the foot of any page.</p>
+          <p>This address no longer gets the new-fundraisers email from Door Money. Any address can join again from the foot of any page.</p>
         ) : (
           <p>The link was cut short by the mail client, or it belongs to an address that is no longer on file. Any address that still gets the emails can use the link in the latest one.</p>
         )
@@ -54,7 +54,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
     >
       <Section>
         <div className="flex flex-wrap gap-4">
-          <ButtonLink href="/auctions" arrow>See the live boards</ButtonLink>
+          <ButtonLink href="/auctions" arrow>See the fundraisers</ButtonLink>
           <ButtonLink href="/" variant="ghost">Back to Door Money</ButtonLink>
         </div>
       </Section>

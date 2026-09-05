@@ -19,7 +19,7 @@ const optionalUrl = z
   .refine((v) => v === null || /^https?:\/\/\S+\.\S+$/.test(v), "Enter a full web address, starting with http.");
 
 const Input = z.object({
-  name: z.string().trim().min(2, "Enter the act's name.").max(80, "Keep the name under 80 characters."),
+  name: z.string().trim().min(2, "Enter the name.").max(80, "Keep the name under 80 characters."),
   slug: z
     .string()
     .trim()

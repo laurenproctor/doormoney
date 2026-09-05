@@ -108,11 +108,11 @@ The rule is convert a page when you touch it, never a repo-wide replace. This li
 - [x] The patron pages: `/patron`, `/patron/[username]`, `/dashboard/profile`, `/patron/signup` and `ProfileForms`. The public profile calls a bought spot a Sponsorship rather than a Placement, and the impact line counts fundraisers backed
 - [x] Emails in `src/lib/email.ts`, the record at `/record/[id]` and the flag page under it. Mail already sent keeps the words it was sent with; only new mail changes. Emails carry a fundraiser's title but not its kind, so they say "the fundraiser" where a page would name the tour or the season
 - [x] The widget itself (`/embed/[slug]`, `EmbedClient`, `WidgetFrame`). Missed when this list was written: it is neither the `/widget` marketing page nor a page of the site, but it is the surface a fan reads before paying. It takes `runs.kind` now, so it names the tour or the season above the card field
-- [ ] The legal pages, which name placements and boards throughout
+- [ ] The legal pages, which name placements and boards throughout. **Deferred on purpose**, not forgotten: they use the retired words in sentences that say what somebody is buying and what happens if it does not run, so the swap is not only cosmetic. A lawyer reviews them in Phase 7 and will rewrite those sentences anyway. `tests/vocabulary.test.ts` lists them in `DEFERRED`; deleting a line there is how this gets reversed
 - [x] `/list` and `/widget`, the two pages that speak only to musicians. Both kept their second person, which voice rule 1 allows a single-audience page
-- [ ] Retire the last of "board" from copy, and check `Logo.tsx` was left alone: "mark" there means the wordmark
+- [x] Retire the last of "board" from copy. Done as a test rather than a task: `tests/vocabulary.test.ts` sweeps `src/app`, `src/components` and the copy-bearing files in `src/lib` for the retired words and fails with file, line and the offending sentence. It found thirty on its first run, including "approves the mark" on the page this phase treats as its reference. `Logo.tsx` was left alone: "mark" there means the wordmark
 
-**Done when:** a reader who lands on any two pages is told the same thing in the same words, and `grep -i board src/app --include=*.tsx` finds only routes, table names and the wordmark.
+**Done when:** a reader who lands on any two pages is told the same thing in the same words. `tests/vocabulary.test.ts` is the check, and it is green with the four legal pages deferred.
 
 **Not in scope:** renaming anything with an address. `/board/<slug>` stays a permanent redirect, `runs` stays the table, and no migration is needed for any of this.
 
