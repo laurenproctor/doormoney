@@ -79,14 +79,14 @@ export async function sendNewBoards(sb: Admin, now = new Date()): Promise<NewBoa
   const { runs, boards } = await unannouncedBoards(sb);
   if (!boards.length) return null;
 
-  const { data: subs } = await sb.from("newsletter").select("email,unsubscribe_token").is("unsubscribed_at", null);
-  const list = (subs ?? []) as { email: string; unsubscribe_token: string }[];
+  const { data: subs } = await sb.from("newsletter").select("email,first_name,unsubscribe_token").is("unsubscribed_at", null);
+  const list = (subs ?? []) as { email: string; first_name: string | null; unsubscribe_token: string }[];
   if (!list.length) return null;
 
   let sent = 0;
   let failed = 0;
   for (const s of list) {
-    const r = await sendEmail(newBoardsEmail({ to: s.email, boards, unsubscribeUrl: `${SITE.url}/newsletter/unsubscribe?t=${s.unsubscribe_token}` }));
+    const r = await sendEmail(newBoardsEmail({ to: s.email, firstName: s.first_name, boards, unsubscribeUrl: `${SITE.url}/newsletter/unsubscribe?t=${s.unsubscribe_token}` }));
     if (r.sent) sent += 1;
     else {
       failed += 1;

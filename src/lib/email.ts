@@ -354,16 +354,20 @@ export function flagConfirmation(params: { to: string; patronName: string; what:
 export type NewBoard = { actName: string; city: string; runTitle: string; showCount: number; dates: string; openSpots: number; fromCents: number | null; boardUrl: string };
 
 /** The new-boards email: the week's boards, to everyone on the list. */
-export function newBoardsEmail(params: { to: string; boards: NewBoard[]; unsubscribeUrl: string }): Mail {
+export function newBoardsEmail(params: { to: string; firstName?: string | null; boards: NewBoard[]; unsubscribeUrl: string }): Mail {
   const n = params.boards.length;
+  // Addresses collected before the form asked for a name have none, so the greeting is dropped
+  // rather than faked. Never "Hi there": an empty greeting reads better than a placeholder one.
+  const greeting = params.firstName?.trim() ? `${params.firstName.trim()},` : null;
   const heading = n === 1 ? `${params.boards[0].actName} opened a board on ${SITE.name}.` : `${n} musicians opened boards on ${SITE.name} this week.`;
   const line = (b: NewBoard) => {
     const open = b.openSpots === 1 ? "one placement open" : `${b.openSpots} placements open`;
     const from = b.fromCents ? `, from ${money(b.fromCents)}` : "";
     return `${b.actName}, ${b.city}. ${b.runTitle}, ${b.showCount} ${b.showCount === 1 ? "show" : "shows"}, ${b.dates}. ${open}${from}. ${b.boardUrl}`;
   };
-  const lines = [heading, ...params.boards.map(line), `Backing a run puts money behind musicians who are already playing. Door Money holds it and pays them weekly through the run.`, `To stop these emails: ${params.unsubscribeUrl}`];
+  const lines = [...(greeting ? [greeting] : []), heading, ...params.boards.map(line), `Backing a run puts money behind musicians who are already playing. Door Money holds it and pays them weekly through the run.`, `To stop these emails: ${params.unsubscribeUrl}`];
   const html = shell([
+    ...(greeting ? [escape(greeting)] : []),
     `<b>${escape(heading)}</b>`,
     ...params.boards.map((b) => {
       const open = b.openSpots === 1 ? "one placement open" : `${b.openSpots} placements open`;
@@ -423,17 +427,21 @@ export function weeklyDigest(params: { to: string; n: DigestNumbers; adminUrl: s
 }
 
 /** To a new address on the new-boards email. Says what arrives, how often, and how to stop it. */
-export function newsletterWelcome(params: { to: string; unsubscribeUrl: string }): Mail {
+export function newsletterWelcome(params: { to: string; firstName?: string | null; unsubscribeUrl: string }): Mail {
+  const greeting = params.firstName?.trim() ? `${params.firstName.trim()},` : null;
   const lines = [
+    ...(greeting ? [greeting] : []),
     `This address is on the ${SITE.name} new-boards email.`,
     `New musicians open boards on ${SITE.name} every week: a band about to tour, a house act starting a residency, a soloist booking a season. One short email says who they are, where they play and what is still open to back. Never more than once a week.`,
     `Nothing to do now. The next one arrives the week a board opens.`,
     `To stop the emails: ${params.unsubscribeUrl}`,
   ];
+  const body = greeting ? lines.slice(1) : lines;
   const html = shell([
+    ...(greeting ? [escape(greeting)] : []),
     `This address is on the <b>${escape(SITE.name)} new-boards email</b>.`,
-    escape(lines[1]),
-    escape(lines[2]),
+    escape(body[1]),
+    escape(body[2]),
     `To stop the emails: <a href="${escape(params.unsubscribeUrl)}" style="color:${BLUE}">unsubscribe</a>.`,
   ]);
   return { to: params.to, subject: `New boards on ${SITE.name}, by email`, text: lines.join("\n\n"), html };

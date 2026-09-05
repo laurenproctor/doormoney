@@ -17,7 +17,7 @@ import { RolesInput } from "@/lib/roles";
 
 export type LoginState = { ok: boolean; email?: string; error?: string };
 export type PasswordState = { error?: string };
-export type SignUpField = "roles" | "display_name" | "email" | "password" | "form";
+export type SignUpField = "roles" | "first_name" | "last_name" | "email" | "password" | "form";
 export type SignUpState = { ok: boolean; email?: string; confirm?: boolean; errors?: Partial<Record<SignUpField, string>> };
 export type ResetState = { ok: boolean; error?: string };
 
@@ -114,7 +114,10 @@ const SignUpInput = z.object({
   // No board address here. A musician picks that on the act page, where it means something,
   // and a patron never needs one at all. See docs/DECISIONS.md, decisions 8 and 10.
   roles: RolesInput,
-  display_name: z.string().trim().min(2, "Enter a name.").max(80, "Keep the name under 80 characters."),
+  // Whoever holds an account is a person. A band's name is on the act, a business's name is on
+  // the patron row, and both of those are what a board or a receipt shows.
+  first_name: z.string().trim().min(1, "Enter a first name.").max(60, "Keep the first name under 60 characters."),
+  last_name: z.string().trim().min(1, "Enter a last name.").max(60, "Keep the last name under 60 characters."),
   email: z.string().trim().email("Enter a valid email address."),
   password: Password,
   next: z.string().optional(),
@@ -129,7 +132,8 @@ const SignUpInput = z.object({
 export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUpState> {
   const parsed = SignUpInput.safeParse({
     roles: form.getAll("roles").filter((v) => typeof v === "string"),
-    display_name: str(form, "display_name"),
+    first_name: str(form, "first_name"),
+    last_name: str(form, "last_name"),
     email: str(form, "email"),
     password: str(form, "password"),
     next: str(form, "next"),
@@ -148,9 +152,9 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
     email,
     password: parsed.data.password,
     options: {
-      // The profile trigger reads these: roles, the name, and any patron rows already paid
+      // The profile trigger reads these: roles, both names, and any patron rows already paid
       // for under this address.
-      data: { display_name: parsed.data.display_name, roles: parsed.data.roles },
+      data: { first_name: parsed.data.first_name, last_name: parsed.data.last_name, roles: parsed.data.roles },
       emailRedirectTo: `${SITE.url}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
