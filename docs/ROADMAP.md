@@ -30,7 +30,7 @@ Time estimates assume one person working with Claude Code, most days. Treat them
 
 - [x] Shared layout: nav, footer, wordmark, tape label, stamp, button
 - [x] Home page ported as the reference implementation
-- [x] Placements page ported (`docs/mockups/placements.html` is the spec)
+- [x] How sponsorship works page ported at `/how-sponsorship-works` (`docs/mockups/placements.html` was the spec; the page was reworked and the `/placements` route removed)
 - [x] Live auctions index ported
 - [x] List an act page ported
 - [x] Widget marketing page ported

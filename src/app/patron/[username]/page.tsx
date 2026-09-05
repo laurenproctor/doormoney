@@ -162,8 +162,8 @@ export default async function PatronProfilePage({ params }: Props) {
             <ButtonLink href="/auctions" arrow>
               See the live boards
             </ButtonLink>
-            <ButtonLink href="/placements" variant="ghost">
-              What a placement is
+            <ButtonLink href="/how-sponsorship-works" variant="ghost">
+              How sponsorship works
             </ButtonLink>
           </div>
         </Section>

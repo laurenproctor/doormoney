@@ -72,7 +72,7 @@ export default async function PatronPage() {
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/auctions">See the live boards</ButtonLink>
-            <ButtonLink href="/placements" variant="ghost">What a placement is</ButtonLink>
+            <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works</ButtonLink>
           </div>
         </Card>
       ) : (

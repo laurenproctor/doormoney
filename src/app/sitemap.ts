@@ -5,7 +5,7 @@ import { listPublishedUsernames } from "@/lib/patronprofile";
 import { actUrl, runUrl } from "@/lib/urls";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = ["", "/placements", "/auctions", "/widget", "/list", "/contact", "/terms", "/refunds", "/privacy", "/cookies", "/accessibility"];
+  const pages = ["", "/how-sponsorship-works", "/auctions", "/widget", "/list", "/contact", "/terms", "/refunds", "/privacy", "/cookies", "/accessibility"];
   const [boards, patrons] = await Promise.all([listOpenBoards(), listPublishedUsernames()]);
   return [
     ...pages.map((p) => ({ url: `${SITE.url}${p}`, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.7 })),
