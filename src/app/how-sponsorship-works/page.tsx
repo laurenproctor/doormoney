@@ -295,8 +295,14 @@ function OptionCard({ surface: s, hero, diagram }: { surface: Surface; hero: boo
     <div className={`edge glow px-6 py-[26px] ${hero ? "col-span-full lit bg-panel" : "bg-panel"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-3.5">
         <h3 className={`heading leading-[1.05] ${hero ? "text-[clamp(26px,3.6vw,36px)]" : "text-[24px]"}`}>{s.name}</h3>
-        <div className="caps whitespace-nowrap text-[15px] text-accent-ink">
-          from {formatMoney(s.defaultPriceCents)} {PER[s.period]}
+        {/*
+          The amount never splits across lines; the period after it may. Holding the whole phrase
+          together made the card's min-content wider than a 375px screen once "a run" became
+          "per fundraiser".
+        */}
+        <div className="caps text-[15px] text-accent-ink">
+          <span className="whitespace-nowrap">from {formatMoney(s.defaultPriceCents)}</span>{" "}
+          <span className="whitespace-nowrap">{PER[s.period]}</span>
         </div>
       </div>
       <p className="mt-2.5 max-w-none text-[15px] leading-[1.65] text-muted">{s.blurb}</p>

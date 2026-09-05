@@ -49,13 +49,18 @@ export function AuthShell({
           </Link>
 
           {/*
-            Three blocks, one grid. On a phone they stack in the order they are written: the
-            heading names the page, the form is next because that is what the visitor came for,
-            and the reasons sit under it. On a wide screen the form moves to its own column and
-            spans both rows, so the heading and the reasons read down the left.
+            Three blocks, one grid. Below lg they stack in the order they are written: the heading
+            names the page, the form is next because that is what the visitor came for, and the
+            reasons sit under it. From lg the form moves to its own column and spans both rows, so
+            the heading and the reasons read down the left.
+
+            The second column waits for lg rather than md because 460px of it is fixed. At 768 that
+            left 173px for the heading, less than a display H1's longest word, so the fixed track
+            pushed the page sideways. It only showed on the pages with a long heading, which is why
+            sign in looked fine while sign up did not.
           */}
-          <div className="hero-in mt-12 grid items-start gap-x-[64px] gap-y-10 md:mt-16 md:grid-cols-[1fr_460px]">
-            <div className="md:col-start-1 md:row-start-1">
+          <div className="hero-in mt-12 grid items-start gap-x-[64px] gap-y-10 md:mt-16 lg:grid-cols-[1fr_460px]">
+            <div className="lg:col-start-1 lg:row-start-1">
               <Eyebrow className="mb-7">{eyebrow}</Eyebrow>
               <h1 className="display max-w-[12ch] text-[clamp(40px,6.4vw,84px)] leading-[0.98]">
                 {title} {accent && <em className="text-accent-ink">{accent}</em>}
@@ -63,11 +68,11 @@ export function AuthShell({
               <div className="mt-7 max-w-[46ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{intro}</div>
             </div>
 
-            <div id="form" className={`glow p-7 max-md:p-6 md:col-start-2 md:row-span-2 md:row-start-1 ${panelClass}`}>
+            <div id="form" className={`glow p-7 max-md:p-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 ${panelClass}`}>
               {children}
             </div>
 
-            <div className="md:col-start-1 md:row-start-2">{aside}</div>
+            <div className="lg:col-start-1 lg:row-start-2">{aside}</div>
           </div>
         </div>
       </main>
