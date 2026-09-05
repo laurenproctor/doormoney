@@ -39,7 +39,7 @@ test("the seven methods are the ones the product asked for, and their keys are s
   assert.equal(isVerificationKey("nightly_photos"), false);
 });
 
-test("a predefined method saves, and comes back in catalogue order", () => {
+test("a predefined method saves, and comes back in catalog order", () => {
   const r = parseVerification({ methods: ["end_of_run_record", "selected_show_photos"], other: "" });
   assert.equal(r.ok, true);
   assert.ok(r.ok);
@@ -99,7 +99,7 @@ test("the same method twice is refused", () => {
   assert.match(r.errors.methods ?? "", /sent twice/);
 });
 
-test("the board shows only what was chosen, in catalogue order", () => {
+test("the board shows only what was chosen, in catalog order", () => {
   const items = verificationItems({ methods: ["social_post_links", "venue_date_record"], other: null });
   assert.deepEqual(items.map((i) => i.label), ["Venue and performance-date list", "Links to placement-related posts"]);
   assert.equal(items.some((i) => i.label === "Attendance estimates"), false);

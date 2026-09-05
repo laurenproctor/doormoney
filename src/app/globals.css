@@ -3,12 +3,12 @@
 /*
   Door Money tokens.
 
-  Every page is a dark room with one colour of light in it. The room (ground, ink, muted, line, panel)
+  Every page is a dark room with one color of light in it. The room (ground, ink, muted, line, panel)
   stays the same everywhere; the light (accent) changes per page through a `data-theme` attribute that
   the <Theme> component sets. Pages never pick hex values: they pick a theme and use the semantic tokens.
 
   Contrast: accent-ink is the tint of each accent that clears 4.5:1 on its ground, for text under 24px.
-  Accent itself is for fills, glows, rules and display type. on-accent is the text colour on an accent fill.
+  Accent itself is for fills, glows, rules and display type. on-accent is the text color on an accent fill.
 */
 :root {
   color-scheme: dark;
@@ -22,7 +22,7 @@
   --on-accent: #ffffff;
 }
 
-/* Blue is the house colour: home, sign in, the dashboard, the widget embed. */
+/* Blue is the house color: home, sign in, the dashboard, the widget embed. */
 [data-theme="blue"] {
   --ground: #050a1c;
   --muted: #9aa5c4;
@@ -78,7 +78,7 @@
   --accent-ink: #ff8273;
   --on-accent: #1a0503;
 }
-/* Mono: the house paper (terms, privacy, cookies, accessibility). White light, no colour. */
+/* Mono: the house paper (terms, privacy, cookies, accessibility). White light, no color. */
 [data-theme="mono"] {
   --ground: #0a0a0a;
   --muted: #a3a09a;
@@ -114,7 +114,7 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
-/* The widget's document shows the host page through; only the card itself is painted. The colour
+/* The widget's document shows the host page through; only the card itself is painted. The color
    scheme goes back to normal too: a dark-scheme frame inside a light-scheme page is painted opaque
    by the browser, whatever its background says. */
 html:has([data-embed]),
@@ -128,7 +128,7 @@ p { max-width: 62ch; }
 ::selection { background: var(--accent); color: var(--on-accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Links inside running text are underlined so they never rely on colour alone. */
+/* Links inside running text are underlined so they never rely on color alone. */
 article a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 article a:hover { color: var(--accent-ink); }
 
@@ -159,7 +159,7 @@ select option { background: var(--ground); color: var(--ink); }
     0 34px 60px -34px rgba(0, 0, 0, 0.85),
     0 40px 90px -50px color-mix(in srgb, var(--accent) 60%, transparent);
 }
-/* Accent-coloured light spilling from behind a block, with the same shadow pooling beneath. */
+/* Accent-colored light spilling from behind a block, with the same shadow pooling beneath. */
 @utility lit {
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--ink) 12%, transparent),
@@ -175,7 +175,7 @@ select option { background: var(--ground); color: var(--ink); }
 
 /*
   Panels are lifted, translucent blocks. Light comes from above, so each one carries a one-pixel glint
-  along its top edge and a faint sheen that fades out a third of the way down. Colour stays the token.
+  along its top edge and a faint sheen that fades out a third of the way down. Color stays the token.
 */
 .bg-panel {
   background-image: linear-gradient(
@@ -326,9 +326,9 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
   transform-origin: 66% 48%;
 }
 /*
-  A photograph is pulled into the room's colour rather than the other way round: the image goes to
-  greyscale and drops in brightness, a layer of the accent colours its tones, and the bloom keeps
-  nearly its full strength on top. The room stays the same colour whether or not a photo is there.
+  A photograph is pulled into the room's color rather than the other way round: the image goes to
+  grayscale and drops in brightness, a layer of the accent colors its tones, and the bloom keeps
+  nearly its full strength on top. The room stays the same color whether or not a photo is there.
 */
 .hero-art.has-photo > img { filter: grayscale(1) brightness(0.5) contrast(1.14); }
 .hero-art > .tint { position: absolute; inset: 0; background: color-mix(in srgb, var(--accent) 55%, var(--ground)); mix-blend-mode: color; }

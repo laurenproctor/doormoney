@@ -22,7 +22,7 @@ The widget itself is 380px wide at most, so it fits a sidebar, a column, or a fo
 
 - **A hand-built site on another origin.** Tested 2026-09-03 with a static page on `127.0.0.1:8787` framing a local Door Money. The frame loaded, resized as the widget changed (560 to 730px on load, 615px with the placement option, 780px with the card form), the backing recorded the host page's origin, and the host page could not read into the frame. The embed document is transparent and resets `color-scheme` to normal, so the card sits directly on a light page without a dark rectangle around it.
 
-## Expected behaviour per platform
+## Expected behavior per platform
 
 Not yet tested on a real account. Each note is what the platform documents about custom code; confirm on a throwaway site and move the entry up.
 

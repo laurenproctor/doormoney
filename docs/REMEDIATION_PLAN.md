@@ -29,7 +29,7 @@ honestly, which ones the code does not keep yet.
 - A webhook is not complete until its business operation completes.
 - Public identity and login identity have separate lifecycles.
 - Page rendering does not start global financial or auction mutations.
-- Product promises agree with actual system behaviour.
+- Product promises agree with actual system behavior.
 - Every critical state transition has an automated test.
 
 ---
@@ -53,11 +53,11 @@ A dependable engineering baseline, before anything touches permissions, auctions
   build. It takes no secrets and cannot reach a live service.
 - Wrote `docs/SYSTEM_INVARIANTS.md` and this document.
 
-The tests record what the code does today, including behaviour that later phases change on purpose.
+The tests record what the code does today, including behavior that later phases change on purpose.
 That is deliberate: a test that fails when Phase 2 or Phase 3 lands is the point, not a defect.
 
 **Gate.** A fresh `npm ci` succeeds, lint is clean, types check on a clean checkout, unit tests pass,
-the production build passes, and no application behaviour, payment behaviour or schema changed.
+the production build passes, and no application behavior, payment behavior or schema changed.
 
 ### Two corrections to the original plan, found while doing the work
 

@@ -80,7 +80,7 @@ export default async function ActPage({ params }: Props) {
   }
 
   const { act, running, past } = profile;
-  // Every act gets its own colour of light, the same one on the page and on every board under it.
+  // Every act gets its own color of light, the same one on the page and on every board under it.
   const theme = themeFor(slug);
   const website = safeWebsite(act.website);
   const handle = instagramHandle(act.instagram);

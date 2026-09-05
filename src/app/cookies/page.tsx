@@ -26,7 +26,7 @@ const COOKIES: { name: string; setBy: string; purpose: string; lasts: string }[]
   {
     name: "__stripe_mid",
     setBy: "Stripe",
-    purpose: "Fraud prevention inside the payment form. Lets Stripe recognise a device it has seen make a payment before.",
+    purpose: "Fraud prevention inside the payment form. Lets Stripe recognize a device it has seen make a payment before.",
     lasts: "One year.",
   },
   {
@@ -43,7 +43,7 @@ const SECTIONS: LegalSection[] = [
     heading: "What a cookie is",
     body: (
       <p>
-        A cookie is a small text file a site asks the browser to keep, so the site can recognise the same browser on the next
+        A cookie is a small text file a site asks the browser to keep, so the site can recognize the same browser on the next
         request. Some cookies are needed for a site to work at all, such as the one that keeps a person signed in. Others exist
         to track people across sites for advertising. {SITE.name} sets only the first kind.
       </p>

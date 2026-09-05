@@ -47,15 +47,15 @@ These are firm. They apply to page copy, button labels, emails, error messages, 
 
 Tokens live in `src/app/globals.css`. Use them; don't introduce new colors or fonts.
 
-Every page is a dark room with one colour of light in it. The room is the same on every page; the light changes per page. Three stage lights (`StageLights`, mounted by `Theme`) throw the accent down the room from a truss above the page and swing as the reader scrolls; they hold still under reduced motion.
+Every page is a dark room with one color of light in it. The room is the same on every page; the light changes per page. Three stage lights (`StageLights`, mounted by `Theme`) throw the accent down the room from a truss above the page and swing as the reader scrolls; they hold still under reduced motion.
 
 - The room: `ground` (page background), `ink` `#F4F0E8` (text), `muted` (secondary text), `line` (1px rules and borders), `panel` (a lifted, translucent block).
 - The light: `accent` (fills, glows, rules, display type at 24px and up), `accent-ink` (the tint of the accent that clears 4.5:1 on the ground; use it for any accent text under 24px), `on-accent` (text on an accent fill).
-- Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, sign up, dashboard, the embed), lime (how sponsorship works), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). A musician's pages take a colour by slug through `themeFor`, so each act keeps the same light.
+- Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, sign up, dashboard, the embed), lime (how sponsorship works), magenta (live auctions), amber (list an act), teal (widget), violet (contact), red (404), mono (the legal pages). A musician's pages take a color by slug through `themeFor`, so each act keeps the same light.
 - Smallest text on the site is 14px. Metadata and captions use 14 or 14.5px, body copy 15px and up.
 - Bodoni Moda for H1s only, set in caps (the `display` utility; the accent word in a headline is italic). Archivo for everything else: headings below the H1 (the `heading` utility, medium weight), body, and tracked caps labels (the `caps` utility). Nothing else.
 - Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`). The other themes carry public domain Gottlieb club photographs; credits in `public/hero/CREDITS.md`.
-- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text colour), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`, `NewsletterCTA` and `NewsletterStrip` (the new-fundraisers email: the band on patron pages, the strip in the footer), `PlacementVerification` (what a fundraiser promises sponsors, on its page), `VerificationEditor` and `ReadinessChecklist` (the dashboard sides of the same thing), `AuthShell` and `AuthPoints` (sign up and sign in, which carry no nav and no footer), `ProfileForms` (the four forms behind a patron's public profile). Reuse them.
+- Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text color), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`, `NewsletterCTA` and `NewsletterStrip` (the new-fundraisers email: the band on patron pages, the strip in the footer), `PlacementVerification` (what a fundraiser promises sponsors, on its page), `VerificationEditor` and `ReadinessChecklist` (the dashboard sides of the same thing), `AuthShell` and `AuthPoints` (sign up and sign in, which carry no nav and no footer), `ProfileForms` (the four forms behind a patron's public profile). Reuse them.
 
 ## Engineering rules
 
@@ -75,7 +75,7 @@ Every page is a dark room with one colour of light in it. The room is the same o
 
 ## Working with the mockups
 
-`docs/mockups/*.html` are self-contained pages with inline CSS in the old paper look. They are the source for sections, order and copy, not for colour or type. When porting one:
+`docs/mockups/*.html` are self-contained pages with inline CSS in the old paper look. They are the source for sections, order and copy, not for color or type. When porting one:
 
 1. Read the whole file first.
 2. Reuse the shared components rather than copying the nav and footer. Take the layout and the words from the mockup; take the look from the design system above.
@@ -85,7 +85,7 @@ Every page is a dark room with one colour of light in it. The room is the same o
 
 ## Do not
 
-- Add a light mode. The dark room and the coloured light are the brand.
+- Add a light mode. The dark room and the colored light are the brand.
 - Add analytics scripts, chat widgets or third-party embeds to the marketing pages without asking.
 - Store card numbers, ever. Stripe Elements only.
 - Write "you" anywhere a person will read it.

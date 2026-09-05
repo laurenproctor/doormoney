@@ -1,6 +1,6 @@
 /*
   The arithmetic every payout rests on. These tests record what the code does today, including the
-  parts later phases will change on purpose: the fee floors in the act's favour, and the weekly
+  parts later phases will change on purpose: the fee floors in the act's favor, and the weekly
   remainder is handed to the last Friday rather than spread across the run.
 */
 import assert from "node:assert/strict";
@@ -88,7 +88,7 @@ test("a run with no Friday in it still pays once, on the end date", () => {
 });
 
 test("a backwards run (end before start) collapses to one slice on the end date", () => {
-  // Current behaviour, not a promise. Nothing validates the order of the two dates yet.
+  // Current behavior, not a promise. Nothing validates the order of the two dates yet.
   const slices = weeklySlices(7777, day("2026-09-30"), day("2026-09-01"));
   assert.equal(slices.length, 1);
   assert.equal(slices[0].amountCents, 7777);

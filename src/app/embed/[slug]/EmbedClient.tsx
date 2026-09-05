@@ -94,7 +94,7 @@ export function EmbedClient(p: {
     }
   };
 
-  // Stripe's form takes the room's colours: read the tokens off the page so the Element matches the light.
+  // Stripe's form takes the room's colors: read the tokens off the page so the Element matches the light.
   const appearance = useMemo<Appearance>(() => {
     const css = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : null;
     const v = (name: string, fallback: string) => css?.getPropertyValue(name).trim() || fallback;

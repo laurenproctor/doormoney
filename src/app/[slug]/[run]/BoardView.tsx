@@ -44,7 +44,7 @@ export function BoardView({
 }) {
   const { act, run } = board;
 
-  // Every act gets its own colour of light, the same one every time.
+  // Every act gets its own color of light, the same one every time.
   const theme = themeFor(slug);
   const season = run.kind === "season";
   const unit = season ? "gigs" : "shows";

@@ -57,7 +57,7 @@ export type VerificationChoice = {
 export type VerificationItem = { key: string; label: string; detail?: string };
 
 /**
- * The methods to show, in catalogue order, with unknown keys dropped. An empty result means the
+ * The methods to show, in catalog order, with unknown keys dropped. An empty result means the
  * section does not belong on the page at all: an older run that predates this feature, or a draft
  * the musician has not answered yet.
  */
@@ -124,7 +124,7 @@ export const VerificationInput = z
     }
   })
   .transform((v): VerificationChoice => ({
-    // Catalogue order in, catalogue order out, so the stored array reads the way the board does.
+    // Catalog order in, catalog order out, so the stored array reads the way the board does.
     methods: VERIFICATION_METHODS.filter((m) => v.methods.includes(m.key)).map((m) => m.key),
     // The write-in answer only survives while its tick does. Deselecting "other" clears it.
     other: v.methods.includes(OTHER_KEY) ? v.other : null,

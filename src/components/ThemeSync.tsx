@@ -1,7 +1,7 @@
 "use client";
 import { useLayoutEffect } from "react";
 
-/** Copies the page theme onto <html>, so the cookie notice and the browser chrome take the page's colour. */
+/** Copies the page theme onto <html>, so the cookie notice and the browser chrome take the page's color. */
 export function ThemeSync({ name }: { name: string }) {
   useLayoutEffect(() => {
     const root = document.documentElement;

@@ -4,7 +4,7 @@
   already uses.
 
   Phase 5 splits these two lifecycles apart. Until it does, these tests record the shared rules,
-  including two quirks that are current behaviour rather than intent: a two-character handle is
+  including two quirks that are current behavior rather than intent: a two-character handle is
   rejected while a one-character one passes the pattern, and doubled hyphens are allowed.
 */
 import assert from "node:assert/strict";

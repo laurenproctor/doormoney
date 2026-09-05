@@ -184,7 +184,7 @@ async function main() {
   html = (await get(A.jar, page)).body;
   await post(A.jar, page, formWith(html, "methods")!, { methods: ["venue_date_record", "other"], other: `   ${answer}   ` });
   let row = await runRow();
-  ok(JSON.stringify(row.verification_methods) === JSON.stringify(["venue_date_record", "other"]), "stored in catalogue order", JSON.stringify(row.verification_methods));
+  ok(JSON.stringify(row.verification_methods) === JSON.stringify(["venue_date_record", "other"]), "stored in catalog order", JSON.stringify(row.verification_methods));
   ok(row.verification_other === answer, "and trimmed");
 
   section("deselecting the write-in clears it");
