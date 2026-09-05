@@ -8,6 +8,7 @@ import { Stamp } from "@/components/Brand";
 import { ROLES } from "@/lib/roles";
 import {
   PASSWORD_MIN,
+  SIGNUP_FIELDS,
   errorId,
   firstInvalid,
   validateField,
@@ -158,8 +159,16 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
     The banner is up while the server has something to say, or while a submission is being held
     back and there is still something to hold it back for. Fixing the last field takes it down
     with the field messages rather than leaving a warning about nothing.
+
+    It carries the actual problems, not a note that there are some. Several of the server's answers
+    belong to a single field rather than to the form: an address that already has an account is the
+    common one. Those used to arrive here as "something above needs another look", which put a
+    vague line where the eye lands and left the real sentence further down the page, next to a
+    field somebody had already filled in correctly as far as they knew.
   */
-  const showBanner = Boolean(formError) || (blocked && Object.keys(errors).length > 0);
+  const fieldMessages = SIGNUP_FIELDS.map((f) => errors[f]).filter((msg): msg is string => Boolean(msg));
+  const showBanner = Boolean(formError) || (blocked && fieldMessages.length > 0);
+  const lead = formError ?? (fieldMessages.length === 1 ? fieldMessages[0] : "There is a problem with the form.");
 
   const describedBy = (f: SignUpField, help?: string) =>
     [errors[f] ? errorId(f) : null, help ?? null].filter(Boolean).join(" ") || undefined;
@@ -180,13 +189,22 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
       */}
       <div role="alert" aria-live="assertive">
         {showBanner && (
-          <p
+          <div
             id={errorId("form")}
-            className="mb-[22px] flex items-start gap-2.5 border-2 border-accent-ink bg-accent/10 px-4 py-3 text-[14.5px] leading-[1.5] text-ink"
+            className="mb-[22px] border-2 border-accent-ink bg-accent/10 px-4 py-3 text-[14.5px] leading-[1.5] text-ink"
           >
-            <Bang />
-            <span>{formError ?? "Something above needs another look. The fields to check are marked."}</span>
-          </p>
+            <p className="flex items-start gap-2.5">
+              <Bang />
+              <span>{lead}</span>
+            </p>
+            {!formError && fieldMessages.length > 1 && (
+              <ul className="mt-2 grid list-disc gap-1 pl-[46px]">
+                {fieldMessages.map((msg) => (
+                  <li key={msg}>{msg}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
 
