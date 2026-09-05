@@ -91,6 +91,31 @@ Private by default, twice over: the page is unpublished until the patron publish
 
 ---
 
+## Phase 2c. The words
+
+**Goal:** the whole site speaks the vocabulary decision 14 settled, rather than one page speaking it and the rest carrying what came before.
+
+Decision 14 replaced the insider words with the ones a stranger would use: a **fundraiser** is what a musician opens, a **sponsorship** is the exchange, a **placement** is only where a sponsor appears, a **logo** is what goes there. `/how-sponsorship-works` was written that way and nothing else was, so the site currently says both. Addresses do not move with the words: routes and columns keep their names, and `runs`, `lots`, `acts` and `/mark/<id>` all stay.
+
+The rule is convert a page when you touch it, never a repo-wide replace. This list exists so that what is left is countable rather than remembered.
+
+- [x] `/how-sponsorship-works`, converted when it was renamed from `/placements`
+- [ ] Home: the hero, the steps and the "Live boards" section head
+- [ ] The fundraiser index at `/auctions`, which still calls itself Live boards throughout
+- [ ] A musician's page at `/[slug]` and a fundraiser's page at `/[slug]/[run]`, including `BoardView`
+- [ ] The dashboard: the run pages, the readiness checklist, the widget panel
+- [ ] The patron pages: `/patron`, `/patron/[username]`, `/dashboard/profile`
+- [ ] Emails in `src/lib/email.ts` and the record at `/record/[id]`
+- [ ] The legal pages, which name placements and boards throughout
+- [ ] `/list` and `/widget`, the two pages that speak only to musicians
+- [ ] Retire the last of "board" from copy, and check `Logo.tsx` was left alone: "mark" there means the wordmark
+
+**Done when:** a reader who lands on any two pages is told the same thing in the same words, and `grep -i board src/app --include=*.tsx` finds only routes, table names and the wordmark.
+
+**Not in scope:** renaming anything with an address. `/board/<slug>` stays a permanent redirect, `runs` stays the table, and no migration is needed for any of this.
+
+---
+
 ## Phase 3. Money, fixed price only
 
 **Goal:** a patron pays, Door Money holds it, the act gets paid weekly. Auctions wait.

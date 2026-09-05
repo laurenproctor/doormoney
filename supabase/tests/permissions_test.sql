@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(37);
+select plan(61);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -30,6 +30,24 @@ update acts set stripe_account_id='acct_secret', stripe_payouts_enabled=true whe
 update lots set funding_token='tok_secret' where id=(select id from lots order by id limit 1);
 -- A patron who asked to stay anonymous still has a real name on the row.
 update patrons set name='Dana Whitfield' where id=(select patron_id from bids where anonymous order by id limit 1);
+
+-- Two accounts with paid history, for the patron profile tests below.
+--   user 1 owns Kettle St. Coffee (a placement won in the open) and the anonymous bidder's row.
+--   user 2 owns a different patron, so "somebody else's placement" is a real row and not a guess.
+update patrons set profile_id='11111111-1111-1111-1111-111111111111'
+ where id in ('c1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000008');
+update patrons set profile_id='22222222-2222-2222-2222-222222222222'
+ where id = 'c1000000-0000-0000-0000-000000000004';
+
+insert into purchases (lot_id, patron_id, amount_cents, fee_cents, payment_status) values
+  -- Won through the anonymous bid the seed puts on this lot.
+  ('a1000000-0000-0000-0000-000000000004', 'c1000000-0000-0000-0000-000000000008', 36000, 5400, 'held'),
+  -- Started and never paid for.
+  ('a1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001', 45000, 6750, 'requires_payment');
+
+insert into patron_profiles (profile_id, display_name) values
+  ('11111111-1111-1111-1111-111111111111', 'Kettle St. Coffee'),
+  ('22222222-2222-2222-2222-222222222222', 'Ridgewood Wine Co.');
 
 create or replace function tests.as_anon() returns void language plpgsql as $$
 begin
@@ -105,18 +123,6 @@ select lives_ok(
 select throws_ok(
   'select count(*) from patrons', '42501',
   null, 'anon cannot read the patrons table at all');
-
-select is(
-  (select count(*)::int from purchases), 0,
-  'anon reads no rows from purchases');
-
-select is(
-  (select count(*)::int from payout_schedule), 0,
-  'anon reads no rows from the payout schedule');
-
-select is(
-  (select count(*)::int from backings), 0,
-  'anon reads no rows from backings');
 
 -- The masked view is the only route to a bidder's name, and it masks.
 select lives_ok(
@@ -230,6 +236,118 @@ select lives_ok(
 select lives_ok(
   $$update runs set status='cancelled' where act_id=(select id from acts where slug='gutter-hymns')$$,
   'the service role can still cancel a run');
+
+-- ---------------------------------------------------------------
+-- The rule the old check was missing, asked directly.
+--
+-- Asked as the service role: naming a purchase means reading patron_id, which no signed-in
+-- account can do any more. owns_patron_activity is security definer, so the answer is the same
+-- whoever asks; what is under test is the rule, not the caller.
+-- ---------------------------------------------------------------
+select is(
+  public.owns_patron_activity(
+    '11111111-1111-1111-1111-111111111111',
+    (select id from purchases where patron_id='c1000000-0000-0000-0000-000000000001' and payment_status='held'),
+    null),
+  true, 'a placement this account paid for may be published');
+
+select is(
+  public.owns_patron_activity(
+    '11111111-1111-1111-1111-111111111111',
+    (select id from purchases where patron_id='c1000000-0000-0000-0000-000000000004'),
+    null),
+  false, 'somebody else''s placement may not, which is the hole 0029 closes');
+
+select is(
+  public.owns_patron_activity(
+    '11111111-1111-1111-1111-111111111111',
+    (select id from purchases where patron_id='c1000000-0000-0000-0000-000000000008'),
+    null),
+  false, 'a placement won through an anonymous bid may not, whatever the patron ticks');
+
+select is(
+  public.owns_patron_activity(
+    '11111111-1111-1111-1111-111111111111',
+    (select id from purchases where payment_status='requires_payment'),
+    null),
+  false, 'and neither may a checkout nobody finished');
+
+select is(
+  public.owns_patron_activity('11111111-1111-1111-1111-111111111111', null, null),
+  false, 'a row pointing at nothing is not activity');
+
+reset role;
+
+-- ===============================================================
+-- Everything built after 0022, brought inside the same boundary (0029)
+-- ===============================================================
+select tests.as_anon();
+
+select throws_ok('select * from purchases limit 1',            '42501', null, 'anon cannot read purchases');
+select throws_ok('select * from backings limit 1',             '42501', null, 'anon cannot read backings');
+select throws_ok('select * from payout_schedule limit 1',      '42501', null, 'anon cannot read the payout schedule');
+select throws_ok('select * from stripe_events limit 1',        '42501', null, 'anon cannot read the Stripe event log');
+select throws_ok('select * from waitlist limit 1',             '42501', null, 'anon cannot read the waitlist');
+select throws_ok('select * from contact_messages limit 1',     '42501', null, 'anon cannot read contact messages');
+select throws_ok('select * from newsletter limit 1',           '42501', null, 'anon cannot read the mailing list');
+select throws_ok('select * from patron_profiles limit 1',      '42501', null, 'anon cannot read patron profiles, published or not');
+select throws_ok('select * from patron_profile_items limit 1', '42501', null, 'anon cannot read what a patron has published');
+select throws_ok('select * from username_history limit 1',     '42501', null, 'anon cannot read the retired username map');
+
+reset role;
+
+-- ===============================================================
+-- A signed-in account, on the tables it half-owns
+-- ===============================================================
+select tests.as_user('11111111-1111-1111-1111-111111111111');
+
+-- The one session-side read of purchases: deciding a mark needs its state, never its money.
+select lives_ok(
+  $$select id, lot_id, mark_status, payment_status from purchases limit 1$$,
+  'a musician can still read the state of a mark on their own lot');
+
+select throws_ok(
+  'select amount_cents from purchases limit 1', '42501',
+  null, 'but not what the patron paid');
+
+select throws_ok(
+  'select stripe_payment_intent_id from purchases limit 1', '42501',
+  null, 'and not the Stripe payment intent behind it');
+
+select throws_ok('select * from backings limit 1', '42501', null, 'a signed-in account cannot read backings');
+select throws_ok('select * from username_history limit 1', '42501', null, 'a signed-in account cannot read the retired username map');
+select throws_ok('select * from patron_profile_items limit 1', '42501', null, 'a signed-in account cannot read the published-activity table');
+
+-- The profile itself: readable, and only ever one row of it.
+-- The exact column list ownProfile() in src/lib/patronprofile.ts selects. If the grant and the
+-- query ever drift apart, the management page stops filling its form in, and this says so first.
+select lives_ok(
+  $$select display_name, bio, location, website, interests, photo_path, published, patron_since
+      from patron_profiles where profile_id = auth.uid()$$,
+  'a patron reads every column the management page asks for');
+
+select is(
+  (select display_name from patron_profiles), 'Kettle St. Coffee',
+  'a patron reads their own profile row');
+
+select is(
+  (select count(*)::int from patron_profiles), 1,
+  'and only their own: the other account''s profile is not there');
+
+-- Writing it is the server's job. published decides whether a page exists at all, and
+-- patron_since is worked out from the first thing this account actually paid for.
+select throws_ok(
+  $$update patron_profiles set published=true where profile_id=auth.uid()$$, '42501',
+  null, 'a patron cannot publish their own profile through the Data API');
+
+select throws_ok(
+  $$update patron_profiles set patron_since='2009-01-01' where profile_id=auth.uid()$$, '42501',
+  null, 'a patron cannot backdate how long they have been one');
+
+select throws_ok(
+  $$insert into patron_profile_items (profile_id, purchase_id)
+    values (auth.uid(), (select id from purchases where patron_id='c1000000-0000-0000-0000-000000000004'))$$,
+  '42501', null, 'a patron cannot publish anything through the Data API');
 
 reset role;
 

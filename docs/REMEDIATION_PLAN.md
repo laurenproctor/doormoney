@@ -75,9 +75,23 @@ the production build passes, and no application behavior, payment behavior or sc
 
 ## Phase 1: Supabase security boundary
 
-**Status: built and tested locally, not applied to the hosted project.** Branch
+**Status: applied to the hosted project, and extended once since.** Branch
 `remediation-phase-1`, migration `0022_security_boundary.sql`. See `docs/PHASE_1_DEPLOYMENT.md` for
 the apply and token-rotation checklist.
+
+`0029_patron_profile_boundary.sql` finished the job. 0022 covered the tables that existed when it
+was written; everything added after it (0024's patron profiles) and everything it had not reached
+(`backings`, `payout_schedule`, `stripe_events`, `waitlist`, `contact_messages`, `newsletter`) was
+left defended by row level security alone. RLS held in every case, so nothing leaked, but one layer
+where the rest of the app has two is how the last hole got in. 0029 also closed a real one:
+`patron_profile_items` checked that a row belonged to the account and never that the placement it
+pointed at did, so anyone signed in who knew a purchase id could publish somebody else's
+sponsorship under their own name. `owns_patron_activity` now asks the question the server action
+was already asking, and the suite has 60 assertions rather than 37.
+
+**The lesson, worth stating because it will recur:** a boundary migration is a snapshot. Every new
+table needs its grants decided when it is created, not in a later sweep. A table with no policy for
+`anon` or `authenticated` still answers the Data API with `200 []` until its grant is revoked.
 
 Four holes were reproduced against a local stack before anything was written, and all four are now
 closed and covered by `supabase/tests/permissions_test.sql` (34 assertions, all passing):
