@@ -100,3 +100,91 @@ export async function transferSliceToAct(params: {
     { idempotencyKey: params.idempotencyKey },
   );
 }
+
+/* ---------------------------------------------------------------------------------------------
+   Bidding with a card on file (docs/DECISIONS.md, decision 4).
+
+   A bid saves a card and charges nothing. At the close the winner's card is charged off-session,
+   on the same terms as every other charge here: the money lands on the platform balance and the
+   Friday job moves the act's share out, so Door Money's 15% is the part never transferred.
+
+   Not an authorization hold. Card authorizations lapse after about a week and a close is usually
+   weeks out, so a hold would have to be re-placed on a schedule and would tie up an outbid
+   patron's money in the meantime. A saved card holds nothing.
+   --------------------------------------------------------------------------------------------- */
+
+/**
+ * The Stripe customer a patron's cards hang off, created on first use.
+ *
+ * A patron is one row per (name, email), so the customer follows the same identity: somebody who
+ * bids twice on two boards has one customer and one saved card.
+ */
+export async function customerForPatron(params: { existingId: string | null; name: string; email: string; patronId: string }) {
+  if (params.existingId) return params.existingId;
+  const customer = await stripe.customers.create({
+    name: params.name,
+    email: params.email,
+    metadata: { patron_id: params.patronId },
+  });
+  return customer.id;
+}
+
+/**
+ * Stores a card against a patron, ready for the close. Charges nothing now.
+ *
+ * `usage: "off_session"` tells the card's bank at storage time that a later charge will happen with
+ * nobody present, which is what lets most cards clear that charge without a second authentication.
+ */
+export async function createBidSetupIntent(params: { customerId: string; lotId: string; patronId: string }) {
+  return stripe.setupIntents.create({
+    customer: params.customerId,
+    usage: "off_session",
+    payment_method_types: ["card"],
+    // SetupIntents take no integration_identifier, unlike a Checkout Session; the metadata is what
+    // tells a bid card apart from any other saved card in the Dashboard.
+    metadata: { kind: "bid", lot_id: params.lotId, patron_id: params.patronId },
+  });
+}
+
+/**
+ * Charges a saved card for a won bid, with nobody at the keyboard.
+ *
+ * `off_session: true` is a declaration to the bank, not a convenience: it is what makes a decline
+ * for "authentication required" arrive as an error here rather than as a payment waiting for a
+ * person who is not there. The caller treats any failure as a fallback to the claim link.
+ *
+ * The idempotency key is the purchase row id, so a close that runs twice charges once.
+ */
+export async function chargeSavedCard(params: {
+  purchaseId: string;
+  lotId: string;
+  actId: string;
+  actSlug: string;
+  customerId: string;
+  paymentMethodId: string;
+  amountCents: number;
+  description: string;
+  patronEmail: string;
+}) {
+  return stripe.paymentIntents.create(
+    {
+      amount: params.amountCents,
+      currency: "usd",
+      customer: params.customerId,
+      payment_method: params.paymentMethodId,
+      off_session: true,
+      confirm: true,
+      receipt_email: params.patronEmail,
+      description: params.description,
+      metadata: {
+        kind: "lot",
+        purchase_id: params.purchaseId,
+        lot_id: params.lotId,
+        act_id: params.actId,
+        act_slug: params.actSlug,
+        won_at_auction: "true",
+      },
+    },
+    { idempotencyKey: `bid-charge-${params.purchaseId}` },
+  );
+}
