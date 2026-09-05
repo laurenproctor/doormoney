@@ -8,7 +8,7 @@ import { Theme, themeFor } from "@/components/Theme";
 import { WidgetFrame } from "@/components/WidgetFrame";
 import { openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
-import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
+import { clockOf, closeStamp, formatDateRange, weekdayOf } from "@/lib/dates";
 import { instagramHandle, instagramUrl, safeWebsite, websiteLabel } from "@/lib/links";
 import { formatMoney } from "@/lib/money";
 import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
@@ -25,7 +25,7 @@ export type PaidNotice = { kind: "paid" | "processing"; amount: number; email: s
 /**
  * The board itself: everything a patron reads, from the hero to the newsletter.
  *
- * One component for two routes. /board/[slug] renders it for the public once a run is open, and
+ * One component for two routes. /[slug]/[run] renders it for the public once a run is open, and
  * the musician's own /dashboard/runs/[id]/preview renders the same thing for a draft with `draft`
  * set, so a preview is the board rather than a picture of one. The route decides who may see it;
  * this decides what it looks like.
@@ -52,6 +52,8 @@ export function BoardView({
   const auction = board.lots.some((l) => l.mode === "auction");
   const closesAt = run.biddingClosesAt;
   const closeDay = closesAt ? weekdayOf(closesAt) : null;
+  // The headline names the close in full, so nobody has to work out which Friday it means.
+  const closeFull = closesAt ? closeStamp(closesAt) : null;
   const closesLabel = closesAt ? `${auction ? "bidding" : "listing"} closes ${closeDay}, ${clockOf(closesAt)}` : "no close time set";
   // The commercial context first, from the run data; the bio's personality follows it.
   const plural = act.type !== "soloist";
@@ -213,7 +215,7 @@ export function BoardView({
         <div className="border-t border-line py-16">
           <div className="mx-auto max-w-[1120px] px-7">
             <Eyebrow className="mb-5">If a bid wins</Eyebrow>
-            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">What happens after {closeDay ?? "the close"}</h2>
+            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">What happens after {closeFull ?? "the close"}</h2>
             <Lines
               marked
               lines={[

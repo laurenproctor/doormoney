@@ -102,7 +102,7 @@ Both sample boards show "Anonymous patron" as a bidder. Anonymity is fine for th
 
 Sign-in was a one-time email link and nothing else. Two things pushed against that: acts asked for a password, and the board address had no owner until an act was listed, so nothing reserved the word a musician wanted.
 
-**Decided (2026-09-04):** one word does both jobs. The username claimed at sign-up is the board address: whoever holds `gutter-hymns` signs in as that and their board is at `/board/gutter-hymns`. It lives on `profiles.username`, the board address stays on `acts.slug`, and two triggers in `0019_usernames.sql` keep the pair from drifting or from being claimed twice. `RESERVED_SLUGS` in `src/lib/slug.ts` is the one list guarding both, so it has to grow whenever a top-level route does.
+**Decided (2026-09-04):** one word does both jobs. The username claimed at sign-up is the board address: whoever holds `gutter-hymns` signs in as that and their page is at `/gutter-hymns`. It lives on `profiles.username`, the board address stays on `acts.slug`, and two triggers in `0019_usernames.sql` keep the pair from drifting or from being claimed twice. `RESERVED_SLUGS` in `src/lib/slug.ts` is the one list guarding both, so it has to grow whenever a top-level route does.
 
 The email link stays as a second way in, for accounts that never set a password. Forgotten passwords go through `/forgot`, which reports the same thing whether or not the account exists.
 
@@ -192,7 +192,26 @@ Letting it move freely is the other extreme: every board link, every printed sti
 - Claiming a word starts the clock. `profiles.username_set_at` records it, so the next date is calculable rather than remembered, and it is shown before anybody tries.
 - Twelve **calendar** months, not 365 days: a word claimed on 29 February moves on 28 February.
 - The rule is held by `claim_username` in migration 0024, not by the form. It takes an advisory lock on the word, so two accounts racing for one cannot both win; the loser is told it is taken.
-- Every retired word goes to `username_history` and stays there. Nobody else can claim it, and `/patron/<old>` and `/board/<old>` redirect permanently to the current address.
+- Every retired word goes to `username_history` and stays there. Nobody else can claim it, and `/patron/<old>` and `/<old>` redirect permanently to the current address.
 - An account with an act moves its handle and its board address in the same transaction, so the one-word promise from decision 8 holds through the change. The patron is told both addresses will move before it happens.
 
 Twelve months is a judgement, not a calculation. It is long enough that links are worth writing down and short enough that a bad first choice is not a life sentence.
+
+---
+
+## 13. Where an act and a run live
+
+**Blocks:** nothing. Built 2026-09-04.
+
+A board used to be one page per act, at `/board/<act>`. That made "act" and "board" the same thing, so an act could only ever be raising for one run, and a musician had nowhere to say who they are apart from whatever run happened to be open.
+
+**Decided (2026-09-04):** the act gets a page, and each run hangs off it.
+
+- `/gutter-hymns` is the act's page: who they are, what they are raising for now, and what they have already run. It is the address a musician gives out and the one on the dashboard.
+- `/gutter-hymns/support-europe-tour` is one run's board. The musician names the fundraiser ("Europe Tour"); Door Money slugifies it into `runs.slug` and puts `support-` in front when it builds the path. The word is theirs, the prefix is ours, so every run address says what it is for.
+- `runs.slug` is unique inside the act, not across the site: two acts may both run a `fall-tour`.
+- A draft's address follows its name. Once the run is published the address is frozen, because by then it is a link on a poster and runs have no history table to redirect from the way a moved handle does. The trigger in migration 0025 holds this, not the form.
+- `/board/<act>` redirects permanently to whichever run the act is raising for, and to the act's page when none is open. It is in sent emails, in pasted widget snippets and in Google, so it stays forever.
+- Every public address is built in `src/lib/urls.ts`. Act words now sit at the root of the site, so `RESERVED_SLUGS` is what keeps a musician off `/login`, and it has to grow whenever a top-level route does.
+
+The cost is that the root of the site is a catch-all: anything the static routes do not claim reaches the act page. That is why the moved-handle lookup answers null rather than throwing when it cannot answer, and why the reserved list is tested against the database's own copy.

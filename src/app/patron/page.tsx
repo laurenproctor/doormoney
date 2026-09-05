@@ -6,6 +6,7 @@ import { requireUser, currentProfile, ownedAct } from "@/lib/auth";
 import { backedBy, type PlacedBid } from "@/lib/backed";
 import { dashboardLinks } from "@/lib/roles";
 import { formatMoney } from "@/lib/money";
+import { actPath } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "What you have backed", robots: { index: false, follow: false } };
 
@@ -87,7 +88,7 @@ export default async function PatronPage() {
                     <div className="min-w-0">
                       <b className="block text-[15px]">
                         {p.lotName} on{" "}
-                        <Link href={`/board/${p.actSlug}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+                        <Link href={actPath(p.actSlug)} className="text-accent-ink underline decoration-1 underline-offset-4">
                           {p.actName}
                         </Link>
                       </b>
@@ -118,7 +119,7 @@ export default async function PatronPage() {
                   <li key={r.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto] sm:items-baseline">
                     <div className="min-w-0">
                       <b className="block text-[15px]">
-                        <Link href={`/board/${r.actSlug}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+                        <Link href={actPath(r.actSlug)} className="text-accent-ink underline decoration-1 underline-offset-4">
                           {r.actName}
                         </Link>
                         , {r.runTitle}
@@ -145,7 +146,7 @@ export default async function PatronPage() {
                     <div className="min-w-0">
                       <b className="block text-[15px]">
                         {b.lotName} on{" "}
-                        <Link href={`/board/${b.actSlug}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+                        <Link href={actPath(b.actSlug)} className="text-accent-ink underline decoration-1 underline-offset-4">
                           {b.actName}
                         </Link>
                       </b>

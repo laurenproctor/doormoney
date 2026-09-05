@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { THEMES, type ThemeName } from "@/components/Theme";
 import { boardAsking, boardWorth, fanWorth, getBoard } from "@/lib/boards";
+import { runUrl } from "@/lib/urls";
 import { WIDGET_TIERS, tierPlace } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { SITE } from "@/lib/site";
@@ -79,7 +80,7 @@ export default async function EmbedPage({ params, searchParams }: Props) {
           ...t,
           label: formatMoney(t.amountCents),
         }))}
-        boardUrl={`${SITE.url}/board/${slug}`}
+        boardUrl={runUrl(slug, board.run.slug)}
         siteUrl={SITE.url}
         source={one(sp.source) === "board" ? "board" : "widget"}
         paymentsOpen={

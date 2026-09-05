@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { CATALOG } from "@/lib/catalog";
+import { actPath, runPath } from "@/lib/urls";
 
 export type LotsState = { ok: boolean; error?: string; saved?: number };
 
@@ -53,7 +54,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
 
   const runId = String(form.get("run_id") ?? "");
   const sb = await supabaseServer();
-  const { data: run } = await sb.from("runs").select("id,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
+  const { data: run } = await sb.from("runs").select("id,slug,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
 
   const { rows, error } = parseRows(form);
@@ -104,7 +105,8 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
 
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
-  revalidatePath(`/board/${act.slug}`);
+  revalidatePath(actPath(act.slug));
+  revalidatePath(runPath(act.slug, run.slug));
   revalidatePath("/auctions");
   return { ok: true, saved: updates.length + inserts.length };
 }

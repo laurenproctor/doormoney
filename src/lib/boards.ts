@@ -5,11 +5,12 @@ import { SAMPLE_BOARDS, type Backer, type Board, type BoardLot } from "@/lib/sam
 const configured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const ACT_COLUMNS = "id,slug,name,type,city,bio,photo_url,instagram,website";
-const RUN_COLUMNS = "id,title,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other";
+const RUN_COLUMNS = "id,slug,title,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other";
 
 type ActRow = { id: string; slug: string; name: string; type: Board["act"]["type"]; city: string; bio: string | null; photo_url: string | null; instagram: string | null; website: string | null };
 type RunRow = {
   id: string;
+  slug: string;
   title: string;
   kind: string;
   starts_on: string;
@@ -22,25 +23,77 @@ type RunRow = {
   verification_other: string | null;
 };
 
-/** Load a public board by act slug. Falls back to the in-memory sample until Supabase is connected. */
-export async function getBoard(slug: string): Promise<Board | null> {
-  if (!configured()) return SAMPLE_BOARDS[slug] ?? null;
+/**
+ * One public board: an act, and one of its runs.
+ *
+ * With a run word, that named run. Without one, the act's current run, which is what the old
+ * /board/<act> address meant and what the widget still asks for. Falls back to the in-memory
+ * sample until Supabase is connected.
+ */
+export async function getBoard(slug: string, runSlug?: string): Promise<Board | null> {
+  if (!configured()) {
+    const sample = SAMPLE_BOARDS[slug] ?? null;
+    if (!sample) return null;
+    return !runSlug || sample.run?.slug === runSlug ? sample : null;
+  }
 
   const sb = await supabaseServer();
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).single();
   if (!actRow) return null;
 
-  const { data: run } = await sb
-    .from("runs")
-    .select(RUN_COLUMNS)
-    .eq("act_id", (actRow as ActRow).id)
-    .in("status", ["open", "live"])
-    .order("starts_on", { ascending: false })
-    .limit(1)
-    .single();
-  if (!run) return { act: shapeAct(actRow as ActRow), run: null as never, lots: [] };
+  // A named run is served whether it is open, live or already closed, so a link that went out on a
+  // poster still lands on the fundraiser it named. Without a name, only a running one will do.
+  const query = sb.from("runs").select(RUN_COLUMNS).eq("act_id", (actRow as ActRow).id);
+  const { data: run } = runSlug
+    ? await query.eq("slug", runSlug).in("status", ["open", "live", "closed"]).maybeSingle()
+    : await query.in("status", ["open", "live"]).order("starts_on", { ascending: false }).limit(1).maybeSingle();
+  if (!run) return runSlug ? null : { act: shapeAct(actRow as ActRow), run: null as never, lots: [] };
 
   return shapeBoard(sb, actRow as ActRow, run as RunRow);
+}
+
+export type ActRun = { slug: string; title: string; kind: string; startsOn: string; endsOn: string; showCount: number; status: string };
+export type ActProfile = { act: Board["act"]; running: ActRun[]; past: ActRun[] };
+
+/**
+ * An act's own page: who they are, what they are raising for now, and what they have already run.
+ * A run still in draft belongs to nobody but its musician and never appears here.
+ */
+export async function getActProfile(slug: string): Promise<ActProfile | null> {
+  if (!configured()) {
+    const sample = SAMPLE_BOARDS[slug];
+    if (!sample) return null;
+    const r = sample.run;
+    return { act: sample.act, running: r ? [{ slug: r.slug, title: r.title, kind: r.kind, startsOn: r.startsOn, endsOn: r.endsOn, showCount: r.showCount, status: "open" }] : [], past: [] };
+  }
+
+  const sb = await supabaseServer();
+  const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).maybeSingle();
+  if (!actRow) return null;
+
+  const { data: rows } = await sb
+    .from("runs")
+    .select("slug,title,kind,starts_on,ends_on,show_count,status")
+    .eq("act_id", (actRow as ActRow).id)
+    .in("status", ["open", "live", "closed"])
+    .order("starts_on", { ascending: false });
+
+  type Row = { slug: string; title: string; kind: string; starts_on: string; ends_on: string; show_count: number; status: string };
+  const runs: ActRun[] = ((rows ?? []) as Row[]).map((r) => ({
+    slug: r.slug,
+    title: r.title,
+    kind: r.kind,
+    startsOn: r.starts_on,
+    endsOn: r.ends_on,
+    showCount: r.show_count,
+    status: r.status,
+  }));
+
+  return {
+    act: shapeAct(actRow as ActRow),
+    running: runs.filter((r) => r.status !== "closed"),
+    past: runs.filter((r) => r.status === "closed"),
+  };
 }
 
 /**
@@ -135,6 +188,7 @@ async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Prom
     act,
     run: {
       id: run.id,
+      slug: run.slug,
       title: run.title,
       kind: run.kind,
       startsOn: run.starts_on,

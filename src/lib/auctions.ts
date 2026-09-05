@@ -4,6 +4,7 @@ import { auctionUnsold, auctionWon, closingSoon, outbidNotice, sendEmail } from 
 import { bidStepCents } from "@/lib/money";
 import { lotName, ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
+import { runUrl } from "@/lib/urls";
 
 /*
   Auctions. Straight bidding: a bid is exactly what the patron pays if they win (decision 4).
@@ -64,13 +65,13 @@ type LotRow = {
   winner_bid_id: string | null;
   funding_deadline: string | null;
   closing_soon_sent_at: string | null;
-  runs: { id: string; title: string; status: string; bidding_closes_at: string | null; acts: { name: string; slug: string; owner_id: string | null } };
+  runs: { id: string; slug: string; title: string; status: string; bidding_closes_at: string | null; acts: { name: string; slug: string; owner_id: string | null } };
 };
 
 type BidRow = { id: string; amount_cents: number; anonymous: boolean; passed_at: string | null; created_at: string; patrons: { name: string; contact_email: string } | null };
 
 const LOT_SELECT =
-  "id,label,surface_key,price_cents,status,closes_at,winner_bid_id,funding_deadline,closing_soon_sent_at,runs!inner(id,title,status,bidding_closes_at,acts!inner(name,slug,owner_id))";
+  "id,label,surface_key,price_cents,status,closes_at,winner_bid_id,funding_deadline,closing_soon_sent_at,runs!inner(id,slug,title,status,bidding_closes_at,acts!inner(name,slug,owner_id))";
 
 /** Every bid on a lot, highest first, newest first on a tie. */
 async function bidsFor(sb: Admin, lotId: string) {
@@ -226,7 +227,7 @@ export async function warnClosingSoon(sb: Admin, now = new Date(), summary?: Auc
             leading: bids[0]?.id === b.id,
             minimumCents: minimumBidCents(lot.price_cents, topCents),
             closesAt: new Date(at),
-            boardUrl: `${SITE.url}/board/${lot.runs.acts.slug}`,
+            boardUrl: runUrl(lot.runs.acts.slug, lot.runs.slug),
           }),
         );
         if (r.sent) {
@@ -268,7 +269,7 @@ export async function notifyOutbid(sb: Admin, lotId: string, newTopBidId: string
         topCents: top.amount_cents,
         minimumCents: minimumBidCents(lot.price_cents, top.amount_cents),
         closesAt: at ? new Date(at) : null,
-        boardUrl: `${SITE.url}/board/${lot.runs.acts.slug}`,
+        boardUrl: runUrl(lot.runs.acts.slug, lot.runs.slug),
       }),
     );
     if (!r.sent) console.error("outbid notice not sent", b.id, r.reason);

@@ -42,7 +42,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
       </Field>
 
-      <Field label="Board address and username" error={err.slug} hint={`${siteUrl}/board/${shownSlug || "the-act"}. The same word signs the act in.`}>
+      <Field label="Board address and username" error={err.slug} hint={`${siteUrl}/${shownSlug || "the-act"}. The same word signs the act in.`}>
         <input
           name="slug"
           value={shownSlug}

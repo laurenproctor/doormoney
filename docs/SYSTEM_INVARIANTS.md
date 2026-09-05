@@ -209,7 +209,7 @@ they sign in, and there is no slug history, so every published link to the old a
 
 **Violated.** Enforced by Phase 3.
 
-`src/app/board/[slug]/page.tsx:81` calls `settleDueLots` during render, with the service-role
+`src/app/[slug]/[run]/page.tsx` calls `settleDueLots` during render, with the service-role
 client. Loading a public board page can close auctions, roll offers to the next bidder and send
 email. The comment there explains the reason (a daily cron is too slow for a close), which Phase 3
 must solve with a worker rather than a page.

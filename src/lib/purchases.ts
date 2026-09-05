@@ -5,6 +5,7 @@ import { payoutNotice, purchaseReceipt, saleNotice, sendEmail, spotTaken } from 
 import { feeCents, weeklySlices } from "@/lib/money";
 import { SITE } from "@/lib/site";
 import { stripe } from "@/lib/stripe";
+import { runUrl } from "@/lib/urls";
 
 /*
   What happens to a purchase after Stripe speaks. Called from the webhook with the service-role
@@ -36,14 +37,14 @@ type PurchaseRow = {
     mode: string;
     winner_bid_id: string | null;
     buy_now_cents: number | null;
-    runs: { id: string; title: string; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
+    runs: { id: string; slug: string; title: string; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
   };
 };
 
 async function loadPurchase(sb: Admin, id: string) {
   const { data, error } = await sb
     .from("purchases")
-    .select("id,amount_cents,fee_cents,payment_status,lot_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
+    .select("id,amount_cents,fee_cents,payment_status,lot_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,slug,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`purchase ${id}: ${error.message}`);
@@ -104,7 +105,7 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
   // Mail. Failures are logged, never fatal: the money moved, the emails can be resent.
   const act = run.acts;
   const name = lotName(p.lots);
-  const boardUrl = `${SITE.url}/board/${act.slug}`;
+  const boardUrl = runUrl(act.slug, run.slug);
   const patronEmail = session.customer_details?.email ?? p.patrons?.contact_email ?? null;
   const patronName = p.patrons?.name ?? "A patron";
   if (patronEmail) {
@@ -157,7 +158,7 @@ async function notifyBiddersSpotTaken(sb: Admin, p: PurchaseRow) {
         lotName: lotName(p.lots),
         yourCents: b.amount_cents,
         takenAtCents: p.amount_cents,
-        boardUrl: `${SITE.url}/board/${p.lots.runs.acts.slug}`,
+        boardUrl: runUrl(p.lots.runs.acts.slug, p.lots.runs.slug),
       }),
     );
     if (!r.sent) console.error("spot taken notice not sent", p.lot_id, r.reason);

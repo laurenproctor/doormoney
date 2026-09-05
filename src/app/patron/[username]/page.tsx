@@ -19,6 +19,7 @@ import {
   type PublicActivity,
   type PublicProfile,
 } from "@/lib/patronprofile";
+import { actPath } from "@/lib/urls";
 
 /*
   A patron's public page.
@@ -205,7 +206,7 @@ function ActivityRow({ item }: { item: PublicActivity }) {
       <div className="min-w-0">
         <b className="block text-[16px] font-medium">
           {live ? (
-            <Link href={`/board/${item.actSlug}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+            <Link href={actPath(item.actSlug)} className="text-accent-ink underline decoration-1 underline-offset-4">
               {item.actName}
             </Link>
           ) : (

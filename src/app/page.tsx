@@ -13,6 +13,7 @@ import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import type { Board } from "@/lib/sample";
 import { HOUSE_RULES, SITE } from "@/lib/site";
+import { runPath } from "@/lib/urls";
 
 const HOME_SURFACES = ["kick_head", "case_sticker", "strap", "tip_jar_card", "merch_runner", "posts_email"];
 
@@ -88,7 +89,7 @@ export default async function HomePage() {
               return (
                 <Link
                   key={b.act.slug}
-                  href={`/board/${b.act.slug}`}
+                  href={runPath(b.act.slug, b.run.slug)}
                   data-reveal
                   style={{ "--i": i } as CSSProperties}
                   className="lift flex flex-col gap-3 bg-ground p-7 text-ink no-underline"

@@ -8,6 +8,7 @@ import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { dashboardLinks } from "@/lib/roles";
 import { SITE } from "@/lib/site";
+import { actPath, bareActUrl } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "Account", robots: { index: false } };
 
@@ -38,8 +39,8 @@ export default async function AccountPage() {
               act && handle ? (
                 <>
                   Board:{" "}
-                  <Link href={`/board/${handle}`} className="text-accent-ink underline underline-offset-4">
-                    {SITE.url.replace(/^https?:\/\//, "")}/board/{handle}
+                  <Link href={actPath(handle)} className="text-accent-ink underline underline-offset-4">
+                    {bareActUrl(handle)}
                   </Link>
                 </>
               ) : handle ? (

@@ -7,6 +7,7 @@ import { Page } from "@/components/Page";
 import { themeFor } from "@/components/Theme";
 import { formatDateRange } from "@/lib/dates";
 import { markOpen, markSeenBy, markSurface, markTarget } from "@/lib/marks";
+import { runPath } from "@/lib/urls";
 import { MarkForm } from "./MarkForm";
 
 /*
@@ -127,7 +128,7 @@ export default async function MarkPage({ params }: Props) {
           <ButtonLink href={`/record/${p.id}`} variant="ghost" arrow>
             The record of the run
           </ButtonLink>
-          <ButtonLink href={`/board/${act.slug}`} variant="ghost">
+          <ButtonLink href={runPath(act.slug, run.slug)} variant="ghost">
             {act.name}&apos;s board
           </ButtonLink>
         </div>

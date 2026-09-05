@@ -11,6 +11,7 @@ import { CATALOG } from "@/lib/catalog";
 import { SITE } from "@/lib/site";
 import { formatMoney } from "@/lib/money";
 import { formatDateRange } from "@/lib/dates";
+import { actPath, runPath } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
   const sb = await supabaseServer();
   const { data: runs } = await sb
     .from("runs")
-    .select("id,kind,title,starts_on,ends_on,show_count,status")
+    .select("id,slug,kind,title,starts_on,ends_on,show_count,status")
     .eq("act_id", act.id)
     .neq("status", "cancelled")
     .order("starts_on", { ascending: false });
@@ -73,7 +74,7 @@ export default async function DashboardPage() {
     note: m.mark_note,
   }));
 
-  const boardHref = `/board/${act.slug}`;
+  const boardHref = current ? runPath(act.slug, current.slug) : actPath(act.slug);
   const boardLive = current && (current.status === "open" || current.status === "live");
   const snippet = `<script src="${SITE.url}/embed.js" data-act="${act.slug}"></script>`;
   const buttonSrc = `${SITE.url}/badge/button.svg?act=${encodeURIComponent(act.name)}`;

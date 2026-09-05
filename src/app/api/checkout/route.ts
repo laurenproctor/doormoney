@@ -8,6 +8,7 @@ import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
+import { runPath } from "@/lib/urls";
 
 /**
  * Starts a payment. Two kinds:
@@ -57,7 +58,7 @@ type LotRow = {
   funding_token: string | null;
   funding_deadline: string | null;
   buy_now_cents: number | null;
-  runs: { id: string; title: string; status: string; act_id: string; acts: { id: string; slug: string; name: string } };
+  runs: { id: string; slug: string; title: string; status: string; act_id: string; acts: { id: string; slug: string; name: string } };
 };
 
 export async function POST(req: Request) {
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
 
   const { data: lotData, error: lotError } = await sb
     .from("lots")
-    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,runs!inner(id,title,status,act_id,acts!inner(id,slug,name))")
+    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,runs!inner(id,slug,title,status,act_id,acts!inner(id,slug,name))")
     .eq("id", input.lotId)
     .maybeSingle();
   if (lotError) return fail("That did not load. Try once more.", 500);
@@ -145,7 +146,7 @@ export async function POST(req: Request) {
       amountCents: amount,
       description: `${lotName(lot)}, ${act.name}, ${lot.runs.title}`,
       patronEmail: email,
-      returnUrl: `${origin}/board/${act.slug}?paid={CHECKOUT_SESSION_ID}`,
+      returnUrl: `${origin}${runPath(act.slug, lot.runs.slug)}?paid={CHECKOUT_SESSION_ID}`,
     });
     await sb.from("purchases").update({ stripe_checkout_session_id: session.id }).eq("id", purchase.id);
     return NextResponse.json({ clientSecret: session.client_secret });

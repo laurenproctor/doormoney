@@ -1,4 +1,5 @@
 "use server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -7,6 +8,8 @@ import { cancelRun as cancelRunForReal } from "@/lib/refunds";
 import { stripeConfigured } from "@/lib/stripe";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { publishBlockers } from "@/lib/readiness";
+import { slugify } from "@/lib/slug";
+import { actPath, runPath } from "@/lib/urls";
 
 export type RunField = "kind" | "title" | "starts_on" | "ends_on" | "show_count" | "expected_attendance" | "bidding_closes_at";
 export type RunState = { ok: boolean; errors?: Partial<Record<RunField | "form", string>> };
@@ -38,6 +41,37 @@ const Input = z
     path: ["bidding_closes_at"],
     message: "Bidding has to close by the end of the run.",
   });
+
+/**
+ * The two public pages a run change can leave stale: the act's page, which lists the runs, and the
+ * run's own board. The word is read back rather than passed in, so this is right whichever action
+ * calls it and whatever the caller had in hand.
+ */
+async function revalidateBoards(sb: SupabaseClient, actSlug: string, runId: string) {
+  revalidatePath(actPath(actSlug));
+  const { data } = await sb.from("runs").select("slug").eq("id", runId).maybeSingle();
+  const runSlug = (data as { slug: string } | null)?.slug;
+  if (runSlug) revalidatePath(runPath(actSlug, runSlug));
+}
+
+/**
+ * The run's own word, taken from the name the musician gave it: "Europe Tour" becomes
+ * "europe-tour" and the page is at /gutter-hymns/support-europe-tour.
+ *
+ * Unique inside the act, not across the site, so two acts may both run a "fall-tour". Migration
+ * 0025 freezes the word once the run leaves draft, because by then it is a link somebody holds.
+ */
+async function runSlugFor(sb: SupabaseClient, actId: string, title: string, runId: string | null) {
+  const base = slugify(title) || "run";
+  const { data } = await sb.from("runs").select("id,slug").eq("act_id", actId);
+  const taken = new Set(((data ?? []) as { id: string; slug: string }[]).filter((r) => r.id !== runId).map((r) => r.slug));
+  if (!taken.has(base)) return base;
+  for (let n = 2; n < 1000; n++) {
+    const candidate = `${base.slice(0, 36)}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${base.slice(0, 32)}-${Date.now().toString(36).slice(-4)}`;
+}
 
 const str = (form: FormData, key: string) => {
   const v = form.get(key);
@@ -77,15 +111,22 @@ export async function saveRun(_prev: RunState, form: FormData): Promise<RunState
   if (runId) {
     // The id came from the form, so the act this account owns is part of the filter as well as
     // part of the row. A run belonging to somebody else matches nothing and changes nothing.
-    const { error } = await sb.from("runs").update(row).eq("id", runId).eq("act_id", act.id);
+    //
+    // A draft's address still follows its name. Once the run is published the name may still
+    // change, but the address does not: it is a link on a poster by then, and 0025 refuses it.
+    const { data: before } = await sb.from("runs").select("status").eq("id", runId).eq("act_id", act.id).maybeSingle();
+    const draft = (before as { status: string } | null)?.status === "draft";
+    const patch = draft ? { ...row, slug: await runSlugFor(sb, act.id, parsed.data.title, runId) } : row;
+    const { error } = await sb.from("runs").update(patch).eq("id", runId).eq("act_id", act.id);
     if (error) return { ok: false, errors: { form: "That did not save. Try once more." } };
     revalidatePath("/dashboard");
     revalidatePath(`/dashboard/runs/${runId}`);
-    revalidatePath(`/board/${act.slug}`);
+    await revalidateBoards(sb, act.slug, runId);
     return { ok: true };
   }
 
-  const { data, error } = await sb.from("runs").insert({ ...row, status: "draft" }).select("id").single();
+  const slug = await runSlugFor(sb, act.id, parsed.data.title, null);
+  const { data, error } = await sb.from("runs").insert({ ...row, slug, status: "draft" }).select("id").single();
   if (error || !data) return { ok: false, errors: { form: "That did not save. Try once more." } };
   revalidatePath("/dashboard");
   redirect(`/dashboard/runs/${data.id}`);
@@ -132,7 +173,7 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
   if (error) return { ok: false, error: "That did not publish. Try once more." };
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
-  revalidatePath(`/board/${act.slug}`);
+  await revalidateBoards(sb, act.slug, runId);
   revalidatePath("/auctions");
   return { ok: true };
 }
@@ -151,7 +192,7 @@ export async function unpublishRun(runId: string): Promise<{ ok: boolean; error?
   if (error) return { ok: false, error: "That did not save. Try once more." };
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
-  revalidatePath(`/board/${act.slug}`);
+  await revalidateBoards(sb, act.slug, runId);
   revalidatePath("/auctions");
   return { ok: true };
 }
@@ -175,7 +216,7 @@ export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: s
   if (!r.ok) return { ok: false, error: r.error };
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
-  revalidatePath(`/board/${act.slug}`);
+  await revalidateBoards(sb, act.slug, runId);
   revalidatePath("/auctions");
   return { ok: true, refundedCents: r.refundedCents, patrons: r.patrons, ...(r.errors.length ? { error: `${r.errors.length} refund${r.errors.length === 1 ? "" : "s"} did not go through. Door Money has the details.` } : {}) };
 }

@@ -23,12 +23,12 @@ export type MarkTarget = {
   lots: {
     label: string | null;
     surface_key: string;
-    runs: { title: string; kind: string; status: string; starts_on: string; ends_on: string; acts: { name: string; slug: string } };
+    runs: { slug: string; title: string; kind: string; status: string; starts_on: string; ends_on: string; acts: { name: string; slug: string } };
   };
 };
 
 const SELECT =
-  "id,payment_status,mark_status,mark_url,mark_text,mark_note,patrons(name),lots!inner(label,surface_key,runs!inner(title,kind,status,starts_on,ends_on,acts!inner(name,slug)))";
+  "id,payment_status,mark_status,mark_url,mark_text,mark_note,patrons(name),lots!inner(label,surface_key,runs!inner(slug,title,kind,status,starts_on,ends_on,acts!inner(name,slug)))";
 
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

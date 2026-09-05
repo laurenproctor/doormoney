@@ -5,6 +5,7 @@ import { backingNotice, backingReceipt, sendEmail } from "@/lib/email";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
+import { runUrl } from "@/lib/urls";
 
 /*
   Fan backings: the $25 and $100 tiers on the widget (docs/DECISIONS.md, decision 3). Not lots.
@@ -26,13 +27,13 @@ type BackingRow = {
   tier: string;
   display_name: string;
   patrons: { name: string; contact_email: string } | null;
-  runs: { id: string; title: string; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
+  runs: { id: string; slug: string; title: string; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
 };
 
 async function loadBacking(sb: Admin, id: string) {
   const { data, error } = await sb
     .from("backings")
-    .select("id,amount_cents,fee_cents,payment_status,tier,display_name,patrons(name,contact_email),runs!inner(id,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id))")
+    .select("id,amount_cents,fee_cents,payment_status,tier,display_name,patrons(name,contact_email),runs!inner(id,slug,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id))")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`backing ${id}: ${error.message}`);
@@ -72,7 +73,7 @@ export async function fulfilBacking(sb: Admin, pi: Stripe.PaymentIntent) {
 
   const act = run.acts;
   const place = tierPlace(b.tier);
-  const boardUrl = `${SITE.url}/board/${act.slug}`;
+  const boardUrl = runUrl(act.slug, run.slug);
   const fanEmail = pi.receipt_email ?? b.patrons?.contact_email ?? null;
   if (fanEmail) {
     const r = await sendEmail(backingReceipt({ to: fanEmail, displayName: b.display_name, actName: act.name, runTitle: run.title, place, amountCents: b.amount_cents, boardUrl, recordUrl: `${SITE.url}/record/${b.id}` }));
