@@ -10,11 +10,14 @@ import type { Board } from "@/lib/sample";
 import { runPath } from "@/lib/urls";
 
 export const metadata: Metadata = {
-  title: "Live boards",
-  description: "Every open board on Door Money: the musicians accepting backing now, what has sold and been bid so far, and when bidding closes.",
+  title: "Fundraisers",
+  description: "Every open fundraiser on Door Money: the musicians raising now, what has sold and been bid so far, and when bidding closes.",
 };
 
-// The route stays /auctions. In copy the page is Live boards: each placement is fixed price or open to bids.
+// The route stays /auctions, because that address is already in sent email and in pasted widget
+// snippets; decision 13 settled that an address outlives the words on the page. In copy this is
+// Fundraisers, and not everything on it is an auction: each sponsorship is fixed price or open to
+// bids, and the musician decides which. See docs/DECISIONS.md, decision 14.
 
 const KIND: Record<Board["act"]["type"], (city: string) => string> = {
   touring_band: () => "Band, touring",
@@ -24,19 +27,20 @@ const KIND: Record<Board["act"]["type"], (city: string) => string> = {
 
 export default async function AuctionsPage() {
   const boards = await listOpenBoards();
-  const count = boards.length === 1 ? "One board is" : `${boards.length} boards are`;
+  const count = boards.length === 1 ? "One fundraiser is" : `${boards.length} fundraisers are`;
 
   return (
     <Page
       theme="magenta"
       current="/auctions"
-      eyebrow="Musicians accepting backing now"
-      title="Live"
-      accent="boards"
+      eyebrow="Musicians raising now"
+      title="Open"
+      accent="fundraisers"
       intro={
         <p>
-          Every open board on Door Money: who&apos;s playing, what has sold and been bid so far, and when bidding
-          closes. Each placement is fixed price or open to bids; the musician decides which. {count} up this week.
+          Every open fundraiser on Door Money: who&apos;s playing, what has sold and been bid so far, and when
+          bidding closes. Each sponsorship is fixed price or open to bids; the musician decides which. {count} up
+          this week.
         </p>
       }
     >
@@ -65,23 +69,23 @@ export default async function AuctionsPage() {
                   {clockOf(b.run.biddingClosesAt)}
                 </div>
               )}
-              <ButtonLink href={runPath(b.act.slug, b.run.slug)} className="self-start">See the board</ButtonLink>
+              <ButtonLink href={runPath(b.act.slug, b.run.slug)} className="self-start">See the fundraiser</ButtonLink>
             </div>
           );
         })}
 
         <div className="edge flex flex-col items-start justify-center gap-3.5 bg-panel px-[26px] py-7 text-ink ">
           <div className="caps text-[14.5px] text-accent-ink">Any musician</div>
-          <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">The next board is open</div>
+          <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">The next fundraiser is open</div>
           <div className="text-[14.5px] leading-[1.7] text-muted">
-            Bands, house acts, soloists. Musicians choose what goes on the board, set the prices and keep the final
+            Bands, house acts, soloists. Musicians choose what they offer, set the prices and keep the final
             say.
           </div>
           <ButtonLink href="/list" className="self-start">List an act</ButtonLink>
         </div>
       </div>
 
-      <NewsletterCTA source="auctions" eyebrow="The next board" />
+      <NewsletterCTA source="auctions" eyebrow="The next fundraiser" />
     </Page>
   );
 }

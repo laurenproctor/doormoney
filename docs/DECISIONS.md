@@ -243,13 +243,16 @@ The mapping:
 - placement is kept but narrowed: only the place a sponsor appears, never the thing being bought
 - lot is unchanged, and stays in the database where it already lives
 
-**Sponsor and patron both stay, and divide by tense.** They were never synonyms, and treating them as rivals is what made this look like a choice.
+**Sponsor and patron both stay, and divide by the kind of transaction.** They were never synonyms, and treating them as rivals is what made this look like a choice.
 
-- Before the money, and in anything a stranger reads first, the role is **sponsor**. A person sponsors a musician. This is the word a business owner would search for and the one they would use with their bookkeeper.
-- After the money, and whenever the sentence is about the person rather than the transaction, they are a **patron**: their account, their page, the musicians they have backed.
-- The test: an invitation says sponsor, a fact about somebody who has already paid says patron.
+- **Patron** is the umbrella. Anyone on the paying side is a patron, at any stage: before the money, after it, fan or business. It is what the `patrons` table holds, what `/patron` is, and it is the company's whole thesis.
+- **Sponsor** is a patron whose money buys a sponsorship, which in practice means a business or a brand taking a placement. Use it wherever the subject is that transaction: the sponsorship pages, the sponsorship options, the approval flow. It is also the word a business owner would search for and use with their bookkeeper.
+- **Backer** is a patron whose money is a backing, the fan tier through the widget. A backing is not a sponsorship, so a fan was never a sponsor.
+- The test: name the transaction and the noun follows. If nothing in the sentence is a sponsorship, the person is a patron.
 
-This keeps `/patron/<username>`, the `patrons` table, `profiles.roles` and decision 10 exactly as they are, and still lets the front door use the plain word.
+This keeps `/patron/<username>`, the `patrons` table, `profiles.roles` and decision 10 exactly as they are.
+
+**Amended (2026-09-04):** this rule first split the two words by tense, sponsor before the money and patron after. Building the sign-up page showed that was the wrong axis. It had no word at all for a fan at the invitation stage, and it forced "sponsor" onto somebody putting $25 into a backing, which this same decision says is not a sponsorship. The kind of transaction is what the two words were always tracking; the tense was a proxy for it that broke as soon as a page had to address both sides at once.
 
 **Addresses outlive words.** Routes and columns keep their names even where the copy changes. `/mark/<id>` is in receipts already sent, `/auctions` is in sent email, and `/board/<act>` is on printed stickers (decision 13). Change what a page says, not where it lives. `/placements` was the one exception, renamed to `/how-sponsorship-works` while nothing was public yet.
 
@@ -257,11 +260,14 @@ So these are not renamed, and never by a repo-wide replace: `runs`, `lots`, `act
 
 **Applied page by page, not all at once.** `/how-sponsorship-works` is written in the new vocabulary; every other page still carries the old one. A session that touches a page converts that page and leaves the rest alone. `src/lib/email.ts` holds more of the old vocabulary than any other single file and reaches people who have already paid, so it is the first target after the marketing pages.
 
-**Still open**, and deliberately not settled here, because each is a conversion question rather than a copy one:
+**Settled since (2026-09-04):**
+
+- The browse page is **Fundraisers**. The route stays `/auctions`, because that address is already in sent email and in pasted widget snippets, and decision 13 settled that an address outlives the words on the page. Not everything on it is an auction, and the copy no longer implies it is: each sponsorship is fixed price or open to bids, and the musician decides which.
+- **"Widget" leaves the site nav** and moves into the musician's dashboard as "On your site". The page is worth nothing to somebody without a fundraiser to embed, and the snippet itself was already on the dashboard overview. `/widget` is unchanged.
+
+**Still open**, and deliberately not settled here, because it is a conversion question rather than a copy one:
 
 - Whether "List an act" survives as the primary musician call to action. It is clear enough, and it is on every page.
-- What the browse page is called. The route says `/auctions`, the title says "Live boards", and the page is a mix of fixed prices and bidding, so it has three names and none of them fits. "Boards" is gone either way.
-- Whether "Widget" survives in the nav. It is a word for the person building the thing, not for the musician installing it.
 
 The cost is a stretch of time where the site says two things at once. That is the price of not doing a big-bang rewrite across every page and every email, and it is smaller than the cost of a stranger bouncing off "board" on the way in.
 

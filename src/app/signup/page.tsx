@@ -13,7 +13,7 @@ export default async function SignUpPage({ searchParams }: Props) {
 
   return (
     <AuthShell
-      eyebrow="Musicians and sponsors"
+      eyebrow="Musicians and patrons"
       title="Create your"
       accent="account"
       // A beam crossing behind the form would otherwise change what its labels sit on.

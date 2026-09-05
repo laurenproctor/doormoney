@@ -29,10 +29,17 @@ export const SITE = {
   contact: "hello@doormoney.co",
 } as const;
 
+/*
+  The top bar, and the footer's column of the same links.
+
+  "Widget" is not here on purpose. It is a word for the person building the thing rather than the
+  musician installing it, and the page it points at is only useful to somebody who already has a
+  fundraiser, so it lives in the dashboard instead (MUSICIAN_LINKS in src/lib/roles.ts).
+  See docs/DECISIONS.md, decision 14.
+*/
 export const NAV = [
   { href: "/how-sponsorship-works", label: "How sponsorship works" },
-  { href: "/auctions", label: "Live boards" },
-  { href: "/widget", label: "Widget" },
+  { href: "/auctions", label: "Fundraisers" },
   { href: "/list", label: "List an act" },
   { href: "/contact", label: "Contact" },
 ] as const;

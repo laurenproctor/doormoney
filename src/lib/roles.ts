@@ -65,6 +65,10 @@ const MUSICIAN_LINKS = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/act", label: "The act" },
   { href: "/dashboard/payouts", label: "Payouts" },
+  // The widget, named for what it does. Dropped from the site nav (decision 14) and kept here,
+  // because it is only worth anything to somebody who already has a fundraiser to embed. The
+  // snippet itself is on the overview; this is the page that explains where to paste it.
+  { href: "/widget", label: "On your site" },
 ] as const;
 
 const PATRON_LINKS = [

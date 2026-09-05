@@ -4,9 +4,9 @@ import { NewsletterForm } from "@/components/NewsletterForm";
 
 /** The pitch, in one place so every page says the same thing. */
 export const NEWSLETTER = {
-  eyebrow: "New boards by email",
-  title: "The next musician, before the placements go.",
-  body: "New musicians open boards on Door Money every week: a band about to tour, a house act starting a residency, a soloist booking a season. One short email says who they are, where they play and what is still open to back. Never more than once a week, nothing else in it.",
+  eyebrow: "New fundraisers by email",
+  title: "The next musician, before the sponsorships go.",
+  body: "New musicians open fundraisers on Door Money every week: a band about to tour, a house act starting a residency, a soloist booking a season. One short email says who they are, where they play and what is still open to back. Never more than once a week, nothing else in it.",
   fine: "Every email has an unsubscribe link. Door Money never shares an address.",
 } as const;
 
@@ -50,7 +50,7 @@ export function NewsletterStrip({ source }: { source: string }) {
       <div>
         <p className="caps text-[14px] text-accent-ink">New musicians, by email</p>
         <p className="mt-2 max-w-[48ch] text-[14.5px] leading-[1.7] text-muted">
-          One short email the week a new board opens: who they are, where they play, what is open to back.
+          One short email the week a new fundraiser opens: who they are, where they play, what is open to back.
         </p>
       </div>
       {/* Never wider than the column it sits in above lg, so the field does not stretch when the strip stacks. */}
