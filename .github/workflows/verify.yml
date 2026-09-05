@@ -1,10 +1,15 @@
 # The gate every change goes through: lint, types, unit tests, production build, from a clean
 # checkout on the Node version .nvmrc names.
 #
+# The second job is the Phase 1 security gate: every migration and the seed applied to a throwaway
+# Postgres, then supabase/tests/permissions_test.sql. It runs here because the suite existed for a
+# while without CI running it, and migration 0022 reached production with a hole in it.
+#
 # This workflow takes no secrets, on purpose. The app is built to run without them (sample data,
 # pretend forms), so a build here can never reach Supabase, Stripe or Resend. The two values below
-# are obvious CI-only placeholders. If a future change makes the build need a real credential,
-# fix the build, do not add a secret to this file.
+# are obvious CI-only placeholders. The database job talks only to a container it starts itself.
+# If a future change makes the build need a real credential, fix the build, do not add a secret
+# to this file.
 
 name: Verify
 
@@ -60,3 +65,18 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+  database:
+    name: Database permissions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the commit
+        uses: actions/checkout@v5
+
+      # Starts its own postgres container, installs pgTAP, applies supabase/tests/bootstrap.sql,
+      # every migration in order and the seed, then runs the suite. The script fails on a plan that
+      # does not match the assertions that ran, so a file that aborts early cannot report green.
+      - name: Data API permissions
+        run: npm run test:db:docker
