@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { periodOf } from "@/lib/periods";
 import { loadStripe, type Appearance } from "@stripe/stripe-js";
 import { elementsAppearance } from "@/lib/stripeAppearance";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -21,7 +22,8 @@ export function EmbedClient(p: {
   actName: string;
   runTitle: string;
   showCount: number;
-  season: boolean;
+  /** runs.kind, so the widget names the tour or the season rather than calling it a run. */
+  kind: string;
   backedLabel: string;
   goalLabel: string | null;
   progress: number;
@@ -59,7 +61,7 @@ export function EmbedClient(p: {
   }, [done, tier, clientSecret]);
 
   const chosen = tier === "placement" ? null : tier;
-  const unit = p.season ? "gigs" : "shows";
+  const period = periodOf(p.kind);
   const tierClass = (on: boolean) =>
     `grid cursor-pointer grid-cols-[72px_1fr] items-center gap-3 border px-3 py-2.5 text-left transition-colors ${
       on ? "border-accent bg-accent/10" : "border-line bg-transparent hover:border-ink/50"
@@ -100,7 +102,7 @@ export function EmbedClient(p: {
   return (
     <div ref={root} className="lit mx-auto max-w-[380px] bg-ground text-ink">
       <div className="caps flex items-center justify-between gap-3 border-b border-line px-4 py-3 text-[14px]">
-        <span>Back the {p.season ? "season" : "run"}</span>
+        <span>Back the {period.noun}</span>
         <span className="text-accent-ink">Door Money</span>
       </div>
 
@@ -109,7 +111,7 @@ export function EmbedClient(p: {
           <div className="caps lit mx-auto mb-4 flex h-[104px] w-[104px] items-center justify-center rounded-full border border-accent/70 text-[14px] text-accent-ink">Backed</div>
           <p className="max-w-none text-[14.5px] leading-[1.6]">
             <b>{done.label} to {p.actName}.</b>
-            <br />A receipt is on its way, and the name goes on {done.place} when the {p.season ? "season" : "run"} wraps.
+            <br />A receipt is on its way, and the name goes on {done.place} when the {period.noun} ends.
           </p>
         </div>
       ) : (
@@ -117,7 +119,7 @@ export function EmbedClient(p: {
           <div className="px-4 pt-4">
             <b className="heading block text-[22px] leading-none">{p.actName}</b>
             <span className="caps mt-1.5 block text-[14px] text-muted">
-              {p.runTitle}. {p.showCount} {unit}.
+              {p.runTitle}. {p.showCount} {period.units}.
             </span>
           </div>
           {p.goalLabel ? (
@@ -167,8 +169,8 @@ export function EmbedClient(p: {
                     $500<small className="caps mt-1 block text-[14px] text-muted">and up</small>
                   </span>
                   <span>
-                    <b className="block text-[14.5px] font-medium leading-tight">Take a placement</b>
-                    <span className="block text-[14px] leading-snug text-muted">Kick head, cases, straps, posts. Opens the musician&apos;s board on Door Money.</span>
+                    <b className="block text-[14.5px] font-medium leading-tight">Take a sponsorship</b>
+                    <span className="block text-[14px] leading-snug text-muted">Kick head, cases, straps, posts. Opens the musician&apos;s page on Door Money.</span>
                   </span>
                 </button>
               </div>
@@ -183,7 +185,7 @@ export function EmbedClient(p: {
 
               {tier === "placement" ? (
                 <a href={p.boardUrl} target="_blank" rel="noopener" className={`${cta} mx-4 w-[calc(100%-32px)]`}>
-                  Open the board <span aria-hidden="true" className="text-[16px] leading-none">&rarr;</span>
+                  Open the fundraiser <span aria-hidden="true" className="text-[16px] leading-none">&rarr;</span>
                 </a>
               ) : (
                 <button type="submit" disabled={pending || !p.paymentsOpen} className={`${cta} mx-4 w-[calc(100%-32px)]`}>
@@ -196,7 +198,7 @@ export function EmbedClient(p: {
                 </p>
               )}
               <p className="max-w-none px-4 pb-4 pt-3 text-[14px] leading-[1.6] text-muted">
-                Door Money holds the money and pays the musician weekly through the {p.season ? "season" : "run"}. Refunded in full if it is cancelled.
+                Door Money holds the money and pays the musician weekly through the {period.noun}. Refunded in full if it is cancelled.
               </p>
             </form>
           )}

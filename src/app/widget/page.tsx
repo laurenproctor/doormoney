@@ -22,9 +22,9 @@ const DEMO_CITIES =
   "Providence, Boston, Portland, Burlington, Albany, Kingston, Brooklyn, Philadelphia, Baltimore, Richmond, Asheville, Nashville, Louisville, Cincinnati, Columbus, Pittsburgh, Buffalo, Rochester.";
 
 const INSTALL: [string, string][] = [
-  ["Copy the snippet", "It appears on the Door Money dashboard the moment the board is live. Same snippet for every page it goes on."],
+  ["Copy the snippet", "It appears on the Door Money dashboard the moment the fundraiser is live. Same snippet for every page it goes on."],
   ["Paste it into the site", "Squarespace, WordPress, Wix, Webflow, Carrd, Shopify, a hand-built site. Anywhere that takes an embed block or custom HTML."],
-  ["The widget keeps itself current", "When the run changes, the totals change, or a new board opens, the widget updates on its own. Nobody touches the code again."],
+  ["The widget keeps itself current", "When the dates change, the totals change, or a new fundraiser opens, the widget updates on its own. Nobody touches the code again."],
 ];
 
 const FACTS: [string, string][] = [
@@ -154,7 +154,7 @@ export default async function WidgetPage() {
             <text x="36" y="70" fill="var(--muted)" stroke="none" fontFamily="var(--font-archivo),Helvetica,sans-serif" fontSize="12">Shows the widget. Cannot read inside it.</text>
             <rect x="60" y="92" width="320" height="196" stroke="var(--accent)" />
             <text x="76" y="120" fill="var(--accent)" stroke="none" fontFamily="var(--font-bodoni),Georgia,serif" fontSize="19" letterSpacing="0.5">DOOR MONEY FRAME</text>
-            <text x="76" y="142" fill="var(--muted)" stroke="none" fontFamily="var(--font-archivo),Helvetica,sans-serif" fontSize="12">Served by Door Money. Holds the run, the tiers, the name.</text>
+            <text x="76" y="142" fill="var(--muted)" stroke="none" fontFamily="var(--font-archivo),Helvetica,sans-serif" fontSize="12">Served by Door Money. Holds the fundraiser, the tiers, the name.</text>
             <rect x="100" y="164" width="240" height="100" fill="var(--accent)" />
             <text x="116" y="192" fill="var(--on-accent)" stroke="none" fontFamily="var(--font-bodoni),Georgia,serif" fontSize="19" letterSpacing="0.5">CARD FIELD</text>
             <text x="116" y="214" fill="var(--on-accent)" stroke="none" fontFamily="var(--font-archivo),Helvetica,sans-serif" fontSize="12">Served by the payment processor.</text>
@@ -204,7 +204,7 @@ export default async function WidgetPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="List an act">The widget comes with the board</SectionHead>
+        <SectionHead eyebrow="List an act">The widget comes with the fundraiser</SectionHead>
         <p className="text-muted">
           Every musician who lists on Door Money gets the snippet and the link button on day one. Nothing extra to set
           up, nothing extra to pay.

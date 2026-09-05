@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Frames /embed/[slug] the way embed.js does on an act's own site, including the resize message.
- * `source` tells the embed where the backing came from ("board" when the board itself frames it).
+ * Frames /embed/[slug] the way embed.js does on a musician's own site, including the resize message.
+ * `source` tells the embed where the backing came from; it is a backings.source column value, so it
+ * still says "board" when the fundraiser's own page is the thing framing it.
  */
 export function WidgetFrame({
   slug,
@@ -14,7 +15,7 @@ export function WidgetFrame({
   slug: string;
   actName: string;
   source?: "widget" | "board";
-  /** The board's own light, so the frame matches the page around it. */ theme?: string;
+  /** The page's own light, so the frame matches what is around it. */ theme?: string;
 }) {
   const query = new URLSearchParams();
   if (source === "board") query.set("source", "board");
