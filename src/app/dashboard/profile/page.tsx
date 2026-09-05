@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
 import { ActivityList, ProfileDetailsForm, PublishForm, UsernameForm } from "@/components/ProfileForms";
 import { currentProfile, ownedAct, requireUser } from "@/lib/auth";
+import { fullName } from "@/lib/names";
 import { dashboardLinks } from "@/lib/roles";
 import { SITE } from "@/lib/site";
 import { formatDay, nextUsernameChange, usernameChangeAllowed } from "@/lib/profile";
@@ -43,7 +44,7 @@ export default async function ProfileSettingsPage() {
     <DashboardShell
       current="/dashboard/profile"
       links={dashboardLinks({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
-      actName={act?.name ?? profile?.display_name ?? null}
+      actName={act?.name ?? fullName(profile)}
       eyebrow="The public profile"
       title="What the room"
       accent="sees"

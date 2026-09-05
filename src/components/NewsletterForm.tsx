@@ -8,8 +8,9 @@ import { subscribeNewsletter, type NewsletterState } from "@/app/actions/newslet
 const initial: NewsletterState = { ok: false };
 
 /**
- * One field, one button: the new-boards email. `source` records which page the address came from.
- * `compact` is the footer strip: a single row, no seal on success.
+ * A first name, an address and a button: the new-boards email. Both fields are required, so the
+ * email can open by name. `source` records which page the address came from. `compact` is the
+ * footer strip, which keeps the two fields and the button on one row where there is space.
  */
 export function NewsletterForm({ source, compact = false }: { source: string; compact?: boolean }) {
   const [state, action, pending] = useActionState(subscribeNewsletter, initial);
@@ -38,6 +39,18 @@ export function NewsletterForm({ source, compact = false }: { source: string; co
         <input id={`${id}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
       <div className="flex flex-wrap gap-2.5">
+        <label htmlFor={`${id}-first-name`} className="sr-only">First name</label>
+        <input
+          id={`${id}-first-name`}
+          name="first_name"
+          type="text"
+          autoComplete="given-name"
+          placeholder="First name"
+          required
+          aria-invalid={state.error ? true : undefined}
+          aria-describedby={state.error ? `${id}-error` : undefined}
+          className={`edge min-w-[140px] flex-1 bg-panel px-3.5 text-[15px] focus:border-accent focus:outline-none ${compact ? "py-2.5" : "py-3"}`}
+        />
         <label htmlFor={`${id}-email`} className="sr-only">Email</label>
         <input
           id={`${id}-email`}

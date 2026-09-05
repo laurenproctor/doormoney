@@ -79,13 +79,19 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
       </fieldset>
       )}
 
-      <label htmlFor="signup-name" className={labelClass}>Name</label>
-      <input id="signup-name" name="display_name" type="text" autoComplete="name" required className={fieldClass} />
-      {errors.display_name ? (
-        <p className="mb-[18px] mt-2 text-[14.5px] text-accent-ink">{errors.display_name}</p>
-      ) : (
-        <p className="mb-[18px] mt-2 text-[14px] text-muted">A person or a business. It goes on the thank-you, never on a bill.</p>
-      )}
+      <div className="grid gap-x-5 sm:grid-cols-2">
+        <div>
+          <label htmlFor="signup-first-name" className={labelClass}>First name</label>
+          <input id="signup-first-name" name="first_name" type="text" autoComplete="given-name" required className={fieldClass} />
+          {errors.first_name && <p className="mt-2 text-[14.5px] text-accent-ink">{errors.first_name}</p>}
+        </div>
+        <div>
+          <label htmlFor="signup-last-name" className={labelClass}>Last name</label>
+          <input id="signup-last-name" name="last_name" type="text" autoComplete="family-name" required className={fieldClass} />
+          {errors.last_name && <p className="mt-2 text-[14.5px] text-accent-ink">{errors.last_name}</p>}
+        </div>
+      </div>
+      <p className="mb-[18px] mt-2 text-[14px] text-muted">The person holding the account. A band or a business gets its own name later.</p>
 
       <label htmlFor="signup-email" className={labelClass}>Email</label>
       <input id="signup-email" name="email" type="email" autoComplete="email" required className={fieldClass} />

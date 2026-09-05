@@ -4,6 +4,7 @@ import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { NewPasswordForm } from "@/components/PasswordForms";
 import { Lines } from "@/components/Brand";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
+import { fullName } from "@/lib/names";
 import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { dashboardLinks } from "@/lib/roles";
@@ -33,7 +34,7 @@ export default async function AccountPage() {
           <CardHead eyebrow="Who this is">The details on file</CardHead>
           <Lines
             lines={[
-              <>Name: <b>{profile?.display_name ?? "not set yet"}</b></>,
+              <>Name: <b>{fullName(profile) ?? "not set yet"}</b></>,
               <>Email: <b>{user.email}</b></>,
               <>Username: <b>{handle ?? "none yet, and none is needed"}</b></>,
               act && handle ? (

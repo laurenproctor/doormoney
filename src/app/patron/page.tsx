@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { requireUser, currentProfile, ownedAct } from "@/lib/auth";
+import { fullName } from "@/lib/names";
 import { backedBy, type PlacedBid } from "@/lib/backed";
 import { dashboardLinks } from "@/lib/roles";
 import { formatMoney } from "@/lib/money";
@@ -46,7 +47,7 @@ export default async function PatronPage() {
   const user = await requireUser("/patron");
   const [profile, act] = await Promise.all([currentProfile(user.id), ownedAct(user.id)]);
   const backed = await backedBy(user.id, profile?.email ?? user.email);
-  const name = profile?.display_name ?? "Patron";
+  const name = fullName(profile) ?? "Patron";
   const nothing = backed.placements.length === 0 && backed.runs.length === 0 && backed.bids.length === 0;
 
   return (
