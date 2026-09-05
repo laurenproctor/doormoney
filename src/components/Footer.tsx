@@ -33,9 +33,9 @@ export function Footer({ note }: { note?: string }) {
           <NewsletterStrip source="footer" />
         </div>
 
-        <div className="grid gap-12 border-t border-line pt-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:gap-14">
+        <div className="grid gap-12 border-t border-line pt-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-14">
           <div>
-            <Logo className="h-[64px] w-auto text-ink max-md:h-[52px]" />
+            <Logo className="h-[64px] w-auto text-ink max-lg:max-w-full max-md:h-[52px]" />
             <p className="mt-5 max-w-[40ch] text-[15px] leading-[1.7]">{SITE.tagline}</p>
             <p className="mt-3 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">
               A patronage market for working musicians. Local businesses, brands and fans put money behind a run; Door
