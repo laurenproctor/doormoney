@@ -5,20 +5,21 @@ import { Section, SectionHead } from "@/components/Brand";
 import { Page } from "@/components/Page";
 import { themeFor } from "@/components/Theme";
 import { flagTarget } from "@/lib/flags";
+import { periodOf } from "@/lib/periods";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { FlagForm } from "./FlagForm";
 
 /*
   "I don't think this ran." The patron's side of Phase 6. Reached from the record and from the
   receipt email, and it needs no account: the id is the same unguessable one the record uses.
-  Raising the flag holds every payment still to go out on this placement, and nothing else.
+  Raising the flag holds every payment still to go out on this sponsorship, and nothing else.
 */
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
-export const metadata: Metadata = { title: "Something is wrong with this run", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Something is wrong with this fundraiser", robots: { index: false, follow: false } };
 
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -29,7 +30,7 @@ export default async function FlagPage({ params }: Props) {
   if (!target) notFound();
 
   const open = Boolean(target.flagged_at && !target.flag_cleared_at);
-  const period = target.season ? "season" : "run";
+  const period = periodOf(target.kind).noun;
   const recordHref = `/record/${id}`;
 
   return (
@@ -52,7 +53,7 @@ export default async function FlagPage({ params }: Props) {
             </p>
           ) : (
             <p className="mt-5">
-              A placement is paid for before the {period} starts, and the money reaches {target.actName} week by week as it goes on. If the {period} stops
+              A sponsorship is paid for before the {period} starts, and the money reaches {target.actName} week by week as it goes on. If the {period} stops
               happening, saying so here holds the rest of it.
             </p>
           )}

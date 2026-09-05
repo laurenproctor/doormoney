@@ -105,7 +105,8 @@ The rule is convert a page when you touch it, never a repo-wide replace. This li
 - [x] A musician's page at `/[slug]` and a fundraiser's page at `/[slug]/[run]`, including `BoardView`, `BoardLots`, `BidForm`, the sample backers and `PlacementVerification`. The period is named from `runs.kind` through `src/lib/periods.ts` rather than branching on "season or run" in nine places
 - [ ] The dashboard: the run pages, the readiness checklist, the widget panel
 - [ ] The patron pages: `/patron`, `/patron/[username]`, `/dashboard/profile`
-- [ ] Emails in `src/lib/email.ts` and the record at `/record/[id]`
+- [x] Emails in `src/lib/email.ts`, the record at `/record/[id]` and the flag page under it. Mail already sent keeps the words it was sent with; only new mail changes. Emails carry a fundraiser's title but not its kind, so they say "the fundraiser" where a page would name the tour or the season
+- [ ] The widget itself (`/embed/[slug]`, `EmbedClient`). Missed when this list was written: it is neither the `/widget` marketing page nor a page of the site, but it is the surface a fan reads before paying
 - [ ] The legal pages, which name placements and boards throughout
 - [ ] `/list` and `/widget`, the two pages that speak only to musicians
 - [ ] Retire the last of "board" from copy, and check `Logo.tsx` was left alone: "mark" there means the wordmark
