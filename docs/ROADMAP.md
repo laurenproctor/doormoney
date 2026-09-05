@@ -107,9 +107,9 @@ The rule is convert a page when you touch it, never a repo-wide replace. This li
 - [x] `/mark/<id>` and its form. Not on this list originally, and it had to come with the emails: they now say "send the logo" and link straight to it
 - [ ] The patron pages: `/patron`, `/patron/[username]`, `/dashboard/profile`
 - [x] Emails in `src/lib/email.ts`, the record at `/record/[id]` and the flag page under it. Mail already sent keeps the words it was sent with; only new mail changes. Emails carry a fundraiser's title but not its kind, so they say "the fundraiser" where a page would name the tour or the season
-- [ ] The widget itself (`/embed/[slug]`, `EmbedClient`). Missed when this list was written: it is neither the `/widget` marketing page nor a page of the site, but it is the surface a fan reads before paying
+- [x] The widget itself (`/embed/[slug]`, `EmbedClient`, `WidgetFrame`). Missed when this list was written: it is neither the `/widget` marketing page nor a page of the site, but it is the surface a fan reads before paying. It takes `runs.kind` now, so it names the tour or the season above the card field
 - [ ] The legal pages, which name placements and boards throughout
-- [ ] `/list` and `/widget`, the two pages that speak only to musicians
+- [x] `/list` and `/widget`, the two pages that speak only to musicians. Both kept their second person, which voice rule 1 allows a single-audience page
 - [ ] Retire the last of "board" from copy, and check `Logo.tsx` was left alone: "mark" there means the wordmark
 
 **Done when:** a reader who lands on any two pages is told the same thing in the same words, and `grep -i board src/app --include=*.tsx` finds only routes, table names and the wordmark.

@@ -67,7 +67,7 @@ export default async function EmbedPage({ params, searchParams }: Props) {
         actName={board.act.name}
         runTitle={board.run.title}
         showCount={board.run.showCount}
-        season={board.run.kind === "season"}
+        kind={board.run.kind}
         backedLabel={formatMoney(backedCents)}
         goalLabel={goalCents > 0 ? formatMoney(goalCents) : null}
         progress={

@@ -10,16 +10,16 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "List an act",
-  description: "Get paid for the audience you're already building. Door Money earns 15% when a placement sells, and nothing before that.",
+  description: "Get paid for the audience you're already building. Door Money earns 15% when a sponsorship sells, and nothing before that.",
 };
 
 // This page speaks to the musician directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
 
 const STEPS: [string, string][] = [
-  ["You decide what goes on the board", "Standard-card prices, or your own numbers. Anything not for sale stays off the board, and nothing goes up without your yes."],
-  ["The board goes live", "Fixed price or open to bids, placement by placement. Winners put the money up within 48 hours or the spot rolls to the next bid."],
+  ["You decide what you offer", "The suggested prices, or your own numbers. Anything not for sale stays off, and nothing goes up without your yes."],
+  ["The fundraiser goes live", "Fixed price or open to bids, one sponsorship at a time. Winners put the money up within 48 hours or the spot rolls to the next bid."],
   ["Nothing about the gigs changes", "You keep playing the gigs you were already going to play. Door Money adds another way for those gigs to pay."],
-  ["The money arrives during the run", "It lands week by week as the run goes on, not at the end of it. No invoices, no chasing, no waiting on anybody's accounting department."],
+  ["The money arrives while you play", "It lands week by week as the shows happen, not at the end. No invoices, no chasing, no waiting on anybody's accounting department."],
 ];
 
 const BOARD: [string, string[]][] = [
@@ -29,9 +29,9 @@ const BOARD: [string, string[]][] = [
 ];
 
 const MONEY: [string, string][] = [
-  ["Door Money makes money when you make money.", `${SITE.name} keeps ${SITE.feePercent}% of completed placements and charges nothing else. If nothing sells, you owe nothing.`],
-  ["When is the money real?", "The moment a placement sells. Winners put the money up within 48 hours, before a note is played, and it reaches you while the run is happening."],
-  ["What if a patron asks for something you don't want?", "Every placement needs your yes before it ships, and that yes can become a no before anything goes up. Your board, your call."],
+  ["Door Money makes money when you make money.", `${SITE.name} keeps ${SITE.feePercent}% of completed sponsorships and charges nothing else. If nothing sells, you owe nothing.`],
+  ["When is the money real?", "The moment a sponsorship sells. Winners put the money up within 48 hours, before a note is played, and it reaches you while the shows are happening."],
+  ["What if a patron asks for something you don't want?", "Every sponsorship needs your yes before it ships, and that yes can become a no before anything goes up. Your fundraiser, your call."],
   ["What about regular income?", `Door, merch, tips and guarantees are yours and stay that way. ${SITE.name} only ever touches the patron money it brings in.`],
 ];
 
@@ -71,7 +71,7 @@ export default async function ListPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="What can be listed">What can go on the board</SectionHead>
+        <SectionHead eyebrow="What can be listed">What you can offer</SectionHead>
         <div className="mt-[30px] grid gap-8 md:grid-cols-3">
           {BOARD.map(([group, items]) => (
             <div key={group}>
@@ -93,11 +93,11 @@ export default async function ListPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="The widget">The board goes wherever you do</SectionHead>
+        <SectionHead eyebrow="The widget">The fundraiser goes wherever you do</SectionHead>
         <div className="mt-[30px] grid items-center gap-9 md:grid-cols-[1.1fr_1fr]">
           <div>
             <p>
-              Listing on Door Money comes with a widget for your own site. It shows the current run, takes the
+              Listing on Door Money comes with a widget for your own site. It shows the current fundraiser, takes the
               payment and pays out weekly, so fans can back you on your page instead of a third party&apos;s. Where a
               platform only allows links, a button sends them to your board instead. Both arrive on day one, at no
               extra cost.
@@ -121,7 +121,7 @@ export default async function ListPage() {
                   <i className="absolute inset-y-0 left-0 w-[59%] bg-accent" />
                 </div>
                 <div className="mt-2.5 grid gap-1.5">
-                  {[...WIDGET_TIERS.map((t) => [t.title, formatMoney(t.amountCents)]), ["Take a placement", "$500+"]].map(([title, price], i) => (
+                  {[...WIDGET_TIERS.map((t) => [t.title, formatMoney(t.amountCents)]), ["Take a sponsorship", "$500+"]].map(([title, price], i) => (
                     <span key={title} className={`flex justify-between border border-line px-2.5 py-1.5 text-[14px] ${i === 0 ? "border-accent! bg-accent/10" : ""}`}>
                       {title}
                       <b>{price}</b>
@@ -150,10 +150,10 @@ export default async function ListPage() {
       </Section>
 
       <Section id="list">
-        <SectionHead eyebrow="List an act">Open a board</SectionHead>
+        <SectionHead eyebrow="List an act">Open a fundraiser</SectionHead>
         <p>
-          Claim a username, describe the run, price the placements, publish. The username is the board address, so
-          the board goes up at its own address and on the live boards page, and the widget snippet is ready the same day.
+          Claim a username, describe the fundraiser, price what you offer, publish. The username is your address, so
+          the fundraiser goes up at its own address and on the fundraiser page, and the widget snippet is ready the same day.
         </p>
         <div className="mt-[34px]">
           <ButtonLink href="/signup?next=%2Fdashboard%2Fact%2Fnew" arrow>List an act</ButtonLink>
