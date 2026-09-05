@@ -8,7 +8,7 @@ import { ROLES, RolesInput, hasRole, homeFor, isRole } from "@/lib/roles";
 
 test("there are two roles and they are the two sides of the room", () => {
   assert.deepEqual(ROLES.map((r) => r.key), ["musician", "patron"]);
-  assert.deepEqual(ROLES.map((r) => r.label), ["I play", "I back musicians"]);
+  assert.deepEqual(ROLES.map((r) => r.label), ["I’m a musician", "I want to support musicians"]);
   assert.equal(isRole("musician"), true);
   assert.equal(isRole("admin"), false);
 });
