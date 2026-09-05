@@ -8,7 +8,7 @@ import { Stamp } from "@/components/Brand";
 const linkInitial: LoginState = { ok: false };
 const passwordInitial: PasswordState = {};
 
-const fieldClass = "edge mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px]";
+const fieldClass = "field mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px]";
 const labelClass = "caps mb-2 block text-[14px] text-muted";
 
 /**

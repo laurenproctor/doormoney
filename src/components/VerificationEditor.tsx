@@ -114,7 +114,7 @@ function Fields({
             aria-describedby="verification-other-count"
             aria-invalid={errors.other ? true : undefined}
             placeholder="The musician will photograph the marked music stand at selected performances and include the venue and date with each image."
-            className="edge w-full bg-transparent px-3.5 py-3 text-[15px] leading-[1.6]"
+            className="field w-full bg-transparent px-3.5 py-3 text-[15px] leading-[1.6]"
           />
           <p id="verification-other-count" className="mt-1.5 text-[14px] text-muted">
             {trimmed} of {OTHER_MAX} characters. At least {OTHER_MIN}.

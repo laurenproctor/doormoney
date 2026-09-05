@@ -16,6 +16,7 @@
   --ink: #f4f0e8;
   --muted: #9aa5c4;
   --line: rgba(244, 240, 232, 0.16);
+  --field-line: rgba(244, 240, 232, 0.42);
   --panel: rgba(244, 240, 232, 0.045);
   --accent: #3d5afe;
   --accent-ink: #8296ff;
@@ -92,6 +93,7 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-field-line: var(--field-line);
   --color-panel: var(--panel);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
@@ -148,6 +150,22 @@ select option { background: var(--ground); color: var(--ink); }
 @utility caps { font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 400; }
 /* One thin line around a block. */
 @utility edge { border: 1px solid var(--line); }
+
+/*
+  Form controls.
+
+  `edge` is the hairline for panels and rules. Against the fill behind a control it measures about
+  1.5:1, which is right for decoration and wrong for something somebody has to find and type into:
+  a control boundary wants 3:1. This is the same ink with more of it, and it clears 3:1 on all
+  eight themes, 3.66:1 on the tightest of them.
+
+  The focus ring and the invalid state live here rather than in each form, because most of these
+  controls had no focus style at all and every form had invented its own error colour. Invalid is
+  driven by aria-invalid, so the thing screen readers are told and the thing the eye sees cannot
+  drift apart. Both states change the border weight as well as its colour, so neither rests on
+  colour alone.
+*/
+@utility field { border: 1px solid var(--field-line); }
 /*
   A block that the page light catches: thin line, a glint along the top edge where the light lands,
   a soft shadow pooling beneath it, and the accent spilling under it. Never a hard shadow.
@@ -358,3 +376,15 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
 
 /* A quiet stage light behind a section or card: the accent, very dim, pooled at the top. */
 .pool { background-image: radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
+
+/* Kept out of the utility so they win over it, and over any border utility a form still carries. */
+.field:focus-visible,
+.field:focus-within {
+  border-color: var(--accent-ink);
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+.field[aria-invalid="true"] {
+  border-color: var(--accent-ink);
+  border-width: 2px;
+}

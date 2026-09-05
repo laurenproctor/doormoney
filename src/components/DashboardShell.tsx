@@ -90,5 +90,5 @@ export function CardHead({ eyebrow, children }: { eyebrow: string; children: Rea
 }
 
 /** Shared input styling for dashboard forms. */
-export const inputClass = "edge w-full bg-transparent px-3.5 py-3 text-[15px]";
+export const inputClass = "field w-full bg-transparent px-3.5 py-3 text-[15px]";
 export const labelClass = "caps mb-2 block text-[14px] text-muted";

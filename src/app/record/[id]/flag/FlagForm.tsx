@@ -46,7 +46,7 @@ export function FlagForm({ id, what }: { id: string; what: string }) {
           rows={4}
           maxLength={1000}
           placeholder="The dates came off the venue's calendar."
-          className="edge w-full px-3.5 py-3 text-[15px]"
+          className="field w-full px-3.5 py-3 text-[15px]"
         />
       </label>
       {/* Left empty by people, filled in by robots. */}

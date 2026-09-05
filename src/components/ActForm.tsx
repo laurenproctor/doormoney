@@ -77,7 +77,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
           // eslint-disable-next-line @next/next/no-img-element
           <img src={act.photo_url} alt="" className="edge mb-3 h-[120px] w-[120px] object-cover" />
         )}
-        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block text-[15px]" />
+        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block text-[15px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink" />
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">

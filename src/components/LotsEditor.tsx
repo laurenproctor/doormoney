@@ -95,7 +95,7 @@ export function LotsEditor({
                         disabled={!r.on}
                         onChange={(e) => set(s.key, { count: e.target.value.replace(/[^0-9]/g, "").slice(0, 1) })}
                         onBlur={() => set(s.key, { count: String(Math.max(1, Math.min(6, Number(r.count) || 1))) })}
-                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
+                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       />
                     </label>
                     <label className="caps text-[14px]">
@@ -106,7 +106,7 @@ export function LotsEditor({
                         value={r.price}
                         disabled={!r.on}
                         onChange={(e) => set(s.key, { price: e.target.value })}
-                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
+                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       />
                     </label>
                     <label className="caps text-[14px]">
@@ -116,7 +116,7 @@ export function LotsEditor({
                         value={r.mode}
                         disabled={!r.on}
                         onChange={(e) => set(s.key, { mode: e.target.value as "fixed" | "auction" })}
-                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
+                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       >
                         <option value="fixed">Fixed price</option>
                         <option value="auction">Auction, price is the reserve</option>
@@ -131,7 +131,7 @@ export function LotsEditor({
                         placeholder="Optional"
                         disabled={!r.on || r.mode !== "auction"}
                         onChange={(e) => set(s.key, { buyNow: e.target.value })}
-                        className="edge mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
+                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
                       />
                     </label>
                   </div>
