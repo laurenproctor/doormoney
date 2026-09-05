@@ -19,7 +19,7 @@ const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.");
 const Input = z
   .object({
     kind: z.enum(["tour", "season", "residency"], { error: "Pick what kind of run this is." }),
-    title: z.string().trim().min(2, "Give the run a name.").max(60, "Keep the name under 60 characters."),
+    title: z.string().trim().min(2, "Give the fundraiser a name.").max(60, "Keep the name under 60 characters."),
     starts_on: dateStr,
     ends_on: dateStr,
     show_count: z.coerce.number().int("Whole shows only.").min(1, "At least one show.").max(400, "That is a lot of shows. Check the number."),
@@ -36,10 +36,10 @@ const Input = z
       .transform((v) => (v ? new Date(v) : null))
       .refine((v) => v === null || !Number.isNaN(v.getTime()), "Pick a date and time."),
   })
-  .refine((r) => r.ends_on >= r.starts_on, { path: ["ends_on"], message: "The run cannot end before it starts." })
+  .refine((r) => r.ends_on >= r.starts_on, { path: ["ends_on"], message: "It cannot end before it starts." })
   .refine((r) => !r.bidding_closes_at || r.bidding_closes_at.toISOString().slice(0, 10) <= r.ends_on, {
     path: ["bidding_closes_at"],
-    message: "Bidding has to close by the end of the run.",
+    message: "Bidding has to close by the last date.",
   });
 
 /**
@@ -186,7 +186,7 @@ export async function unpublishRun(runId: string): Promise<{ ok: boolean; error?
 
   const sb = await supabaseServer();
   const { data: sold } = await sb.from("lots").select("id").eq("run_id", runId).in("status", ["sold", "pending_funding"]).limit(1);
-  if (sold && sold.length) return { ok: false, error: "A spot has sold, so the board stays up. Contact Door Money to cancel the run." };
+  if (sold && sold.length) return { ok: false, error: "A spot has sold, so the page stays up. Contact Door Money to cancel the fundraiser." };
 
   const { error } = await sb.from("runs").update({ status: "draft" }).eq("id", runId).eq("act_id", act.id).eq("status", "open");
   if (error) return { ok: false, error: "That did not save. Try once more." };
@@ -210,7 +210,7 @@ export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: s
   const { data: run } = await sb.from("runs").select("id,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
   if (!["open", "live"].includes(run.status)) return { ok: false, error: "Only an open or live run can be cancelled." };
-  if (!stripeConfigured()) return { ok: false, error: "Refunds are not switched on yet. Contact Door Money to cancel the run." };
+  if (!stripeConfigured()) return { ok: false, error: "Refunds are not switched on yet. Contact Door Money to cancel the fundraiser." };
 
   const r = await cancelRunForReal(supabaseAdmin(), runId);
   if (!r.ok) return { ok: false, error: r.error };

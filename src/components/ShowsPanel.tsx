@@ -25,7 +25,7 @@ export function ShowsPanel({ runId, shows, defaultCity }: { runId: string; shows
         </p>
       )}
       {shows.length === 0 ? (
-        <p className="mb-6 max-w-none text-[15px] text-muted">No dates yet. Add each show once; through the run, one tap marks it played.</p>
+        <p className="mb-6 max-w-none text-[15px] text-muted">No dates yet. Add each show once; as they happen, one tap marks each played.</p>
       ) : (
         <ul className="mb-8 divide-y divide-line border-y border-line">
           {shows.map((s) => (

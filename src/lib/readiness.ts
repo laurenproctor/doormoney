@@ -63,16 +63,16 @@ export function verificationComplete(run: ReadinessRun): boolean {
 }
 
 /**
- * Everything standing between this draft and a public board, in the order a musician would fix it.
+ * Everything between this draft and a public fundraiser, in the order a musician would fix it.
  * Empty means publishing will go through. Each line names the thing and where it lives.
  */
 export function publishBlockers({ act, run, lotCount, auctionCount }: ReadinessInput): string[] {
   const out: string[] = [];
-  if (!filled(act.name) || !filled(act.city)) out.push("Finish the act's name and city on the act page.");
-  else if (!filled(act.bio)) out.push("Add a short bio on the act page. The board leads with it.");
-  if (!runComplete(run)) out.push("Finish the run: a name, both dates and a show count.");
+  if (!filled(act.name) || !filled(act.city)) out.push("Finish the name and city on the musician page.");
+  else if (!filled(act.bio)) out.push("Add a short bio on the musician page. The fundraiser leads with it.");
+  if (!runComplete(run)) out.push("Finish the fundraiser: a name, both dates and a show count.");
   if (lotCount === 0) out.push("Add at least one spot before publishing.");
-  if (auctionCount > 0 && !filled(run.bidding_closes_at)) out.push("Auction spots need a bidding close time. Set one on the run.");
+  if (auctionCount > 0 && !filled(run.bidding_closes_at)) out.push("Auction spots need a bidding close time. Set one below.");
   if (!verificationComplete(run)) {
     const pickedOther = (run.methods ?? []).includes(OTHER_KEY);
     const answer = run.other?.trim() ?? "";
@@ -104,14 +104,14 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
     },
     {
       key: "run",
-      label: "Run details",
+      label: "Fundraiser details",
       done: runComplete(run),
       note: runComplete(run) ? `${run.title}, ${run.show_count} ${run.show_count === 1 ? "date" : "dates"}.` : "A name, both dates and a show count.",
       href: "#run-details",
     },
     {
       key: "lots",
-      label: "Placements",
+      label: "Sponsorships",
       done: lotCount > 0 && !auctionsNeedClose,
       note:
         lotCount === 0
@@ -138,15 +138,15 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
       note: act.stripe_payouts_enabled
         ? "Stripe is ready. Money moves every Friday."
         : act.stripe_account_id
-          ? "Stripe still wants a few details. The board can open first; the money waits."
-          : "Not set up. The board can open first; Door Money holds the money until it is.",
+          ? "Stripe still wants a few details. The fundraiser can open first; the money waits."
+          : "Not set up. The fundraiser can open first; Door Money holds the money until it is.",
       href: "/dashboard/payouts",
     },
     {
       key: "publish",
       label: "Ready to publish",
       done: published || blockers.length === 0,
-      note: published ? "The board is public." : blockers.length === 0 ? "Nothing left. Publish it below." : blockers[0],
+      note: published ? "The fundraiser is public." : blockers.length === 0 ? "Nothing left. Publish it below." : blockers[0],
     },
   ];
 }

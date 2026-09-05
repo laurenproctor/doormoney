@@ -17,7 +17,7 @@ export type RunInput = {
 };
 
 const KINDS = [
-  ["tour", "Tour", "A run of dates on the road."],
+  ["tour", "Tour", "A stretch of dates on the road."],
   ["season", "Season", "A stretch of gigs at home. Weeks or months."],
   ["residency", "Residency", "One room, a month at a time."],
 ] as const;
@@ -55,7 +55,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
         {err.kind && <p className="mt-1.5 text-[14.5px] text-accent-ink">{err.kind}</p>}
       </fieldset>
 
-      <Field label="Run name" error={err.title} hint='Shows on the board. "Fall run", "Winter season", "October at Barbès".'>
+      <Field label="Run name" error={err.title} hint='Shows on the public page. "Fall tour", "Winter season", "October at Barbès".'>
         <input name="title" defaultValue={run?.title ?? ""} className={inputClass} />
       </Field>
 
@@ -69,7 +69,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
       </div>
 
       <div className="grid gap-x-5 md:grid-cols-2">
-        <Field label="Shows on the run" error={err.show_count}>
+        <Field label="Shows in it" error={err.show_count}>
           <input name="show_count" type="number" min={1} max={400} defaultValue={run?.show_count ?? ""} className={inputClass} />
         </Field>
         <Field label="Expected attendance" error={err.expected_attendance} hint="Across the whole run, a rough number. Optional.">
@@ -82,7 +82,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : run ? "Save the run" : "Save and price the spots"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving" : run ? "Save the fundraiser" : "Save and price the spots"}</Button>
         {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
         {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>

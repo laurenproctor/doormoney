@@ -42,7 +42,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
       </Field>
 
-      <Field label="Board address and username" error={err.slug} hint={`${siteUrl}/${shownSlug || "the-act"}. The same word signs the act in.`}>
+      <Field label="Address and username" error={err.slug} hint={`${siteUrl}/${shownSlug || "the-act"}. The same word signs the act in.`}>
         <input
           name="slug"
           value={shownSlug}
@@ -72,7 +72,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
         <textarea name="bio" rows={4} defaultValue={act?.bio ?? ""} className={inputClass} />
       </Field>
 
-      <Field label="Photo" error={err.photo} hint="JPG, PNG or WebP, under 5MB. Shows on the board and the widget.">
+      <Field label="Photo" error={err.photo} hint="JPG, PNG or WebP, under 5MB. Shows on your page and the widget.">
         {act?.photo_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={act.photo_url} alt="" className="edge mb-3 h-[120px] w-[120px] object-cover" />

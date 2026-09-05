@@ -7,7 +7,7 @@ import { Stamp } from "@/components/Brand";
 const initial: MarkState = { ok: false };
 
 /**
- * The patron sends the mark. A logo file, a name, or both, and a line to the act if the mark needs
+ * The patron sends the logo. A file, a name, or both, and a line to the musician if it needs
  * one. Sending again before the act decides replaces what is there, so a patron who picked the
  * wrong file can just send the right one.
  */
@@ -23,7 +23,7 @@ export function MarkForm({
   purchaseId: string;
   actName: string;
   surface: string;
-  /** True when a mark is already in, so the copy talks about replacing it. */
+  /** True when a logo is already in, so the copy talks about replacing it. */
   resend: boolean;
   currentUrl: string | null;
   currentText: string | null;
@@ -75,7 +75,7 @@ export function MarkForm({
           {currentUrl && !fileName && (
             <div className="mt-4 flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={currentUrl} alt="The mark already sent" className="edge h-[64px] w-[96px] bg-ground object-contain p-1.5" />
+              <img src={currentUrl} alt="The logo already sent" className="edge h-[64px] w-[96px] bg-ground object-contain p-1.5" />
               <span className="caps text-[14px] text-muted">Already sent</span>
             </div>
           )}
@@ -117,7 +117,7 @@ export function MarkForm({
 
       <div className="mt-8 flex flex-wrap items-center gap-5">
         <Button type="submit" disabled={pending} arrow>
-          {pending ? "Sending" : resend ? "Send the new mark" : "Send the mark"}
+          {pending ? "Sending" : resend ? "Send the new logo" : "Send the logo"}
         </Button>
         <p className="max-w-[38ch] text-[14px] leading-[1.6] text-muted">
           {actName} approves it before it goes anywhere.

@@ -28,7 +28,7 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
         type: "express",
         country: "US",
         email: user.email ?? undefined,
-        business_profile: { name: act.name, ...(boardUrl ? { url: boardUrl } : {}), product_description: "Sponsorship placements for a working musician" },
+        business_profile: { name: act.name, ...(boardUrl ? { url: boardUrl } : {}), product_description: "Sponsorship for a working musician" },
         capabilities: { transfers: { requested: true } },
         metadata: { act_id: act.id, slug: act.slug },
       });

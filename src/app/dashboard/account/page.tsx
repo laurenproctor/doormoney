@@ -27,7 +27,7 @@ export default async function AccountPage() {
       eyebrow="The account"
       title="How this account"
       accent="signs in"
-      intro={<p>The email address gets in from anywhere. A musician can sign in with the board address instead. The password changes here any time.</p>}
+      intro={<p>The email address gets in from anywhere. A musician can sign in with their address instead. The password changes here any time.</p>}
     >
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -52,7 +52,7 @@ export default async function AccountPage() {
                   </Link>
                 </>
               ) : (
-                <>The username is claimed with the board, or with a patron profile.</>
+                <>The username is claimed with a musician page, or with a patron profile.</>
               ),
             ]}
           />

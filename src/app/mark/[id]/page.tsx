@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/Button";
 import { Page } from "@/components/Page";
 import { themeFor } from "@/components/Theme";
 import { formatDateRange } from "@/lib/dates";
+import { periodOf } from "@/lib/periods";
 import { markOpen, markSeenBy, markSurface, markTarget } from "@/lib/marks";
 import { runPath } from "@/lib/urls";
 import { MarkForm } from "./MarkForm";
@@ -23,8 +24,8 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const p = await markTarget(id);
-  if (!p) return { title: "Send the mark", robots: { index: false } };
-  return { title: `Send the mark for ${p.lots.runs.acts.name}`, robots: { index: false, follow: false } };
+  if (!p) return { title: "Send the logo", robots: { index: false } };
+  return { title: `Send the logo for ${p.lots.runs.acts.name}`, robots: { index: false, follow: false } };
 }
 
 export default async function MarkPage({ params }: Props) {
@@ -39,22 +40,23 @@ export default async function MarkPage({ params }: Props) {
   const open = markOpen(p);
   const decided = p.mark_status === "approved" || p.mark_status === "declined";
 
+  const period = periodOf(run.kind);
   const state = decided
     ? p.mark_status === "approved"
-      ? "The mark is approved"
-      : "The mark was declined"
+      ? "The logo is approved"
+      : "The logo was declined"
     : run.status === "cancelled"
-      ? "The run was cancelled"
+      ? `The ${period.noun} was cancelled`
       : p.mark_status === "submitted"
         ? `Waiting on ${act.name}`
-        : `${act.name} is waiting for the mark`;
+        : `${act.name} is waiting for the logo`;
 
   return (
     <Page
       theme={themeFor(act.slug)}
       current="/auctions"
-      eyebrow="The mark"
-      title="Send the mark for the"
+      eyebrow="The logo"
+      title="Send the logo for the"
       accent={surface.toLowerCase()}
       headline="md"
       strap={state}
@@ -64,8 +66,8 @@ export default async function MarkPage({ params }: Props) {
             {act.name}. {run.title}, {formatDateRange(run.starts_on, run.ends_on)}.
           </p>
           <p className="mt-5">
-            {p.patrons?.name ?? "A patron"} holds the {surface.toLowerCase()} on this {run.kind === "season" ? "season" : "run"}. The
-            mark is the name or logo as it will appear{seenBy ? `, seen by ${seenBy}` : ""}.
+            {p.patrons?.name ?? "A patron"} holds the {surface.toLowerCase()} on this {period.noun}. The logo is the
+            name or image as it will appear{seenBy ? `, seen by ${seenBy}` : ""}.
           </p>
         </>
       }
@@ -74,7 +76,7 @@ export default async function MarkPage({ params }: Props) {
         {open ? (
           <>
             <SectionHead eyebrow={p.mark_status === "submitted" ? "Already sent" : "What to send"}>
-              {p.mark_status === "submitted" ? `${act.name} has the mark` : "A logo, a name, or both"}
+              {p.mark_status === "submitted" ? `${act.name} has the logo` : "A logo, a name, or both"}
             </SectionHead>
             <p className="mb-9 max-w-[62ch] text-muted">
               {p.mark_status === "submitted"
@@ -94,19 +96,19 @@ export default async function MarkPage({ params }: Props) {
         ) : (
           <>
             <SectionHead eyebrow="Where it stands">
-              {p.mark_status === "approved" ? `${act.name} said yes` : p.mark_status === "declined" ? "Declined and refunded" : "The run was cancelled"}
+              {p.mark_status === "approved" ? `${act.name} said yes` : p.mark_status === "declined" ? "Declined and refunded" : `The ${period.noun} was cancelled`}
             </SectionHead>
             <p className="max-w-[62ch] text-muted">
               {p.mark_status === "approved"
-                ? `The mark goes on the ${surface.toLowerCase()} for the whole run. Changing it now goes through Door Money.`
+                ? `The logo goes on the ${surface.toLowerCase()} for the whole ${period.noun}. Changing it now goes through Door Money.`
                 : p.mark_status === "declined"
-                  ? `${act.name} declined the mark, so the placement never runs and the money went back to the card it came from.`
-                  : `${act.name} cancelled the run, so the placement never runs and the money went back to the card it came from.`}
+                  ? `${act.name} declined the logo, so the sponsorship never runs and the money went back to the card it came from.`
+                  : `${act.name} cancelled the ${period.noun}, so the sponsorship never runs and the money went back to the card it came from.`}
             </p>
             {p.mark_url && (
               <div className="mt-8">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.mark_url} alt="The mark" className="edge h-[120px] w-[200px] bg-panel object-contain p-3" />
+                <img src={p.mark_url} alt="The logo" className="edge h-[120px] w-[200px] bg-panel object-contain p-3" />
               </div>
             )}
           </>
@@ -114,22 +116,22 @@ export default async function MarkPage({ params }: Props) {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="How it goes">The act has the final say</SectionHead>
+        <SectionHead eyebrow="How it goes">The musician has the final say</SectionHead>
         <Lines
           marked
           lines={[
-            "The mark is the patron's own name or logo, or one the patron has the right to use.",
+            "The logo is the patron's own name or image, or one the patron has the right to use.",
             `${act.name} approves or declines it. Nothing goes up without their yes.`,
-            "A declined mark means the placement never runs, and the money goes back in full.",
-            "An approved mark stays on the surface for the whole run.",
+            "A declined logo means the sponsorship never runs, and the money goes back in full.",
+            `An approved logo stays where it goes for the whole ${period.noun}.`,
           ]}
         />
         <div className="mt-9 flex flex-wrap gap-4">
           <ButtonLink href={`/record/${p.id}`} variant="ghost" arrow>
-            The record of the run
+            The record
           </ButtonLink>
           <ButtonLink href={runPath(act.slug, run.slug)} variant="ghost">
-            {act.name}&apos;s board
+            {act.name}&apos;s page
           </ButtonLink>
         </div>
         <p className="mt-8 text-[14.5px] text-muted">

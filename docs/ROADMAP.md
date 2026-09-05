@@ -103,7 +103,8 @@ The rule is convert a page when you touch it, never a repo-wide replace. This li
 - [x] The fundraiser index at `/auctions`. It was converted with the nav and the list above had it wrong; two labels were left, "placements open" and "shows on the run", and both are gone now
 - [x] Home: the hero, the steps, the fundraiser section, the house rules and the two calls to action
 - [x] A musician's page at `/[slug]` and a fundraiser's page at `/[slug]/[run]`, including `BoardView`, `BoardLots`, `BidForm`, the sample backers and `PlacementVerification`. The period is named from `runs.kind` through `src/lib/periods.ts` rather than branching on "season or run" in nine places
-- [ ] The dashboard: the run pages, the readiness checklist, the widget panel
+- [x] The dashboard: the fundraiser pages, the readiness checklist, the payout pages and the server-action messages a musician reads when something goes wrong. The nav says Musician rather than "the act", which the vocabulary bans in prose
+- [x] `/mark/<id>` and its form. Not on this list originally, and it had to come with the emails: they now say "send the logo" and link straight to it
 - [ ] The patron pages: `/patron`, `/patron/[username]`, `/dashboard/profile`
 - [x] Emails in `src/lib/email.ts`, the record at `/record/[id]` and the flag page under it. Mail already sent keeps the words it was sent with; only new mail changes. Emails carry a fundraiser's title but not its kind, so they say "the fundraiser" where a page would name the tour or the season
 - [ ] The widget itself (`/embed/[slug]`, `EmbedClient`). Missed when this list was written: it is neither the `/widget` marketing page nor a page of the site, but it is the surface a fan reads before paying
