@@ -10,7 +10,7 @@ const initial: VerificationState = { ok: false };
  * What patrons get back from this run, as a list of ticks.
  *
  * The rows are real checkboxes with a drawn mark over them, so a keyboard reaches every row, the
- * label click target is the whole row, and nothing depends on colour alone. The write-in box only
+ * label click target is the whole row, and nothing depends on color alone. The write-in box only
  * appears under its own tick, and its text is cleared on the server the moment that tick comes off.
  */
 export function VerificationEditor({

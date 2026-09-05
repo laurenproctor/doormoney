@@ -2,7 +2,7 @@
 
 The rules Door Money has to keep once it holds real money. This document states the rule, then says
 plainly whether the code enforces it today. Most of them it does not. Nothing here should be read as
-a description of current behaviour unless the status says so.
+a description of current behavior unless the status says so.
 
 Status is one of:
 

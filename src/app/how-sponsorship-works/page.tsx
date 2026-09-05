@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   promises more than those two files do. See CLAUDE.md, "No invented proof".
 */
 
-/** The heading pair above each group of sponsorship options. Local to this page; the catalogue's own labels serve Home. */
+/** The heading pair above each group of sponsorship options. Local to this page; the catalog's own labels serve Home. */
 const GROUP_HEADS: Record<SurfaceGroup, { eyebrow: string; heading: string; intro: string }> = {
   onstage: {
     eyebrow: "Onstage",
@@ -68,7 +68,7 @@ const STAGE_KEY = CATALOG.filter((s) => s.group === "onstage" && !s.appliesTo.in
 
 const FIT: Record<ActType, string> = { touring_band: "bands", house_act: "house acts", soloist: "soloists" };
 
-/** "Bands, house acts and soloists": who a sponsorship option is offered by, from the catalogue itself. */
+/** "Bands, house acts and soloists": who a sponsorship option is offered by, from the catalog itself. */
 function fitLabel(types: ActType[]): string {
   const names = (["touring_band", "house_act", "soloist"] as ActType[]).filter((t) => types.includes(t)).map((t) => FIT[t]);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];

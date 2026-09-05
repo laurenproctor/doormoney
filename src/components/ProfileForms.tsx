@@ -26,7 +26,7 @@ import type { EligibleItem, OwnProfile } from "@/lib/patronprofile";
   of both this page and, for a musician, their board.
 
   Every control here is a real button in a real form: keyboard first, no drag and drop anywhere,
-  every state said in words rather than in colour, and every message in a live region.
+  every state said in words rather than in color, and every message in a live region.
 */
 
 const initial: ProfileState = { ok: false };

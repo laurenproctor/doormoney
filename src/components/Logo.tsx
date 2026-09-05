@@ -1,7 +1,7 @@
 import { SITE } from "@/lib/site";
 
 /*
-  The Door Money logo, inlined so it takes the current text colour (ink in the nav and footer,
+  The Door Money logo, inlined so it takes the current text color (ink in the nav and footer,
   on-accent on a fill). `lockup` is the mark with the wordmark; `mark` is the monogram alone.
   Path data comes from the supplied artwork; the outer group flips its Y axis.
 */
@@ -27,7 +27,7 @@ const WORDMARK = [
 /*
   Geometry in the flipped, scaled space. The mark spans x 152..410 and y 140..602 (258 by 462).
   The letters as drawn span x 645..2065 and y 306..426 (1420 by 120), which is small next to the mark,
-  so the lockup enlarges them by WORD_SCALE and sets them GAP units to the right of the mark, centred on it.
+  so the lockup enlarges them by WORD_SCALE and sets them GAP units to the right of the mark, centered on it.
 */
 const MARK_BOX = { x: 152, y: 140, w: 258, h: 462 };
 const WORD_BOX = { x: 645, y: 306, w: 1420, h: 120 };
