@@ -215,3 +215,52 @@ A board used to be one page per act, at `/board/<act>`. That made "act" and "boa
 - Every public address is built in `src/lib/urls.ts`. Act words now sit at the root of the site, so `RESERVED_SLUGS` is what keeps a musician off `/login`, and it has to grow whenever a top-level route does.
 
 The cost is that the root of the site is a catch-all: anything the static routes do not claim reaches the act page. That is why the moved-handle lookup answers null rather than throwing when it cannot answer, and why the reserved list is tested against the database's own copy.
+
+---
+
+## 14. The words the site uses
+
+**Blocks:** all copy from here on.
+
+The vocabulary was written from the inside. It is coherent, and it is doing real work: "musician" instead of creator, patronage instead of advertising, a refusal to sound like an ad network. But it also asks a stranger to learn six words before the offer makes sense. Someone meeting a fundraiser for the first time hits "board", "run", "placement", "surface" and "mark" inside two screens, and not one of them means in English what it means here.
+
+The two audiences who have to convert cold, a local business owner who has never sponsored anything and a fan, are exactly the two with no way to decode any of it. Counted in the rendered text of the marketing pages: "board" appears 73 times, "placement" 57, "patron" 40.
+
+**Decided (2026-09-04):** two classes of word, governed differently.
+
+**Identity words carry the company and do not change.** Musician, patron, backing, Door Money, "put money behind the music". These are the reason the site does not read like a media buy, and they are worth defending.
+
+**Mechanism words are labels for how the machine works.** They should be whatever a stranger would say. Where a plain word exists the plain word wins, even when the insider word is more precise.
+
+The mapping:
+
+- board becomes **fundraiser**
+- run becomes the actual period (**tour**, **residency**, **season**) where it is known, otherwise **fundraiser**
+- mark becomes **logo**, or **name and logo**
+- surface becomes **where the sponsorship appears**, or just the thing itself (a kick drum head)
+- standard card becomes **suggested prices**
+- "the act" in prose becomes **the musician** or **the band**
+- placement is kept but narrowed: only the place a sponsor appears, never the thing being bought
+- lot is unchanged, and stays in the database where it already lives
+
+**Sponsor and patron both stay, and divide by tense.** They were never synonyms, and treating them as rivals is what made this look like a choice.
+
+- Before the money, and in anything a stranger reads first, the role is **sponsor**. A person sponsors a musician. This is the word a business owner would search for and the one they would use with their bookkeeper.
+- After the money, and whenever the sentence is about the person rather than the transaction, they are a **patron**: their account, their page, the musicians they have backed.
+- The test: an invitation says sponsor, a fact about somebody who has already paid says patron.
+
+This keeps `/patron/<username>`, the `patrons` table, `profiles.roles` and decision 10 exactly as they are, and still lets the front door use the plain word.
+
+**Addresses outlive words.** Routes and columns keep their names even where the copy changes. `/mark/<id>` is in receipts already sent, `/auctions` is in sent email, and `/board/<act>` is on printed stickers (decision 13). Change what a page says, not where it lives. `/placements` was the one exception, renamed to `/how-sponsorship-works` while nothing was public yet.
+
+So these are not renamed, and never by a repo-wide replace: `runs`, `lots`, `acts`, `patrons`, `mark_text`, `mark_status`, the `Surface` type in `src/lib/catalog.ts`, and the word "mark" in `src/components/Logo.tsx`, where it means the wordmark and nothing else.
+
+**Applied page by page, not all at once.** `/how-sponsorship-works` is written in the new vocabulary; every other page still carries the old one. A session that touches a page converts that page and leaves the rest alone. `src/lib/email.ts` holds more of the old vocabulary than any other single file and reaches people who have already paid, so it is the first target after the marketing pages.
+
+**Still open**, and deliberately not settled here, because each is a conversion question rather than a copy one:
+
+- Whether "List an act" survives as the primary musician call to action. It is clear enough, and it is on every page.
+- What the browse page is called. The route says `/auctions`, the title says "Live boards", and the page is a mix of fixed prices and bidding, so it has three names and none of them fits. "Boards" is gone either way.
+- Whether "Widget" survives in the nav. It is a word for the person building the thing, not for the musician installing it.
+
+The cost is a stretch of time where the site says two things at once. That is the price of not doing a big-bang rewrite across every page and every email, and it is smaller than the cost of a stranger bouncing off "board" on the way in.
