@@ -46,14 +46,17 @@ export function NewsletterCTA({
 /** The compact strip in the footer, so the ask is on every page without a band on every page. */
 export function NewsletterStrip({ source }: { source: string }) {
   return (
-    <div className="grid gap-6 border-b border-line pb-12 md:grid-cols-[1fr_minmax(0,560px)] md:items-center md:gap-16">
+    <div className="grid gap-6 border-b border-line pb-12 lg:grid-cols-[1fr_minmax(0,560px)] lg:items-center lg:gap-16">
       <div>
         <p className="caps text-[14px] text-accent-ink">New musicians, by email</p>
         <p className="mt-2 max-w-[48ch] text-[14.5px] leading-[1.7] text-muted">
           One short email the week a new board opens: who they are, where they play, what is open to back.
         </p>
       </div>
-      <NewsletterForm source={source} compact />
+      {/* Never wider than the column it sits in above lg, so the field does not stretch when the strip stacks. */}
+      <div className="max-w-[560px]">
+        <NewsletterForm source={source} compact />
+      </div>
     </div>
   );
 }
