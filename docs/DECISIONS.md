@@ -264,3 +264,26 @@ So these are not renamed, and never by a repo-wide replace: `runs`, `lots`, `act
 - Whether "Widget" survives in the nav. It is a word for the person building the thing, not for the musician installing it.
 
 The cost is a stretch of time where the site says two things at once. That is the price of not doing a big-bang rewrite across every page and every email, and it is smaller than the cost of a stranger bouncing off "board" on the way in.
+
+---
+
+## 15. Who the copy talks to
+
+**Blocks:** all copy from here on.
+
+The voice rules have banned the second person since the first copy brief, and on the pages that brief was written for the ban is right. Door Money serves musicians and the people funding them, usually on the same page, and the third person is what forces a sentence to name which one it means. "Musicians open a fundraiser, sponsors keep a record of what they backed" is one clear line in the third person and two confusing ones in the second, because "you" would be a different person in each half.
+
+The trouble is that the rule was written as an absolute and applied everywhere, and it has been collecting exceptions ever since: the tagline's second line (decision 1), the sponsor steps on the home page, List an act, the widget. Four carve-outs is not a law. It is a default that was never scoped.
+
+Where it actually breaks is a form. On the sign-up page the reader has already picked a side, is acting on their own account, and is about to agree to the terms. "Musicians agree to the Terms and Conditions", under a button somebody is about to press, does not say who is agreeing. Plain-language guidance recommends the second person for instructions and tasks on comprehension grounds rather than fashion, and consent is the case where naming the person matters most.
+
+**Decided (2026-09-04):** the rule is scoped rather than relaxed, and the thing it is really about is ambiguity, not formality. The second person is banned wherever "you" could mean either side of the market, and used wherever it cannot.
+
+- **Editorial surfaces stay in the third person.** Home, how sponsorship works, the live fundraisers index, an act's page, a fundraiser's page, the legal pages. These describe the market to somebody deciding whether to enter it, both sides read them, and the copy has to keep saying which side it means.
+- **Transactional surfaces are written in the second person.** Sign up, sign in, the password flows, the dashboard, the patron pages behind an account, form labels, helper text, validation messages, the record, and every email that reaches somebody about their own money. One reader, already self-selected, doing something to their own account. There is no ambiguity about who "you" is, and writing around it makes the instruction worse.
+- **A marketing page that addresses one audience only may use either.** List an act and the widget speak to musicians and nobody else, so the ambiguity the rule exists to prevent cannot arise. Both are in the second person today and stay there.
+- The line is whether the reader has an account and is doing something to it, not whether the page happens to contain a form. The newsletter box on a marketing page is still marketing.
+- **Button labels are imperative or nominal everywhere**, on both kinds of page: "List an act", "Back a musician", "Create free account". An imperative is not the second person for this purpose and it reads the same in both registers.
+- The exceptions named in the old rule are absorbed by this one and no longer need listing, except the tagline's second line, which stays an exception because it is marketing and it does say "you" (decision 1).
+
+The cost is that the site reads in two registers, and the seam shows when somebody moves from a fundraiser page to the sign-up form. That is the right place for a seam. It falls between reading about a market and using a product, which is a difference readers already expect, and the alternative was a consent line that never says who is consenting.
