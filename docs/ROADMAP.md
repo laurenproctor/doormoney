@@ -102,7 +102,7 @@ The rule is convert a page when you touch it, never a repo-wide replace. This li
 - [x] `/how-sponsorship-works`, converted when it was renamed from `/placements`
 - [x] The fundraiser index at `/auctions`. It was converted with the nav and the list above had it wrong; two labels were left, "placements open" and "shows on the run", and both are gone now
 - [x] Home: the hero, the steps, the fundraiser section, the house rules and the two calls to action
-- [ ] A musician's page at `/[slug]` and a fundraiser's page at `/[slug]/[run]`, including `BoardView`
+- [x] A musician's page at `/[slug]` and a fundraiser's page at `/[slug]/[run]`, including `BoardView`, `BoardLots`, `BidForm`, the sample backers and `PlacementVerification`. The period is named from `runs.kind` through `src/lib/periods.ts` rather than branching on "season or run" in nine places
 - [ ] The dashboard: the run pages, the readiness checklist, the widget panel
 - [ ] The patron pages: `/patron`, `/patron/[username]`, `/dashboard/profile`
 - [ ] Emails in `src/lib/email.ts` and the record at `/record/[id]`

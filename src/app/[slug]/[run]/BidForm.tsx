@@ -11,14 +11,14 @@ import { elementsAppearance } from "@/lib/stripeAppearance";
  * Placing a bid, in two steps: who and how much, then the card.
  *
  * Straight bidding, so the number here is what the patron pays if it wins. Nobody signs in to bid,
- * so the form takes a name and an email and offers to keep the name off the board.
+ * so the form takes a name and an email and offers to keep the name off the page.
  *
  * The card is stored, not charged. It sits against the patron until the close, and only the winning
  * bid is ever charged; an outbid patron has nothing to release. Taking it here is what stops a bid
  * from somebody who never meant to pay, which used to cost the act 48 hours before rolling on.
  *
  * Without a publishable key the card step is skipped and the bid goes in as it always did, which is
- * how the sample boards and any Door Money running without Stripe keep working.
+ * how the sample fundraisers and any Door Money running without Stripe keep working.
  */
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
@@ -146,7 +146,7 @@ export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lot
 
           <label className="flex items-center gap-2.5 text-[14.5px] text-muted md:col-span-4">
             <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
-            Show the bid as &quot;Anonymous patron&quot; on the board. The musician still sees the name.
+            Show the bid as &quot;Anonymous patron&quot; on this page. The musician still sees the name.
           </label>
           {/* Left empty by people, filled in by robots. */}
           <input value={website} onChange={(e) => setWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
@@ -182,7 +182,7 @@ function CardStep({ lotId, details, website, onDone }: { lotId: string; details:
     setError(null);
     try {
       // The card is stored, never charged here, so there is no return_url to come back from:
-      // "if_required" keeps the patron on the board unless their bank insists on a redirect.
+      // "if_required" keeps the patron on the page unless their bank insists on a redirect.
       const { error: err, setupIntent } = await stripe.confirmSetup({ elements, redirect: "if_required" });
       if (err) {
         setError(err.message ?? "The card was not saved. Try once more.");

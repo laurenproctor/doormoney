@@ -2,14 +2,15 @@ import { Eyebrow } from "@/components/Brand";
 import { verificationItems, type VerificationChoice } from "@/lib/verification";
 
 /**
- * What patrons get back from this run, on the public board and in the draft preview.
+ * What patrons get back from this fundraiser, on its public page and in the draft preview.
  *
- * It sits between the placements and the fan section on purpose: a patron reads it while they are
- * still deciding. Only the methods the musician ticked are here. Nothing on this block claims Door
- * Money went and looked, because Door Money does not; the disclosure says where it comes from.
+ * It sits between the sponsorship options and the fan section on purpose: a patron reads it while
+ * they are still deciding. Only the methods the musician ticked are here. Nothing on this block
+ * claims Door Money went and looked, because Door Money does not; the disclosure says where it
+ * comes from.
  *
- * A run with nothing chosen renders nothing at all, so boards published before this existed keep
- * working and never show an empty promise.
+ * A fundraiser with nothing chosen renders nothing at all, so pages published before this existed
+ * keep working and never show an empty promise.
  */
 export function PlacementVerification({
   actName,
@@ -29,7 +30,7 @@ export function PlacementVerification({
         <Eyebrow className="mb-5">Placement verification</Eyebrow>
         <h2 className="heading mb-6 max-w-[22ch] text-[clamp(28px,4vw,46px)] leading-[1.02]">How the placements will be recorded</h2>
         <p className="mb-9 text-[clamp(16px,1.9vw,17px)] leading-[1.6]">
-          {actName} will document where the marks appeared during {runTitle}. Patrons receive a record of the placement after the run.
+          {actName} will document where the logos appeared during {runTitle}. Sponsors receive a record once it ends.
         </p>
 
         <ul className="grid max-w-[900px] gap-px border border-line bg-line sm:grid-cols-2">
