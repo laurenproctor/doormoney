@@ -11,6 +11,7 @@ import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { periodOf } from "@/lib/periods";
 import type { Board } from "@/lib/sample";
 import { HOUSE_RULES, SITE } from "@/lib/site";
 import { runPath } from "@/lib/urls";
@@ -85,7 +86,6 @@ export default async function HomePage() {
           <SectionHead eyebrow="Open fundraisers">Musicians raising now</SectionHead>
           <div className="mt-10 grid gap-px bg-line md:grid-flow-col md:auto-cols-fr">
             {boards.map((b, i) => {
-              const gigs = b.run.kind === "season";
               return (
                 <Link
                   key={b.act.slug}
@@ -97,7 +97,7 @@ export default async function HomePage() {
                   <span className="caps text-[14px] text-accent-ink">{KIND[b.act.type](b.act.city)}</span>
                   <span className="heading text-[clamp(24px,2.6vw,30px)] leading-[1.05]">{b.act.name}</span>
                   <span className="caps text-[14px] leading-[1.7] text-muted">
-                    {b.run.title}. {b.run.showCount} {gigs ? "gigs" : "shows"}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
+                    {b.run.title}. {b.run.showCount} {periodOf(b.run.kind).units}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
                   </span>
                   <span className="mt-2 flex flex-wrap gap-x-7 gap-y-3 border-t border-line pt-4">
                     <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />

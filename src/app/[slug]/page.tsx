@@ -10,6 +10,7 @@ import { NewsletterCTA } from "@/components/Newsletter";
 import { Theme, themeFor } from "@/components/Theme";
 import { getActProfile, type ActRun } from "@/lib/boards";
 import { formatDateRange } from "@/lib/dates";
+import { periodOf } from "@/lib/periods";
 import { instagramHandle, instagramUrl, safeWebsite, websiteLabel } from "@/lib/links";
 import { currentSlugFor } from "@/lib/patronprofile";
 import { actPath, runPath } from "@/lib/urls";
@@ -22,8 +23,8 @@ import { normalizeUsername } from "@/lib/username";
   not claim. RESERVED_SLUGS in src/lib/slug.ts and the reserved_handles table keep the two apart:
   no musician holds "login", so no act page can shadow one.
 
-  The page introduces the act and lists what they are raising for. A run's own board is a page down
-  from here, at /gutter-hymns/support-europe-tour.
+  The page introduces the musician and lists what they are raising for. A fundraiser has its own
+  page one down from here, at /gutter-hymns/support-europe-tour.
 */
 
 type Props = { params: Promise<{ slug: string }> };
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const profile = await getActProfile(slug);
   if (!profile) return { title: "Musician" };
   const { act } = profile;
-  const description = act.bio ?? `${act.name}, ${act.city}. Patrons put money behind the run on Door Money.`;
+  const description = act.bio ?? `${act.name}, ${act.city}. Patrons put money behind the work on Door Money.`;
   return {
     title: act.name,
     description,
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const runUnit = (kind: string) => (kind === "season" ? "gigs" : "shows");
+
 
 function RunRow({ actSlug, run, live }: { actSlug: string; run: ActRun; live: boolean }) {
   return (
@@ -55,12 +56,12 @@ function RunRow({ actSlug, run, live }: { actSlug: string; run: ActRun; live: bo
             </Link>
           </h3>
           <p className="caps mt-3 text-[14px] text-muted">
-            {run.showCount} {runUnit(run.kind)}, {formatDateRange(run.startsOn, run.endsOn)}
+            {run.showCount} {periodOf(run.kind).units}, {formatDateRange(run.startsOn, run.endsOn)}
           </p>
         </div>
         {live && (
           <ButtonLink href={runPath(actSlug, run.slug)} className="self-start">
-            Back the run
+            Back the {periodOf(run.kind).noun}
           </ButtonLink>
         )}
       </div>
@@ -72,15 +73,15 @@ export default async function ActPage({ params }: Props) {
   const { slug } = await params;
   const profile = await getActProfile(slug);
   if (!profile) {
-    // A board address that moved keeps its old word pointing here. Retired words are never
-    // reissued (migration 0024), so this can only ever land on the musician who left it behind.
+    // An address that moved keeps its old word pointing here. Retired words are never reissued
+    // (migration 0024), so this can only ever land on the musician who left it behind.
     const moved = await currentSlugFor(normalizeUsername(slug));
     if (moved && moved !== slug) permanentRedirect(actPath(moved));
     notFound();
   }
 
   const { act, running, past } = profile;
-  // Every act gets its own color of light, the same one on the page and on every board under it.
+  // Every musician gets their own color of light, the same one here and on every fundraiser below.
   const theme = themeFor(slug);
   const website = safeWebsite(act.website);
   const handle = instagramHandle(act.instagram);
@@ -133,7 +134,7 @@ export default async function ActPage({ params }: Props) {
                 What {plural ? "they are" : "the musician is"} raising for
               </>
             ) : (
-              <>No run is open right now</>
+              <>No fundraiser is open right now</>
             )}
           </SectionHead>
           {running.length ? (
@@ -144,14 +145,15 @@ export default async function ActPage({ params }: Props) {
             </ul>
           ) : (
             <p className="mt-10 max-w-[56ch] text-[16px] text-muted">
-              {act.name} {plural ? "have" : "has"} no run open on Door Money at the moment. The next one shows up here.
+              {act.name} {plural ? "have" : "has"} no fundraiser open on Door Money at the moment. The next one shows up
+              here.
             </p>
           )}
         </Section>
 
         {past.length > 0 && (
           <Section className="border-t border-line">
-            <SectionHead eyebrow="Already run">What came before</SectionHead>
+            <SectionHead eyebrow="Finished">What came before</SectionHead>
             <ul className="mt-12">
               {past.map((r) => (
                 <RunRow key={r.slug} actSlug={slug} run={r} live={false} />
@@ -160,7 +162,7 @@ export default async function ActPage({ params }: Props) {
           </Section>
         )}
 
-        <NewsletterCTA source={`act:${slug}`} eyebrow="The next board" />
+        <NewsletterCTA source={`act:${slug}`} eyebrow="The next fundraiser" />
       </main>
       <Footer />
     </Theme>

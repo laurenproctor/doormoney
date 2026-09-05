@@ -11,24 +11,25 @@ import { CATALOG } from "@/lib/catalog";
 import { clockOf, closeStamp, formatDateRange, weekdayOf } from "@/lib/dates";
 import { instagramHandle, instagramUrl, safeWebsite, websiteLabel } from "@/lib/links";
 import { formatMoney } from "@/lib/money";
+import { periodOf } from "@/lib/periods";
 import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
 import type { Board } from "@/lib/sample";
 import { BoardLots, type LotView } from "./BoardLots";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
 
-/** "an 18-show run", "a 32-gig season". */
+/** "an 18-show fall tour", "a 32-gig season". */
 const article = (n: number) => (/^(8|11$|18$|8\d)/.test(String(n)) ? "an" : "a");
 const firstSentence = (s: string) => s.split(/(?<=\.)\s/)[0];
 
 export type PaidNotice = { kind: "paid" | "processing"; amount: number; email: string | null };
 
 /**
- * The board itself: everything a patron reads, from the hero to the newsletter.
+ * The fundraiser's page: everything a patron reads, from the hero to the newsletter.
  *
- * One component for two routes. /[slug]/[run] renders it for the public once a run is open, and
- * the musician's own /dashboard/runs/[id]/preview renders the same thing for a draft with `draft`
- * set, so a preview is the board rather than a picture of one. The route decides who may see it;
- * this decides what it looks like.
+ * One component for two routes. /[slug]/[run] renders it for the public once a fundraiser is open,
+ * and the musician's own /dashboard/runs/[id]/preview renders the same thing for a draft with
+ * `draft` set, so a preview is the page rather than a picture of one. The route decides who may
+ * see it; this decides what it looks like.
  */
 export function BoardView({
   board,
@@ -39,15 +40,16 @@ export function BoardView({
   board: Board;
   slug: string;
   paid?: PaidNotice | null;
-  /** The banner for a private preview: where to go back to, and whether the board is already up. */
+  /** The banner for a private preview: where to go back to, and whether it is already up. */
   draft?: { backHref: string; published: boolean } | null;
 }) {
   const { act, run } = board;
 
   // Every act gets its own color of light, the same one every time.
   const theme = themeFor(slug);
+  // The period by name, never "the run": docs/DECISIONS.md, decision 14.
+  const period = periodOf(run.kind);
   const season = run.kind === "season";
-  const unit = season ? "gigs" : "shows";
   const noun = act.type === "soloist" ? "The musician" : "The band";
   const auction = board.lots.some((l) => l.mode === "auction");
   const closesAt = run.biddingClosesAt;
@@ -55,7 +57,7 @@ export function BoardView({
   // The headline names the close in full, so nobody has to work out which Friday it means.
   const closeFull = closesAt ? closeStamp(closesAt) : null;
   const closesLabel = closesAt ? `${auction ? "bidding" : "listing"} closes ${closeDay}, ${clockOf(closesAt)}` : "no close time set";
-  // The commercial context first, from the run data; the bio's personality follows it.
+  // The commercial context first, from the fundraiser itself; the bio's personality follows it.
   const plural = act.type !== "soloist";
   const lead = season
     ? `${act.name} is playing ${article(run.showCount)} ${run.showCount}-gig ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}, carrying the same case and stand into every room.`
@@ -86,8 +88,8 @@ export function BoardView({
       closed: l.mode === "auction" && (l.status !== "open" || Boolean(lotCloses && lotCloses <= nowIso)),
       priceCents: l.priceCents,
       bidCents: l.topBid?.amountCents ?? null,
-      // A patron who bid anonymously stays anonymous on the board after they win. The act sees the
-      // name on the dashboard, and the mark itself is not anonymous by definition.
+      // A patron who bid anonymously stays anonymous here after they win. The musician sees the
+      // name on the dashboard, and the logo itself is not anonymous by definition.
       bidder: l.status === "sold" ? (l.topBid?.anonymous ? "Anonymous patron" : (l.soldTo ?? "a patron")) : (l.topBid?.patronName ?? null),
       anonymous: l.topBid?.anonymous ?? false,
       minimumCents: minimumBidCents(l.priceCents, l.topBid?.amountCents ?? null),
@@ -98,9 +100,9 @@ export function BoardView({
   });
 
   const facts: [string, string][] = [
-    [String(run.showCount), season ? "gigs a season" : "shows on the run"],
+    [String(run.showCount), period.counted],
     ...(run.expectedAttendance ? [[`~${run.expectedAttendance.toLocaleString("en-US")}`, "expected attendance"] as [string, string]] : []),
-    [String(openSpots(board)), "placements still open"],
+    [String(openSpots(board)), "sponsorship options open"],
   ];
 
   return (
@@ -111,7 +113,7 @@ export function BoardView({
           <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-7 py-3">
             <span className="caps flex items-center gap-3 text-[14px] text-accent-ink">
               <i aria-hidden="true" className="inline-block h-1.5 w-1.5 flex-none bg-accent" />
-              {draft.published ? "Preview of the published board" : "Draft preview, private to this account"}
+              {draft.published ? "Preview of the published page" : "Draft preview, private to this account"}
             </span>
             <a href={draft.backHref} className="caps text-[14px] text-muted underline decoration-1 underline-offset-4 hover:text-ink">
               Back to editing
@@ -123,10 +125,10 @@ export function BoardView({
         <section className="relative overflow-hidden">
           <HeroArt theme={theme} src={act.photoUrl} />
           <div className="hero-in relative mx-auto max-w-[1120px] px-7 pb-10 pt-[72px]">
-            <Eyebrow className="mb-7">{draft && !draft.published ? "Draft board" : "Live board"}</Eyebrow>
+            <Eyebrow className="mb-7">{draft && !draft.published ? "Draft fundraiser" : "Open fundraiser"}</Eyebrow>
             <h1 className={`display max-w-[14ch] leading-[0.98] ${act.name.length > 14 ? "text-[clamp(40px,7vw,92px)]" : "text-[clamp(48px,8.4vw,108px)]"}`}>{act.name}</h1>
             <p className="caps mt-6 text-[14.5px] leading-[2]">
-              {run.title}. {run.showCount} {unit}, {formatDateRange(run.startsOn, run.endsOn)}. {act.city}.
+              {run.title}. {run.showCount} {period.units}, {formatDateRange(run.startsOn, run.endsOn)}. {act.city}.
             </p>
             <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>
             {act.bio && <p className="mt-5 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
@@ -172,14 +174,14 @@ export function BoardView({
               <Eyebrow className="mb-3">{paid.kind === "paid" ? "Paid" : "Payment on its way"}</Eyebrow>
               <p className="max-w-none text-[16px]">
                 {paid.kind === "paid"
-                  ? `${formatMoney(paid.amount)} received. The spot is taken for the run, and the board shows it within a minute.`
-                  : `${formatMoney(paid.amount)} is clearing. The spot is held until it lands, and the board updates on its own.`}
+                  ? `${formatMoney(paid.amount)} received. The spot is taken, and this page shows it within a minute.`
+                  : `${formatMoney(paid.amount)} is clearing. The spot is held until it lands, and this page updates on its own.`}
                 {paid.email ? ` A record is on its way to ${paid.email}.` : ""}
               </p>
-              <p className="mt-2 max-w-none text-[15px] text-muted">Door Money holds the money and pays {act.name} every Friday through the run.</p>
+              <p className="mt-2 max-w-none text-[15px] text-muted">Door Money holds the money and pays {act.name} every Friday as the {period.noun} goes on.</p>
             </div>
           )}
-          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={season ? "Back the season" : "Back the run"} />
+          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={`Back the ${period.noun}`} />
         </div>
 
         <PlacementVerification
@@ -192,10 +194,10 @@ export function BoardView({
           <div className="mx-auto grid max-w-[1120px] items-start gap-12 px-7 md:grid-cols-[1fr_400px]">
             <div>
               <Eyebrow className="mb-5">Fans</Eyebrow>
-              <h2 className="heading mb-6 text-[clamp(28px,4vw,46px)] leading-[1.02]">Back the {season ? "season" : "run"} for $25 or $100</h2>
+              <h2 className="heading mb-6 text-[clamp(28px,4vw,46px)] leading-[1.02]">Back the {period.noun} for $25 or $100</h2>
               <p>
-                Fans back a {season ? "season" : "run"} without taking a placement: a name on the tour thank-you, or on the merch table card at every{" "}
-                {season ? "gig" : "show"}. Door Money holds the money and pays {act.name} weekly, the same as a placement.
+                Fans back a {period.noun} without sponsoring it: a name on the tour thank-you, or on the merch table card
+                at every {period.unit}. Door Money holds the money and pays {act.name} weekly, the same as a sponsorship.
               </p>
               {backers.length > 0 && (
                 <>
@@ -219,19 +221,17 @@ export function BoardView({
             <Lines
               marked
               lines={[
-                "The winning patron puts the money up within 48 hours, or the spot goes to the next bid.",
-                `${noun} approves the mark. The musician always has the final say.`,
-                `${noun} plays the ${season ? "season" : "run"} it was already playing.`,
-                `The money reaches ${noun.toLowerCase()} week by week as the ${season ? "season" : "run"} goes on.`,
-                season
-                  ? "End of season: a record of every gig the placement ran at."
-                  : "End of the run, the patron gets a record of it: every show, every room, the attendance count.",
+                "The winning bidder puts the money up within 48 hours, or the spot goes to the next bid.",
+                `${noun} approves the logo. The musician always has the final say.`,
+                `${noun} plays the ${period.noun} it was already playing.`,
+                `The money reaches ${noun.toLowerCase()} week by week as the ${period.noun} goes on.`,
+                `End of the ${period.noun}, the sponsor gets a record of it: every ${period.unit}, every room, the attendance count.`,
               ]}
             />
           </div>
         </div>
 
-        <NewsletterCTA source={`board:${board.act.slug}`} eyebrow="The next board" />
+        <NewsletterCTA source={`board:${board.act.slug}`} eyebrow="The next fundraiser" />
       </main>
 
       <Footer note={showBackers ? BACKERS_DISCLAIMER : undefined} />

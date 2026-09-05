@@ -6,6 +6,7 @@ import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { periodOf } from "@/lib/periods";
 import type { Board } from "@/lib/sample";
 import { runPath } from "@/lib/urls";
 
@@ -18,13 +19,6 @@ export const metadata: Metadata = {
 // snippets; decision 13 settled that an address outlives the words on the page. In copy this is
 // Fundraisers, and not everything on it is an auction: each sponsorship is fixed price or open to
 // bids, and the musician decides which. See docs/DECISIONS.md, decision 14.
-
-/** What the shows are called, by the period being funded. Never "the run": decision 14. */
-const PERIOD: Record<Board["run"]["kind"], string> = {
-  tour: "shows on the tour",
-  season: "gigs a season",
-  residency: "nights of the residency",
-};
 
 const KIND: Record<Board["act"]["type"], (city: string) => string> = {
   touring_band: () => "Band, touring",
@@ -53,13 +47,12 @@ export default async function AuctionsPage() {
     >
       <div className="mx-auto grid max-w-[1120px] gap-[30px] px-7 pb-[90px] md:grid-cols-2">
         {boards.map((b) => {
-          const gigs = b.run.kind === "season";
           return (
             <div key={b.act.slug} className="edge flex flex-col gap-3.5 bg-panel px-[26px] py-7 ">
               <div className="caps text-[14.5px] text-accent-ink">{KIND[b.act.type](b.act.city)}</div>
               <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">{b.act.name}</div>
               <div className="caps text-[14.5px] leading-[1.7] text-muted">
-                {b.run.title}. {b.run.showCount} {gigs ? "gigs" : "shows"}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
+                {b.run.title}. {b.run.showCount} {periodOf(b.run.kind).units}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
               </div>
               <div className="flex flex-wrap gap-[26px] border-t border-line pt-3.5">
                 <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />
@@ -67,7 +60,7 @@ export default async function AuctionsPage() {
                 {b.run.expectedAttendance ? (
                   <Stat value={`~${b.run.expectedAttendance.toLocaleString("en-US")}`} label="expected attendance" />
                 ) : (
-                  <Stat value={String(b.run.showCount)} label={PERIOD[b.run.kind]} />
+                  <Stat value={String(b.run.showCount)} label={periodOf(b.run.kind).counted} />
                 )}
               </div>
               {b.run.biddingClosesAt && (

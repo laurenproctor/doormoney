@@ -1,6 +1,6 @@
-// Who backs a soloist. Sample copy for Rosie's board: buyer types for the solo tier, with real
+// Who backs a soloist. Sample copy for Rosie's fundraiser: sponsor types for the solo tier, with real
 // companies named as illustrations only, kept behind a disclosure so the categories carry the point.
-// Until musicians can write their own backer notes, it shows on Rosie's board alone.
+// Until musicians can write their own backer notes, it shows on Rosie's fundraiser alone.
 
 const BACKERS: { title: string; body: string; who: string; fits: string }[] = [
   {
@@ -25,7 +25,7 @@ const BACKERS: { title: string; body: string; who: string; fits: string }[] = [
     title: "Neighborhood businesses",
     body: "The shop on the block that wants its local musician to keep playing. No targeting logic. The purest version of the whole idea.",
     who: "Sahadi's, Devoción, McNally Jackson, Talea Beer Co.",
-    fits: "any open placement, usually the cheapest one",
+    fits: "any open sponsorship, usually the cheapest one",
   },
 ];
 
@@ -57,7 +57,7 @@ export function RosieBackers() {
           ))}
         </div>
         <p className="mt-[22px] max-w-[70ch] text-[14px] text-muted">
-          Companies named here are examples of who each placement is built for. None of them are involved with Door
+          Companies named here are examples of who each sponsorship is built for. None of them are involved with Door
           Money, and none have bought anything.
         </p>
       </div>

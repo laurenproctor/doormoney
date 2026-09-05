@@ -116,7 +116,7 @@ export function BoardLots({
       <div className="lit mt-12 flex flex-wrap items-end justify-between gap-6 bg-panel px-8 py-7 max-md:px-6">
         <div>
           <b className="heading block text-[clamp(38px,6vw,64px)] leading-none">{formatMoney(worth)}</b>
-          <span className="caps mt-2 block text-[14px] text-muted">in sold placements and current bids</span>
+          <span className="caps mt-2 block text-[14px] text-muted">in sold sponsorships and current bids</span>
         </div>
         <div className="md:text-right">
           {closesAt ? (
@@ -129,7 +129,7 @@ export function BoardLots({
       </div>
 
       <div className="pb-6 pt-[84px]">
-        <Eyebrow className="mb-5">The placements</Eyebrow>
+        <Eyebrow className="mb-5">Sponsorship options</Eyebrow>
         <h2 className="heading mb-8 text-[clamp(30px,4.4vw,52px)] leading-[1.02]">{heading}</h2>
         <div className="grid gap-px bg-line">
           {lots.map((l, i) => {
