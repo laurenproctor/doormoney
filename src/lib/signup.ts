@@ -6,10 +6,10 @@
  * once: clear an error the moment it stops being true, and put the cursor on the control that
  * needs attention instead of leaving it on the body.
  *
- * The rules and the wording here are deliberately the server's, and tests/signup.test.ts pins
- * them against it so the two copies cannot drift in silence. Where the two differ at all, this
- * one is the looser: a value this accepts and the server refuses comes back as a server error,
- * which the form shows. The reverse would be a field nobody can submit.
+ * The limits and the wording live here and the server imports them, so there is one copy of
+ * both. What is still two copies is the checking itself: EMAIL_RE below is deliberately looser
+ * than the server's zod email check, because a value this accepts and the server refuses comes
+ * back as a server error the form shows, while the reverse would be a field nobody can submit.
  */
 import { ROLES } from "@/lib/roles";
 
@@ -23,10 +23,30 @@ export function errorId(field: SignUpField | "form"): string {
   return `signup-${field.replace(/_/g, "-")}-error`;
 }
 
-/** Mirrors Password in src/app/actions/auth.ts. bcrypt stops reading at 72 bytes. */
+/** bcrypt stops reading at 72 bytes, so anything past that is not really part of the password. */
 export const PASSWORD_MIN = 10;
 export const PASSWORD_MAX = 72;
 export const NAME_MAX = 60;
+
+/**
+ * The wording, written once.
+ *
+ * Both copies of the rules read these: validateField below, for the answer the page gives at
+ * once, and SignUpInput in src/app/actions/auth.ts, for the one that actually decides. They used
+ * to be two sets of literals in two files, kept together by a test that read auth.ts as text and
+ * matched its zod calls with a regular expression. Sharing the strings is what that test wanted;
+ * this is it, so the test is gone.
+ */
+export const SIGNUP_MESSAGES = {
+  roles: "Pick at least one, or both.",
+  first_name_missing: "Enter a first name.",
+  first_name_long: `Keep the first name under ${NAME_MAX} characters.`,
+  last_name_missing: "Enter a last name.",
+  last_name_long: `Keep the last name under ${NAME_MAX} characters.`,
+  email: "Enter a valid email address.",
+  password_short: `Use at least ${PASSWORD_MIN} characters.`,
+  password_long: `Keep the password under ${PASSWORD_MAX} characters.`,
+} as const;
 
 export type SignUpValues = {
   roles: readonly string[];
@@ -50,22 +70,22 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function validateField(field: SignUpField, values: SignUpValues): string | undefined {
   switch (field) {
     case "roles":
-      return values.roles.some((r) => ROLE_KEYS.includes(r)) ? undefined : "Pick at least one, or both.";
+      return values.roles.some((r) => ROLE_KEYS.includes(r)) ? undefined : SIGNUP_MESSAGES.roles;
     case "first_name": {
       const v = values.first_name.trim();
-      if (v.length < 1) return "Enter a first name.";
-      return v.length > NAME_MAX ? `Keep the first name under ${NAME_MAX} characters.` : undefined;
+      if (v.length < 1) return SIGNUP_MESSAGES.first_name_missing;
+      return v.length > NAME_MAX ? SIGNUP_MESSAGES.first_name_long : undefined;
     }
     case "last_name": {
       const v = values.last_name.trim();
-      if (v.length < 1) return "Enter a last name.";
-      return v.length > NAME_MAX ? `Keep the last name under ${NAME_MAX} characters.` : undefined;
+      if (v.length < 1) return SIGNUP_MESSAGES.last_name_missing;
+      return v.length > NAME_MAX ? SIGNUP_MESSAGES.last_name_long : undefined;
     }
     case "email":
-      return EMAIL_RE.test(values.email.trim()) ? undefined : "Enter a valid email address.";
+      return EMAIL_RE.test(values.email.trim()) ? undefined : SIGNUP_MESSAGES.email;
     case "password":
-      if (values.password.length < PASSWORD_MIN) return `Use at least ${PASSWORD_MIN} characters.`;
-      return values.password.length > PASSWORD_MAX ? `Keep the password under ${PASSWORD_MAX} characters.` : undefined;
+      if (values.password.length < PASSWORD_MIN) return SIGNUP_MESSAGES.password_short;
+      return values.password.length > PASSWORD_MAX ? SIGNUP_MESSAGES.password_long : undefined;
   }
 }
 

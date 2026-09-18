@@ -2,14 +2,12 @@
   The optional patron profile, in the parts that have no database in them: what the fields will
   take, what a music preference may be, and when the username is allowed to move.
 
-  The database repeats every one of these as a constraint (migration 0024). The last test in this
-  file reads that migration and checks the two public views select nothing private, because that is
-  the one rule where being wrong is not a bug in a form but a leak.
+  The database repeats every one of these as a constraint (migration 0024), and what the two
+  public views will show is checked against a real Postgres in supabase/tests/permissions_test.sql
+  rather than here: that is the one rule where being wrong is not a bug in a form but a leak, so
+  it is tested where the views actually run.
 */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   BIO_MAX,
@@ -22,7 +20,6 @@ import {
   profileLink,
   usernameChangeAllowed,
 } from "@/lib/profile";
-import { normalizeUsername, usernameProblem } from "@/lib/username";
 
 // ---------------------------------------------------------------
 // Music preferences
@@ -130,20 +127,12 @@ test("a word claimed on a leap day lands on the last day of February, not on 1 M
   assert.equal(next?.toISOString().slice(0, 10), "2029-02-28");
 });
 
-test("a username has to pass the same rules a musician address does, and patron is reserved", () => {
-  assert.equal(usernameProblem("lauren"), null);
-  assert.match(usernameProblem("ab") ?? "", /3 characters/);
-  assert.match(usernameProblem("x".repeat(41)) ?? "", /under 40/);
-  assert.match(usernameProblem("-lauren") ?? "", /Letters, digits and hyphens/);
-  assert.match(usernameProblem("Lauren Proctor") ?? "", /Letters, digits and hyphens/);
-  for (const reserved of ["patron", "patrons", "signup", "dashboard", "board", "admin"]) {
-    assert.match(usernameProblem(reserved) ?? "", /reserved/, `${reserved} should be reserved`);
-  }
-});
-
-test("a username is normalised before any of that is asked", () => {
-  assert.equal(normalizeUsername("  Lauren  "), "lauren");
-});
+/*
+  The username rules themselves are tested once, in tests/slug.test.ts: length, shape, the reserved
+  list and the normalize-then-check round trip. This file used to repeat all of it. The one thing
+  that repetition carried and the other file did not was that "patron" and "patrons" are reserved,
+  which now lives in slug.test.ts with the rest of the route list.
+*/
 
 // ---------------------------------------------------------------
 // What the page says about itself
@@ -167,63 +156,17 @@ test("the totals count runs and musicians, and nothing else", () => {
   assert.deepEqual(impactTotals(activity.slice(0, 1)), ["1 fundraiser backed", "1 musician supported"]);
 });
 
-// ---------------------------------------------------------------
-// The one rule that has to hold in SQL
-// ---------------------------------------------------------------
+/*
+  The rules that have to hold in SQL are tested in SQL.
 
-const migration = readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "supabase", "migrations", "0024_patron_profiles.sql"),
-  "utf8",
-);
+  Four tests used to sit here. They read supabase/migrations/0024_patron_profiles.sql as text and
+  checked that the two public views did not mention amount_cents, email, stripe_ and so on, that
+  they filtered on published, that an anonymous bid was excluded, and that the photo bucket was
+  created private.
 
-/** The text of one `create view ... as ... ;` statement. */
-function viewBody(name: string) {
-  const start = migration.indexOf(`create view ${name}`);
-  assert.notEqual(start, -1, `${name} should exist`);
-  const end = migration.indexOf("grant select on", start);
-  assert.notEqual(end, -1, `${name} should be granted`);
-  return migration.slice(start, end);
-}
-
-test("the public views select nothing private", () => {
-  const forbidden = [
-    "amount_cents",
-    "fee_cents",
-    "refunded_cents",
-    "refunded_at",
-    "email",
-    "stripe_",
-    "mark_",
-    "profile_id,",
-    "payment_intent",
-    "funding_token",
-  ];
-  for (const view of ["public_patron_profiles", "public_patron_activity"]) {
-    const body = viewBody(view);
-    for (const word of forbidden) {
-      assert.equal(body.includes(word), false, `${view} must not select ${word}`);
-    }
-  }
-});
-
-test("the public views only show what was published, twice over", () => {
-  for (const view of ["public_patron_profiles", "public_patron_activity"]) {
-    assert.match(viewBody(view), /pp\.published/, `${view} must require a published profile`);
-  }
-  // Activity has to be ticked (a patron_profile_items row) and paid before it is public.
-  const activity = viewBody("public_patron_activity");
-  assert.match(activity, /from patron_profile_items i/);
-  assert.equal((activity.match(/payment_status in \('held', 'released', 'partially_refunded'\)/g) ?? []).length, 2);
-});
-
-test("an anonymous bid keeps a placement off the public view", () => {
-  assert.match(viewBody("public_patron_activity"), /b\.anonymous/);
-  assert.match(viewBody("public_patron_activity"), /not exists/);
-});
-
-test("the profile and the ticks are private by default, and the photo bucket is not public", () => {
-  assert.match(migration, /published boolean not null default false/);
-  assert.match(migration, /'patron-photos', 'patron-photos', false/);
-  // No storage policy is added at all, so nothing in the bucket is readable without a signed link.
-  assert.equal(/on storage\.objects/.test(migration), false);
-});
+  They now live in supabase/tests/permissions_test.sql, which runs every migration against a real
+  Postgres in CI and then asks the database what those views are and what they return. That is
+  strictly stronger: the grep read one migration's text, so a later migration replacing a view
+  would have left it passing while the view leaked. Each of the four was confirmed to fail against
+  a deliberately broken view before the move.
+*/
