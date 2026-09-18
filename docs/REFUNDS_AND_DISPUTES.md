@@ -56,6 +56,19 @@ dies holding a row is freed after fifteen minutes, and a crash between marking a
 cancelled and queueing its refunds is caught by a sweep that asks which patron is still holding
 money on a cancelled fundraiser.
 
+## What the database refuses
+
+The rules above are enforced by the application and, since migration 0033, by PostgreSQL under it.
+A payment moves `requires_payment` to `held` to `released`, and out to `refunded` or
+`partially_refunded`. There is no way back from any of them: a refunded purchase cannot return to
+held, a released one cannot return to unpaid, and a refund can neither shrink nor exceed the charge
+it is against. A logo is answered once, which is what holds a sponsorship's payouts until the
+musician says yes.
+
+None of that is reachable through the site today. It is written down because each one is a single
+forgotten condition away from being reachable, and every one of them would be a row saying a
+patron's money is somewhere it is not.
+
 ## Disputes
 
 A dispute is a patron asking their bank to reverse the charge. Door Money would rather be asked first, because a flag stops the money at once and a dispute can take the bank up to seventy five days.

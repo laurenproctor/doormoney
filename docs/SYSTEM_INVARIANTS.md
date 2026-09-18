@@ -69,13 +69,14 @@ than silent, but it does not resolve on its own. See `docs/DECISIONS.md`, decisi
 
 ### A payout cannot exceed the available act share
 
-**Partly held.** Enforced by Phase 2 and Phase 4.
+**Partly held.** Enforced by Phase 4.
 
 The schedule is built from amount minus fee, so the arithmetic cannot overpay
 (`weeklySlices`, tested in `tests/money.test.ts`), and since 0031 a sponsorship's slice cannot be
-marked paid at all before the logo is approved. What is still missing is the amount constraint: no
-database rule prevents a payout row from being written or edited to more than the act's share, and
-there is no ledger to check the total against.
+marked paid at all before the logo is approved. Since 0033 a refund cannot exceed the charge it is
+against, or shrink. What is still missing is the payout side of the same constraint: no database
+rule prevents a `payout_schedule` row from being written or edited to more than the act's share,
+and there is no ledger to check the total against.
 
 ### Every Stripe object maps to an internal financial record
 
@@ -91,6 +92,24 @@ that exists at Stripe and not here, or here and not at Stripe, goes unnoticed.
 There is no ledger. Totals are computed from mutable rows on `purchases`, `backings` and
 `payout_schedule`, and revenue is read from configured lot prices rather than from what was actually
 charged.
+
+### A payment only moves the way money moves
+
+**Held**, since migration 0033.
+
+`purchases.payment_status` and `backings.payment_status` carried the state of everybody's money
+from 0001 with nothing behind them but the WHERE clause of whichever query wrote next. The
+application was careful (fulfilment conditional on `requires_payment`, the payout job on `held`,
+`refundRow` checking before it writes) and careful is not enforced: each of those is one forgotten
+`.eq()` from being absent. Nothing refused a refunded purchase moving back to held, a released one
+back to requires_payment, or a refund unwinding to zero.
+
+A trigger on both tables now allows only what the system performs: `requires_payment` to `held` to
+`released`, and out to `refunded` or `partially_refunded`, with a hand-made refund after the fact
+allowed from `released` because Door Money pays that one out of its own pocket. Every other move,
+and every way back, is refused. A status that does not change is always allowed, so a duplicate
+webhook stays harmless. `purchases.mark_status` has the same treatment, which is what 0031's hold
+rests on: a logo goes none, submitted, then approved or declined, and no further.
 
 ---
 

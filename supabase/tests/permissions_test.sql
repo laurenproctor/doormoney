@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(88);
+select plan(99);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -440,6 +440,7 @@ select is(
   (select status::text || ' ' || (due_on = current_date)::text from payout_schedule where id='de000000-0000-0000-0000-000000000001'),
   'scheduled true', 'the slice that was refused is still scheduled, and still due on the day it was');
 
+update purchases set mark_status='submitted' where lot_id='a1000000-0000-0000-0000-000000000002';
 update purchases set mark_status='declined' where lot_id='a1000000-0000-0000-0000-000000000002';
 insert into payout_schedule (id, act_id, purchase_id, due_on, amount_cents, status)
 values (
@@ -467,6 +468,7 @@ select lives_ok(
   'a fan backing pays on the calendar, with no logo anywhere in it');
 
 -- The yes is what releases it, and the same slice then moves.
+update purchases set mark_status='submitted' where lot_id='a1000000-0000-0000-0000-000000000004';
 update purchases set mark_status='approved' where lot_id='a1000000-0000-0000-0000-000000000004';
 
 select lives_ok(
@@ -541,6 +543,80 @@ select is(
   (select updated_at from financial_operations where id='fa000000-0000-0000-0000-000000000001'),
   (select created_at from financial_operations where id='fa000000-0000-0000-0000-000000000001'),
   'and a caller cannot tell the row when it last moved: the trigger does');
+
+reset role;
+
+-- ===============================================================
+-- Money moves one way (0033)
+--
+-- The transitions the system performs, and every way back. None of the refusals below is reachable
+-- through the application today; each is one forgotten WHERE clause, one migration or one
+-- hand-written UPDATE from being reachable, and each would be a row saying a patron's money is
+-- somewhere it is not.
+-- ===============================================================
+set local role service_role;
+
+insert into purchases (id, lot_id, patron_id, amount_cents, fee_cents, payment_status)
+values ('55000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000006',
+        'c1000000-0000-0000-0000-000000000001', 10000, 1500, 'held');
+
+select lives_ok(
+  $$update purchases set payment_status='released' where id='55000000-0000-0000-0000-000000000001'$$,
+  'a held payment is released once every slice has gone to the musician');
+
+select throws_ok(
+  $$update purchases set payment_status='held' where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'but a released payment cannot be un-released');
+
+select throws_ok(
+  $$update purchases set payment_status='requires_payment' where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'and cannot go back to never having been paid');
+
+select lives_ok(
+  $$update purchases set payment_status='refunded', refunded_cents=10000 where id='55000000-0000-0000-0000-000000000001'$$,
+  'a refund by hand after the fact is allowed, out of Door Money''s own pocket');
+
+select throws_ok(
+  $$update purchases set payment_status='held' where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a refunded payment is the end of the road');
+
+-- charge.amount_refunded is a running total, so an older event arriving late must not walk it back.
+select throws_ok(
+  $$update purchases set refunded_cents=500 where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a refund cannot shrink');
+
+select throws_ok(
+  $$update purchases set refunded_cents=10001 where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'nor can more go back than was ever charged');
+
+-- A fan backing is held to the same rule, on the same function.
+insert into backings (id, run_id, patron_id, tier, amount_cents, fee_cents, display_name, payment_status)
+values ('55000000-0000-0000-0000-000000000002',
+        (select r.id from lots l join runs r on r.id=l.run_id where l.id='a1000000-0000-0000-0000-000000000006'),
+        'c1000000-0000-0000-0000-000000000001', 'thank_you', 2500, 375, 'A fan', 'requires_payment');
+
+select throws_ok(
+  $$update backings set payment_status='released' where id='55000000-0000-0000-0000-000000000002'$$,
+  '23514', null, 'a backing cannot be released without ever being paid for');
+
+-- The logo, which migration 0031 needs to be answered once and for good.
+insert into purchases (id, lot_id, patron_id, amount_cents, fee_cents, payment_status)
+values ('55000000-0000-0000-0000-000000000003','a1000000-0000-0000-0000-000000000007',
+        'c1000000-0000-0000-0000-000000000001', 10000, 1500, 'held');
+
+select throws_ok(
+  $$update purchases set mark_status='approved' where id='55000000-0000-0000-0000-000000000003'$$,
+  '23514', null, 'a logo nobody sent cannot be approved');
+
+select lives_ok(
+  $$update purchases set mark_status='submitted' where id='55000000-0000-0000-0000-000000000003';
+    update purchases set mark_status='approved'  where id='55000000-0000-0000-0000-000000000003';
+    update purchases set mark_status='approved'  where id='55000000-0000-0000-0000-000000000003'$$,
+  'a logo is sent, answered, and answering it again changes nothing');
+
+select throws_ok(
+  $$update purchases set mark_status='declined' where id='55000000-0000-0000-0000-000000000003'$$,
+  '23514', null, 'and an approved logo cannot be taken back, which is what 0031 rests on');
 
 reset role;
 

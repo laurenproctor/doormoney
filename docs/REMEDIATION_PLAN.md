@@ -147,9 +147,10 @@ callers can neither read nor mutate protected data.
 
 ## Phase 2: durable money lifecycle
 
-**Status: mostly done.** The payout gate is `0031_payout_needs_approved_mark.sql` and the refund
-outbox is `0032_financial_operations.sql`. What is left is the explicit state machine for purchases
-and backings, which is the one item below still open.
+**Status: done**, apart from the reconciliation plan, which belongs to Phase 4 and is listed there.
+Three migrations: `0031_payout_needs_approved_mark.sql` (the payout gate),
+`0032_financial_operations.sql` (the refund outbox) and `0033_payment_state_machine.sql` (the
+transitions).
 
 Make purchases, marks, refunds, cancellations, payouts and failures explicit and recoverable.
 
@@ -189,13 +190,23 @@ mark is approved. Fan backings without a mark follow their own documented rule.
   call and the database write. The last of those was already safe and stayed that way: the Stripe
   idempotency key means a retry after a crash between the refund and the write returns the same
   refund rather than making a second one.
-- [ ] Define the purchase and backing state machine, and validate every transition in PostgreSQL.
-  The refund side has one now (`financial_op_status`, with a check that a settled row is never also
-  waiting for a worker). `purchases.payment_status` and `backings.payment_status` still do not.
+- [x] Define the purchase and backing state machine, and validate every transition in PostgreSQL.
+  Migration 0033. `payment_status` moves requires_payment to held to released, and out to refunded
+  or partially_refunded; every other move, and every way back, is refused by a trigger on both
+  tables. `refunded_cents` cannot shrink (the webhook writes Stripe's running total, so a late
+  older event would otherwise walk it backwards) and cannot exceed the charge. `mark_status` is
+  answered once: none to submitted to approved or declined, and no further, which is what 0031's
+  hold on a sponsorship's payouts rests on and what nothing enforced before.
+
+  Writing it found one thing: `permissions_test.sql` had been driving a logo straight from none to
+  declined to set up the 0031 fixtures, which is not a move the application can make. The rules
+  refused the test, and the fixture was what was wrong.
 - [ ] Plan the reconciliation of existing purchases and payout rows.
 
 **Gate.** No payout happens before its release condition, and every failed refund or cancellation
-obligation stays visible and retryable. Both halves are met and tested.
+obligation stays visible and retryable. Both halves are met and tested, and the state a payment is
+in is now enforced by PostgreSQL rather than by the WHERE clause of whichever query writes next.
+`supabase/tests/permissions_test.sql` covers the phase in 29 assertions, up from 70 to 99.
 
 ---
 
