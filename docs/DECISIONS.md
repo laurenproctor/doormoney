@@ -332,9 +332,15 @@ open too.
 
 ---
 
-## 17. Sponsorship across four categories
+## 17. An extensible, city-agnostic sponsorship product
 
-**Decided (2026-09-18):** Door Money expands to music, sports teams, film, and theater. Organizers raise money by offering specified visibility to sponsors with relevant audiences. Patronage remains part of the purpose and brand story; sponsorship is the exchange the product must explain.
+**Decided and clarified (2026-09-18):** Door Money starts its expansion with music, sports teams, film, and theater, and intends to grow to as many categories as can sustain a clear, deliverable sponsorship promise. These are starting categories, not a permanent ceiling. Organizers raise money by offering specified visibility to sponsors with relevant audiences. Patronage remains part of the purpose and brand story; sponsorship is the exchange the product must explain.
+
+**Confirmed by the owner:** every sponsorship must make clear both what the funding enables and what the sponsor can count on receiving.
+
+Door Money is city-agnostic. More early testers may come from NYC through the founder's network, but the product and technical model must support organizers and audiences elsewhere, including online and multi-location activity. The New York launch scope and geographic rationale in the historical roadmap no longer govern the product. Payment-country and currency capabilities remain explicit operational capabilities, not claims of universal availability.
+
+Phase 2 must make category definitions extensible and location/time-zone concepts portable. Phase 3 must avoid city-based eligibility restrictions and distinguish organizer location from audience reach. Expansion adds definitions and supported capabilities to the shared workflow rather than redesigning it for each category or place.
 
 The authoritative definitions and compatibility requirements are in `PRODUCT_CONTRACT.md`. The implementation sequence and audit gates are in `EXPANSION_PLAN.md`.
 

@@ -1,6 +1,6 @@
 # Door Money roadmap
 
-> Historical music implementation roadmap. The current product scope is in `PRODUCT_CONTRACT.md`; the five new expansion phases are in `EXPANSION_PLAN.md`. Completion claims below concern the original music build and do not establish readiness for sports teams, film, or theater.
+> Historical music implementation roadmap. The current product scope is in `PRODUCT_CONTRACT.md`; the five new expansion phases are in `EXPANSION_PLAN.md`. Completion claims below concern the original music build and do not establish readiness for sports teams, film, or theater. Those are starting categories, not a final taxonomy. The New York launch scope and geographic rationale for currency limits below are historical: the current product is city-agnostic, with extensible categories and explicit payment capabilities.
 
 From seven mockup pages to a working marketplace in New York. Phases are ordered so that each one ships something usable on its own, and so that money-handling is built once and reused by the board, the widget and the auctions rather than three times.
 

@@ -1,6 +1,8 @@
 # Door Money
 
-Door Money connects sponsors with relevant audiences through music, sports teams, film, and theater. Organizers raise money by offering specified visibility in exchange for support.
+Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, and theater. The product is city-agnostic and designed to expand to as many categories as can sustain a clear, deliverable sponsorship promise. Every sponsorship explains what the funding enables and what the sponsor can count on receiving.
+
+NYC may be a source of early testers, not a limit on who the product is for. The technology must support new categories and locations without rebuilding the shared sponsorship workflow. Payment availability remains explicit about the countries and currencies actually supported.
 
 Start with `CLAUDE.md` and `docs/PRODUCT_CONTRACT.md`. Follow `docs/EXPANSION_PLAN.md` for the current five-phase expansion. The application currently implements the music workflow; the broader categories are the implementation target, not a claim of live availability. `docs/ROADMAP.md` records the original music build.
 

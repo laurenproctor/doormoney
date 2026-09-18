@@ -1,6 +1,8 @@
 # Door Money
 
-Door Money is a sponsorship marketplace connecting sponsors with relevant audiences through music, sports teams, film, and theater. Organizers raise money by offering specified visibility. Sponsors support work and communities that matter to them and receive the exposure described in the offer.
+Door Money is a category-extensible, city-agnostic sponsorship marketplace connecting sponsors with relevant audiences. We start with music, sports teams, film, and theater and intend to expand to as many categories as can support a clear, deliverable sponsorship promise. Organizers raise money by offering specified visibility. Every sponsorship must make clear both what the funding enables and what the sponsor can count on receiving.
+
+New York may supply more early testers because of the founder's network; it is not an eligibility boundary or a technical default. Design for organizers and audiences anywhere, including online and multi-location activity. Category and geography must not be fixed to the initial cohort. Actual payment availability must reflect supported capabilities, not imply that every country and currency is already enabled.
 
 Read `docs/PRODUCT_CONTRACT.md` first for the current product contract, category definitions, and compatibility rules. `docs/EXPANSION_PLAN.md` governs the five expansion phases. Decision 17 in `docs/DECISIONS.md` supersedes the earlier music-only product scope. `docs/ROADMAP.md` records the original music build, not the expansion plan.
 

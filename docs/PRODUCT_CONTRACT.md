@@ -4,15 +4,17 @@ Effective 2026-09-18. Governed by decision 17 in `DECISIONS.md`.
 
 ## Purpose and exchange
 
-Door Money connects sponsors with relevant audiences through music, sports teams, film, and theater. Organizers fund their work by offering specified visibility. Sponsors support work and communities that matter to them while receiving the exposure described in the purchased offer.
+Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, and theater. Organizers fund their work by offering specified visibility. Sponsors support work and communities that matter to them while receiving the exposure described in the purchased offer.
+
+**Confirmed product principle:** every sponsorship must make clear both what the funding enables and what the sponsor can count on receiving. This is the test for product fit across categories and places.
 
 A fundraiser must answer: what will the money enable, who is the audience, and what visibility does the sponsor receive? Audience fit supports the purchase decision. Expected reach is an estimate with its basis stated; evidence of delivery and measured results are separate facts.
 
 A sponsorship is not an investment, ownership stake, or promise of commercial return. A backing is the existing recognition contribution, a distinct transaction with its own benefits. Do not silently convert backings into sponsorships or advertise charitable tax treatment.
 
-## Launch categories
+## Starting categories and expansion
 
-These four stable keys are the contract for Phase 2. This document does not itself add database values or enable checkout.
+These four stable keys define the initial cohort for Phase 2, not the maximum scope of the product. The intent is to expand to as many categories as can sustain a clear, deliverable sponsorship promise. This document does not itself add database values or enable checkout.
 
 | Key | Public name | Responsible organizer | Fundraiser scope | Relevant details | Example visibility |
 | --- | --- | --- | --- | --- | --- |
@@ -23,9 +25,23 @@ These four stable keys are the contract for Phase 2. This document does not itse
 
 Examples are possibilities, not included benefits or evidence requirements. An organizer may offer only placements they have authority to deliver. A film must not imply guaranteed distribution, festival acceptance, or audience size. A team representative must have authority over offered team inventory; youth participation does not create permission to publish identifying evidence about minors.
 
+Category definitions must be extensible. Keep category labels, relevant fields, templates, and delivery-policy capabilities separate from shared ownership, checkout, and records. Adding a category should extend the defined category system through deliberate configuration and validation, without rebuilding the core workflow or forcing it into one of the first four categories.
+
+A future category fits when an organizer can state the funding purpose, identify the relevant audience, control the offered visibility, and specify what will be delivered and how it will be documented. Live availability also needs an implemented delivery and payment workflow. The initial taxonomy must not become a permanent product limit.
+
 Category belongs to the fundraiser. It is separate from sale method, account role, music subtype, and timeline format. Category-specific fields may add context but must not fabricate a music subtype, show count, tour, or residency for another category. Even a music recording effort may have no performances.
 
-Changing a category must not reinterpret a purchased offer. Phase 2 defines draft validation and locks; Phase 4 supplies purchase snapshots. Unknown or invalid new categories must fail validation rather than falling back silently to music. Existing music rows receive an explicit compatibility mapping.
+Changing a category must not reinterpret a purchased offer. Phase 2 defines draft validation and locks; Phase 4 supplies purchase snapshots. Category keys not yet defined or enabled must fail validation rather than falling back silently to music. The enabled set must be able to grow; this validation rule does not close the product to future categories. Existing music rows receive an explicit compatibility mapping.
+
+## Geography and audience reach
+
+Door Money is city-agnostic. NYC may supply more early testers through the founder's network, but that recruitment pattern does not define eligibility. The product is open in purpose to organizers and audiences anywhere a clear sponsorship promise can be delivered.
+
+Separate the organizer's location, activity locations, and the audience the sponsorship reaches. Support local, multi-city, touring, international, and online-only activity without inventing an NYC address or a physical venue. Location informs discovery and audience fit; it is not a fixed city allowlist.
+
+Phase 2 must support country-aware locations, optional city/region where appropriate, and explicit time-zone meaning for timed events and deadlines. Preserve date-only values as dates, and distinguish them from instants. Never silently interpret every organizer's deadline as New York time.
+
+Geographic openness does not claim that every payment corridor or currency already works. Keep payment-country, currency, and payout capabilities explicit and separate from city eligibility. Preserve the current music payment behavior while designing those capabilities to expand; do not reinterpret existing integer money amounts in another currency or publish unsupported payment promises.
 
 ## Shared concepts and words
 
@@ -90,6 +106,6 @@ Phase 3 verifies new-category publication and checkout in test mode. New-categor
 
 ## Status and authority
 
-Expansion Phase 1 establishes this contract and vocabulary checks. The current app remains music-specific. Phases 2–4 implement the contract; Phase 5 establishes operational evidence through real completed transactions.
+Expansion Phase 1 establishes this contract and vocabulary checks. The current app remains music-specific. Phases 2–4 implement support for the starting categories on an extensible, city-agnostic foundation; Phase 5 establishes operational evidence through real completed transactions. Success in the initial cohort informs further category and geographic expansion rather than defining a permanent boundary.
 
 This document and decision 17 take precedence over conflicting historical scope in `ROADMAP.md`, earlier decisions, and music mockups. Historical engineering audits remain evidence about their stated commits, not fresh assertions about current production.
