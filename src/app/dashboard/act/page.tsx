@@ -7,7 +7,7 @@ import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "The musician" };
+export const metadata: Metadata = { title: "Organizer profile" };
 
 export default async function EditActPage() {
   const user = await requireUser("/dashboard/act");
@@ -16,10 +16,11 @@ export default async function EditActPage() {
   const username = await usernameFor(supabaseAdmin(), user.id);
 
   return (
-    <DashboardShell current="/dashboard/act" actName={act.name} eyebrow="Who is playing" title="The" accent="act">
+    <DashboardShell current="/dashboard/act" actName={act.name} eyebrow="Your profile" title="The" accent="organizer">
       <Card className="max-w-[720px]">
         <ActForm act={act} siteUrl={SITE.url} username={username} />
       </Card>
     </DashboardShell>
   );
 }
+

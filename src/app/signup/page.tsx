@@ -13,26 +13,26 @@ export default async function SignUpPage({ searchParams }: Props) {
 
   return (
     <AuthShell
-      eyebrow="Musicians and patrons"
+      eyebrow="Organizers and sponsors"
       title="Create your"
       accent="account"
       // A beam crossing behind the form would otherwise change what its labels sit on.
       panelClass="bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))]"
       intro={
         <p>
-          Raise money for your music, support musicians you care about, or do both from one free
+          Create fundraisers, sponsor work you care about, or do both from one free
           account.
         </p>
       }
       aside={
         <AuthPoints
-          heading="One account. More ways to move music forward."
+          heading="One account. More ways to support work."
           points={[
-            "Raise money for upcoming shows, tours, releases and creative work already in motion.",
+            "Start a fundraiser with a clear purpose and a clear promise to sponsors.",
             "Turn sponsorship opportunities into meaningful income, without chasing agreements, payments or updates across email.",
-            "Support musicians directly and see what your money is helping make possible.",
+            "See what your support helps make possible and what you can count on receiving.",
             "Keep every fundraiser, sponsorship, payment and backing organized in one place.",
-            "Join free. Start raising or giving support whenever you are ready.",
+            "Join free. Music is live; sports teams, film and theater can prepare private drafts.",
           ]}
         />
       }
@@ -41,3 +41,4 @@ export default async function SignUpPage({ searchParams }: Props) {
     </AuthShell>
   );
 }
+

@@ -20,6 +20,7 @@ export type ReadinessAct = {
 };
 
 export type ReadinessRun = {
+  category_key?: string;
   title: string | null;
   starts_on: string | null;
   ends_on: string | null;
@@ -68,6 +69,7 @@ export function verificationComplete(run: ReadinessRun): boolean {
  */
 export function publishBlockers({ act, run, lotCount, auctionCount }: ReadinessInput): string[] {
   const out: string[] = [];
+  if (run.category_key && run.category_key !== "music") out.push("This category is available for drafts. Publishing is not available yet.");
   if (!filled(act.name) || !filled(act.city)) out.push("Finish the name and city on the musician page.");
   else if (!filled(act.bio)) out.push("Add a short bio on the musician page. The fundraiser leads with it.");
   if (!runComplete(run)) out.push("Finish the fundraiser: a name, both dates and a show count.");
@@ -150,3 +152,4 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
     },
   ];
 }
+

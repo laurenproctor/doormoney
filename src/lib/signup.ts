@@ -11,7 +11,7 @@
  * than the server's zod email check, because a value this accepts and the server refuses comes
  * back as a server error the form shows, while the reverse would be a field nobody can submit.
  */
-import { ROLES } from "@/lib/roles";
+import { isRole } from "@/lib/roles";
 
 export type SignUpField = "roles" | "first_name" | "last_name" | "email" | "password";
 
@@ -58,7 +58,7 @@ export type SignUpValues = {
 
 export type SignUpErrors = Partial<Record<SignUpField, string>>;
 
-const ROLE_KEYS: readonly string[] = ROLES.map((r) => r.key);
+
 
 /**
  * Deliberately loose. The server's zod email check is the strict one; this only has to catch the
@@ -70,7 +70,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function validateField(field: SignUpField, values: SignUpValues): string | undefined {
   switch (field) {
     case "roles":
-      return values.roles.some((r) => ROLE_KEYS.includes(r)) ? undefined : SIGNUP_MESSAGES.roles;
+      return values.roles.some((r) => isRole(r)) ? undefined : SIGNUP_MESSAGES.roles;
     case "first_name": {
       const v = values.first_name.trim();
       if (v.length < 1) return SIGNUP_MESSAGES.first_name_missing;
@@ -103,3 +103,4 @@ export function validateSignUp(values: SignUpValues): SignUpErrors {
 export function firstInvalid(errors: SignUpErrors): SignUpField | null {
   return SIGNUP_FIELDS.find((f) => errors[f]) ?? null;
 }
+

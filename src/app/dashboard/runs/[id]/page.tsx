@@ -8,6 +8,8 @@ import { ShowsPanel, type ShowRow } from "@/components/ShowsPanel";
 import { VerificationEditor } from "@/components/VerificationEditor";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
+import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
+import { draftCategories, loadFundraiserDraft } from "@/app/actions/drafts";
 import { CATALOG } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import { periodOf } from "@/lib/periods";
@@ -28,15 +30,23 @@ export default async function RunPage({ params }: Props) {
   const sb = await supabaseServer();
   const { data: run } = await sb
     .from("runs")
-    .select("id,slug,kind,title,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other")
+    .select("id,slug,category_key,kind,title,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other")
     .eq("id", id)
     .eq("act_id", act.id)
     .maybeSingle();
   if (!run) notFound();
 
+  if (run.status === "draft" && (run.category_key !== "music" || !act.type || !run.kind || !run.starts_on || !run.ends_on || run.show_count === null)) {
+    const draft = await loadFundraiserDraft(id);
+    if (!draft) notFound();
+    return <DashboardShell current="/dashboard" actName={act.name} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
+      <Card className="max-w-[760px]"><FundraiserDraftForm draft={draft} categories={await draftCategories()} musicOrganizer={act.type !== null} /></Card>
+    </DashboardShell>;
+  }
+
   const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", id).order("created_at");
   const { data: shows } = await sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", id).order("played_on");
-  const surfaces = CATALOG.filter((s) => s.appliesTo.includes(act.type));
+  const surfaces = CATALOG.filter((s) => act.type !== null && s.appliesTo.includes(act.type));
   const boardHref = runUrl(act.slug, run.slug);
   const allLots = lots ?? [];
   const methods: string[] = run.verification_methods ?? [];
@@ -92,13 +102,14 @@ export default async function RunPage({ params }: Props) {
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           Enter the dates once. As they happen, one tap marks a show played. A photo and a headcount are optional and go on the record patrons get at the end.
         </p>
-        <ShowsPanel runId={run.id} shows={(shows ?? []) as ShowRow[]} defaultCity={act.city} />
+        <ShowsPanel runId={run.id} shows={(shows ?? []) as ShowRow[]} defaultCity={act.city ?? ""} />
       </Card>
 
       <Card id="run-details" className="max-w-[760px]">
         <CardHead eyebrow="The fundraiser">Dates and details</CardHead>
-        <RunForm run={run as RunInput} actType={act.type} />
+        {run.status === "draft" ? <FundraiserDraftForm draft={await loadFundraiserDraft(id)} categories={await draftCategories()} musicOrganizer={act.type !== null} /> : <RunForm run={run as RunInput} actType={act.type} />}
       </Card>
     </DashboardShell>
   );
 }
+

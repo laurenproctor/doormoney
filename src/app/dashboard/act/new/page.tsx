@@ -7,7 +7,7 @@ import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "New act" };
+export const metadata: Metadata = { title: "Organizer profile" };
 
 export default async function NewActPage() {
   const user = await requireUser("/dashboard/act/new");
@@ -21,8 +21,8 @@ export default async function NewActPage() {
       current="/dashboard/act"
       eyebrow="Step one of three"
       title="Name the"
-      accent="act"
-      intro={<p>The name, the address and a photo. Everything here can change later. The fundraiser and the prices come next.</p>}
+      accent="organizer"
+      intro={<p>Start with your name and profile address. Location and a photo are optional. Next, describe what you are raising funds for.</p>}
     >
       <Card className="max-w-[720px]">
         <ActForm act={null} siteUrl={SITE.url} username={username} />
@@ -30,3 +30,4 @@ export default async function NewActPage() {
     </DashboardShell>
   );
 }
+

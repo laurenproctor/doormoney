@@ -39,7 +39,7 @@ export async function getBoard(slug: string, runSlug?: string): Promise<Board | 
 
   const sb = await supabaseServer();
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).single();
-  if (!actRow) return null;
+  if (!actRow || !actRow.type) return null;
 
   // A named run is served whether it is open, live or already closed, so a link that went out on a
   // poster still lands on the fundraiser it named. Without a name, only a running one will do.
@@ -69,7 +69,7 @@ export async function getActProfile(slug: string): Promise<ActProfile | null> {
 
   const sb = await supabaseServer();
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).maybeSingle();
-  if (!actRow) return null;
+  if (!actRow || !actRow.type) return null;
 
   const { data: rows } = await sb
     .from("runs")
@@ -108,10 +108,10 @@ export async function getOwnedRunBoard(runId: string, actId: string): Promise<Bo
 
   const sb = await supabaseServer();
   const { data: run } = await sb.from("runs").select(RUN_COLUMNS).eq("id", runId).eq("act_id", actId).maybeSingle();
-  if (!run) return null;
+  if (!run || !run.kind || !run.starts_on || !run.ends_on || run.show_count === null) return null;
 
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("id", actId).maybeSingle();
-  if (!actRow) return null;
+  if (!actRow || !actRow.type) return null;
 
   return shapeBoard(sb, actRow as ActRow, run as RunRow);
 }
@@ -231,3 +231,4 @@ export function boardAsking(b: Board) {
 export function openSpots(b: Board) {
   return b.lots.filter((l) => l.status === "open").length;
 }
+

@@ -32,7 +32,7 @@ function localValue(iso: string | null) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function RunForm({ run, actType }: { run: RunInput | null; actType: "touring_band" | "house_act" | "soloist" }) {
+export function RunForm({ run, actType }: { run: RunInput | null; actType: "touring_band" | "house_act" | "soloist" | null }) {
   const [state, action, pending] = useActionState(saveRun, initial);
   const err = state.errors ?? {};
   const defaultKind = run?.kind ?? (actType === "touring_band" ? "tour" : "season");
@@ -89,3 +89,4 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
     </form>
   );
 }
+

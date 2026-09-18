@@ -7,6 +7,7 @@ import { slugify, slugWhileTyping } from "@/lib/slug";
 import type { OwnedAct } from "@/lib/auth";
 
 const ACT_TYPES = [
+  ["", "Other organizer"],
   ["touring_band", "Band"],
   ["house_act", "House act"],
   ["soloist", "Solo"],
@@ -25,24 +26,24 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
   return (
     <form action={action} noValidate encType="multipart/form-data">
       <fieldset className="mb-[18px] flex flex-wrap gap-3.5">
-        <legend className={labelClass}>Act type</legend>
+        <legend className={labelClass}>Organizer type</legend>
         {ACT_TYPES.map(([value, label]) => (
           <label
             key={value}
             className="caps edge min-w-[120px] flex-1 cursor-pointer bg-panel p-3 text-center text-[16px] has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:checked]:border-accent"
           >
-            <input type="radio" name="type" value={value} defaultChecked={(act?.type ?? "touring_band") === value} className="sr-only" />
+            <input type="radio" name="type" value={value} defaultChecked={(act?.type ?? "") === value} className="sr-only" />
             {label}
           </label>
         ))}
       </fieldset>
       {err.type && <p className="-mt-3 mb-3 text-[14.5px] text-accent-ink">{err.type}</p>}
 
-      <Field label="Act name" error={err.name}>
+      <Field label="Organizer name" error={err.name}>
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
       </Field>
 
-      <Field label="Address and username" error={err.slug} hint={`${siteUrl}/${shownSlug || "the-act"}. The same word signs the act in.`}>
+      <Field label="Address and username" error={err.slug} hint={`${siteUrl}/${shownSlug || "your-name"}. This is also your sign-in username.`}>
         <input
           name="slug"
           value={shownSlug}
@@ -57,7 +58,13 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
 
       <div className="grid gap-x-5 md:grid-cols-2">
         <Field label="City" error={err.city}>
-          <input name="city" defaultValue={act?.city ?? "New York"} className={inputClass} />
+          <input name="city" defaultValue={act?.city ?? ""} className={inputClass} />
+        </Field>
+        <Field label="Region" error={err.region}>
+          <input name="region" defaultValue={act?.region ?? ""} className={inputClass} />
+        </Field>
+        <Field label="Country code" error={err.country_code} hint="Two letters, such as US or GB. Leave blank if unknown.">
+          <input name="country_code" maxLength={2} defaultValue={act?.country_code ?? ""} className={inputClass} />
         </Field>
         <Field label="Instagram" error={err.instagram} hint="Handle only, no @">
           <input name="instagram" defaultValue={act?.instagram ?? ""} className={inputClass} />
@@ -68,11 +75,11 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
         <input name="website" type="url" defaultValue={act?.website ?? ""} placeholder="https://" className={inputClass} />
       </Field>
 
-      <Field label="Bio" error={err.bio} hint="Two or three sentences. Shows on your page.">
+      <Field label="Bio" error={err.bio} hint="Two or three sentences introducing your work.">
         <textarea name="bio" rows={4} defaultValue={act?.bio ?? ""} className={inputClass} />
       </Field>
 
-      <Field label="Photo" error={err.photo} hint="JPG, PNG or WebP, under 5MB. Shows on your page and the widget.">
+      <Field label="Photo" error={err.photo} hint="JPG, PNG or WebP, under 5MB.">
         {act?.photo_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={act.photo_url} alt="" className="edge mb-3 h-[120px] w-[120px] object-cover" />
@@ -81,7 +88,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the details" : "Create the page"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the details" : "Create organizer profile"}</Button>
         {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
         {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>
@@ -101,3 +108,4 @@ export function Field({ label, hint, error, children }: { label: string; hint?: 
     </div>
   );
 }
+
