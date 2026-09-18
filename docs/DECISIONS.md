@@ -293,3 +293,36 @@ Where it actually breaks is a form. On the sign-up page the reader has already p
 - The exceptions named in the old rule are absorbed by this one and no longer need listing, except the tagline's second line, which stays an exception because it is marketing and it does say "you" (decision 1).
 
 The cost is that the site reads in two registers, and the seam shows when somebody moves from a fundraiser page to the sign-up form. That is the right place for a seam. It falls between reading about a market and using a product, which is a difference readers already expect, and the alternative was a consent line that never says who is consenting.
+
+## 16. A sponsorship whose logo never arrives
+
+**Blocks:** the remediation plan, Phase 2
+
+Gating a sponsorship's payouts on the musician's yes (migration 0031) makes the refund promise on
+`/terms` true: nothing is sent while the answer is open, so a declined logo can go back in full.
+It also creates a state that did not exist before. A patron who pays and then never sends a logo,
+or a musician who never answers one that was sent, leaves the money sitting on Door Money's balance
+with no Friday that will ever move it.
+
+Nobody is wronged yet in that state, which is why it is not urgent: the patron has not lost
+anything and the musician has not been underpaid. But it does not resolve on its own, and a
+fundraiser that closes with money still held is not a thing to discover by accident.
+
+What is built today is the visible half, and only that:
+
+- The Friday job counts every held slice under `logo has not been approved yet`, so the reason is
+  in the payout summary rather than in nothing.
+- `/admin` carries the total as "waiting on a logo", beside the money that is simply held.
+- The musician's dashboard says, above the logos waiting on a yes, that the money waits with them.
+- A patron who has sent nothing already gets one reminder three days after paying
+  (`sendMarkReminders`, migration 0018). That was built before this and is unchanged.
+
+**Not decided, and deliberately not defaulted in code:** what Door Money does when a fundraiser
+closes with a logo still unanswered. The candidates are to refund the patron in full, to pay the
+musician anyway on the grounds that the shows were played, or to keep holding it and write to both
+sides. Each is defensible and each says something different about what a sponsorship is, so it is
+an owner's call rather than a default worth sneaking in. Until it is made, the money stays held and
+Door Money can see it, which is the same posture as a patron's flag: Door Money looks first.
+
+The related question from decision 9, whether a patron can say the record never arrived, is still
+open too.

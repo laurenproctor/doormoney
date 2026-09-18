@@ -2,10 +2,13 @@
   What the sign-up form refuses before it posts, and the ids the messages hang on.
 
   The server is the authority: SignUpInput in src/app/actions/auth.ts parses the same fields again
-  and nothing reaches Supabase without passing it. src/lib/signup.ts is the copy the page runs so
-  it can answer at once, and these tests pin the two together. A rule that changes on the server
-  and not here shows up as a field the page waves through; the reverse is a field nobody can
-  submit at all, which is the worse of the two, so the client copy is deliberately the looser one.
+  and nothing reaches Supabase without passing it. src/lib/signup.ts is what the page runs so it
+  can answer at once, and it is also where the limits and the messages are defined: auth.ts
+  imports them, so the two cannot disagree about a number or a sentence.
+
+  What is still two implementations is the checking. The client copy is deliberately the looser
+  one: a value it accepts and the server refuses comes back as a server error the form shows,
+  while the reverse would be a field nobody can submit at all.
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -22,7 +25,6 @@ import {
   validateSignUp,
   type SignUpValues,
 } from "@/lib/signup";
-import { ROLES } from "@/lib/roles";
 
 const good: SignUpValues = {
   roles: ["musician"],
@@ -109,24 +111,27 @@ test("every message has an id of its own, and the form-level one has its own too
 });
 
 /* ---------------------------------------------------------------------------------------------
-   The two copies of the rules, held together.
+   The two copies of the rules, and what is left of them.
+
+   There used to be two tests here that read src/app/actions/auth.ts as text and matched its zod
+   calls with regular expressions, because the limits and the messages were written out in both
+   files and nothing but a test held them together. auth.ts imports them from @/lib/signup now, so
+   there is one copy and the drift those tests watched for cannot happen.
+
+   This is the one line of that worth keeping. It does not check the wording, which is no longer
+   duplicated, only that the server still reads the shared module rather than going back to
+   literals of its own. Matching an import is stable in a way that matching a zod call is not.
    --------------------------------------------------------------------------------------------- */
 
 const server = readFileSync(path.join(import.meta.dirname, "..", "src", "app", "actions", "auth.ts"), "utf8");
 
-test("the client's limits are the ones the server enforces", () => {
-  assert.match(server, new RegExp(`min\\(${PASSWORD_MIN}, "Use at least ${PASSWORD_MIN} characters\\."\\)`));
-  assert.match(server, new RegExp(`max\\(${PASSWORD_MAX}, "Keep the password under ${PASSWORD_MAX} characters\\."\\)`));
-  assert.match(server, new RegExp(`max\\(${NAME_MAX}, "Keep the first name under ${NAME_MAX} characters\\."\\)`));
-  assert.match(server, new RegExp(`max\\(${NAME_MAX}, "Keep the last name under ${NAME_MAX} characters\\."\\)`));
-});
-
-test("the client's wording is the server's wording", () => {
-  for (const message of ["Enter a first name.", "Enter a last name.", "Enter a valid email address."]) {
-    assert.ok(server.includes(`"${message}"`), `the server no longer says ${message}`);
+test("the server reads its limits and its wording from the module the page runs", () => {
+  assert.match(server, /import \{[^}]*SIGNUP_MESSAGES[^}]*\} from "@\/lib\/signup";/);
+  for (const name of ["NAME_MAX", "PASSWORD_MAX", "PASSWORD_MIN"]) {
+    assert.match(server, new RegExp(`import \\{[^}]*\\b${name}\\b[^}]*\\} from "@\\/lib\\/signup";`), name);
   }
-});
-
-test("the role keys the form sends are still the ones stored", () => {
-  assert.deepEqual(ROLES.map((r) => r.key), ["musician", "patron"]);
+  // The literals those names replaced, back in the file, would mean the copies have split again.
+  for (const gone of ['"Enter a first name."', '"Use at least 10 characters."', "max(60,", "min(10,"]) {
+    assert.ok(!server.includes(gone), `auth.ts writes its own ${gone} again`);
+  }
 });

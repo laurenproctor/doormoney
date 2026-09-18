@@ -1,8 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { tierPlace } from "@/lib/catalog";
-import { cancellationNotice, sendEmail } from "@/lib/email";
-import { lotName } from "@/lib/purchases";
-import { SITE } from "@/lib/site";
 import { stripe } from "@/lib/stripe";
 
 /*
@@ -78,6 +74,31 @@ async function refundRow(sb: Admin, table: SourceTable, id: string, reason: Refu
 export const refundPurchase = (sb: Admin, purchaseId: string, reason: RefundReason) => refundRow(sb, "purchases", purchaseId, reason);
 export const refundBacking = (sb: Admin, backingId: string, reason: RefundReason) => refundRow(sb, "backings", backingId, reason);
 
+/* ---------------------------------------------------------------------------------------------
+   Writing down that a refund is owed, before Stripe is called.
+
+   The obligation has to outlive the request that created it. Until migration 0032 it did not: a
+   cancelled fundraiser refunded its patrons in one in-memory loop, and a process that died halfway
+   left nothing anywhere saying the rest were owed. src/lib/outbox.ts is what works the queue; this
+   is the write, kept here because deciding a refund is owed is this file's job.
+   --------------------------------------------------------------------------------------------- */
+
+/** Stripe sees this string too: refundRow above passes the same one as its idempotency key. */
+export const refundKey = (rowId: string, reason: RefundReason) => `refund_${rowId}_${reason}`;
+
+/**
+ * Queues one refund. Idempotent on the key, so the same obligation cannot be written twice and a
+ * second cancel of the same fundraiser adds nothing.
+ */
+export async function queueRefund(sb: Admin, source: SourceTable, rowId: string, reason: RefundReason) {
+  const column = SOURCES[source].column;
+  const { error } = await sb
+    .from("financial_operations")
+    .upsert({ kind: "refund", [column]: rowId, reason, idempotency_key: refundKey(rowId, reason) }, { onConflict: "idempotency_key", ignoreDuplicates: true });
+  if (error) throw new Error(`queue refund ${rowId}: ${error.message}`);
+  return refundKey(rowId, reason);
+}
+
 type RunRow = {
   id: string;
   title: string;
@@ -87,8 +108,18 @@ type RunRow = {
 };
 
 /**
- * The act pulls the run. Every open spot comes off the board, every patron gets the unreleased part
- * back with a note, and any checkout in progress is closed. Returns what went back, for the dashboard.
+ * The act pulls the run. Every open spot comes off the board, any checkout in progress is closed,
+ * and every patron still holding money has a refund written down for them.
+ *
+ * It writes the obligations rather than paying them. The money goes back in src/lib/outbox.ts, from
+ * the keys returned here and from the daily job, so a refund that Stripe refuses on the day is
+ * still owed tomorrow. Before migration 0032 this loop was the only record that it was owed at all,
+ * and a process that died partway through lost the rest.
+ *
+ * The fundraiser is marked cancelled first, so that nothing new can be sold into a fundraiser that
+ * is coming down. A crash between that and the queueing below is what sweepCancelledRuns exists
+ * for: it asks which patron is still holding money on a cancelled fundraiser rather than trusting
+ * this request to have finished.
  */
 export async function cancelRun(sb: Admin, runId: string) {
   const { data } = await sb.from("runs").select("id,title,kind,status,acts!inner(id,name,slug)").eq("id", runId).maybeSingle();
@@ -99,57 +130,35 @@ export async function cancelRun(sb: Admin, runId: string) {
   const { data: marked } = await sb.from("runs").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", run.id).in("status", ["open", "live"]).select("id");
   if (!marked?.length) return { ok: false as const, error: "That run is already cancelled." };
 
-  const { data: lots } = await sb.from("lots").select("id,label,surface_key,status").eq("run_id", run.id);
+  const { data: lots } = await sb.from("lots").select("id").eq("run_id", run.id);
   const lotIds = (lots ?? []).map((l) => l.id);
   await sb.from("lots").update({ status: "cancelled", funding_deadline: null }).eq("run_id", run.id).in("status", ["open", "pending_funding", "unsold"]);
 
+  type P = { id: string; payment_status: string; stripe_checkout_session_id: string | null };
+  type B = { id: string; payment_status: string; stripe_payment_intent_id: string | null };
   const { data: purchases } = lotIds.length
-    ? await sb.from("purchases").select("id,lot_id,amount_cents,payment_status,stripe_checkout_session_id,patrons(name,contact_email)").in("lot_id", lotIds)
+    ? await sb.from("purchases").select("id,payment_status,stripe_checkout_session_id").in("lot_id", lotIds)
     : { data: [] };
-  type P = { id: string; lot_id: string; amount_cents: number; payment_status: string; stripe_checkout_session_id: string | null; patrons: { name: string; contact_email: string } | null };
+  const { data: backings } = await sb.from("backings").select("id,payment_status,stripe_payment_intent_id").eq("run_id", run.id);
 
-  let refunded = 0;
-  let patrons = 0;
-  const errors: string[] = [];
-  const notify = async (to: string, patronName: string, what: string, refundedCents: number, amountCents: number, recordId: string) => {
-    const sent = await sendEmail(cancellationNotice({ to, patronName, actName: run.acts.name, runTitle: run.title, lotName: what, refundedCents, amountCents, recordUrl: `${SITE.url}/record/${recordId}` }));
-    if (!sent.sent) console.error("cancellation notice not sent", recordId, sent.reason);
-  };
-
-  for (const p of (purchases ?? []) as unknown as P[]) {
+  const owed: string[] = [];
+  for (const p of (purchases ?? []) as P[]) {
     if (p.payment_status === "requires_payment") {
       // Mid-checkout. Expiring the session makes Stripe send checkout.session.expired, which drops the row.
       if (p.stripe_checkout_session_id) await stripe.checkout.sessions.expire(p.stripe_checkout_session_id).catch(() => undefined);
       continue;
     }
-    const r = await refundPurchase(sb, p.id, "run_cancelled");
-    if (!r.ok) {
-      errors.push(`${p.id}: ${r.reason}`);
-      continue;
-    }
-    refunded += r.refundedCents;
-    patrons += 1;
-    const lot = (lots ?? []).find((l) => l.id === p.lot_id);
-    if (p.patrons?.contact_email && lot) await notify(p.patrons.contact_email, p.patrons.name, lotName(lot), r.refundedCents, p.amount_cents, p.id);
+    owed.push(await queueRefund(sb, "purchases", p.id, "run_cancelled"));
   }
-
-  // The fans who backed the run through the widget get theirs back the same way.
-  type B = { id: string; amount_cents: number; payment_status: string; tier: string; display_name: string; stripe_payment_intent_id: string | null; patrons: { contact_email: string } | null };
-  const { data: backings } = await sb.from("backings").select("id,amount_cents,payment_status,tier,display_name,stripe_payment_intent_id,patrons(contact_email)").eq("run_id", run.id);
-  for (const b of (backings ?? []) as unknown as B[]) {
+  // The fans who backed the run through the widget are owed theirs the same way.
+  for (const b of (backings ?? []) as B[]) {
     if (b.payment_status === "requires_payment") {
       // Mid-payment in the widget. Cancelling the intent makes Stripe send payment_intent.canceled, which drops the row.
       if (b.stripe_payment_intent_id) await stripe.paymentIntents.cancel(b.stripe_payment_intent_id).catch(() => undefined);
       continue;
     }
-    const r = await refundBacking(sb, b.id, "run_cancelled");
-    if (!r.ok) {
-      errors.push(`${b.id}: ${r.reason}`);
-      continue;
-    }
-    refunded += r.refundedCents;
-    patrons += 1;
-    if (b.patrons?.contact_email) await notify(b.patrons.contact_email, b.display_name, `name on ${tierPlace(b.tier)}`, r.refundedCents, b.amount_cents, b.id);
+    owed.push(await queueRefund(sb, "backings", b.id, "run_cancelled"));
   }
-  return { ok: true as const, refundedCents: refunded, patrons, errors };
+
+  return { ok: true as const, owed };
 }

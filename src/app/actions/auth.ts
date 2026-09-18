@@ -6,6 +6,7 @@ import { SITE } from "@/lib/site";
 import { safeNext } from "@/lib/auth";
 import { emailForUsername, normalizeUsername } from "@/lib/username";
 import { RolesInput, homeFor } from "@/lib/roles";
+import { NAME_MAX, PASSWORD_MAX, PASSWORD_MIN, SIGNUP_MESSAGES } from "@/lib/signup";
 
 /*
   Four ways in, one account behind them all:
@@ -26,11 +27,13 @@ const str = (form: FormData, key: string) => {
   return typeof v === "string" ? v : "";
 };
 
-// bcrypt stops reading at 72 bytes, so anything past that is not really part of the password.
+// The limits and the wording come from @/lib/signup, which the sign-up page also runs, so the
+// answer the page gives at once and the one this makes are the same answer. bcrypt stops reading
+// at 72 bytes, so anything past PASSWORD_MAX is not really part of the password.
 const Password = z
   .string()
-  .min(10, "Use at least 10 characters.")
-  .max(72, "Keep the password under 72 characters.");
+  .min(PASSWORD_MIN, SIGNUP_MESSAGES.password_short)
+  .max(PASSWORD_MAX, SIGNUP_MESSAGES.password_long);
 
 // ---------------------------------------------------------------
 // The email link. Unchanged, and still the way in for anyone with no password set.
@@ -116,9 +119,9 @@ const SignUpInput = z.object({
   roles: RolesInput,
   // Whoever holds an account is a person. A band's name is on the act, a business's name is on
   // the patron row, and both of those are what a board or a receipt shows.
-  first_name: z.string().trim().min(1, "Enter a first name.").max(60, "Keep the first name under 60 characters."),
-  last_name: z.string().trim().min(1, "Enter a last name.").max(60, "Keep the last name under 60 characters."),
-  email: z.string().trim().email("Enter a valid email address."),
+  first_name: z.string().trim().min(1, SIGNUP_MESSAGES.first_name_missing).max(NAME_MAX, SIGNUP_MESSAGES.first_name_long),
+  last_name: z.string().trim().min(1, SIGNUP_MESSAGES.last_name_missing).max(NAME_MAX, SIGNUP_MESSAGES.last_name_long),
+  email: z.string().trim().email(SIGNUP_MESSAGES.email),
   password: Password,
   next: z.string().optional(),
 });

@@ -24,7 +24,7 @@ The same rule covers fan backings. `refundPurchase` and `refundBacking` are the 
 
 | Case | What happens | Enforced by |
 |---|---|---|
-| The act declines a mark | The unreleased part goes back, the spot returns to the board. A mark is normally decided before the run starts, so in practice this is everything. | `decideMark` in `src/app/actions/marks.ts` |
+| The act declines a mark | The whole charge goes back, fee included, and the spot returns to the board. Not "in practice": since migration 0031 a sponsorship's weekly slices cannot be paid before the mark is approved, so there is never a released part to subtract. | `decideMark` in `src/app/actions/marks.ts`, `slicePlan` in `src/lib/release.ts` |
 | The act cancels the run | Every patron and every fan gets the unreleased part back. Open spots come off the board. A checkout in flight is expired, and a fan's unfinished payment is cancelled. | `cancelRun` in `src/lib/refunds.ts` |
 | An auction winner never pays | Nothing was ever charged. The spot rolls to the next bid with a fresh 48 hours. | `rollExpiredFunding` in `src/lib/auctions.ts` |
 | Someone takes a spot at its take-it-now price | The bidders were never charged. They are told the bidding is over. | `notifyBiddersSpotTaken` in `src/lib/purchases.ts` |
@@ -32,6 +32,45 @@ The same rule covers fan backings. `refundPurchase` and `refundBacking` are the 
 | Door Money refunds by hand in Stripe | The `charge.refunded` webhook mirrors the amount, and a full refund stops the remaining slices. | `src/app/api/stripe/webhook/route.ts` |
 
 Refunds go to the card the patron paid with. Banks take five to ten business days.
+
+## A refund that is owed does not depend on the request that owed it
+
+A refund is written down before Stripe is called. `cancelRun` and `decideMark` each put a row in
+`financial_operations` (migration 0032) and only then attempt it, so a refund Stripe refuses today
+is still owed tomorrow and a process that dies partway through loses an attempt rather than an
+obligation. The row carries the same idempotency key the Stripe call uses, so neither the queue nor
+Stripe can be made to refund the same payment twice.
+
+`src/lib/outbox.ts` works it. The two places an obligation is born attempt it at once, which is why
+a cancellation still reports its total on the spot. The daily job retries what failed and stops
+after six attempts. The row carries a widening wait (five minutes, then thirty, then two hours,
+then twelve, then a day), but the only worker after the first attempt is the daily job, so in
+practice each retry is about a day apart and the six attempts span about five days. Stopping is not
+giving up: the row stays, marked `failed` with its last error, counted on `/admin` next to the
+payment it belongs to. Refunding it by hand in the Stripe Dashboard is what clears it: the
+`charge.refunded` webhook mirrors the amount the way it always did, and the next daily job sees
+the amount and settles the row.
+
+The patron is told from the queue and nowhere else, once, by whichever attempt gets the money back.
+A refund that lands on the fourth try still sends the mail the first try would have.
+
+Two gaps it closes on purpose, because both were reachable rather than theoretical: a worker that
+dies holding a row is freed after fifteen minutes, and a crash between marking a fundraiser
+cancelled and queueing its refunds is caught by a sweep that asks which patron is still holding
+money on a cancelled fundraiser.
+
+## What the database refuses
+
+The rules above are enforced by the application and, since migration 0033, by PostgreSQL under it.
+A payment moves `requires_payment` to `held` to `released`, and out to `refunded` or
+`partially_refunded`. There is no way back from any of them: a refunded purchase cannot return to
+held, a released one cannot return to unpaid, and a refund can neither shrink nor exceed the charge
+it is against. A logo is answered once, which is what holds a sponsorship's payouts until the
+musician says yes.
+
+None of that is reachable through the site today. It is written down because each one is a single
+forgotten condition away from being reachable, and every one of them would be a row saying a
+patron's money is somewhere it is not.
 
 ## Disputes
 

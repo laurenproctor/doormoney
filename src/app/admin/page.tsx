@@ -19,7 +19,7 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
 
   const flags = await openFlags(db);
-  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns] = await Promise.all([
+  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns, owedRefunds] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
     db.from("lots").select("id,run_id,surface_key,label,price_cents,mode,status"),
@@ -29,6 +29,15 @@ export default async function AdminPage() {
     db.from("waitlist").select("id,role,name,email,city,act_type,created_at").order("created_at", { ascending: false }).limit(200),
     db.from("newsletter").select("id,email,source,created_at,unsubscribed_at").order("created_at", { ascending: false }).limit(200),
     db.from("mail_runs").select("id,kind,sent_at,recipients,failures").order("sent_at", { ascending: false }).limit(20),
+    // Refunds Door Money owes and has not managed to send. A 'failed' row is out of attempts and
+    // waiting on a person (migration 0032, src/lib/outbox.ts).
+    db
+      .from("financial_operations")
+      .select("id,purchase_id,backing_id,reason,status,attempts,last_error,next_attempt_at,created_at")
+      .eq("kind", "refund")
+      .in("status", ["pending", "processing", "retryable", "failed"])
+      .order("created_at", { ascending: false })
+      .limit(100),
   ]);
   const subscribers = (newsletter.data ?? []).filter((n) => !n.unsubscribed_at);
 
@@ -43,19 +52,57 @@ export default async function AdminPage() {
   const backingRows = backings.data ?? [];
   const runTitle = new Map(runRows.map((r) => [r.id, `${actName.get(r.act_id) ?? ""}, ${r.title}`]));
   const held = [...(purchases.data ?? []), ...backingRows].filter((p) => p.payment_status === "held").reduce((n, p) => n + p.amount_cents, 0);
+  // Money Door Money is holding that cannot move on a Friday yet, because nobody has approved the
+  // logo (migration 0031). A sponsorship sitting here past the end of its fundraiser is the case
+  // Door Money looks at by hand: see docs/DECISIONS.md, decision 16.
+  type OwedRefund = { id: string; purchase_id: string | null; backing_id: string | null; reason: string; status: string; attempts: number; last_error: string | null; next_attempt_at: string; created_at: string };
+  const owed = (owedRefunds.data ?? []) as OwedRefund[];
+  const stuckRefunds = owed.filter((o) => o.status === "failed").length;
+
+  const waitingOnLogo = (purchases.data ?? [])
+    .filter((p) => p.payment_status === "held" && p.mark_status !== "approved")
+    .reduce((n, p) => n + p.amount_cents, 0);
 
   return (
     <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Read only" title="Admin" accent="">
       <div className="grid gap-[30px]">
-        <dl className="grid grid-cols-2 gap-4 md:grid-cols-6">
+        <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <Stat n={String(actRows.length)} label="acts" />
           <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="fundraisers up" />
           <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
           <Stat n={formatMoney(held)} label="held" />
+          <Stat n={formatMoney(waitingOnLogo)} label="waiting on a logo" />
+          <Stat n={String(owed.length)} label={owed.length === 1 ? "refund owed" : "refunds owed"} />
           <Stat n={String(flags.length)} label={flags.length === 1 ? "flag open" : "flags open"} />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
           <Stat n={String(subscribers.length)} label="get new fundraisers" />
         </dl>
+
+        {owed.length > 0 && (
+          <Card>
+            <CardHead eyebrow="Refunds owed">
+              {owed.length} not back yet{stuckRefunds ? `, ${stuckRefunds} out of attempts` : ""}
+            </CardHead>
+            <p className="mb-5 max-w-none text-[15px] text-muted">
+              Every refund Door Money owes is written down before Stripe is called, so one that fails is still owed. The daily job keeps trying and the
+              patron is told when it lands. A row that is out of attempts has stopped on its own and wants a person: refund it in the Stripe Dashboard,
+              and the row settles the next time the job sees it.
+            </p>
+            <Table
+              head={["Payment", "Why", "State", "Tries", "Next try", "Last error"]}
+              rows={owed.map((o) => [
+                <Link key="r" href={`/record/${o.purchase_id ?? o.backing_id}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+                  {o.purchase_id ? "Sponsorship" : "Backing"}
+                </Link>,
+                o.reason === "mark_declined" ? "logo declined" : "fundraiser cancelled",
+                o.status,
+                String(o.attempts),
+                o.status === "failed" ? "stopped" : when.format(new Date(o.next_attempt_at)),
+                o.last_error ?? "",
+              ])}
+            />
+          </Card>
+        )}
 
         {flags.length > 0 && (
           <Card>

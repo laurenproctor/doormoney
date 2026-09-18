@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { cancelRun as cancelRunForReal } from "@/lib/refunds";
+import { workRefundQueue } from "@/lib/outbox";
 import { stripeConfigured } from "@/lib/stripe";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { publishBlockers } from "@/lib/readiness";
@@ -212,11 +213,26 @@ export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: s
   if (!["open", "live"].includes(run.status)) return { ok: false, error: "Only an open or live run can be cancelled." };
   if (!stripeConfigured()) return { ok: false, error: "Refunds are not switched on yet. Contact Door Money to cancel the fundraiser." };
 
-  const r = await cancelRunForReal(supabaseAdmin(), runId);
+  const admin = supabaseAdmin();
+  const r = await cancelRunForReal(admin, runId);
   if (!r.ok) return { ok: false, error: r.error };
+
+  // Every refund is written down by now, so the fundraiser is cancelled whatever happens next. This
+  // is the first attempt at each one; the daily job keeps at whatever Stripe refuses today.
+  const done = await workRefundQueue(admin, r.owed);
+
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
   await revalidateBoards(sb, act.slug, runId);
   revalidatePath("/auctions");
-  return { ok: true, refundedCents: r.refundedCents, patrons: r.patrons, ...(r.errors.length ? { error: `${r.errors.length} refund${r.errors.length === 1 ? "" : "s"} did not go through. Door Money has the details.` } : {}) };
+
+  const waiting = done.retryable + done.failed;
+  return {
+    ok: true,
+    refundedCents: done.refundedCents,
+    patrons: done.succeeded,
+    ...(waiting
+      ? { error: `${waiting} refund${waiting === 1 ? " is" : "s are"} still going through. Door Money keeps trying and the patron${waiting === 1 ? "" : "s"} will hear when it lands.` }
+      : {}),
+  };
 }

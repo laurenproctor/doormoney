@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(70);
+select plan(114);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -404,6 +404,335 @@ select is(
   0, 'nothing in the schema can be truncated by a browser');
 
 reset role;
+
+-- ===============================================================
+-- A sponsorship's money waits for the logo (0031)
+--
+-- The Friday job asks the same question in src/lib/release.ts. This is the answer underneath it:
+-- the rule has to hold for any caller that writes to payout_schedule with the service role, not
+-- only for the one query that remembers to filter. /terms promises a declined logo a full refund,
+-- and refundDue can only give back what has not already been sent.
+-- ===============================================================
+set local role service_role;
+
+-- The seed's held purchase carries no logo yet, which is where every sponsorship starts.
+insert into payout_schedule (id, act_id, purchase_id, due_on, amount_cents, status)
+values (
+  'de000000-0000-0000-0000-000000000001',
+  (select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+  (select id from purchases where lot_id = 'a1000000-0000-0000-0000-000000000004'),
+  current_date, 5000, 'scheduled');
+
+select throws_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a sponsorship slice cannot be paid while the logo is still waiting');
+
+select throws_ok(
+  $$insert into payout_schedule (act_id, purchase_id, due_on, amount_cents, status)
+    values ((select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+            (select id from purchases where lot_id = 'a1000000-0000-0000-0000-000000000004'),
+            current_date, 5000, 'paid')$$,
+  '23514', null, 'nor can one be inserted already paid, around the update');
+
+-- Waiting is not skipping: the refused slice keeps its status and its due date, so the first Friday
+-- after the yes pays every Friday that went by without one.
+select is(
+  (select status::text || ' ' || (due_on = current_date)::text from payout_schedule where id='de000000-0000-0000-0000-000000000001'),
+  'scheduled true', 'the slice that was refused is still scheduled, and still due on the day it was');
+
+update purchases set mark_status='submitted' where lot_id='a1000000-0000-0000-0000-000000000002';
+update purchases set mark_status='declined' where lot_id='a1000000-0000-0000-0000-000000000002';
+insert into payout_schedule (id, act_id, purchase_id, due_on, amount_cents, status)
+values (
+  'de000000-0000-0000-0000-000000000002',
+  (select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000002'),
+  (select id from purchases where lot_id = 'a1000000-0000-0000-0000-000000000002'),
+  current_date, 5000, 'scheduled');
+
+select throws_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000002'$$,
+  '23514', null, 'a declined logo never pays out at all');
+
+-- A backing has no logo for anyone to approve, so the calendar alone releases it (decision 3).
+insert into backings (id, run_id, patron_id, tier, amount_cents, fee_cents, display_name, payment_status)
+values ('de000000-0000-0000-0000-000000000003',
+        (select r.id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+        'c1000000-0000-0000-0000-000000000001', 'thank_you', 2500, 375, 'A fan', 'held');
+insert into payout_schedule (id, act_id, backing_id, due_on, amount_cents, status)
+values ('de000000-0000-0000-0000-000000000004',
+        (select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+        'de000000-0000-0000-0000-000000000003', current_date, 2125, 'scheduled');
+
+select lives_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000004'$$,
+  'a fan backing pays on the calendar, with no logo anywhere in it');
+
+-- The yes is what releases it, and the same slice then moves.
+update purchases set mark_status='submitted' where lot_id='a1000000-0000-0000-0000-000000000004';
+update purchases set mark_status='approved' where lot_id='a1000000-0000-0000-0000-000000000004';
+
+select lives_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000001'$$,
+  'and the moment the musician approves the logo, the waiting slice pays');
+
+-- The guard fires on the way into paid and nowhere else, so a refund can still skip a paid row.
+select lives_ok(
+  $$update payout_schedule set status='skipped', paused_reason='refunded' where id='de000000-0000-0000-0000-000000000001'$$,
+  'a refund can still move a slice out of paid');
+
+reset role;
+
+-- ===============================================================
+-- Refunds Door Money owes are written down, and nobody else can see them (0032)
+--
+-- The table holds patron money, Stripe idempotency keys and error text. It is also the only record
+-- that a refund is owed at all once the request that owed it is gone, so a row that could be
+-- rewritten from a browser would be a refund that could be made to disappear.
+-- ===============================================================
+select tests.as_anon();
+
+select throws_ok('select * from financial_operations limit 1', '42501', null, 'anon cannot read the refunds Door Money owes');
+select throws_ok(
+  $$insert into financial_operations (kind, purchase_id, reason, idempotency_key)
+    values ('refund', (select id from purchases limit 1), 'run_cancelled', 'forged')$$,
+  '42501', null, 'anon cannot invent an obligation');
+select throws_ok($$delete from financial_operations$$, '42501', null, 'anon cannot delete a refund that is owed');
+select throws_ok($$truncate table financial_operations$$, '42501', null, 'nor truncate them all');
+
+reset role;
+select tests.as_user('11111111-1111-1111-1111-111111111111');
+
+select throws_ok('select * from financial_operations limit 1', '42501', null, 'a signed-in musician cannot read them either');
+select throws_ok(
+  $$update financial_operations set status='succeeded'$$,
+  '42501', null, 'and cannot mark a refund they owe as already sent');
+
+reset role;
+set local role service_role;
+
+-- The shape the queue relies on.
+insert into financial_operations (id, kind, purchase_id, reason, idempotency_key)
+values ('fa000000-0000-0000-0000-000000000001', 'refund',
+        (select id from purchases where lot_id='a1000000-0000-0000-0000-000000000004'),
+        'run_cancelled', 'refund_one_run_cancelled');
+
+select throws_ok(
+  $$insert into financial_operations (kind, purchase_id, reason, idempotency_key)
+    values ('refund', (select id from purchases where lot_id='a1000000-0000-0000-0000-000000000004'),
+            'run_cancelled', 'refund_one_run_cancelled')$$,
+  '23505', null, 'the same obligation cannot be written down twice');
+
+select throws_ok(
+  $$insert into financial_operations (kind, purchase_id, backing_id, reason, idempotency_key)
+    values ('refund', (select id from purchases limit 1), (select id from backings limit 1), 'run_cancelled', 'refund_both')$$,
+  '23514', null, 'an obligation is against one payment, never two');
+
+-- A settled row is one a worker will not pick up again, and an unsettled one has to stay pickable.
+select throws_ok(
+  $$update financial_operations set status='succeeded' where id='fa000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a refund cannot be called succeeded without being settled');
+
+-- The bogus updated_at is the point: the trigger has to overwrite whatever a caller passes, and
+-- inside one transaction now() is the transaction's start, so it lands back on created_at.
+select lives_ok(
+  $$update financial_operations set status='succeeded', settled_at=now(), amount_cents=36000, updated_at='2000-01-01'
+     where id='fa000000-0000-0000-0000-000000000001'$$,
+  'a refund that went through settles with the amount that went back');
+
+select is(
+  (select updated_at from financial_operations where id='fa000000-0000-0000-0000-000000000001'),
+  (select created_at from financial_operations where id='fa000000-0000-0000-0000-000000000001'),
+  'and a caller cannot tell the row when it last moved: the trigger does');
+
+reset role;
+
+-- ===============================================================
+-- Money moves one way (0033)
+--
+-- The transitions the system performs, and every way back. None of the refusals below is reachable
+-- through the application today; each is one forgotten WHERE clause, one migration or one
+-- hand-written UPDATE from being reachable, and each would be a row saying a patron's money is
+-- somewhere it is not.
+-- ===============================================================
+set local role service_role;
+
+insert into purchases (id, lot_id, patron_id, amount_cents, fee_cents, payment_status)
+values ('55000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000006',
+        'c1000000-0000-0000-0000-000000000001', 10000, 1500, 'held');
+
+select lives_ok(
+  $$update purchases set payment_status='released' where id='55000000-0000-0000-0000-000000000001'$$,
+  'a held payment is released once every slice has gone to the musician');
+
+select throws_ok(
+  $$update purchases set payment_status='held' where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'but a released payment cannot be un-released');
+
+select throws_ok(
+  $$update purchases set payment_status='requires_payment' where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'and cannot go back to never having been paid');
+
+select lives_ok(
+  $$update purchases set payment_status='refunded', refunded_cents=10000 where id='55000000-0000-0000-0000-000000000001'$$,
+  'a refund by hand after the fact is allowed, out of Door Money''s own pocket');
+
+select throws_ok(
+  $$update purchases set payment_status='held' where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a refunded payment is the end of the road');
+
+-- charge.amount_refunded is a running total, so an older event arriving late must not walk it back.
+select throws_ok(
+  $$update purchases set refunded_cents=500 where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a refund cannot shrink');
+
+select throws_ok(
+  $$update purchases set refunded_cents=10001 where id='55000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'nor can more go back than was ever charged');
+
+-- A fan backing is held to the same rule, on the same function.
+insert into backings (id, run_id, patron_id, tier, amount_cents, fee_cents, display_name, payment_status)
+values ('55000000-0000-0000-0000-000000000002',
+        (select r.id from lots l join runs r on r.id=l.run_id where l.id='a1000000-0000-0000-0000-000000000006'),
+        'c1000000-0000-0000-0000-000000000001', 'thank_you', 2500, 375, 'A fan', 'requires_payment');
+
+select throws_ok(
+  $$update backings set payment_status='released' where id='55000000-0000-0000-0000-000000000002'$$,
+  '23514', null, 'a backing cannot be released without ever being paid for');
+
+-- The logo, which migration 0031 needs to be answered once and for good.
+insert into purchases (id, lot_id, patron_id, amount_cents, fee_cents, payment_status)
+values ('55000000-0000-0000-0000-000000000003','a1000000-0000-0000-0000-000000000007',
+        'c1000000-0000-0000-0000-000000000001', 10000, 1500, 'held');
+
+select throws_ok(
+  $$update purchases set mark_status='approved' where id='55000000-0000-0000-0000-000000000003'$$,
+  '23514', null, 'a logo nobody sent cannot be approved');
+
+select lives_ok(
+  $$update purchases set mark_status='submitted' where id='55000000-0000-0000-0000-000000000003';
+    update purchases set mark_status='approved'  where id='55000000-0000-0000-0000-000000000003';
+    update purchases set mark_status='approved'  where id='55000000-0000-0000-0000-000000000003'$$,
+  'a logo is sent, answered, and answering it again changes nothing');
+
+select throws_ok(
+  $$update purchases set mark_status='declined' where id='55000000-0000-0000-0000-000000000003'$$,
+  '23514', null, 'and an approved logo cannot be taken back, which is what 0031 rests on');
+
+reset role;
+
+-- What the two public patron views will actually show (0024)
+-- ===============================================================
+-- These replace a test in tests/profile.test.ts that read migration 0024 as text and checked the
+-- view definitions did not mention amount_cents, email, stripe_ and so on. A grep over a migration
+-- is not what serves a request: a later migration can replace a view and the grep goes on passing.
+-- What follows asks the database what the views are and what they return.
+--
+-- Superuser again, because this has to set up the published state that the patron is rightly
+-- refused above. It runs last, and the whole file rolls back.
+reset role;
+
+-- The shape, exactly. A column added to either view has to be added here on purpose.
+select set_eq(
+  $$select column_name::text from information_schema.columns
+     where table_schema = 'public' and table_name = 'public_patron_profiles'$$,
+  $$values ('username'::text),('display_name'),('bio'),('location'),('website'),('interests'),
+           ('photo_path'),('patron_since'),('published_at')$$,
+  'public_patron_profiles shows these columns and no others');
+
+select set_eq(
+  $$select column_name::text from information_schema.columns
+     where table_schema = 'public' and table_name = 'public_patron_activity'$$,
+  $$values ('username'::text),('kind'),('act_name'),('act_slug'),('run_title'),('run_status'),
+           ('detail'),('supported_at')$$,
+  'public_patron_activity shows these columns and no others');
+
+-- And the rule behind the shape, so a rename cannot walk one back in.
+select is_empty(
+  $$select table_name || '.' || column_name from information_schema.columns
+     where table_schema = 'public'
+       and table_name in ('public_patron_profiles', 'public_patron_activity')
+       and column_name ~ '(amount|fee|refunded|email|stripe|payment|intent|funding|token|mark_|profile_id)'$$,
+  'no public patron view carries money, an address, a Stripe id or an internal key');
+
+-- Off by default, in the database rather than in a form.
+select is(
+  (select column_default from information_schema.columns
+    where table_schema = 'public' and table_name = 'patron_profiles' and column_name = 'published'),
+  'false', 'a patron profile is unpublished until somebody publishes it');
+
+select is(
+  (select public from storage.buckets where id = 'patron-photos'), false,
+  'the patron photo bucket is private, so a photo needs a signed link');
+
+-- And no policy on storage.objects opens that bucket back up: the only way to a patron photo is the
+-- signed link the server mints, and a permissive select policy naming the bucket would be a second
+-- way in. tests/profile.test.ts used to grep migration 0024 for this; the catalog is the thing to ask.
+select is_empty(
+  $$select policyname from pg_policies
+     where schemaname = 'storage' and tablename = 'objects'
+       and (coalesce(qual, '') || coalesce(with_check, '')) like '%patron-photos%'$$,
+  'no storage policy names the patron photo bucket');
+
+-- The handle goes on first, and deliberately before the two assertions below.
+--
+-- Both views also require a non-null profiles.username, and the accounts in the fixtures above
+-- have none: handle_new_user copies it out of the auth user's metadata and these were inserted
+-- without any. Asserting the views are empty while that is still true proves nothing about the
+-- published flag, which is the thing meant to be under test. With the handle set, published is
+-- the only reason left for a row to be missing.
+update profiles set username = 'kettle-st' where id = '11111111-1111-1111-1111-111111111111';
+
+select is_empty('select * from public_patron_profiles',
+  'an unpublished profile is on no public page, handle or no handle');
+select is_empty('select * from public_patron_activity',
+  'and neither is anything it has paid for');
+
+update patron_profiles set published = true, published_at = now()
+ where profile_id = '11111111-1111-1111-1111-111111111111';
+
+select is((select count(*)::int from public_patron_profiles), 1,
+  'publishing puts that profile, and only that profile, on the view');
+select is((select username from public_patron_profiles), 'kettle-st', 'under its own handle');
+
+-- Publishing the profile publishes nothing it has bought. Each item is ticked separately.
+select is_empty('select * from public_patron_activity',
+  'a published profile still shows nothing it has not ticked');
+
+-- Ticking the placement won through an anonymous bid. It stays off the page regardless: an
+-- anonymous bid is never publishable, whatever the form that ticked it said.
+insert into patron_profile_items (profile_id, purchase_id)
+  select '11111111-1111-1111-1111-111111111111', id from purchases
+   where patron_id = 'c1000000-0000-0000-0000-000000000008';
+
+select is_empty('select * from public_patron_activity',
+  'a placement won with an anonymous bid stays off the page even once it is ticked');
+
+-- The other half of that, without which the three is_empty assertions above would all pass just
+-- as well if the view returned nothing to anybody at all. This one was bought in the open.
+--
+-- It is the second purchase in the fixtures at the top, still requires_payment when it is ticked.
+-- Ticked and unpaid, it stays off the page: the view shows only what was actually paid for (held,
+-- released or partially refunded), and this is the one assertion that holds that filter, so a
+-- later rewrite of the view cannot drop it quietly. The backing arm of the union has no fixture
+-- here and is not asserted.
+insert into patron_profile_items (profile_id, purchase_id)
+  select '11111111-1111-1111-1111-111111111111', id from purchases
+   where lot_id = 'a1000000-0000-0000-0000-000000000002'
+     and patron_id = 'c1000000-0000-0000-0000-000000000001';
+
+select is_empty('select * from public_patron_activity',
+  'a ticked placement that was never paid for stays off the page');
+
+-- Then paid for. Moved from requires_payment to held rather than inserted fresh:
+-- purchases_live_lot_idx allows one live purchase per lot, so a second row on the same lot is a
+-- duplicate key and the rest of the file never runs.
+update purchases set payment_status = 'held'
+ where lot_id = 'a1000000-0000-0000-0000-000000000002'
+   and patron_id = 'c1000000-0000-0000-0000-000000000001';
+
+select is((select count(*)::int from public_patron_activity), 1,
+  'a placement bought in the open, and ticked, is the one thing on the page');
+select is((select kind from public_patron_activity), 'placement', 'and it reads as a placement');
 
 select * from finish();
 rollback;

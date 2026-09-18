@@ -147,26 +147,66 @@ callers can neither read nor mutate protected data.
 
 ## Phase 2: durable money lifecycle
 
+**Status: done**, apart from the reconciliation plan, which belongs to Phase 4 and is listed there.
+Three migrations: `0031_payout_needs_approved_mark.sql` (the payout gate),
+`0032_financial_operations.sql` (the refund outbox) and `0033_payment_state_machine.sql` (the
+transitions).
+
 Make purchases, marks, refunds, cancellations, payouts and failures explicit and recoverable.
 
 **Product decision.** For placement purchases, no money is released to an act before the patron's
 mark is approved. Fan backings without a mark follow their own documented rule.
 
-- Define the purchase and backing state machine, and validate every transition in PostgreSQL.
-- Gate placement payouts on mark approval.
-- Make a declined mark produce the full refund the product promises.
-- Keep a run cancellation from becoming final until every financial obligation is durably queued.
-- Add durable financial-operation (outbox) records for refunds, transfers, transfer reversals,
+- [x] Gate placement payouts on mark approval. `slicePlan` in `src/lib/release.ts` is the rule the
+  Friday job asks, and migration 0031 is a trigger asking the same thing under it, because a query
+  is not a boundary. A backing has no logo and stays on the calendar. Waiting is not skipping: a
+  held slice keeps its scheduled status and its due date, so the first Friday after the yes pays
+  every Friday that went by without one.
+- [x] Make a declined mark produce the full refund the product promises. Nothing left to fix in
+  `refundDue`: it was always correct about the money not yet sent, and 0031 is what makes "not yet
+  sent" mean all of it.
+
+  One thing the gate creates, and does not answer: a sponsorship whose logo never arrives holds its
+  money with no Friday that will ever move it. Counted in the payout summary, totalled on `/admin`
+  and said out loud on the musician's dashboard, but not resolved. `docs/DECISIONS.md`, decision 16
+  has the candidates and says why none of them is a safe default to pick in code.
+- [x] Keep a run cancellation from becoming final until every financial obligation is durably queued.
+  Taken the other way round, deliberately: the fundraiser is marked cancelled first, so nothing new
+  can be sold into one that is coming down, and `sweepOwed` closes the window from the far end by
+  asking which patron is still holding money on a cancelled fundraiser. Trusting the request that
+  cancelled it to have finished is the assumption that caused this.
+- [x] Add durable financial-operation (outbox) records for refunds, transfers, transfer reversals,
   cancellation refunds and mark-decline refunds, each pending, processing, succeeded, retryable or
-  terminally failed, with stable idempotency keys.
-- Never let an in-memory loop be the only record of a refund that is owed.
-- Add retry workers and staff-visible failure states, and make partial failures resumable.
-- Test every valid and invalid transition, duplicate execution, and failure between the Stripe call
-  and the database write.
-- Plan the reconciliation of existing purchases and payout rows.
+  terminally failed, with stable idempotency keys. Refunds only, and that is the whole gap:
+  transfers already had an outbox in `payout_schedule`, which is a durable row per slice with a
+  status and a stable key. Transfer reversals arrive with disputes in Phase 4 and have nothing to
+  queue yet.
+- [x] Never let an in-memory loop be the only record of a refund that is owed.
+- [x] Add retry workers and staff-visible failure states, and make partial failures resumable. The
+  daily job retries on a widening schedule and stops after six attempts, about a day and a half; a
+  worker that dies holding a row is reclaimed after fifteen minutes; `/admin` carries what is owed,
+  what it last failed with and what has stopped.
+- [x] Test every valid and invalid transition, duplicate execution, and failure between the Stripe
+  call and the database write. The last of those was already safe and stayed that way: the Stripe
+  idempotency key means a retry after a crash between the refund and the write returns the same
+  refund rather than making a second one.
+- [x] Define the purchase and backing state machine, and validate every transition in PostgreSQL.
+  Migration 0033. `payment_status` moves requires_payment to held to released, and out to refunded
+  or partially_refunded; every other move, and every way back, is refused by a trigger on both
+  tables. `refunded_cents` cannot shrink (the webhook writes Stripe's running total, so a late
+  older event would otherwise walk it backwards) and cannot exceed the charge. `mark_status` is
+  answered once: none to submitted to approved or declined, and no further, which is what 0031's
+  hold on a sponsorship's payouts rests on and what nothing enforced before.
+
+  Writing it found one thing: `permissions_test.sql` had been driving a logo straight from none to
+  declined to set up the 0031 fixtures, which is not a move the application can make. The rules
+  refused the test, and the fixture was what was wrong.
+- [ ] Plan the reconciliation of existing purchases and payout rows.
 
 **Gate.** No payout happens before its release condition, and every failed refund or cancellation
-obligation stays visible and retryable.
+obligation stays visible and retryable. Both halves are met and tested, and the state a payment is
+in is now enforced by PostgreSQL rather than by the WHERE clause of whichever query writes next.
+`supabase/tests/permissions_test.sql` covers the phase in 29 assertions, up from 70 to 99.
 
 ---
 

@@ -48,22 +48,35 @@ a bid can land after the lot has closed.
 
 ### A declined mark receives the refund promised by the product
 
-**Partly held.** Enforced by Phase 2.
+**Held**, since migration 0031.
 
 `refundDue` (`src/lib/refunds.ts`) returns the unreleased part of the charge plus the fee that rode
-on it, and that arithmetic is now tested (`tests/refunds.test.ts`). The promise in
-`docs/REFUNDS_AND_DISPUTES.md` matches, but leans on the words "in practice this is everything":
-nothing stops weekly slices from being released before the mark is decided. Once Phase 2 gates
-placement payouts on mark approval, the promise becomes unconditional.
+on it, and that arithmetic is tested (`tests/refunds.test.ts`). It could only ever give back what
+had not been sent, and until 0031 nothing stopped a weekly slice from being sent while the logo was
+still undecided: slices fall on the fundraiser's own Fridays, so a sponsorship bought during a live
+fundraiser could be paid out on Friday and declined on Saturday. The patron was told "in full" on
+`/terms` and in two emails, and would have got less.
+
+A sponsorship's slice now waits for the musician's yes, asked in `slicePlan`
+(`src/lib/release.ts`, covered by `tests/release.test.ts`) and asked again by a trigger underneath
+it, so the rule holds for any caller that writes to `payout_schedule` rather than only for the one
+query that remembers to filter (`supabase/tests/permissions_test.sql`, seven assertions). A backing
+carries no logo and is unaffected: the calendar alone releases it, which is decision 2, option A.
+
+What this creates instead is a sponsorship whose logo never arrives, whose money then waits with
+nothing to move it. Nobody is short-changed in that state and it is counted in three places rather
+than silent, but it does not resolve on its own. See `docs/DECISIONS.md`, decision 16.
 
 ### A payout cannot exceed the available act share
 
-**Partly held.** Enforced by Phase 2 and Phase 4.
+**Partly held.** Enforced by Phase 4.
 
 The schedule is built from amount minus fee, so the arithmetic cannot overpay
-(`weeklySlices`, tested in `tests/money.test.ts`). What is missing is a constraint: no database rule
-prevents a payout row from being written or edited to more than the act's share, and there is no
-ledger to check the total against.
+(`weeklySlices`, tested in `tests/money.test.ts`), and since 0031 a sponsorship's slice cannot be
+marked paid at all before the logo is approved. Since 0033 a refund cannot exceed the charge it is
+against, or shrink. What is still missing is the payout side of the same constraint: no database
+rule prevents a `payout_schedule` row from being written or edited to more than the act's share,
+and there is no ledger to check the total against.
 
 ### Every Stripe object maps to an internal financial record
 
@@ -79,6 +92,24 @@ that exists at Stripe and not here, or here and not at Stripe, goes unnoticed.
 There is no ledger. Totals are computed from mutable rows on `purchases`, `backings` and
 `payout_schedule`, and revenue is read from configured lot prices rather than from what was actually
 charged.
+
+### A payment only moves the way money moves
+
+**Held**, since migration 0033.
+
+`purchases.payment_status` and `backings.payment_status` carried the state of everybody's money
+from 0001 with nothing behind them but the WHERE clause of whichever query wrote next. The
+application was careful (fulfilment conditional on `requires_payment`, the payout job on `held`,
+`refundRow` checking before it writes) and careful is not enforced: each of those is one forgotten
+`.eq()` from being absent. Nothing refused a refunded purchase moving back to held, a released one
+back to requires_payment, or a refund unwinding to zero.
+
+A trigger on both tables now allows only what the system performs: `requires_payment` to `held` to
+`released`, and out to `refunded` or `partially_refunded`, with a hand-made refund after the fact
+allowed from `released` because Door Money pays that one out of its own pocket. Every other move,
+and every way back, is refused. A status that does not change is always allowed, so a duplicate
+webhook stays harmless. `purchases.mark_status` has the same treatment, which is what 0031's hold
+rests on: a logo goes none, submitted, then approved or declined, and no further.
 
 ---
 
@@ -105,12 +136,31 @@ the insert and the work leaves the event permanently marked as seen.
 
 ### Refunds and cancellations survive a failure
 
-**Violated.** Enforced by Phase 2.
+**Held**, since migration 0032.
 
-`cancelRun` (`src/lib/refunds.ts`) walks purchases and backings in an in-memory loop and collects
-failures into an `errors` array that is returned to the caller and then dropped. If the process dies
-halfway, the refunds that had not run yet leave no record that they were owed. There is no outbox,
-no retry worker, and no staff-visible failure state.
+`cancelRun` (`src/lib/refunds.ts`) used to walk purchases and backings in an in-memory loop,
+refunding each as it went and collecting failures into an `errors` array. The count reached the
+musician and nothing else outlived the request: a process that died halfway left no record anywhere
+that the remaining refunds were owed, and a failure was never tried again.
+
+`cancelRun` now writes every obligation to `financial_operations` before Stripe is called, and
+`decideMark` does the same for a declined logo. A row carries its own idempotency key, which is the
+key the Stripe call uses, so the same obligation cannot be written or paid twice.
+`src/lib/outbox.ts` works the queue: the two places an obligation is born attempt it immediately,
+and the daily job retries what failed on a widening schedule and stops after six attempts rather
+than forever. The patron is written to from one place, by whichever attempt lands, so a refund that
+succeeds on Thursday still sends the mail and cannot send it twice.
+
+Three ways it can still be lost are each closed rather than assumed away. A worker that dies
+holding a row is reclaimed after fifteen minutes (the claim is what sets `updated_at`, and a caller
+cannot backdate it). A crash between marking a fundraiser cancelled and queueing its refunds is
+caught by a sweep that asks which patron is still holding money on a cancelled fundraiser rather
+than trusting the request to have finished, and the same sweep covers a declined logo. A row out of
+attempts is `failed` rather than gone, counted on `/admin` with its last error and the payment it
+belongs to.
+
+Not covered here, and still Phase 4: there is no ledger to reconcile any of this against, so a
+refund Stripe has and this table does not still goes unnoticed.
 
 ---
 
