@@ -1,6 +1,7 @@
 import { tierPlace } from "@/lib/catalog";
 import { payoutProblem, recordReady, sendEmail } from "@/lib/email";
 import { lotName, notifyPayout } from "@/lib/purchases";
+import { slicePlan } from "@/lib/release";
 import { SITE } from "@/lib/site";
 import { transferSliceToAct } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -8,7 +9,9 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 /*
   The Friday job. Every payout_schedule row that is due and still scheduled becomes one Transfer
   from Door Money's balance to the act's Connect account, sourced from the patron's charge.
-  A row belongs to a lot purchase or to a fan backing; both move the same way.
+  A row belongs to a lot purchase or to a fan backing; both move the same way, and `slicePlan`
+  in src/lib/release.ts decides which ones may move at all. A sponsorship waits for the musician's
+  yes on the logo; a backing has no logo and goes on the calendar.
   Safe to run any day and any number of times: rows flip to paid as they go, and the Stripe
   idempotency key is the row id, so a retry after a crash cannot send a slice twice.
 */
@@ -26,7 +29,7 @@ export type PayoutSummary = {
   closed: number;
 };
 
-type Source = { id: string; stripe_charge_id: string | null; payment_status: string };
+type Source = { id: string; stripe_charge_id: string | null; payment_status: string; mark_status?: string | null };
 type DueRow = {
   id: string;
   act_id: string;
@@ -46,7 +49,8 @@ async function dueRows(sb: ReturnType<typeof supabaseAdmin>, ranOn: string) {
   const base = (source: "purchases" | "backings") =>
     sb
       .from("payout_schedule")
-      .select(`id,act_id,amount_cents,due_on,purchase_id,backing_id,${source}!inner(id,stripe_charge_id,payment_status),${ACT}`)
+      // A sponsorship's logo decides whether its money is owed, so the Friday job reads it here.
+      .select(`id,act_id,amount_cents,due_on,purchase_id,backing_id,${source}!inner(id,stripe_charge_id,payment_status${source === "purchases" ? ",mark_status" : ""}),${ACT}`)
       .eq("status", "scheduled")
       .not(source === "purchases" ? "purchase_id" : "backing_id", "is", null)
       .lte("due_on", ranOn);
@@ -70,20 +74,21 @@ export async function runWeeklyPayouts(today = new Date()): Promise<PayoutSummar
   const touchedBackings = new Set<string>();
 
   for (const row of rows) {
-    const source = row.purchases ?? row.backings;
-    if (!source || source.payment_status !== "held" || !source.stripe_charge_id) {
-      skip("purchase has no charge to draw on");
-      continue;
-    }
-    if (!row.acts.stripe_account_id || !row.acts.stripe_payouts_enabled) {
-      skip("act has not finished payout setup");
+    const source = row.purchases
+      ? ({ kind: "sponsorship", ...row.purchases } as const)
+      : row.backings
+        ? ({ kind: "backing", ...row.backings } as const)
+        : null;
+    const plan = slicePlan(source, row.acts);
+    if (!plan.ok) {
+      skip(plan.hold);
       continue;
     }
     try {
       const transfer = await transferSliceToAct({
         amountCents: row.amount_cents,
-        stripeAccountId: row.acts.stripe_account_id,
-        sourceChargeId: source.stripe_charge_id,
+        stripeAccountId: plan.stripeAccountId,
+        sourceChargeId: plan.chargeId,
         idempotencyKey: `payout_${row.id}`,
         metadata: { payout_id: row.id, ...(row.purchase_id ? { purchase_id: row.purchase_id } : { backing_id: row.backing_id ?? "" }), act_id: row.act_id, due_on: row.due_on },
       });

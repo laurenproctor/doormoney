@@ -147,16 +147,30 @@ callers can neither read nor mutate protected data.
 
 ## Phase 2: durable money lifecycle
 
+**Status: started.** The payout gate is done, in migration `0031_payout_needs_approved_mark.sql`.
+The durability half (the outbox, the retry workers, the state machine) has not been.
+
 Make purchases, marks, refunds, cancellations, payouts and failures explicit and recoverable.
 
 **Product decision.** For placement purchases, no money is released to an act before the patron's
 mark is approved. Fan backings without a mark follow their own documented rule.
 
-- Define the purchase and backing state machine, and validate every transition in PostgreSQL.
-- Gate placement payouts on mark approval.
-- Make a declined mark produce the full refund the product promises.
-- Keep a run cancellation from becoming final until every financial obligation is durably queued.
-- Add durable financial-operation (outbox) records for refunds, transfers, transfer reversals,
+- [ ] Define the purchase and backing state machine, and validate every transition in PostgreSQL.
+- [x] Gate placement payouts on mark approval. `slicePlan` in `src/lib/release.ts` is the rule the
+  Friday job asks, and migration 0031 is a trigger asking the same thing under it, because a query
+  is not a boundary. A backing has no logo and stays on the calendar. Waiting is not skipping: a
+  held slice keeps its scheduled status and its due date, so the first Friday after the yes pays
+  every Friday that went by without one.
+- [x] Make a declined mark produce the full refund the product promises. Nothing left to fix in
+  `refundDue`: it was always correct about the money not yet sent, and 0031 is what makes "not yet
+  sent" mean all of it.
+
+  One thing the gate creates, and does not answer: a sponsorship whose logo never arrives holds its
+  money with no Friday that will ever move it. Counted in the payout summary, totalled on `/admin`
+  and said out loud on the musician's dashboard, but not resolved. `docs/DECISIONS.md`, decision 16
+  has the candidates and says why none of them is a safe default to pick in code.
+- [ ] Keep a run cancellation from becoming final until every financial obligation is durably queued.
+- [ ] Add durable financial-operation (outbox) records for refunds, transfers, transfer reversals,
   cancellation refunds and mark-decline refunds, each pending, processing, succeeded, retryable or
   terminally failed, with stable idempotency keys.
 - Never let an in-memory loop be the only record of a refund that is owed.
@@ -166,7 +180,8 @@ mark is approved. Fan backings without a mark follow their own documented rule.
 - Plan the reconciliation of existing purchases and payout rows.
 
 **Gate.** No payout happens before its release condition, and every failed refund or cancellation
-obligation stays visible and retryable.
+obligation stays visible and retryable. The first half of that is met and tested; the second is
+what is left of this phase.
 
 ---
 

@@ -48,22 +48,34 @@ a bid can land after the lot has closed.
 
 ### A declined mark receives the refund promised by the product
 
-**Partly held.** Enforced by Phase 2.
+**Held**, since migration 0031.
 
 `refundDue` (`src/lib/refunds.ts`) returns the unreleased part of the charge plus the fee that rode
-on it, and that arithmetic is now tested (`tests/refunds.test.ts`). The promise in
-`docs/REFUNDS_AND_DISPUTES.md` matches, but leans on the words "in practice this is everything":
-nothing stops weekly slices from being released before the mark is decided. Once Phase 2 gates
-placement payouts on mark approval, the promise becomes unconditional.
+on it, and that arithmetic is tested (`tests/refunds.test.ts`). It could only ever give back what
+had not been sent, and until 0031 nothing stopped a weekly slice from being sent while the logo was
+still undecided: slices fall on the fundraiser's own Fridays, so a sponsorship bought during a live
+fundraiser could be paid out on Friday and declined on Saturday. The patron was told "in full" on
+`/terms` and in two emails, and would have got less.
+
+A sponsorship's slice now waits for the musician's yes, asked in `slicePlan`
+(`src/lib/release.ts`, covered by `tests/release.test.ts`) and asked again by a trigger underneath
+it, so the rule holds for any caller that writes to `payout_schedule` rather than only for the one
+query that remembers to filter (`supabase/tests/permissions_test.sql`, seven assertions). A backing
+carries no logo and is unaffected: the calendar alone releases it, which is decision 2, option A.
+
+What this creates instead is a sponsorship whose logo never arrives, whose money then waits with
+nothing to move it. Nobody is short-changed in that state and it is counted in three places rather
+than silent, but it does not resolve on its own. See `docs/DECISIONS.md`, decision 16.
 
 ### A payout cannot exceed the available act share
 
 **Partly held.** Enforced by Phase 2 and Phase 4.
 
 The schedule is built from amount minus fee, so the arithmetic cannot overpay
-(`weeklySlices`, tested in `tests/money.test.ts`). What is missing is a constraint: no database rule
-prevents a payout row from being written or edited to more than the act's share, and there is no
-ledger to check the total against.
+(`weeklySlices`, tested in `tests/money.test.ts`), and since 0031 a sponsorship's slice cannot be
+marked paid at all before the logo is approved. What is still missing is the amount constraint: no
+database rule prevents a payout row from being written or edited to more than the act's share, and
+there is no ledger to check the total against.
 
 ### Every Stripe object maps to an internal financial record
 

@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(70);
+select plan(77);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -402,6 +402,81 @@ select is(
   (select count(*)::int from information_schema.table_privileges
     where table_schema='public' and grantee in ('anon','authenticated') and privilege_type='TRUNCATE'),
   0, 'nothing in the schema can be truncated by a browser');
+
+reset role;
+
+-- ===============================================================
+-- A sponsorship's money waits for the logo (0031)
+--
+-- The Friday job asks the same question in src/lib/release.ts. This is the answer underneath it:
+-- the rule has to hold for any caller that writes to payout_schedule with the service role, not
+-- only for the one query that remembers to filter. /terms promises a declined logo a full refund,
+-- and refundDue can only give back what has not already been sent.
+-- ===============================================================
+set local role service_role;
+
+-- The seed's held purchase carries no logo yet, which is where every sponsorship starts.
+insert into payout_schedule (id, act_id, purchase_id, due_on, amount_cents, status)
+values (
+  'de000000-0000-0000-0000-000000000001',
+  (select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+  (select id from purchases where lot_id = 'a1000000-0000-0000-0000-000000000004'),
+  current_date, 5000, 'scheduled');
+
+select throws_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a sponsorship slice cannot be paid while the logo is still waiting');
+
+select throws_ok(
+  $$insert into payout_schedule (act_id, purchase_id, due_on, amount_cents, status)
+    values ((select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+            (select id from purchases where lot_id = 'a1000000-0000-0000-0000-000000000004'),
+            current_date, 5000, 'paid')$$,
+  '23514', null, 'nor can one be inserted already paid, around the update');
+
+-- Waiting is not skipping: the refused slice keeps its status and its due date, so the first Friday
+-- after the yes pays every Friday that went by without one.
+select is(
+  (select status::text || ' ' || (due_on = current_date)::text from payout_schedule where id='de000000-0000-0000-0000-000000000001'),
+  'scheduled true', 'the slice that was refused is still scheduled, and still due on the day it was');
+
+update purchases set mark_status='declined' where lot_id='a1000000-0000-0000-0000-000000000002';
+insert into payout_schedule (id, act_id, purchase_id, due_on, amount_cents, status)
+values (
+  'de000000-0000-0000-0000-000000000002',
+  (select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000002'),
+  (select id from purchases where lot_id = 'a1000000-0000-0000-0000-000000000002'),
+  current_date, 5000, 'scheduled');
+
+select throws_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000002'$$,
+  '23514', null, 'a declined logo never pays out at all');
+
+-- A backing has no logo for anyone to approve, so the calendar alone releases it (decision 3).
+insert into backings (id, run_id, patron_id, tier, amount_cents, fee_cents, display_name, payment_status)
+values ('de000000-0000-0000-0000-000000000003',
+        (select r.id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+        'c1000000-0000-0000-0000-000000000001', 'thank_you', 2500, 375, 'A fan', 'held');
+insert into payout_schedule (id, act_id, backing_id, due_on, amount_cents, status)
+values ('de000000-0000-0000-0000-000000000004',
+        (select r.act_id from lots l join runs r on r.id = l.run_id where l.id = 'a1000000-0000-0000-0000-000000000004'),
+        'de000000-0000-0000-0000-000000000003', current_date, 2125, 'scheduled');
+
+select lives_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000004'$$,
+  'a fan backing pays on the calendar, with no logo anywhere in it');
+
+-- The yes is what releases it, and the same slice then moves.
+update purchases set mark_status='approved' where lot_id='a1000000-0000-0000-0000-000000000004';
+
+select lives_ok(
+  $$update payout_schedule set status='paid' where id='de000000-0000-0000-0000-000000000001'$$,
+  'and the moment the musician approves the logo, the waiting slice pays');
+
+-- The guard fires on the way into paid and nowhere else, so a refund can still skip a paid row.
+select lives_ok(
+  $$update payout_schedule set status='skipped', paused_reason='refunded' where id='de000000-0000-0000-0000-000000000001'$$,
+  'a refund can still move a slice out of paid');
 
 reset role;
 

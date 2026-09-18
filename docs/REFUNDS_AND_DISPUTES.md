@@ -24,7 +24,7 @@ The same rule covers fan backings. `refundPurchase` and `refundBacking` are the 
 
 | Case | What happens | Enforced by |
 |---|---|---|
-| The act declines a mark | The unreleased part goes back, the spot returns to the board. A mark is normally decided before the run starts, so in practice this is everything. | `decideMark` in `src/app/actions/marks.ts` |
+| The act declines a mark | The whole charge goes back, fee included, and the spot returns to the board. Not "in practice": since migration 0031 a sponsorship's weekly slices cannot be paid before the mark is approved, so there is never a released part to subtract. | `decideMark` in `src/app/actions/marks.ts`, `slicePlan` in `src/lib/release.ts` |
 | The act cancels the run | Every patron and every fan gets the unreleased part back. Open spots come off the board. A checkout in flight is expired, and a fan's unfinished payment is cancelled. | `cancelRun` in `src/lib/refunds.ts` |
 | An auction winner never pays | Nothing was ever charged. The spot rolls to the next bid with a fresh 48 hours. | `rollExpiredFunding` in `src/lib/auctions.ts` |
 | Someone takes a spot at its take-it-now price | The bidders were never charged. They are told the bidding is over. | `notifyBiddersSpotTaken` in `src/lib/purchases.ts` |

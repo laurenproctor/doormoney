@@ -170,27 +170,32 @@ export default async function DashboardPage() {
           {waiting.length === 0 ? (
             <p className="max-w-none text-[15px] text-muted">When a patron sends a logo for a spot they bought, it shows here. Nothing goes on the gear without your yes.</p>
           ) : (
-            <ul className="divide-y divide-line">
-              {waiting.map((m) => (
-                <li key={m.id} className="grid gap-4 py-4 md:grid-cols-[120px_1fr_auto] md:items-center">
-                  <div className="edge flex h-[100px] w-[120px] items-center justify-center bg-ground p-2">
-                    {m.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.url} alt={`${m.patron} logo`} className="max-h-full max-w-full object-contain" />
-                    ) : (
-                      <span className="caps text-center text-[15px] leading-tight">{m.text ?? m.patron}</span>
-                    )}
-                  </div>
-                  <div>
-                    <b className="block text-[15px]">{m.patron}</b>
-                    <span className="caps text-[14.5px] text-muted">{m.lot}</span>
-                    {m.text && m.url && <span className="mt-1.5 block text-[14.5px]">Name to set: {m.text}</span>}
-                    {m.note && <p className="mt-1.5 max-w-[52ch] text-[14.5px] leading-[1.55] text-muted">&ldquo;{m.note}&rdquo;</p>}
-                  </div>
-                  <MarkDecision purchaseId={m.id} />
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="mb-5 max-w-none text-[15px] text-muted">
+                Door Money holds the money on each of these until you answer. Friday payments on a spot start once you say yes, and a no sends the patron every cent back.
+              </p>
+              <ul className="divide-y divide-line">
+                {waiting.map((m) => (
+                  <li key={m.id} className="grid gap-4 py-4 md:grid-cols-[120px_1fr_auto] md:items-center">
+                    <div className="edge flex h-[100px] w-[120px] items-center justify-center bg-ground p-2">
+                      {m.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.url} alt={`${m.patron} logo`} className="max-h-full max-w-full object-contain" />
+                      ) : (
+                        <span className="caps text-center text-[15px] leading-tight">{m.text ?? m.patron}</span>
+                      )}
+                    </div>
+                    <div>
+                      <b className="block text-[15px]">{m.patron}</b>
+                      <span className="caps text-[14.5px] text-muted">{m.lot}</span>
+                      {m.text && m.url && <span className="mt-1.5 block text-[14.5px]">Name to set: {m.text}</span>}
+                      {m.note && <p className="mt-1.5 max-w-[52ch] text-[14.5px] leading-[1.55] text-muted">&ldquo;{m.note}&rdquo;</p>}
+                    </div>
+                    <MarkDecision purchaseId={m.id} />
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </Card>
 

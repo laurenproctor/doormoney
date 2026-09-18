@@ -43,15 +43,22 @@ export default async function AdminPage() {
   const backingRows = backings.data ?? [];
   const runTitle = new Map(runRows.map((r) => [r.id, `${actName.get(r.act_id) ?? ""}, ${r.title}`]));
   const held = [...(purchases.data ?? []), ...backingRows].filter((p) => p.payment_status === "held").reduce((n, p) => n + p.amount_cents, 0);
+  // Money Door Money is holding that cannot move on a Friday yet, because nobody has approved the
+  // logo (migration 0031). A sponsorship sitting here past the end of its fundraiser is the case
+  // Door Money looks at by hand: see docs/DECISIONS.md, decision 16.
+  const waitingOnLogo = (purchases.data ?? [])
+    .filter((p) => p.payment_status === "held" && p.mark_status !== "approved")
+    .reduce((n, p) => n + p.amount_cents, 0);
 
   return (
     <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Read only" title="Admin" accent="">
       <div className="grid gap-[30px]">
-        <dl className="grid grid-cols-2 gap-4 md:grid-cols-6">
+        <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Stat n={String(actRows.length)} label="acts" />
           <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="fundraisers up" />
           <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
           <Stat n={formatMoney(held)} label="held" />
+          <Stat n={formatMoney(waitingOnLogo)} label="waiting on a logo" />
           <Stat n={String(flags.length)} label={flags.length === 1 ? "flag open" : "flags open"} />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
           <Stat n={String(subscribers.length)} label="get new fundraisers" />
