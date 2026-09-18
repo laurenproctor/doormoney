@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { CATALOG } from "@/lib/catalog";
 import { payoutNotice, purchaseReceipt, saleNotice, sendEmail, spotTaken } from "@/lib/email";
 import { feeCents, weeklySlices } from "@/lib/money";
+import { queueRefund } from "@/lib/refunds";
 import { SITE } from "@/lib/site";
 import { stripe } from "@/lib/stripe";
 import { runUrl } from "@/lib/urls";
@@ -29,6 +30,8 @@ type PurchaseRow = {
   fee_cents: number;
   payment_status: string;
   lot_id: string;
+  /** The winning bid this pays for; null for a fixed price and for a take-it-now. */
+  bid_id: string | null;
   patrons: { name: string; contact_email: string } | null;
   lots: {
     id: string;
@@ -44,7 +47,7 @@ type PurchaseRow = {
 async function loadPurchase(sb: Admin, id: string) {
   const { data, error } = await sb
     .from("purchases")
-    .select("id,amount_cents,fee_cents,payment_status,lot_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,slug,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
+    .select("id,amount_cents,fee_cents,payment_status,lot_id,bid_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,slug,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`purchase ${id}: ${error.message}`);
@@ -82,8 +85,12 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
  * card was charged off-session at the close. The schedule and the emails are the same either way,
  * so they are written once here rather than twice.
  *
- * Idempotent. The state change is conditional on requires_payment, so a duplicate webhook, a second
- * close, or a close racing a webhook all end with one held purchase and one schedule.
+ * The state change is fulfil_lot_purchase (migration 0035), which takes the lot's row lock and
+ * asks whether this purchase still pays for the lot's current offer. It marks the purchase held
+ * either way, because the charge is real, and marks the lot sold only when the answer is yes.
+ * A duplicate webhook, a second close, or a close racing a webhook all find "already". A payment
+ * that lands after its offer has rolled to another bidder finds "stale": the lot stays with its
+ * current winner and the money goes straight back through the refund queue.
  */
 export async function holdPurchase(
   sb: Admin,
@@ -93,6 +100,7 @@ export async function holdPurchase(
   if (!p) return { ok: false as const, reason: "purchase not found" };
   if (p.payment_status !== "requires_payment") return { ok: true as const, already: true };
 
+  // The charge behind the intent, read from Stripe before the transaction rather than inside it.
   const piId = params.paymentIntentId;
   let chargeId: string | null = null;
   if (piId) {
@@ -100,21 +108,24 @@ export async function holdPurchase(
     chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id ?? null;
   }
 
-  // The state change. Conditional on requires_payment so a duplicate event is a no-op.
-  const { data: updated, error } = await sb
-    .from("purchases")
-    .update({ payment_status: "held", stripe_payment_intent_id: piId, stripe_charge_id: chargeId, ...(params.checkoutSessionId ? { stripe_checkout_session_id: params.checkoutSessionId } : {}) })
-    .eq("id", p.id)
-    .eq("payment_status", "requires_payment")
-    .select("id");
+  const { data: outcome, error } = await sb.rpc("fulfil_lot_purchase", {
+    p_purchase_id: p.id,
+    p_payment_intent_id: piId,
+    p_charge_id: chargeId,
+    p_checkout_session_id: params.checkoutSessionId ?? null,
+  });
   if (error) throw new Error(`hold purchase ${p.id}: ${error.message}`);
-  if (!updated?.length) return { ok: true as const, already: true };
-
-  await sb.from("lots").update({ status: "sold", funding_deadline: null, funding_token: null }).eq("id", p.lot_id);
+  if (outcome === "already") return { ok: true as const, already: true };
+  if (outcome === "missing") return { ok: false as const, reason: "purchase not found" };
+  if (outcome === "stale") {
+    await refundStaleOffer(sb, p);
+    return { ok: true as const, already: false, stale: true as const };
+  }
+  if (outcome !== "sold") throw new Error(`hold purchase ${p.id}: fulfil_lot_purchase answered ${String(outcome)}`);
 
   // Taken outright at the take-it-now price, with bids already on it. Everyone who bid is told the
   // bidding is over, and that nothing was charged to them.
-  if (p.lots.mode === "auction" && !p.lots.winner_bid_id) await notifyBiddersSpotTaken(sb, p);
+  if (p.lots.mode === "auction" && !p.bid_id) await notifyBiddersSpotTaken(sb, p);
 
   // The schedule: the act's share, in equal Friday slices across the run.
   const run = p.lots.runs;
@@ -141,7 +152,22 @@ export async function holdPurchase(
     const r = await sendEmail(saleNotice({ to: owner, actName: act.name, lotName: name, patronName, amountCents: p.amount_cents, netCents: p.amount_cents - p.fee_cents, boardUrl, dashboardUrl: `${SITE.url}/dashboard` }));
     if (!r.sent) console.error("sale notice not sent", p.id, r.reason);
   }
-  return { ok: true as const, already: false };
+  return { ok: true as const, already: false, stale: false as const };
+}
+
+/**
+ * A payment for an offer that had already moved on. Written down as owed first, then attempted at
+ * once; the daily job carries it from there. The patron hears from the refund queue, not from here,
+ * so a refund that lands on the fourth attempt still says so exactly once.
+ */
+async function refundStaleOffer(sb: Admin, p: PurchaseRow) {
+  const key = await queueRefund(sb, "purchases", p.id, "stale_offer");
+  console.error("stale offer paid for", p.id, "on lot", p.lot_id, "after its offer moved on; refund queued as", key);
+  // A dynamic import: the outbox names this file for lot names, and a static cycle here would
+  // evaluate one of them half-built.
+  const { workRefundQueue } = await import("@/lib/outbox");
+  const r = await workRefundQueue(sb, [key]);
+  if (!r.succeeded) console.error("stale offer refund did not go through yet", p.id, r);
 }
 
 /**

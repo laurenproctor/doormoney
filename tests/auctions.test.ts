@@ -46,3 +46,48 @@ test("a zero top bid is a bid, not an absent one", () => {
   assert.equal(minimumBidCents(10000, null), 10000);
   assert.equal(minimumBidCents(10000, 0), 500);
 });
+
+/*
+  What the database's refusals become on the page. place_bid and begin_lot_purchase (migration
+  0035) raise the reason as the message; these two maps are the only place those words are turned
+  into copy, so a reason the database can raise and the page cannot say would be a silent "try
+  once more". Every reason the functions raise is listed here on purpose.
+*/
+import { bidRefusalMessage, checkoutRefusal } from "@/lib/auctions";
+
+const BID_REASONS = ["lot_not_found", "not_an_auction", "fundraiser_closed", "spot_on_hold", "bidding_over", "bidding_closed", "bid_below_minimum"];
+const CHECKOUT_REASONS = ["lot_not_found", "spot_taken", "spot_being_taken", "bidding_passed_take_it_now", "not_for_sale_outright", "not_for_sale", "offer_not_current", "bid_not_on_lot", "amount_not_the_bid", "amount_not_the_price"];
+
+test("every reason place_bid can raise has its own words", () => {
+  const fallback = bidRefusalMessage("something_else");
+  for (const reason of BID_REASONS) {
+    const message = bidRefusalMessage(reason, reason === "bid_below_minimum" ? "54500" : null);
+    assert.notEqual(message, fallback, `${reason} fell through to the generic message`);
+    assert.doesNotMatch(message, /_/, `${reason} leaked a database word onto the page`);
+  }
+});
+
+test("a bid under the minimum says what the next bid starts at", () => {
+  assert.equal(bidRefusalMessage("bid_below_minimum", "54500"), "The next bid starts at $545.");
+  // A detail that is not a number still gets a sentence, never NaN.
+  assert.doesNotMatch(bidRefusalMessage("bid_below_minimum", null), /NaN|\$undefined/);
+  assert.doesNotMatch(bidRefusalMessage("bid_below_minimum", "abc"), /NaN/);
+});
+
+test("every reason begin_lot_purchase can raise has its own words and a status", () => {
+  const fallback = checkoutRefusal("something_else");
+  assert.equal(fallback.status, 500);
+  for (const reason of CHECKOUT_REASONS) {
+    const r = checkoutRefusal(reason);
+    assert.notEqual(r.error, fallback.error, `${reason} fell through to the generic message`);
+    assert.ok(r.status >= 400 && r.status < 500, `${reason} is the caller's problem, not the server's`);
+    assert.doesNotMatch(r.error, /_/, `${reason} leaked a database word onto the page`);
+  }
+});
+
+test("a checkout on a spot somebody else is paying for is a conflict, and a lapsed offer is gone", () => {
+  assert.equal(checkoutRefusal("spot_being_taken").status, 409);
+  assert.equal(checkoutRefusal("spot_taken").status, 409);
+  assert.equal(checkoutRefusal("offer_not_current").status, 410);
+  assert.equal(checkoutRefusal("lot_not_found").status, 404);
+});

@@ -1,6 +1,11 @@
 -- Door Money seed. Sample acts from the mockups so every screen renders.
 -- Run after 0001_init.sql:  supabase db reset   (applies migrations then seed)
 
+-- The bids and purchases below are history: bids on spots that have since sold, purchases already
+-- held. Migration 0035 guards both tables against exactly that shape of insert, so the seed says
+-- up front that it is a trusted load. Only the seed and the test fixtures set this.
+set doormoney.trusted_load = 'on';
+
 -- ---------------------------------------------------------------
 -- The standard card. Mirrors src/lib/catalog.ts; keep them in sync.
 -- ---------------------------------------------------------------
@@ -108,3 +113,5 @@ insert into purchases (lot_id, patron_id, amount_cents, fee_cents, payment_statu
 ('a1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 120000, 18000, 'held', 'approved'),
 ('a1000000-0000-0000-0000-000000000005', 'c1000000-0000-0000-0000-000000000004',  35000,  5250, 'held', 'approved'),
 ('b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000005',   6000,   900, 'held', 'approved');
+
+reset doormoney.trusted_load;

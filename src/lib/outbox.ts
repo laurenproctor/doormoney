@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { tierPlace } from "@/lib/catalog";
-import { cancellationNotice, markDeclined, sendEmail } from "@/lib/email";
+import { cancellationNotice, markDeclined, sendEmail, staleOfferRefund } from "@/lib/email";
 import { lotName } from "@/lib/purchases";
 import { queueRefund, refundBacking, refundKey, refundPurchase, type RefundReason } from "@/lib/refunds";
 import { SITE } from "@/lib/site";
+import { runUrl } from "@/lib/urls";
 
 /*
   Refunds Door Money owes, written down before Stripe is called.
@@ -270,7 +271,7 @@ type PurchaseMail = {
   id: string;
   amount_cents: number;
   patrons: { name: string; contact_email: string } | null;
-  lots: { label: string | null; surface_key: string; runs: { title: string; acts: { name: string } } };
+  lots: { label: string | null; surface_key: string; runs: { slug: string; title: string; acts: { name: string; slug: string } } };
 };
 type BackingMail = {
   id: string;
@@ -290,7 +291,7 @@ async function notifyRefunded(sb: Admin, source: "purchases" | "backings", id: s
   if (source === "purchases") {
     const { data } = await sb
       .from("purchases")
-      .select("id,amount_cents,patrons(name,contact_email),lots!inner(label,surface_key,runs!inner(title,acts!inner(name)))")
+      .select("id,amount_cents,patrons(name,contact_email),lots!inner(label,surface_key,runs!inner(slug,title,acts!inner(name,slug)))")
       .eq("id", id)
       .maybeSingle();
     const p = data as unknown as PurchaseMail | null;
@@ -300,7 +301,9 @@ async function notifyRefunded(sb: Admin, source: "purchases" | "backings", id: s
     mail =
       reason === "mark_declined"
         ? markDeclined({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, lotName: what, refundedCents, boardsUrl: `${SITE.url}/auctions` })
-        : cancellationNotice({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, runTitle: p.lots.runs.title, lotName: what, refundedCents, amountCents: p.amount_cents, recordUrl });
+        : reason === "stale_offer"
+          ? staleOfferRefund({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, lotName: what, refundedCents, boardUrl: runUrl(p.lots.runs.acts.slug, p.lots.runs.slug) })
+          : cancellationNotice({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, runTitle: p.lots.runs.title, lotName: what, refundedCents, amountCents: p.amount_cents, recordUrl });
   } else {
     const { data } = await sb
       .from("backings")

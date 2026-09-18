@@ -212,26 +212,53 @@ in is now enforced by PostgreSQL rather than by the WHERE clause of whichever qu
 
 ## Phase 3: transactional auctions
 
+**Status: built, not applied.** Three migrations: `0034_stale_offer_refund_reason.sql` (one enum
+value, on its own because Postgres will not use it in the transaction that adds it),
+`0035_transactional_auctions.sql` (the functions, the guards, the offer version) and
+`0036_auction_worker_schedule.sql` (the database calling the worker). `docs/PHASE_3_DEPLOYMENT.md`
+has the apply order.
+
 Make bidding, closing, funding, rollover and checkout safe under concurrency.
 
-- Replace read-then-insert bid placement with a transactional RPC that locks the lot row, computes
-  the minimum, and inserts, all in one transaction.
-- Reject bids after the authoritative close time.
-- Make winner selection and rollover transactional. Treat `requires_payment` as an active funding
-  attempt.
-- Bind a checkout session to the lot, the winner, the funding token or version, the authoritative
+- [x] Replace read-then-insert bid placement with a transactional RPC that locks the lot row, computes
+  the minimum, and inserts, all in one transaction. `place_bid`. A trigger on `bids` asks the same
+  questions under the same lock of any insert that comes another way, and a second trigger keeps a
+  bid's amount, lot and patron from changing afterwards.
+- [x] Reject bids after the authoritative close time. In the function and in the trigger, against the
+  lot's own `closes_at` or the run's `bidding_closes_at`, at the database's clock.
+- [x] Make winner selection and rollover transactional. `close_auction` and `roll_offer`, one lot per
+  call, each under the row lock. Treat `requires_payment` as an active funding attempt: a purchase
+  still inside its `expires_at` holds a roll back ("waiting"); one past it is cleared and its Stripe
+  session named for expiry.
+- [x] Bind a checkout session to the lot, the winner, the funding token or version, the authoritative
   price and an offer expiry, and revalidate all of it during webhook fulfilment before marking a lot
-  sold.
-- Expire stale checkout sessions when an offer rolls over.
-- Freeze commercial terms once the first bid lands, and refuse deletion of lots with bids or
-  financial records.
-- Take global auction settlement out of board-page rendering. Rendering becomes read-only and
-  settlement moves to an isolated idempotent worker.
-- Test simultaneous bids, bids at closing time, winner rollover, completion of an old checkout,
-  duplicate fulfilment, and buy-now while bids exist.
+  sold. Every offer bumps `lots.offer_version`; a purchase records `bid_id` and `offer_version`; the
+  guard on `purchases` refuses a row that does not pay for the current offer at the bid's amount, and
+  `fulfil_lot_purchase` re-checks it under the lock. A stale payment is held (the charge is real)
+  and refunded through the queue under the new reason; the lot stays with its current winner.
+- [x] Expire stale checkout sessions when an offer rolls over. `roll_offer` returns the session ids it
+  cleared and the worker expires them at Stripe, best effort.
+- [x] Freeze commercial terms once the first bid lands, and refuse deletion of lots with bids or
+  financial records. Price, mode, take-it-now and placement freeze on the first bid or purchase;
+  deletion was already refused by 0022. The dashboard says which spot and why.
+- [x] Take global auction settlement out of board-page rendering. Rendering becomes read-only and
+  settlement moves to an isolated idempotent worker. `/api/cron/auctions`, called every five minutes
+  by pg_cron through pg_net (0036, guarded so CI's plain Postgres installs nothing) and daily by the
+  existing job. The page no longer imports anything that writes.
+- [x] Test simultaneous bids, bids at closing time, winner rollover, completion of an old checkout,
+  duplicate fulfilment, and buy-now while bids exist. `supabase/tests/auctions_test.sql` (81
+  assertions) covers everything one session can; `supabase/tests/concurrency_test.sh` races two
+  psql sessions for the rest: two bids at the same minimum, two closes, a bid in flight as the
+  close arrives, and a fulfilment in flight as a roll arrives. Both run from `npm run
+  test:db:docker` and in CI.
+
+Found while doing it: an abandoned take-it-now checkout used to hand the lot to the current top
+bidder before the auction had closed, because the roll saw a lapsed `pending_funding` with no winner
+and picked "the next bid". A lapsed hold now reopens the lot ("reopened") and the close decides.
 
 **Gate.** Two concurrent requests never produce two authoritative winners and never fulfil a stale
-offer.
+offer. Met: the concurrency script shows one winner from two closes and one bid from two at the same
+minimum, and the pgTAP suite shows a stale offer held and not sold, twice.
 
 ---
 

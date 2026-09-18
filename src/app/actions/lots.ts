@@ -92,10 +92,13 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
 
   if (deletes.length) {
     const { error: e } = await sb.from("lots").delete().in("id", deletes).eq("status", "open");
+    if (e?.message.includes("cannot be deleted")) return { ok: false, error: "A spot with a bid or a payment on it cannot be removed." };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
   for (const u of updates) {
     const { error: e } = await sb.from("lots").update({ label: u.label, price_cents: u.price_cents, mode: u.mode, buy_now_cents: u.buy_now_cents }).eq("id", u.id).eq("status", "open");
+    // Migration 0035 freezes a spot's terms the moment somebody bids on it.
+    if (e?.message.includes("lot_terms_frozen")) return { ok: false, error: `${u.label ?? "A spot"} already has a bid on it, so its price, its mode and its take-it-now number stay as they are.` };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
   if (inserts.length) {

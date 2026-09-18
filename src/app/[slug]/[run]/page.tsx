@@ -4,8 +4,6 @@ import { getBoard } from "@/lib/boards";
 import { periodOf } from "@/lib/periods";
 import { currentSlugFor } from "@/lib/patronprofile";
 import { normalizeUsername } from "@/lib/username";
-import { closeTimeOf, settleDueLots } from "@/lib/auctions";
-import { supabaseAdmin } from "@/lib/supabase/server";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { runPath, runSlugFromSegment } from "@/lib/urls";
 import { BoardView, type PaidNotice } from "./BoardView";
@@ -33,24 +31,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** Whether anything here is past its moment: bidding over, or a funding window run out. */
-async function hasOverdueLot(board: NonNullable<Awaited<ReturnType<typeof getBoard>>>) {
-  const nowIso = new Date().toISOString();
-  const closes = board.run?.biddingClosesAt ?? null;
-  const overdueBidding = board.lots.some((l) => {
-    if (l.mode !== "auction" || l.status !== "open") return false;
-    const at = closeTimeOf({ closes_at: l.closesAt ?? null }, { bidding_closes_at: closes });
-    return at !== null && at <= nowIso;
-  });
-  if (overdueBidding) return true;
-  // A funding deadline is not on the public page, so ask for the ones that matter.
-  const waiting = board.lots.filter((l) => l.mode === "auction" && l.status === "pending_funding").map((l) => l.id);
-  if (!waiting.length) return false;
-  const { data } = await supabaseAdmin().from("lots").select("id").in("id", waiting).lt("funding_deadline", nowIso).limit(1);
-  return Boolean(data?.length);
-}
-
-/** What the patron sees when Stripe's embedded checkout sends them back here. */
 async function paidNotice(sessionId: string | undefined, slug: string): Promise<PaidNotice | null> {
   if (!sessionId || !sessionId.startsWith("cs_") || !stripeConfigured()) return null;
   try {
@@ -70,7 +50,7 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
   const runSlug = runSlugFromSegment(segment);
   if (!runSlug) notFound();
 
-  let board = await getBoard(slug, runSlug);
+  const board = await getBoard(slug, runSlug);
   if (!board || !board.run) {
     // An address that moved keeps its old word pointing here. Retired words are never
     // reissued (migration 0024), so this can only ever land on the musician who left it behind.
@@ -79,12 +59,9 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  // An auction that has run out of time settles here rather than waiting for the next cron pass.
-  // Both writes are conditional on the state they expect, so two readers at once cannot double up.
-  if (await hasOverdueLot(board)) {
-    await settleDueLots(supabaseAdmin());
-    board = (await getBoard(slug, runSlug)) ?? board;
-  }
+  // Rendering is read-only. An auction past its time is closed by the worker at
+  // /api/cron/auctions (remediation Phase 3), never by a page load: a page that settled its own
+  // lots on sight let any anonymous visitor close auctions, charge cards and send email.
   const paid = await paidNotice(typeof sp.paid === "string" ? sp.paid : undefined, slug);
 
   return <BoardView board={board} slug={slug} paid={paid} />;

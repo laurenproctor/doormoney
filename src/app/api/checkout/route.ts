@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { backingFee } from "@/lib/backings";
 import { patronFor, payingProfileId } from "@/lib/patrons";
-import { buyNowOpen } from "@/lib/auctions";
+import { buyNowOpen, checkoutRefusal } from "@/lib/auctions";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
@@ -106,34 +106,33 @@ export async function POST(req: Request) {
     amount = winningBid.amount_cents;
   }
 
-  // Somebody else may be mid-checkout on this lot. Their hold lasts CHECKOUT_MINUTES; after that it is stale.
-  const { data: existing } = await sb.from("purchases").select("id,payment_status,created_at").eq("lot_id", lot.id).in("payment_status", ["requires_payment", "held", "released"]).maybeSingle();
-  if (existing) {
-    if (existing.payment_status !== "requires_payment") return fail("That spot is already taken.", 409);
-    const ageMs = Date.now() - new Date(existing.created_at).getTime();
-    if (ageMs < (CHECKOUT_MINUTES + 5) * 60_000) return fail("Someone is taking that spot right now. Try again in a few minutes.", 409);
-    await sb.from("purchases").delete().eq("id", existing.id).eq("payment_status", "requires_payment");
-  }
-
   // The patron: the same business paying twice should be one patron row.
   const email = input.email.toLowerCase();
   const patronId = await patronFor(sb, input.patronName, email, profileId);
   if (!patronId) return fail("That did not save. Try once more.", 500);
 
-  // The purchase. A partial unique index keeps one live purchase per lot, so two patrons racing cannot both get through.
-  const { data: purchase, error: purchaseError } = await sb
-    .from("purchases")
-    .insert({ lot_id: lot.id, patron_id: patronId, amount_cents: amount, fee_cents: lotFee(amount) })
-    .select("id")
-    .single();
-  if (purchaseError || !purchase) return fail("Someone is taking that spot right now. Try again in a few minutes.", 409);
-
-  // A spot being taken now is held for the checkout window. A lot already won at auction keeps the
-  // deadline from its email, so this leaves it alone.
-  if (lot.mode === "fixed" || input.buyNow) {
-    const deadline = new Date(Date.now() + CHECKOUT_MINUTES * 60_000).toISOString();
-    await sb.from("lots").update({ status: "pending_funding", funding_deadline: deadline }).eq("id", lot.id).eq("status", "open");
+  // The purchase and the hold on the lot, in one transaction under the lot's lock
+  // (begin_lot_purchase, migration 0035). It clears any checkout on the lot that has expired,
+  // refuses one that is still live, and binds this purchase to the offer it pays for: the winning
+  // bid for a won auction, the take-it-now number or the price for anything taken outright. The
+  // purchase stops counting as an attempt to pay a little after Stripe's own session expiry, so a
+  // session Stripe could still complete is never cleared from under it.
+  const wonBidId = lot.mode === "auction" && !input.buyNow ? lot.winner_bid_id : null;
+  const expiresAt = new Date(Date.now() + (CHECKOUT_MINUTES + 15) * 60_000).toISOString();
+  const { data: purchaseId, error: purchaseError } = await sb.rpc("begin_lot_purchase", {
+    p_lot_id: lot.id,
+    p_patron_id: patronId,
+    p_amount_cents: amount,
+    p_fee_cents: lotFee(amount),
+    p_bid_id: wonBidId,
+    p_expires_at: expiresAt,
+  });
+  if (purchaseError || typeof purchaseId !== "string") {
+    if (purchaseError && !["23514", "23505", "P0002"].includes(purchaseError.code)) console.error("begin_lot_purchase failed", lot.id, purchaseError.code, purchaseError.message);
+    const refusal = checkoutRefusal(purchaseError?.message ?? "");
+    return fail(refusal.error, refusal.status);
   }
+  const purchase = { id: purchaseId };
 
   const act = lot.runs.acts;
   const origin = process.env.NODE_ENV === "production" ? SITE.url : new URL(req.url).origin;
@@ -151,10 +150,11 @@ export async function POST(req: Request) {
     await sb.from("purchases").update({ stripe_checkout_session_id: session.id }).eq("id", purchase.id);
     return NextResponse.json({ clientSecret: session.client_secret });
   } catch (e) {
-    // Stripe said no. Give the lot back so the patron can try again.
+    // Stripe said no. Give the lot back so the patron can try again. A lot won at auction keeps
+    // its winner and its clock; only a hold this request put on the lot comes off.
     console.error("checkout session failed", e instanceof Error ? e.message : e);
-    await sb.from("purchases").delete().eq("id", purchase.id);
-    if (lot.mode === "fixed" || input.buyNow) await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", lot.id).eq("status", "pending_funding");
+    await sb.from("purchases").delete().eq("id", purchase.id).eq("payment_status", "requires_payment");
+    if (!wonBidId) await sb.from("lots").update({ status: "open", funding_deadline: null }).eq("id", lot.id).eq("status", "pending_funding").is("winner_bid_id", null);
     return fail("Payment could not start. Try once more.", 502);
   }
 }

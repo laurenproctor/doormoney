@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# The Phase 1 gate, runnable anywhere Docker is: supabase/tests/permissions_test.sql against a real
-# Postgres with every migration and the seed applied.
+# The database gate, runnable anywhere Docker is: every supabase/tests/*_test.sql suite, then the
+# two-session concurrency checks, against a real Postgres with every migration and the seed applied.
 #
 # `supabase test db` needs the whole local stack, which is slow and flaky under load, so this uses
 # one throwaway postgres container plus supabase/tests/bootstrap.sql instead. Same assertions, no
@@ -61,27 +61,36 @@ done
 say "Seeding"
 psql_ -q -d "$DB" < "$ROOT/supabase/seed.sql"
 
-say "Running permissions_test.sql"
-# pgTAP prints TAP; psql must not stop on the first failing assertion, or the plan never reports.
-docker exec -i "$NAME" psql -U postgres -d "$DB" -X -q --no-align --tuples-only \
-  < "$ROOT/supabase/tests/permissions_test.sql" | tee /tmp/doormoney-tap.txt
+total_ok=0
+for suite in "$ROOT"/supabase/tests/*_test.sql; do
+  say "Running $(basename "$suite")"
+  # pgTAP prints TAP; psql must not stop on the first failing assertion, or the plan never reports.
+  docker exec -i "$NAME" psql -U postgres -d "$DB" -X -q --no-align --tuples-only \
+    < "$suite" | tee /tmp/doormoney-tap.txt
 
-# Check the plan, not just the absence of failures. A test file that aborts on its first statement
-# prints no "not ok" at all, so "no failures" and "nothing ran" look identical without this.
-plan_count=$(grep -oE '^1\.\.[0-9]+' /tmp/doormoney-tap.txt | head -1 | cut -d. -f3)
-ok_count=$(grep -cE '^ok [0-9]+' /tmp/doormoney-tap.txt || true)
-fail_count=$(grep -cE '^not ok [0-9]+' /tmp/doormoney-tap.txt || true)
+  # Check the plan, not just the absence of failures. A test file that aborts on its first statement
+  # prints no "not ok" at all, so "no failures" and "nothing ran" look identical without this.
+  plan_count=$(grep -oE '^1\.\.[0-9]+' /tmp/doormoney-tap.txt | head -1 | cut -d. -f3)
+  ok_count=$(grep -cE '^ok [0-9]+' /tmp/doormoney-tap.txt || true)
+  fail_count=$(grep -cE '^not ok [0-9]+' /tmp/doormoney-tap.txt || true)
 
-if [ -z "$plan_count" ]; then
-  say "FAILED: the test file never reported a plan, so it aborted before running"
-  grep -E 'ERROR|FATAL' /tmp/doormoney-tap.txt | head -10
-  exit 1
-fi
+  if [ -z "$plan_count" ]; then
+    say "FAILED: $(basename "$suite") never reported a plan, so it aborted before running"
+    grep -E 'ERROR|FATAL' /tmp/doormoney-tap.txt | head -10
+    exit 1
+  fi
 
-if [ "$fail_count" != "0" ] || [ "$ok_count" != "$plan_count" ]; then
-  say "FAILED: $ok_count of $plan_count passed, $fail_count failed"
-  grep -E '^not ok|^# ' /tmp/doormoney-tap.txt | head -40
-  exit 1
-fi
+  if [ "$fail_count" != "0" ] || [ "$ok_count" != "$plan_count" ]; then
+    say "FAILED: $(basename "$suite"): $ok_count of $plan_count passed, $fail_count failed"
+    grep -E '^not ok|^# ' /tmp/doormoney-tap.txt | head -40
+    exit 1
+  fi
+  total_ok=$((total_ok + ok_count))
+done
 
-say "All $ok_count assertions passed"
+# Every suite above rolls itself back, so the concurrency checks start from the seed. They do not
+# roll back, which is fine: the container is thrown away.
+say "Running concurrency_test.sh"
+CONTAINER="$NAME" DB="$DB" bash "$ROOT/supabase/tests/concurrency_test.sh"
+
+say "All $total_ok assertions passed"

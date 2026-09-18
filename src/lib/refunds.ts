@@ -11,7 +11,13 @@ import { stripe } from "@/lib/stripe";
 
 type Admin = SupabaseClient;
 
-export type RefundReason = "run_cancelled" | "mark_declined";
+/**
+ * Why money goes back. Matches the refund_reason enum (migrations 0032, 0034).
+ * - run_cancelled: the musician called the fundraiser off.
+ * - mark_declined: the musician refused the sponsor's logo.
+ * - stale_offer: the payment landed for an auction offer that had already moved on to another bid.
+ */
+export type RefundReason = "run_cancelled" | "mark_declined" | "stale_offer";
 
 type RowForRefund = {
   id: string;
