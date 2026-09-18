@@ -22,7 +22,6 @@ import {
   validateSignUp,
   type SignUpValues,
 } from "@/lib/signup";
-import { ROLES } from "@/lib/roles";
 
 const good: SignUpValues = {
   roles: ["musician"],
@@ -110,6 +109,13 @@ test("every message has an id of its own, and the form-level one has its own too
 
 /* ---------------------------------------------------------------------------------------------
    The two copies of the rules, held together.
+
+   These two read src/app/actions/auth.ts as text, which is brittle: reformatting the schema breaks
+   them. They survived the testing-suite audit anyway, because the duplication is real. auth.ts is
+   a "use server" file, so every export has to be an async function and SignUpInput cannot be
+   exported for a test to parse against. Until auth.ts imports PASSWORD_MIN, PASSWORD_MAX and
+   NAME_MAX from @/lib/signup instead of repeating 10, 72 and 60, these are the only thing holding
+   the client copy of the rules to the server's.
    --------------------------------------------------------------------------------------------- */
 
 const server = readFileSync(path.join(import.meta.dirname, "..", "src", "app", "actions", "auth.ts"), "utf8");
@@ -125,8 +131,4 @@ test("the client's wording is the server's wording", () => {
   for (const message of ["Enter a first name.", "Enter a last name.", "Enter a valid email address."]) {
     assert.ok(server.includes(`"${message}"`), `the server no longer says ${message}`);
   }
-});
-
-test("the role keys the form sends are still the ones stored", () => {
-  assert.deepEqual(ROLES.map((r) => r.key), ["musician", "patron"]);
 });

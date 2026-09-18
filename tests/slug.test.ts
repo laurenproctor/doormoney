@@ -81,8 +81,17 @@ test("the slug pattern currently allows doubled hyphens inside", () => {
   assert.ok(SLUG_RE.test("a--b"));
 });
 
-test("the reserved list covers the site's own paths", () => {
-  for (const path of ["admin", "api", "dashboard", "board", "embed", "login", "signup", "terms", "contact"]) {
+test("every top-level route the site serves is reserved, so no page can shadow one", () => {
+  // The act page is the catch-all at the root: whatever the static routes do not claim lands
+  // there, and a musician who claimed "dashboard" would take the dashboard with it. The same
+  // namespace holds patron usernames (migration 0024), so this is the one list for both.
+  //
+  // Consolidated here in the testing-suite audit from three places: this test, the same
+  // assertion in tests/urls.test.ts, and the patron half of tests/profile.test.ts.
+  for (const path of [
+    "admin", "api", "board", "claim", "contact", "dashboard", "embed", "how-sponsorship-works",
+    "list", "login", "mark", "patron", "patrons", "record", "signup", "terms", "widget", "auctions",
+  ]) {
     assert.ok(RESERVED_SLUGS.has(path), `${path} is a real route but is not reserved`);
   }
 });

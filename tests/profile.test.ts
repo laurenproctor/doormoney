@@ -22,7 +22,6 @@ import {
   profileLink,
   usernameChangeAllowed,
 } from "@/lib/profile";
-import { normalizeUsername, usernameProblem } from "@/lib/username";
 
 // ---------------------------------------------------------------
 // Music preferences
@@ -130,20 +129,12 @@ test("a word claimed on a leap day lands on the last day of February, not on 1 M
   assert.equal(next?.toISOString().slice(0, 10), "2029-02-28");
 });
 
-test("a username has to pass the same rules a musician address does, and patron is reserved", () => {
-  assert.equal(usernameProblem("lauren"), null);
-  assert.match(usernameProblem("ab") ?? "", /3 characters/);
-  assert.match(usernameProblem("x".repeat(41)) ?? "", /under 40/);
-  assert.match(usernameProblem("-lauren") ?? "", /Letters, digits and hyphens/);
-  assert.match(usernameProblem("Lauren Proctor") ?? "", /Letters, digits and hyphens/);
-  for (const reserved of ["patron", "patrons", "signup", "dashboard", "board", "admin"]) {
-    assert.match(usernameProblem(reserved) ?? "", /reserved/, `${reserved} should be reserved`);
-  }
-});
-
-test("a username is normalised before any of that is asked", () => {
-  assert.equal(normalizeUsername("  Lauren  "), "lauren");
-});
+/*
+  The username rules themselves are tested once, in tests/slug.test.ts: length, shape, the reserved
+  list and the normalize-then-check round trip. This file used to repeat all of it. The one thing
+  that repetition carried and the other file did not was that "patron" and "patrons" are reserved,
+  which now lives in slug.test.ts with the rest of the route list.
+*/
 
 // ---------------------------------------------------------------
 // What the page says about itself
