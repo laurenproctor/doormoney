@@ -117,12 +117,31 @@ the insert and the work leaves the event permanently marked as seen.
 
 ### Refunds and cancellations survive a failure
 
-**Violated.** Enforced by Phase 2.
+**Held**, since migration 0032.
 
-`cancelRun` (`src/lib/refunds.ts`) walks purchases and backings in an in-memory loop and collects
-failures into an `errors` array that is returned to the caller and then dropped. If the process dies
-halfway, the refunds that had not run yet leave no record that they were owed. There is no outbox,
-no retry worker, and no staff-visible failure state.
+`cancelRun` (`src/lib/refunds.ts`) used to walk purchases and backings in an in-memory loop,
+refunding each as it went and collecting failures into an `errors` array. The count reached the
+musician and nothing else outlived the request: a process that died halfway left no record anywhere
+that the remaining refunds were owed, and a failure was never tried again.
+
+`cancelRun` now writes every obligation to `financial_operations` before Stripe is called, and
+`decideMark` does the same for a declined logo. A row carries its own idempotency key, which is the
+key the Stripe call uses, so the same obligation cannot be written or paid twice.
+`src/lib/outbox.ts` works the queue: the two places an obligation is born attempt it immediately,
+and the daily job retries what failed on a widening schedule and stops after six attempts rather
+than forever. The patron is written to from one place, by whichever attempt lands, so a refund that
+succeeds on Thursday still sends the mail and cannot send it twice.
+
+Three ways it can still be lost are each closed rather than assumed away. A worker that dies
+holding a row is reclaimed after fifteen minutes (the claim is what sets `updated_at`, and a caller
+cannot backdate it). A crash between marking a fundraiser cancelled and queueing its refunds is
+caught by a sweep that asks which patron is still holding money on a cancelled fundraiser rather
+than trusting the request to have finished, and the same sweep covers a declined logo. A row out of
+attempts is `failed` rather than gone, counted on `/admin` with its last error and the payment it
+belongs to.
+
+Not covered here, and still Phase 4: there is no ledger to reconcile any of this against, so a
+refund Stripe has and this table does not still goes unnoticed.
 
 ---
 

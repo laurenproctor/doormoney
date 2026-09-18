@@ -147,15 +147,15 @@ callers can neither read nor mutate protected data.
 
 ## Phase 2: durable money lifecycle
 
-**Status: started.** The payout gate is done, in migration `0031_payout_needs_approved_mark.sql`.
-The durability half (the outbox, the retry workers, the state machine) has not been.
+**Status: mostly done.** The payout gate is `0031_payout_needs_approved_mark.sql` and the refund
+outbox is `0032_financial_operations.sql`. What is left is the explicit state machine for purchases
+and backings, which is the one item below still open.
 
 Make purchases, marks, refunds, cancellations, payouts and failures explicit and recoverable.
 
 **Product decision.** For placement purchases, no money is released to an act before the patron's
 mark is approved. Fan backings without a mark follow their own documented rule.
 
-- [ ] Define the purchase and backing state machine, and validate every transition in PostgreSQL.
 - [x] Gate placement payouts on mark approval. `slicePlan` in `src/lib/release.ts` is the rule the
   Friday job asks, and migration 0031 is a trigger asking the same thing under it, because a query
   is not a boundary. A backing has no logo and stays on the calendar. Waiting is not skipping: a
@@ -169,19 +169,33 @@ mark is approved. Fan backings without a mark follow their own documented rule.
   money with no Friday that will ever move it. Counted in the payout summary, totalled on `/admin`
   and said out loud on the musician's dashboard, but not resolved. `docs/DECISIONS.md`, decision 16
   has the candidates and says why none of them is a safe default to pick in code.
-- [ ] Keep a run cancellation from becoming final until every financial obligation is durably queued.
-- [ ] Add durable financial-operation (outbox) records for refunds, transfers, transfer reversals,
+- [x] Keep a run cancellation from becoming final until every financial obligation is durably queued.
+  Taken the other way round, deliberately: the fundraiser is marked cancelled first, so nothing new
+  can be sold into one that is coming down, and `sweepOwed` closes the window from the far end by
+  asking which patron is still holding money on a cancelled fundraiser. Trusting the request that
+  cancelled it to have finished is the assumption that caused this.
+- [x] Add durable financial-operation (outbox) records for refunds, transfers, transfer reversals,
   cancellation refunds and mark-decline refunds, each pending, processing, succeeded, retryable or
-  terminally failed, with stable idempotency keys.
-- Never let an in-memory loop be the only record of a refund that is owed.
-- Add retry workers and staff-visible failure states, and make partial failures resumable.
-- Test every valid and invalid transition, duplicate execution, and failure between the Stripe call
-  and the database write.
-- Plan the reconciliation of existing purchases and payout rows.
+  terminally failed, with stable idempotency keys. Refunds only, and that is the whole gap:
+  transfers already had an outbox in `payout_schedule`, which is a durable row per slice with a
+  status and a stable key. Transfer reversals arrive with disputes in Phase 4 and have nothing to
+  queue yet.
+- [x] Never let an in-memory loop be the only record of a refund that is owed.
+- [x] Add retry workers and staff-visible failure states, and make partial failures resumable. The
+  daily job retries on a widening schedule and stops after six attempts, about a day and a half; a
+  worker that dies holding a row is reclaimed after fifteen minutes; `/admin` carries what is owed,
+  what it last failed with and what has stopped.
+- [x] Test every valid and invalid transition, duplicate execution, and failure between the Stripe
+  call and the database write. The last of those was already safe and stayed that way: the Stripe
+  idempotency key means a retry after a crash between the refund and the write returns the same
+  refund rather than making a second one.
+- [ ] Define the purchase and backing state machine, and validate every transition in PostgreSQL.
+  The refund side has one now (`financial_op_status`, with a check that a settled row is never also
+  waiting for a worker). `purchases.payment_status` and `backings.payment_status` still do not.
+- [ ] Plan the reconciliation of existing purchases and payout rows.
 
 **Gate.** No payout happens before its release condition, and every failed refund or cancellation
-obligation stays visible and retryable. The first half of that is met and tested; the second is
-what is left of this phase.
+obligation stays visible and retryable. Both halves are met and tested.
 
 ---
 

@@ -33,6 +33,29 @@ The same rule covers fan backings. `refundPurchase` and `refundBacking` are the 
 
 Refunds go to the card the patron paid with. Banks take five to ten business days.
 
+## A refund that is owed does not depend on the request that owed it
+
+A refund is written down before Stripe is called. `cancelRun` and `decideMark` each put a row in
+`financial_operations` (migration 0032) and only then attempt it, so a refund Stripe refuses today
+is still owed tomorrow and a process that dies partway through loses an attempt rather than an
+obligation. The row carries the same idempotency key the Stripe call uses, so neither the queue nor
+Stripe can be made to refund the same payment twice.
+
+`src/lib/outbox.ts` works it. The two places an obligation is born attempt it at once, which is why
+a cancellation still reports its total on the spot. The daily job retries what failed on a widening
+schedule (five minutes, then thirty, then two hours, then twelve, then a day) and stops after six
+attempts. Stopping is not giving up: the row stays, marked `failed` with its last error, counted on
+`/admin` next to the payment it belongs to. Refunding it by hand in the Stripe Dashboard is what
+clears it, and the `charge.refunded` webhook mirrors the amount the way it always did.
+
+The patron is told from the queue and nowhere else, once, by whichever attempt gets the money back.
+A refund that lands on the fourth try still sends the mail the first try would have.
+
+Two gaps it closes on purpose, because both were reachable rather than theoretical: a worker that
+dies holding a row is freed after fifteen minutes, and a crash between marking a fundraiser
+cancelled and queueing its refunds is caught by a sweep that asks which patron is still holding
+money on a cancelled fundraiser.
+
 ## Disputes
 
 A dispute is a patron asking their bank to reverse the charge. Door Money would rather be asked first, because a flag stops the money at once and a dispute can take the bank up to seventy five days.

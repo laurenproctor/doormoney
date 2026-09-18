@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(77);
+select plan(88);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -477,6 +477,70 @@ select lives_ok(
 select lives_ok(
   $$update payout_schedule set status='skipped', paused_reason='refunded' where id='de000000-0000-0000-0000-000000000001'$$,
   'a refund can still move a slice out of paid');
+
+reset role;
+
+-- ===============================================================
+-- Refunds Door Money owes are written down, and nobody else can see them (0032)
+--
+-- The table holds patron money, Stripe idempotency keys and error text. It is also the only record
+-- that a refund is owed at all once the request that owed it is gone, so a row that could be
+-- rewritten from a browser would be a refund that could be made to disappear.
+-- ===============================================================
+select tests.as_anon();
+
+select throws_ok('select * from financial_operations limit 1', '42501', null, 'anon cannot read the refunds Door Money owes');
+select throws_ok(
+  $$insert into financial_operations (kind, purchase_id, reason, idempotency_key)
+    values ('refund', (select id from purchases limit 1), 'run_cancelled', 'forged')$$,
+  '42501', null, 'anon cannot invent an obligation');
+select throws_ok($$delete from financial_operations$$, '42501', null, 'anon cannot delete a refund that is owed');
+select throws_ok($$truncate table financial_operations$$, '42501', null, 'nor truncate them all');
+
+reset role;
+select tests.as_user('11111111-1111-1111-1111-111111111111');
+
+select throws_ok('select * from financial_operations limit 1', '42501', null, 'a signed-in musician cannot read them either');
+select throws_ok(
+  $$update financial_operations set status='succeeded'$$,
+  '42501', null, 'and cannot mark a refund they owe as already sent');
+
+reset role;
+set local role service_role;
+
+-- The shape the queue relies on.
+insert into financial_operations (id, kind, purchase_id, reason, idempotency_key)
+values ('fa000000-0000-0000-0000-000000000001', 'refund',
+        (select id from purchases where lot_id='a1000000-0000-0000-0000-000000000004'),
+        'run_cancelled', 'refund_one_run_cancelled');
+
+select throws_ok(
+  $$insert into financial_operations (kind, purchase_id, reason, idempotency_key)
+    values ('refund', (select id from purchases where lot_id='a1000000-0000-0000-0000-000000000004'),
+            'run_cancelled', 'refund_one_run_cancelled')$$,
+  '23505', null, 'the same obligation cannot be written down twice');
+
+select throws_ok(
+  $$insert into financial_operations (kind, purchase_id, backing_id, reason, idempotency_key)
+    values ('refund', (select id from purchases limit 1), (select id from backings limit 1), 'run_cancelled', 'refund_both')$$,
+  '23514', null, 'an obligation is against one payment, never two');
+
+-- A settled row is one a worker will not pick up again, and an unsettled one has to stay pickable.
+select throws_ok(
+  $$update financial_operations set status='succeeded' where id='fa000000-0000-0000-0000-000000000001'$$,
+  '23514', null, 'a refund cannot be called succeeded without being settled');
+
+-- The bogus updated_at is the point: the trigger has to overwrite whatever a caller passes, and
+-- inside one transaction now() is the transaction's start, so it lands back on created_at.
+select lives_ok(
+  $$update financial_operations set status='succeeded', settled_at=now(), amount_cents=36000, updated_at='2000-01-01'
+     where id='fa000000-0000-0000-0000-000000000001'$$,
+  'a refund that went through settles with the amount that went back');
+
+select is(
+  (select updated_at from financial_operations where id='fa000000-0000-0000-0000-000000000001'),
+  (select created_at from financial_operations where id='fa000000-0000-0000-0000-000000000001'),
+  'and a caller cannot tell the row when it last moved: the trigger does');
 
 reset role;
 

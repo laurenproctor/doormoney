@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAuctionJob } from "@/lib/auctions";
 import { sendMarkReminders } from "@/lib/marks";
+import { runRefundJob } from "@/lib/outbox";
 import { runWeeklyMail } from "@/lib/weekly";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -14,6 +15,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  * - The weekly mail: the new-boards email and Door Money's digest. Each decides for itself whether
  *   a week has passed, so calling this daily sends nothing extra.
  * - One reminder to any patron whose spot is paid for but whose mark has not arrived.
+ * - The refund queue: every refund Door Money owes and has not yet managed to send, plus a sweep
+ *   of cancelled fundraisers for obligations that were never written down at all.
  *
  * Vercel Cron calls it on the schedule in vercel.json with `Authorization: Bearer $CRON_SECRET`.
  * Everything here is idempotent, so running it early or twice is safe.
@@ -42,7 +45,17 @@ export async function GET(req: Request) {
       console.error("mark reminders failed", e instanceof Error ? e.message : e);
       marks = { error: "mark reminders failed" };
     }
-    return NextResponse.json({ auctions, mail, marks });
+    // Money a patron is owed. Reported rather than thrown for the same reason as the mail: one
+    // refund Stripe will not take today must not stop the rest of the job, and the queue holds
+    // every one of them until it does.
+    let refunds;
+    try {
+      refunds = await runRefundJob(sb);
+    } catch (e) {
+      console.error("refund queue failed", e instanceof Error ? e.message : e);
+      refunds = { error: "refund queue failed" };
+    }
+    return NextResponse.json({ auctions, mail, marks, refunds });
   } catch (e) {
     console.error("daily job failed", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "daily job failed" }, { status: 500 });

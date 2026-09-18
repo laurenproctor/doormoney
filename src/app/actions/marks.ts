@@ -3,11 +3,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
-import { markApproved, markDeclined, markWaiting, sendEmail } from "@/lib/email";
+import { markApproved, markWaiting, sendEmail } from "@/lib/email";
 import { markOpen, markSurface, markTarget } from "@/lib/marks";
 import { ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
-import { refundPurchase } from "@/lib/refunds";
+import { queueRefund } from "@/lib/refunds";
+import { workRefundQueue } from "@/lib/outbox";
 import { stripeConfigured } from "@/lib/stripe";
 import { actPath } from "@/lib/urls";
 
@@ -31,30 +32,31 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
   }
 
   const admin = supabaseAdmin();
-  let refundedCents: number | undefined;
   const { error } = await admin.from("purchases").update({ mark_status: decision }).eq("id", purchaseId).eq("mark_status", "submitted");
   if (error) return { ok: false, error: "That did not save. Try once more." };
 
   if (decision === "declined") {
     // The placement never runs, so the patron gets everything back and the spot goes back up.
-    const r = await refundPurchase(admin, p.id, "mark_declined");
-    if (!r.ok) return { ok: false, error: "The logo is declined, but the refund did not go through. Door Money has the details." };
-    refundedCents = r.refundedCents;
+    // The refund is written down before Stripe is called (migration 0032), so the decline stands
+    // whatever Stripe says today and the daily job keeps at anything it refused. Since 0031 no
+    // slice can have gone out on an unapproved logo, so "everything back" is the whole charge.
+    const key = await queueRefund(admin, "purchases", p.id, "mark_declined");
+    await workRefundQueue(admin, [key]);
     await admin.from("lots").update({ status: "open" }).eq("id", p.lot_id).eq("status", "sold");
     revalidatePath(actPath(act.slug));
   }
 
-  // The patron hears the answer either way. A failed send is logged, never fatal: the decision stands.
-  const target = await markTarget(purchaseId);
-  const patronEmail = await patronAddress(admin, purchaseId);
-  if (target && patronEmail) {
-    const surface = markSurface(target);
-    const mail =
-      decision === "approved"
-        ? markApproved({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: surface, recordUrl: `${SITE.url}/record/${purchaseId}` })
-        : markDeclined({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: surface, refundedCents: refundedCents ?? 0, boardsUrl: `${SITE.url}/auctions` });
-    const r = await sendEmail(mail);
-    if (!r.sent) console.error("mark decision not sent", purchaseId, r.reason);
+  // The yes is told from here. The no is told from src/lib/outbox.ts instead, by whichever attempt
+  // gets the money back, so a refund that lands on Thursday does not send a mail on Monday saying
+  // it already had. A failed send is logged, never fatal: the decision stands either way.
+  if (decision === "approved") {
+    const target = await markTarget(purchaseId);
+    const patronEmail = await patronAddress(admin, purchaseId);
+    if (target && patronEmail) {
+      const mail = markApproved({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: markSurface(target), recordUrl: `${SITE.url}/record/${purchaseId}` });
+      const r = await sendEmail(mail);
+      if (!r.sent) console.error("mark decision not sent", purchaseId, r.reason);
+    }
   }
 
   revalidatePath("/dashboard");
