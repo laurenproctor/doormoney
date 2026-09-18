@@ -1,5 +1,7 @@
 # Door Money roadmap
 
+> Historical music implementation roadmap. The current product scope is in `PRODUCT_CONTRACT.md`; the five new expansion phases are in `EXPANSION_PLAN.md`. Completion claims below concern the original music build and do not establish readiness for sports teams, film, or theater.
+
 From seven mockup pages to a working marketplace in New York. Phases are ordered so that each one ships something usable on its own, and so that money-handling is built once and reused by the board, the widget and the auctions rather than three times.
 
 Time estimates assume one person working with Claude Code, most days. Treat them as sequencing, not deadlines.

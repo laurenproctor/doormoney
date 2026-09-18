@@ -1,4 +1,6 @@
-# Open decisions
+# Product decisions
+
+**Current scope:** decision 17 and `PRODUCT_CONTRACT.md` govern the broader sponsorship product. Decisions 1–16 retain the history and current music mechanics. Where they conflict on product scope, vocabulary, or future discovery routes, decision 17 takes precedence. Historical phase numbers refer to `ROADMAP.md` or `REMEDIATION_PLAN.md`, not `EXPANSION_PLAN.md`.
 
 Product questions that came up while building the mockups and don't have an owner's answer yet. Each one blocks or shapes a phase. The codebase picks a default so work can continue; the default is marked, and changing it later is cheap if it's changed before the phase that depends on it.
 
@@ -326,3 +328,26 @@ Door Money can see it, which is the same posture as a patron's flag: Door Money 
 
 The related question from decision 9, whether a patron can say the record never arrived, is still
 open too.
+
+
+---
+
+## 17. Sponsorship across four categories
+
+**Decided (2026-09-18):** Door Money expands to music, sports teams, film, and theater. Organizers raise money by offering specified visibility to sponsors with relevant audiences. Patronage remains part of the purpose and brand story; sponsorship is the exchange the product must explain.
+
+The authoritative definitions and compatibility requirements are in `PRODUCT_CONTRACT.md`. The implementation sequence and audit gates are in `EXPANSION_PLAN.md`.
+
+This supersedes the company-wide music restriction in decision 14 and `CLAUDE.md`. Musician remains correct within music. Organizer is the shared supply-side term. Sponsor describes the visibility purchase, and patron remains valid for the broader relationship and existing accounts. Backings remain a separate transaction type.
+
+The music tagline in decision 1 can remain on music-specific surfaces. A shared homepage must explain relevant audiences, visibility, and meaningful support; a replacement company tagline is not selected by this decision. Phase 3 owns the application copy rollout.
+
+Decision 10's multi-role account behavior remains. A category describes a fundraiser, not an exclusive identity or an authorization role. Existing `musician` roles and existing account histories must survive Phase 2.
+
+Decision 13's public profile and fundraiser addresses remain. Phase 3 introduces `/fundraisers` as the canonical discovery route and preserves `/auctions` through compatibility routing. Reserve the new top-level name in both the application and the database, and check existing namespace collisions before rollout.
+
+Decisions 2, 9, and 16 describe current music mechanics, not policies to apply automatically to a film or team. Logo approval is not evidence of complete delivery. Phase 4 must explicitly settle release timing, missed evidence, cancellation, and unresolved sponsor materials before real payments open for a new category.
+
+**Still open for Phase 4:** the release-policy matrix; handling a logo or other sponsor materials that never arrive; evidence access and retention; delivery failures and make-goods; cancellation after partial payment or release; and the relationship between a missed funding goal and the purchased deliverables. Until those decisions are implemented, Phase 3's new-category checkout verification is test-mode only.
+
+**Status:** product contract established on the expansion Phase 1 branch. New-category runtime support is not implemented by this decision.

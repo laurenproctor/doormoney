@@ -1,47 +1,46 @@
 # Door Money
 
-Sponsorship marketplace for working musicians in New York. Local businesses and gear brands put money behind bands, house acts and soloists: a name on the kick drum, the road cases, the tip jar, a post. Door Money holds the money and pays the musician every Friday through the fundraiser. Fans can also back a musician through an embeddable widget.
+Door Money is a sponsorship marketplace connecting sponsors with relevant audiences through music, sports teams, film, and theater. Organizers raise money by offering specified visibility. Sponsors support work and communities that matter to them and receive the exposure described in the offer.
 
-Read `docs/ROADMAP.md` for the phases and `docs/DECISIONS.md` for the open product questions and the defaults this codebase assumes. The seven HTML files in `docs/mockups/` hold the page structure and the copy. The look is the design system below, not the mockups' paper palette.
+Read `docs/PRODUCT_CONTRACT.md` first for the current product contract, category definitions, and compatibility rules. `docs/EXPANSION_PLAN.md` governs the five expansion phases. Decision 17 in `docs/DECISIONS.md` supersedes the earlier music-only product scope. `docs/ROADMAP.md` records the original music build, not the expansion plan.
+
+**Implementation status:** the shipped application still implements the music workflow. Expansion Phase 1 changes instructions, decisions, and vocabulary checks; it does not enable the other categories. Preserve existing music data, URLs, and payment behavior until the relevant implementation phase. Historical mockups are music examples, subordinate to this contract and the voice rules.
 
 @AGENTS.md
 
 ## Vocabulary
 
-Two kinds of word live here, and they are governed differently. Settled in `docs/DECISIONS.md`, decision 14.
+Shared language describes the exchange; category language describes the work. Decision 17 supersedes decision 14's fixed music identity while preserving its plain-language and address-compatibility rules.
 
-**Identity words carry the company and do not change.** Musician, patron, backing, Door Money, "put money behind the music". The idea behind all of it: Door Money is a patronage market for working musicians. Sponsorship is the mechanism, not the point.
+- **Organizer**: the person or organization responsible for a fundraiser and its promised delivery. Use this on shared creation and account surfaces. Use musician, team, filmmaker, or theater company where the category is known. A category is not an account role, and an account may organize and sponsor.
+- **Sponsor**: someone buying specified visibility through a sponsorship. Use this throughout discovery, offers, checkout, delivery, and the transaction record.
+- **Patron**: the broader relationship of supporting work or a community. Use patron rather than supporter as the generic account label. Existing patron accounts and addresses remain valid. Patronage can express purpose; it must not obscure what a sponsor receives.
+- **Backer / backing**: the existing recognition contribution through the widget. Keep it distinct from a sponsorship. Do not relabel historic backings as sponsorships or promise new benefits on them.
+- **Fundraiser**: one named funding effort with its own category, purpose, goal, timeline, and sponsorship options. Use the actual period where useful: tour, season, production, or screening series. Never board, campaign, or run as the generic product noun.
+- **Sponsorship option**: a priced offer describing the visibility available. **Sponsorship** is the exchange. Fixed price and bidding are sale methods, not different categories.
+- **Placement**: where a sponsor's name, logo, product, or message appears. It may be physical, digital, printed, or part of a production. The complete purchase is a sponsorship.
+- **Deliverable**: a specific promised action or appearance, with a due date or delivery window. **Evidence** documents that delivery; it is not a Door Money certification.
+- **Logo**: a sponsor's name or logo for an offer that needs it. Some offers need other materials; logo approval must not become the universal definition of delivery.
+- **Record**: the sponsor's summary of the purchased offer, delivery, evidence, and payment outcomes. Keep Stripe receipts distinct from this record.
+- **Profile**: a page about an organizer or patron; name the kind when ambiguous. Existing music preferences remain music preferences and are not silently converted into broader interests.
+- **Suggested prices**: template defaults. The organizer's chosen price wins.
 
-**Mechanism words are labels for how the machine works.** They should be whatever a stranger would say. Where a plain word exists, the plain word wins, even when the insider word is more precise.
+Door Money leads with relevant audiences, specified visibility, and meaningful support. It does not guarantee sales, audience growth, impressions, distribution, or outcomes it cannot substantiate. Sponsorship is the product's exchange; patronage expresses why that exchange can matter.
 
-- **Musician**: the supply side. Subtypes when the type matters: band, soloist, ensemble, house act. Never "artist" in product copy, never "creator", never "user". "Act" survives in the data model (`acts` table) and in the flow name "List an act"; in prose say musician or band, never "the act".
-- **Patron**: the umbrella for anyone on the paying side, at any stage, fan or business. Their account at `/patron`, their page at `/patron/<username>`, the musicians they have backed. One account can be a musician and a patron at once (`profiles.roles`, decision 10), so never write copy that assumes an account is only one of them. Never "advertiser", never "buyer", never "customer", never "supporter" as a noun.
-- **Sponsor**: a patron whose money buys a sponsorship, which in practice is a business or a brand taking a placement. Use it wherever the subject is that transaction: the sponsorship pages, the sponsorship options, the approval flow.
-- **Backer**: a patron whose money is a backing, the fan tier through the widget. A backing is not a sponsorship, so a fan was never a sponsor. The test: name the transaction and the noun follows, and if nothing in the sentence is a sponsorship the person is a patron.
-- **Fundraiser**: what a musician opens to fund one tour, residency or season. Never "board", never "campaign", never "run" in copy. Name the actual period where it is known. `runs` stays the table and `support-<slug>` stays the address.
-- **Sponsorship**: the exchange itself. **Sponsorship option** is one thing a musician offers, at a price the musician sets.
-- **Placement**: only the place a sponsor appears (a kick drum head, a merch table runner, a newsletter). Never the thing being bought; that is a sponsorship. "Lot" is the database word and stays there. Never "surface" in copy, and never "standard card": the figures in `src/lib/catalog.ts` are **suggested prices**.
-- **Logo**: the sponsor's name or logo as it will appear. Never "the mark" in copy, never "ad", never "creative". `mark_text`, `mark_status` and `/mark/<id>` keep their names, because that route is in receipts already sent.
-- **Backing**: a fan-tier contribution through the widget, made by a backer. Not a sponsorship.
-- **Record**: the end-of-fundraiser summary a sponsor receives. Never "receipt" in copy (fine in code for Stripe receipts), never "report".
-- **Profile**: a patron's optional public page at `/patron/<username>`, managed at `/dashboard/profile`. Private until published, and per activity after that (decision 11). Never "supporter page", never "fan page", never "leaderboard". The list of what a patron listens for is **music preferences** in the dashboard and "Listening for" on the page; never "tags", never "genres", since a preference can be a scene, an instrument or a tradition.
+Addresses outlive words. Preserve `acts`, `runs`, `lots`, `patrons`, `mark_*`, sent-email links, and existing music addresses. The `musician` stored role remains compatible until Phase 2 introduces neutral account concepts. Phase 3 adds `/fundraisers` with compatibility for `/auctions`; it does not delete old links. Never use a global search-and-replace to rename these identifiers.
 
-The company is not "an advertising marketplace" or "an influencer platform". The differentiator is that musicians get paid for the work of being musicians without becoming influencers.
-
-Addresses outlive words: routes and columns keep their names even where the copy changes. `/placements` becoming `/how-sponsorship-works` was the one exception, done while nothing was public.
-
-The site is written in this vocabulary, apart from the four legal pages, which wait for the Phase 7 lawyer review. `tests/vocabulary.test.ts` holds the line: it sweeps the app for the retired words and fails with the file, the line and the sentence. Convert a page when you touch it, and never run a repo-wide replace, least of all on `src/components/Logo.tsx`, where "mark" means the wordmark and nothing else. When that test fails it is usually right; the fix is the word, not the test.
+`tests/vocabulary.test.ts` guards the current app's retired wording and the authoritative contract's broader scope. Category-specific music wording stays valid. Shared pages, dashboard copy, templates, and emails receive category-aware copy in Phase 3. The current scanner is a heuristic: single-word labels and interpolated strings still require manual review. The four legal pages retain their existing review deferral; launch requires their terms to match the implemented policies.
 
 ## Voice rules for anything user-facing
 
 These are firm. They apply to page copy, button labels, emails, error messages, empty states and placeholder text.
 
-1. **The second person only where "you" can mean one person.** The site serves musicians and the people funding them, usually on the same page, so editorial copy stays in the third person and names the side it means: "Musicians set their own prices," not "you set your prices." That covers home, how sponsorship works, the fundraiser index, an act's page, a fundraiser's page and the legal pages. Transactional surfaces go the other way: sign up, sign in, the password flows, the dashboard, the patron pages behind an account, form labels, helper text, validation messages, the record and any email about somebody's own money are written to the person doing the thing, in the second person. A marketing page with only one audience (List an act, the widget) may use either, and both use the second person today. Button labels are imperative or nominal everywhere: "List an act", "Back a musician", "Create free account". Settled in `docs/DECISIONS.md`, decision 15.
+1. **The second person only where "you" can mean one person.** The site serves organizers and sponsors, usually on the same page, so editorial copy stays in the third person and names the side it means: "Organizers set their own prices," not "you set your prices." That covers home, how sponsorship works, the fundraiser index, an act's page, a fundraiser's page and the legal pages. Transactional surfaces go the other way: sign up, sign in, the password flows, the dashboard, the patron pages behind an account, form labels, helper text, validation messages, the record and any email about somebody's own money are written to the person doing the thing, in the second person. A marketing page with only one audience (the organizer invitation, the widget) may use either, and both use the second person today. Button labels are imperative or nominal everywhere: "Create a fundraiser", "Find sponsorships", "Create an account". Settled in `docs/DECISIONS.md`, decision 15.
 2. **Active voice.** Name who does what. "Door Money holds the money," not "the money is held." "Patrons put the money up," not "the money is put up."
-3. **Benefits before mechanics.** Lead with what sponsorship does for the musician (gas, rooms, the difference between a tour that happens and one that doesn't) and what a sponsor gets (attention, a name in the room, support they can point at). Mechanics (holds, weekly payouts, approvals) come second and stay short.
+3. **Benefits before mechanics.** Lead with what sponsorship funds for the organizer (travel, equipment, production, or performances) and what a sponsor gets (attention, a name in the room, support they can point at). Mechanics (holds, weekly payouts, approvals) come second and stay short.
 4. **Plain words.** No insider phrasing, no jargon, no cleverness that needs decoding. "When Door Money opens," not "when doors open." "Attendance," not "through the door."
 5. **No em dashes.** Anywhere. Use a comma, a colon, a period, or parentheses.
-6. **No invented proof.** A fundraiser says what its musician actually ticked, and nothing more. The verification methods live in `src/lib/verification.ts` and reach the page through `PlacementVerification`; never write proof language by hand into a page. Don't promise documentation from every show: the methods say "selected shows" because that is the promise. Don't imply Door Money inspected anything, so no "verified by Door Money", no "confirmed", no certification language. Documentation comes from the musician and Door Money passes it on. Keep the commitment the size it is (see `docs/DECISIONS.md`, decision 9).
+6. **No invented proof.** A fundraiser says what its organizer actually committed to, and nothing more. The verification methods live in `src/lib/verification.ts` and reach the page through `PlacementVerification`; never write proof language by hand into a page. Don't promise documentation from every show: the methods say "selected shows" because that is the promise. Don't imply Door Money inspected anything, so no "verified by Door Money", no "confirmed", no certification language. Documentation comes from the organizer and Door Money passes it on. Category-specific evidence and permissions arrive in Phase 4. Keep the commitment the size it is (see `docs/DECISIONS.md`, decision 9).
 7. **Short sentences.** Cut the second clause when the first one already lands.
 
 ## Design system
@@ -60,13 +59,15 @@ Every page is a dark room with one color of light in it. The room is the same on
 
 ## Engineering rules
 
+These describe the existing music implementation unless explicitly marked otherwise. Expansion requirements live in the product contract. Friday transfers and logo approval are current mechanics, not universal promises for new categories.
+
 - Next.js 16 App Router. `params` and `searchParams` are Promises: await them. `middleware.ts` is now `proxy.ts`.
 - Server components by default. Add `"use client"` only for interactivity.
 - Supabase for Postgres, Auth, Realtime and Storage. Server-side client in `src/lib/supabase/server.ts`, browser client in `src/lib/supabase/client.ts`. Never use the service-role key in client code.
 - Stripe Connect with Express accounts, separate charges and transfers. The patron pays Door Money through an embedded Checkout Session; the charge sits on the platform balance and weekly Transfers (with `source_transaction`) move the act's share out. Door Money's 15% is the part never transferred: the schedule is built from amount minus `fee_cents`. Never `application_fee_amount`, never `transfer_data` on the charge. Every Stripe webhook handler must be idempotent: check `stripe_events` before acting, and make each write conditional on the state it expects.
 - Money is stored as integer cents in Postgres, never floats. Format with `formatMoney` from `src/lib/money.ts`.
 - The widget at `/embed/[slug]` must be frameable by any origin; nothing else may be. See `next.config.ts` headers.
-- The sponsorship options and their suggested prices live in `src/lib/catalog.ts`. Prices there are defaults; the musician's own price on a lot always wins.
+- The current music sponsorship options and their suggested prices live in `src/lib/catalog.ts`. Prices there are defaults; the musician's own price on a lot always wins.
 - Validate every API input with zod. Return typed errors, never raw exceptions.
 - Public reads of anything a patron owns go through a sanitised view (`public_patron_profiles`, `public_patron_activity`, `lot_buyers`, `run_backers`), granted to `anon` and selecting only public columns. Never open `profiles`, `purchases`, `backings`, `bids` or `patrons` to the browser: they hold email addresses, amounts and Stripe ids. Selecting a private column and hiding it in React is not privacy.
 - A patron's public profile and each item on it are off by default, in the database, and are turned on one at a time. An anonymous bid is never publishable, whatever a form says.
@@ -82,8 +83,8 @@ Every page is a dark room with one color of light in it. The room is the same on
 `docs/mockups/*.html` are self-contained pages with inline CSS in the old paper look. They are the source for sections, order and copy, not for color or type. When porting one:
 
 1. Read the whole file first.
-2. Reuse the shared components rather than copying the nav and footer. Take the layout and the words from the mockup; take the look from the design system above.
-3. Keep the copy word for word unless it breaks a voice rule above or uses retired vocabulary, in which case fix it and note it in the commit.
+2. Reuse the shared components rather than copying the nav and footer. Take the layout from the mockup and the look from the design system above. Apply the current product contract to the words.
+3. Keep copy only where it fits the current category and product contract, follows the voice rules, and uses current vocabulary. Rewrite conflicting copy and note the change in the commit.
 4. Replace hardcoded sample data with reads from Supabase, using the seed data so the result looks the same.
 5. Match the layout at desktop and at 380px wide.
 
@@ -92,4 +93,4 @@ Every page is a dark room with one color of light in it. The room is the same on
 - Add a light mode. The dark room and the colored light are the brand.
 - Add analytics scripts, chat widgets or third-party embeds to the marketing pages without asking.
 - Store card numbers, ever. Stripe Elements only.
-- Write "you" on a page that talks to musicians and the people funding them at once. The second person belongs on the pages somebody uses, not the pages that describe the market. See voice rule 1.
+- Write "you" on a page that talks to organizers and sponsors at once. The second person belongs on the pages somebody uses, not the pages that describe the market. See voice rule 1.

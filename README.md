@@ -1,6 +1,8 @@
 # Door Money
 
-Sponsorship marketplace for working musicians in New York. Start with `CLAUDE.md`, then `docs/ROADMAP.md`.
+Door Money connects sponsors with relevant audiences through music, sports teams, film, and theater. Organizers raise money by offering specified visibility in exchange for support.
+
+Start with `CLAUDE.md` and `docs/PRODUCT_CONTRACT.md`. Follow `docs/EXPANSION_PLAN.md` for the current five-phase expansion. The application currently implements the music workflow; the broader categories are the implementation target, not a claim of live availability. `docs/ROADMAP.md` records the original music build.
 
 ## Run it
 
@@ -23,7 +25,9 @@ Opens on http://localhost:3000 with sample data and pretend forms. No accounts n
 
 ```
 CLAUDE.md                 product rules, voice rules, engineering rules
-docs/ROADMAP.md           phases 0 to 7
+docs/PRODUCT_CONTRACT.md  current product scope, categories, terminology, compatibility
+docs/EXPANSION_PLAN.md    five expansion phases and audit gates
+docs/ROADMAP.md           historical music phases 0 to 7
 docs/DECISIONS.md         open product questions and the defaults in code
 docs/mockups/             the seven HTML mockups. Page structure and copy; the look lives in src/app/globals.css.
 supabase/migrations/      schema

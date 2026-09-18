@@ -1,6 +1,9 @@
 /*
   The words the site is allowed to use, held by CI rather than by memory.
 
+  Decision 17 broadens the product to four categories; category-specific music words remain valid.
+  The contract checks below prevent reintroducing the old company-wide restriction.
+
   Decision 14 retired a handful of words and CLAUDE.md says to convert a page when you touch it,
   never in a repo-wide replace. That rule is right and it has one failure mode: a page nobody
   touches keeps the old words, and nobody notices until a reader does. Phase 2c converted eleven
@@ -161,4 +164,61 @@ test("no page a reader can reach uses a word the site retired", () => {
   const hits = sweep();
   const report = hits.map((h) => `  ${h.file}:${h.line}  (${h.word})\n    ${h.text.slice(0, 100)}`).join("\n");
   assert.equal(hits.length, 0, `${hits.length} retired word${hits.length === 1 ? "" : "s"} still on the site:\n${report}`);
+});
+
+// The expansion contract is authoritative; historical decisions and mockups are deliberately
+// scoped by that contract rather than rewritten as though the music implementation never existed.
+const CONTRACT_FILES = ["CLAUDE.md", "README.md", "docs/PRODUCT_CONTRACT.md"];
+
+const MUSIC_ONLY_CONTRACT = [
+  /marketplace\s+for\s+working\s+musicians(?:\s+in\s+New\s+York)?/i,
+  /patronage\s+market\s+for\s+working\s+musicians/i,
+  /identity\s+words\s+carry\s+the\s+company\s+and\s+do\s+not\s+change/i,
+  /sponsorship\s+is\s+the\s+mechanism,?\s+not\s+the\s+point/i,
+  /(?:only|exclusively)\s+(?:serves?|supports?|for)\s+(?:working\s+)?musicians/i,
+  /(?:every|all)\s+(?:organizers?|fundraisers?)\s+(?:is|are|must\s+be)\s+(?:a\s+)?musicians?/i,
+];
+
+function musicOnlyContract(text: string): boolean {
+  return MUSIC_ONLY_CONTRACT.some((rule) => rule.test(text));
+}
+
+test("shared vocabulary permits all four categories without retiring music language", () => {
+  for (const text of [
+    "Organizers create fundraisers and offer sponsorships.",
+    "Sponsors receive the visibility described in the purchased offer.",
+    "A team offers approved signage for its season.",
+    "A filmmaker offers a credit in the film.",
+    "The theater company offers a program credit.",
+    "Musicians set their own prices.",
+    "A patron backs the tour.",
+    "Evidence documents a deliverable; it does not certify audience reach.",
+  ]) {
+    assert.equal(RETIRED.some(([rule]) => rule.test(text)), false, text);
+    assert.equal(musicOnlyContract(text), false, text);
+  }
+});
+
+test("contract guard rejects music-only positioning, including multiline copy", () => {
+  for (const text of [
+    "Sponsorship marketplace for working musicians in New York.",
+    "Door Money is a patronage market for working musicians.",
+    "Identity words carry the company and do not change.",
+    "Sponsorship is the mechanism, not the point.",
+    "Door Money exclusively serves musicians.",
+    "Every fundraiser must be a musician.",
+    "Sponsorship marketplace\nfor working musicians.",
+  ]) {
+    assert.equal(musicOnlyContract(text), true, text);
+  }
+});
+
+test("active product instructions do not restore the superseded music-only contract", () => {
+  for (const file of CONTRACT_FILES) {
+    assert.equal(musicOnlyContract(readFileSync(path.join(ROOT, file), "utf8")), false, file);
+  }
+  const decisions = readFileSync(path.join(ROOT, "docs/DECISIONS.md"), "utf8");
+  const current = decisions.split("## 17. ")[1];
+  assert.ok(current, "decision 17 must remain available");
+  assert.equal(musicOnlyContract(current), false, "decision 17");
 });
