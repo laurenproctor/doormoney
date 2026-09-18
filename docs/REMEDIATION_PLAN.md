@@ -331,7 +331,10 @@ credentials does not break published board links.
 - Route final terms, privacy, refund, auction and disclosure language through qualified counsel.
 - Replace the state-changing unsubscribe GET with a scanner-safe flow, and add `List-Unsubscribe`.
 - Durable idempotency against duplicate newsletter sends, and never record a reminder or announcement
-  as sent when delivery failed.
+  as sent when delivery failed. The total failure is already closed, ahead of this phase, because it
+  was seen live on 2026-09-11: a new-fundraisers pass that reaches nobody marks nothing announced
+  and does not start the week's clock (`src/lib/weekly.ts`, `tests/weekly.test.ts`). What is left
+  here is the partial failure, which needs a per-address send log, and the mark reminders.
 - Fix the HTML email footer escaping problem.
 - Implement the retention and deletion commitments the privacy policy makes.
 - Update the README to describe every migration and the real setup, and the roadmap to reflect

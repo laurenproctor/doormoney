@@ -21,9 +21,13 @@ type Admin = SupabaseClient;
 const WEEK_MS = 7 * 24 * 3600 * 1000;
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
-/** When a kind of mail last went out, or null if it never has. */
+/**
+ * When a kind of mail last reached anybody, or null if it never has. A pass that delivered nothing
+ * is kept in mail_runs as history and does not count here: it must not start the week's clock, or
+ * one bad day with the mail provider costs the list a week.
+ */
 async function lastSent(sb: Admin, kind: string) {
-  const { data } = await sb.from("mail_runs").select("sent_at").eq("kind", kind).order("sent_at", { ascending: false }).limit(1).maybeSingle();
+  const { data } = await sb.from("mail_runs").select("sent_at").eq("kind", kind).gt("recipients", 0).order("sent_at", { ascending: false }).limit(1).maybeSingle();
   return data?.sent_at ? new Date(data.sent_at as string) : null;
 }
 
@@ -72,7 +76,10 @@ export type NewBoardsResult = { sent: number; failed: number; boards: number } |
 /**
  * The new-boards email. Sends only when boards are waiting and a week has passed, so the promise
  * on the signup form ("never more than weekly") holds even though the job runs daily.
- * A board is marked announced whether or not every send succeeded, so nobody is mailed twice.
+ * A fundraiser is marked announced once the email has reached anybody, so nobody is mailed twice.
+ * When it reached nobody, nothing is marked: the pass is recorded with its failures and the next
+ * daily pass tries again. Telling one failed address from another is Phase 7's work
+ * (docs/REMEDIATION_PLAN.md); this keeps a total failure from being written down as a send.
  */
 export async function sendNewBoards(sb: Admin, now = new Date()): Promise<NewBoardsResult> {
   if (!dueForAnother(await lastSent(sb, "new_boards"), now)) return null;
@@ -94,7 +101,7 @@ export async function sendNewBoards(sb: Admin, now = new Date()): Promise<NewBoa
     }
   }
 
-  await sb.from("runs").update({ announced_at: now.toISOString() }).in("id", runs.map((r) => r.id));
+  if (sent > 0) await sb.from("runs").update({ announced_at: now.toISOString() }).in("id", runs.map((r) => r.id));
   await sb.from("mail_runs").insert({ kind: "new_boards", sent_at: now.toISOString(), recipients: sent, failures: failed, detail: { boards: boards.map((b) => b.boardUrl) } });
   return { sent, failed, boards: boards.length };
 }
