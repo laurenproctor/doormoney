@@ -1,6 +1,9 @@
 /*
   The words the site is allowed to use, held by CI rather than by memory.
 
+  Decision 17 starts with four categories and keeps category and geography extensible.
+  The contract checks below prevent reintroducing the old company-wide restriction.
+
   Decision 14 retired a handful of words and CLAUDE.md says to convert a page when you touch it,
   never in a repo-wide replace. That rule is right and it has one failure mode: a page nobody
   touches keeps the old words, and nobody notices until a reader does. Phase 2c converted eleven
@@ -161,4 +164,71 @@ test("no page a reader can reach uses a word the site retired", () => {
   const hits = sweep();
   const report = hits.map((h) => `  ${h.file}:${h.line}  (${h.word})\n    ${h.text.slice(0, 100)}`).join("\n");
   assert.equal(hits.length, 0, `${hits.length} retired word${hits.length === 1 ? "" : "s"} still on the site:\n${report}`);
+});
+
+// The expansion contract is authoritative; historical decisions and mockups are deliberately
+// scoped by that contract rather than rewritten as though the music implementation never existed.
+const CONTRACT_FILES = ["CLAUDE.md", "README.md", "docs/PRODUCT_CONTRACT.md"];
+
+const RESTRICTED_CONTRACT = [
+  /marketplace\s+for\s+working\s+musicians(?:\s+in\s+New\s+York)?/i,
+  /patronage\s+market\s+for\s+working\s+musicians/i,
+  /identity\s+words\s+carry\s+the\s+company\s+and\s+do\s+not\s+change/i,
+  /sponsorship\s+is\s+the\s+mechanism,?\s+not\s+the\s+point/i,
+  /(?:only|exclusively)\s+(?:serves?|supports?|for)\s+(?:working\s+)?musicians/i,
+  /(?:every|all)\s+(?:organizers?|fundraisers?)\s+(?:is|are|must\s+be)\s+(?:a\s+)?musicians?/i,
+  /(?:limited|restricted)\s+to\s+(?:these\s+)?(?:four|4)\s+categories/i,
+  /only\s+(?:NYC|New\s+York)(?:-based)?\s+(?:organizers|fundraisers|teams)\s+(?:can|may)\s+(?:join|publish|participate)/i,
+  /organizers\s+must\s+be\s+(?:based|located)\s+in\s+(?:NYC|New\s+York)/i,
+];
+
+function restrictedContract(text: string): boolean {
+  return RESTRICTED_CONTRACT.some((rule) => rule.test(text));
+}
+
+test("shared vocabulary permits starting categories and geographic expansion", () => {
+  for (const text of [
+    "Organizers create fundraisers and offer sponsorships.",
+    "Start with music, sports teams, film, and theater; add categories as the model proves itself.",
+    "New York may supply early testers; organizers elsewhere are welcome.",
+    "An online fundraiser can reach audiences across cities.",
+    "Sponsors receive the visibility described in the purchased offer.",
+    "A team offers approved signage for its season.",
+    "A filmmaker offers a credit in the film.",
+    "The theater company offers a program credit.",
+    "Musicians set their own prices.",
+    "A patron backs the tour.",
+    "Evidence documents a deliverable; it does not certify audience reach.",
+  ]) {
+    assert.equal(RETIRED.some(([rule]) => rule.test(text)), false, text);
+    assert.equal(restrictedContract(text), false, text);
+  }
+});
+
+test("contract guard rejects closed category and city positioning, including multiline copy", () => {
+  for (const text of [
+    "Sponsorship marketplace for working musicians in New York.",
+    "Door Money is a patronage market for working musicians.",
+    "Identity words carry the company and do not change.",
+    "Sponsorship is the mechanism, not the point.",
+    "Door Money exclusively serves musicians.",
+    "Every fundraiser must be a musician.",
+    "Door Money is limited to four categories.",
+    "Only NYC fundraisers can publish.",
+    "Only New York-based teams may participate.",
+    "Organizers must be based in NYC.",
+    "Sponsorship marketplace\nfor working musicians.",
+  ]) {
+    assert.equal(restrictedContract(text), true, text);
+  }
+});
+
+test("active product instructions preserve open category and geographic scope", () => {
+  for (const file of CONTRACT_FILES) {
+    assert.equal(restrictedContract(readFileSync(path.join(ROOT, file), "utf8")), false, file);
+  }
+  const decisions = readFileSync(path.join(ROOT, "docs/DECISIONS.md"), "utf8");
+  const current = decisions.split("## 17. ")[1];
+  assert.ok(current, "decision 17 must remain available");
+  assert.equal(restrictedContract(current), false, "decision 17");
 });
