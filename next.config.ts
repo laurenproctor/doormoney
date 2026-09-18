@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
     // Act photos come through a server action. Bucket cap is 5MB; leave room for multipart overhead.
     serverActions: { bodySizeLimit: "6mb" },
   },
+  async redirects() {
+    // The nav calls the index "Fundraisers" and the index lives at /auctions, because addresses
+    // outlive words. Somebody who types the word they just read should still arrive. Temporary on
+    // purpose: a permanent redirect is cached by the browser for good, and these may be the real
+    // address one day. Every source here has to be in RESERVED_SLUGS (src/lib/slug.ts) and in
+    // reserved_handles, or a musician could claim the name and never see their own page.
+    return [
+      { source: "/fundraisers", destination: "/auctions", permanent: false },
+      { source: "/fundraiser", destination: "/auctions", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {
