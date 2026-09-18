@@ -10,6 +10,8 @@ import { test } from "node:test";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { RESERVED_SLUGS } from "@/lib/slug";
+// Through the alias, because the test resolver only adds the ".ts" for "@/" paths.
+import nextConfig from "@/../next.config";
 
 const dir = path.join(import.meta.dirname, "..", "supabase", "migrations");
 
@@ -50,6 +52,25 @@ test("the reserved list has no duplicates and is all legal handles", () => {
   for (const name of names) {
     assert.match(name, /^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])?$/, `${name} could never be typed as a handle anyway`);
   }
+});
+
+test("every address the site redirects from the root is a name nobody can claim", async () => {
+  // A redirect is checked before any page. A musician holding a redirected name would have a page
+  // that no visitor could reach, so the name has to be reserved before the redirect exists.
+  const redirects = await nextConfig.redirects!();
+  assert.ok(redirects.length > 0, "the redirects are gone, and so is what this test was guarding");
+  for (const r of redirects) {
+    const root = r.source.split("/")[1]!;
+    assert.ok(RESERVED_SLUGS.has(root), `${r.source} redirects, but "${root}" can still be claimed as a handle`);
+  }
+});
+
+test("the word in the nav reaches the page the nav links to", async () => {
+  const redirects = await nextConfig.redirects!();
+  const to = (source: string) => redirects.find((r) => r.source === source);
+  assert.equal(to("/fundraisers")?.destination, "/auctions");
+  // Temporary: a permanent redirect is cached for good, and this may be the real address one day.
+  assert.equal(to("/fundraisers")?.permanent, false);
 });
 
 test("the migration is numbered past the branch that already used 0020 and 0021", () => {
