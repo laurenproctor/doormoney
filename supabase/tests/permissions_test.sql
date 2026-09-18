@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(70);
+select plan(83);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -404,6 +404,104 @@ select is(
   0, 'nothing in the schema can be truncated by a browser');
 
 reset role;
+
+-- ===============================================================
+-- What the two public patron views will actually show (0024)
+-- ===============================================================
+-- These replace a test in tests/profile.test.ts that read migration 0024 as text and checked the
+-- view definitions did not mention amount_cents, email, stripe_ and so on. A grep over a migration
+-- is not what serves a request: a later migration can replace a view and the grep goes on passing.
+-- What follows asks the database what the views are and what they return.
+--
+-- Superuser again, because this has to set up the published state that the patron is rightly
+-- refused above. It runs last, and the whole file rolls back.
+reset role;
+
+-- The shape, exactly. A column added to either view has to be added here on purpose.
+select set_eq(
+  $$select column_name::text from information_schema.columns
+     where table_schema = 'public' and table_name = 'public_patron_profiles'$$,
+  $$values ('username'::text),('display_name'),('bio'),('location'),('website'),('interests'),
+           ('photo_path'),('patron_since'),('published_at')$$,
+  'public_patron_profiles shows these columns and no others');
+
+select set_eq(
+  $$select column_name::text from information_schema.columns
+     where table_schema = 'public' and table_name = 'public_patron_activity'$$,
+  $$values ('username'::text),('kind'),('act_name'),('act_slug'),('run_title'),('run_status'),
+           ('detail'),('supported_at')$$,
+  'public_patron_activity shows these columns and no others');
+
+-- And the rule behind the shape, so a rename cannot walk one back in.
+select is_empty(
+  $$select table_name || '.' || column_name from information_schema.columns
+     where table_schema = 'public'
+       and table_name in ('public_patron_profiles', 'public_patron_activity')
+       and column_name ~ '(amount|fee|refunded|email|stripe|payment|intent|funding|token|mark_|profile_id)'$$,
+  'no public patron view carries money, an address, a Stripe id or an internal key');
+
+-- Off by default, in the database rather than in a form.
+select is(
+  (select column_default from information_schema.columns
+    where table_schema = 'public' and table_name = 'patron_profiles' and column_name = 'published'),
+  'false', 'a patron profile is unpublished until somebody publishes it');
+
+select is(
+  (select public from storage.buckets where id = 'patron-photos'), false,
+  'the patron photo bucket is private, so a photo needs a signed link');
+
+-- The handle goes on first, and deliberately before the two assertions below.
+--
+-- Both views also require a non-null profiles.username, and the accounts in the fixtures above
+-- have none: handle_new_user copies it out of the auth user's metadata and these were inserted
+-- without any. Asserting the views are empty while that is still true proves nothing about the
+-- published flag, which is the thing meant to be under test. With the handle set, published is
+-- the only reason left for a row to be missing.
+update profiles set username = 'kettle-st' where id = '11111111-1111-1111-1111-111111111111';
+
+select is_empty('select * from public_patron_profiles',
+  'an unpublished profile is on no public page, handle or no handle');
+select is_empty('select * from public_patron_activity',
+  'and neither is anything it has paid for');
+
+update patron_profiles set published = true, published_at = now()
+ where profile_id = '11111111-1111-1111-1111-111111111111';
+
+select is((select count(*)::int from public_patron_profiles), 1,
+  'publishing puts that profile, and only that profile, on the view');
+select is((select username from public_patron_profiles), 'kettle-st', 'under its own handle');
+
+-- Publishing the profile publishes nothing it has bought. Each item is ticked separately.
+select is_empty('select * from public_patron_activity',
+  'a published profile still shows nothing it has not ticked');
+
+-- Ticking the placement won through an anonymous bid. It stays off the page regardless: an
+-- anonymous bid is never publishable, whatever the form that ticked it said.
+insert into patron_profile_items (profile_id, purchase_id)
+  select '11111111-1111-1111-1111-111111111111', id from purchases
+   where patron_id = 'c1000000-0000-0000-0000-000000000008';
+
+select is_empty('select * from public_patron_activity',
+  'a placement won with an anonymous bid stays off the page even once it is ticked');
+
+-- The other half of that, without which the three is_empty assertions above would all pass just
+-- as well if the view returned nothing to anybody at all. This one was bought in the open.
+--
+-- It is the second purchase in the fixtures at the top, moved from requires_payment to held rather
+-- than inserted fresh: purchases_live_lot_idx allows one live purchase per lot, so a second row on
+-- the same lot is a duplicate key and the rest of the file never runs.
+update purchases set payment_status = 'held'
+ where lot_id = 'a1000000-0000-0000-0000-000000000002'
+   and patron_id = 'c1000000-0000-0000-0000-000000000001';
+
+insert into patron_profile_items (profile_id, purchase_id)
+  select '11111111-1111-1111-1111-111111111111', id from purchases
+   where lot_id = 'a1000000-0000-0000-0000-000000000002'
+     and patron_id = 'c1000000-0000-0000-0000-000000000001';
+
+select is((select count(*)::int from public_patron_activity), 1,
+  'a placement bought in the open, and ticked, is the one thing on the page');
+select is((select kind from public_patron_activity), 'placement', 'and it reads as a placement');
 
 select * from finish();
 rollback;
