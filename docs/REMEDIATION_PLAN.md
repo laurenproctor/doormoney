@@ -267,6 +267,10 @@ minimum, and the pgTAP suite shows a stale offer held and not sold, twice.
 
 Give Door Money an authoritative financial history and a way to recover.
 
+**Status: not started.** `docs/PHASE_4_INVENTORY.md` is the reading done beforehand: what exists, what
+is missing item by item, five things this list leaves out, and the decisions that have to be made
+before the dispute work can be written.
+
 - Add an immutable ledger covering patron charges, Door Money fees, act liabilities, transfers,
   refunds, transfer reversals, disputes, dispute fees, recoveries and adjustments. Entries balance.
 - Redesign webhook-event storage to distinguish received, processing, processed, and failed and
