@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardShell, Card } from "@/components/DashboardShell";
-import { RunForm } from "@/components/RunForm";
+import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
+import { draftCategories } from "@/app/actions/drafts";
 import { requireUser, ownedAct } from "@/lib/auth";
 
-export const metadata: Metadata = { title: "New run" };
+export const metadata: Metadata = { title: "New fundraiser" };
 
 export default async function NewRunPage() {
   const user = await requireUser("/dashboard/runs/new");
@@ -17,12 +18,13 @@ export default async function NewRunPage() {
       actName={act.name}
       eyebrow="Step two of three"
       title="Describe the"
-      accent="run"
-      intro={<p>The dates, the number of shows, and a name for it. Patrons back the whole stretch, not a single night.</p>}
+      accent="fundraiser"
+      intro={<p>Describe what the funding enables and who the sponsorship can reach. Unknown details can wait.</p>}
     >
       <Card className="max-w-[760px]">
-        <RunForm run={null} actType={act.type} />
+        <FundraiserDraftForm draft={null} categories={await draftCategories()} musicOrganizer={act.type !== null} />
       </Card>
     </DashboardShell>
   );
 }
+

@@ -27,9 +27,10 @@ const PERIODS: Record<string, Period> = {
 };
 
 /**
- * The words for a stored kind. A kind the app does not know falls back to the tour wording rather
- * than to "run", which is the one word none of these may be.
+ * The words for a stored kind. A kind the app does not know uses neutral fundraiser wording without
+ * inventing a tour or music-specific unit.
  */
 export function periodOf(kind: string | null | undefined): Period {
-  return PERIODS[kind ?? ""] ?? PERIODS.tour;
+  return PERIODS[kind ?? ""] ?? { noun: "fundraiser", units: "activities", unit: "activity", counted: "planned activities" };
 }
+

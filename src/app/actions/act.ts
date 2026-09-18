@@ -7,7 +7,7 @@ import { requireUser, ownedAct } from "@/lib/auth";
 import { RESERVED_SLUGS, SLUG_RE, slugify } from "@/lib/slug";
 import { actPath } from "@/lib/urls";
 
-export type ActField = "name" | "slug" | "type" | "city" | "bio" | "instagram" | "website" | "photo";
+export type ActField = "name" | "slug" | "type" | "city" | "region" | "country_code" | "bio" | "instagram" | "website" | "photo";
 export type ActState = { ok: boolean; errors?: Partial<Record<ActField | "form", string>> };
 
 const optionalUrl = z
@@ -28,8 +28,10 @@ const Input = z.object({
     .max(40, "Keep the address under 40 characters.")
     .regex(SLUG_RE, "Letters, digits and hyphens only.")
     .refine((s) => !RESERVED_SLUGS.has(s), "That address is reserved. Pick another."),
-  type: z.enum(["touring_band", "house_act", "soloist"], { error: "Pick an act type." }),
-  city: z.string().trim().min(2, "Enter a city.").max(60, "Keep the city under 60 characters."),
+  type: z.union([z.enum(["touring_band", "house_act", "soloist"]), z.literal("")]).transform((v) => v || null),
+  city: z.string().trim().max(60).transform((v) => v || null),
+  region: z.string().trim().max(100).transform((v) => v || null),
+  country_code: z.string().trim().toUpperCase().refine((v) => !v || /^[A-Z]{2}$/.test(v), "Use a two-letter country code.").transform((v) => v || null),
   bio: z.string().trim().max(600, "Keep the bio under 600 characters.").optional().transform((v) => v || null),
   instagram: z
     .string()
@@ -55,7 +57,9 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
     name: str(form, "name"),
     slug: str(form, "slug") || slugify(str(form, "name")),
     type: str(form, "type"),
-    city: str(form, "city") || "New York",
+    city: str(form, "city"),
+    region: str(form, "region"),
+    country_code: str(form, "country_code"),
     bio: str(form, "bio"),
     instagram: str(form, "instagram"),
     website: str(form, "website"),
@@ -78,7 +82,7 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
 
   const sb = await supabaseServer();
   const existing = await ownedAct(user.id);
-  const row = { ...parsed.data, owner_id: user.id };
+  const row = parsed.data;
 
   // The board address and the sign-in username are one word, so claiming either claims both.
   // claim_username (migration 0024) does it in one transaction: it checks the whole namespace,
@@ -94,23 +98,14 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   }
   if (claim !== "ok") return { ok: false, errors: { slug: claimMessage(claim as string) } };
 
-  // Listing an act makes this account a musician, whatever it ticked at sign-up. A role is only
-  // ever added: somebody who came here to back musicians and then started a band is both.
-  // Through the service role: 0022 leaves the browser no write on profiles beyond the handle,
-  // and a role is not something an account should be able to hand itself through PostgREST.
-  const admin = supabaseAdmin();
-  const { data: profile } = await admin.from("profiles").select("roles").eq("id", user.id).maybeSingle();
-  const roles: string[] = (profile as { roles?: string[] } | null)?.roles ?? [];
-  if (!roles.includes("musician")) {
-    await admin.from("profiles").update({ roles: [...roles, "musician"] }).eq("id", user.id);
-  }
+  // The ownership trigger adds organizer atomically without replacing any existing roles.
 
   let actId = existing?.id ?? null;
   if (existing) {
     const { error } = await sb.from("acts").update(row).eq("id", existing.id);
     if (error) return { ok: false, errors: { form: dbMessage(error.code) } };
   } else {
-    const { data, error } = await sb.from("acts").insert(row).select("id").single();
+    const { data, error } = await sb.from("acts").insert({ ...row, owner_id: user.id }).select("id").single();
     if (error || !data) return { ok: false, errors: { form: dbMessage(error?.code) } };
     actId = data.id;
   }
@@ -147,3 +142,4 @@ function claimMessage(code: string) {
   if (code === "invalid") return "Letters, digits and hyphens only, starting and ending with a letter or digit.";
   return "That did not save. Try once more.";
 }
+
