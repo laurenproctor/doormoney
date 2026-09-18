@@ -39,11 +39,15 @@ update patrons set profile_id='11111111-1111-1111-1111-111111111111'
 update patrons set profile_id='22222222-2222-2222-2222-222222222222'
  where id = 'c1000000-0000-0000-0000-000000000004';
 
+-- Purchases written as history. Migration 0035 guards purchases against inserts that do not pay
+-- for a current offer, which these fixtures are not trying to be, so they load as the seed does.
+select set_config('doormoney.trusted_load', 'on', true);
 insert into purchases (lot_id, patron_id, amount_cents, fee_cents, payment_status) values
   -- Won through the anonymous bid the seed puts on this lot.
   ('a1000000-0000-0000-0000-000000000004', 'c1000000-0000-0000-0000-000000000008', 36000, 5400, 'held'),
   -- Started and never paid for.
   ('a1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001', 45000, 6750, 'requires_payment');
+select set_config('doormoney.trusted_load', 'off', true);
 
 insert into patron_profiles (profile_id, display_name) values
   ('11111111-1111-1111-1111-111111111111', 'Kettle St. Coffee'),
@@ -555,6 +559,8 @@ reset role;
 -- somewhere it is not.
 -- ===============================================================
 set local role service_role;
+-- History again (see the fixtures at the top): rows born held, which 0035 refuses from anyone else.
+select set_config('doormoney.trusted_load', 'on', true);
 
 insert into purchases (id, lot_id, patron_id, amount_cents, fee_cents, payment_status)
 values ('55000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000006',
@@ -603,6 +609,7 @@ select throws_ok(
 insert into purchases (id, lot_id, patron_id, amount_cents, fee_cents, payment_status)
 values ('55000000-0000-0000-0000-000000000003','a1000000-0000-0000-0000-000000000007',
         'c1000000-0000-0000-0000-000000000001', 10000, 1500, 'held');
+select set_config('doormoney.trusted_load', 'off', true);
 
 select throws_ok(
   $$update purchases set mark_status='approved' where id='55000000-0000-0000-0000-000000000003'$$,

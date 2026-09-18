@@ -502,6 +502,25 @@ export function markDeclined(params: { to: string; patronName: string; actName: 
 }
 
 /** To the patron whose spot is paid for but whose logo has not arrived. Sent once. */
+/**
+ * A payment landed for an auction offer that had already moved on. Nothing was sold; the whole
+ * amount goes back. The patron did nothing wrong, and the copy says so.
+ */
+export function staleOfferRefund(params: { to: string; patronName: string; actName: string; lotName: string; refundedCents: number; boardUrl: string }): Mail {
+  const lot = params.lotName.toLowerCase();
+  const lines = [
+    `By the time ${params.patronName}'s payment for the ${lot} landed, ${params.actName} had already offered the spot to another bid. The payment did not buy it.`,
+    `${money(params.refundedCents)}, the whole amount, goes back to the card it was paid with. Refunds take five to ten business days to show up, depending on the bank.`,
+    `The fundraiser is still open, and the other spots on it are here: ${params.boardUrl}`,
+  ];
+  const html = shell([
+    `By the time <b>${escape(params.patronName)}</b>'s payment for the ${escape(lot)} landed, ${escape(params.actName)} had already offered the spot to another bid. The payment did not buy it.`,
+    `<b style="color:${BLUE}">${money(params.refundedCents)}</b>, the whole amount, goes back to the card it was paid with. Refunds take five to ten business days to show up, depending on the bank.`,
+    `The fundraiser is still open, and the other spots on it are here: <a href="${escape(params.boardUrl)}" style="color:${BLUE}">${escape(params.boardUrl)}</a>`,
+  ]);
+  return { to: params.to, subject: `Refunded: the ${lot} had already gone`, text: lines.join("\n\n"), html };
+}
+
 export function markReminder(params: { to: string; patronName: string; actName: string; lotName: string; runTitle: string; markUrl: string }): Mail {
   const lines = [
     `${params.patronName} holds the ${params.lotName.toLowerCase()} on ${params.actName}'s ${params.runTitle.toLowerCase()}, paid for and waiting on one thing.`,

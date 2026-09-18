@@ -19,32 +19,29 @@ references are to that commit.
 
 ### A patron cannot be charged for a stale auction offer
 
-**Violated.** Enforced by Phase 3.
-
-Checkout reads the lot, the winning bid and the price at session-creation time
-(`src/app/api/checkout/route.ts`), but the session is not bound to a funding token or an offer
-version, and webhook fulfilment does not re-check that the winner and price are still the ones the
-session was made for. An offer that rolls to the next bidder while a checkout is open can still be
-completed by the patron who lost it.
+**Held** as of migration `0035`. Every offer bumps `lots.offer_version`; a purchase records the
+`bid_id` and `offer_version` it pays for; `guard_purchase_insert` refuses a purchase that is not for
+the lot's current winner at the bid's exact amount and version, and `fulfil_lot_purchase` asks the
+same question again under the lot's lock before it will mark the lot sold. A payment that lands for
+an offer that has moved on is held (the charge is real) and refunded through the queue under
+`stale_offer`; the lot stays with its current winner. Proved by `supabase/tests/auctions_test.sql`
+("a payment for an offer that has moved on is not a sale") and by `concurrency_test.sh` scenario 4.
 
 ### One auction has one authoritative winner at a time
 
-**Violated.** Enforced by Phase 3.
-
-`closeDueAuctions` and `rollExpiredFunding` (`src/lib/auctions.ts`) select candidate lots, then
-update them in a later statement. Nothing locks the lot row across that gap, and `settleDueLots`
-runs from page rendering, so two concurrent readers of the same board can both try to settle the
-same lot.
+**Held** as of migration `0035`. `close_auction` and `roll_offer` select the lot `for update` and
+decide and write inside that lock, one lot per transaction; a second call finds the lot no longer
+open and answers `already`. Settlement runs only from the worker at `/api/cron/auctions` and the
+daily job, never from a page. Proved by `concurrency_test.sh` scenario 2: two closes at once, one
+`won`, one `already`, `offer_version` 1.
 
 ### A bid must exceed the authoritative current minimum
 
-**Partly held.** Enforced by Phase 3.
-
-`placeBid` (`src/app/actions/bids.ts:62`) reads the top bid, computes the minimum, and then inserts,
-in three separate round trips with no lock and no constraint behind them. The arithmetic is correct
-and now tested (`tests/auctions.test.ts`), but two bids that arrive together can both read the same
-top and both be accepted. The close-time check has the same shape: it is read before the insert, so
-a bid can land after the lot has closed.
+**Held** as of migration `0035`. `place_bid` reads the top bid, computes the minimum and inserts
+under the lot's row lock, and `guard_bid_insert` does the same for any insert that arrives another
+way, so two bids that arrive together queue: the second sees the first. The close time is checked
+in the same place at the database's clock. Proved by `auctions_test.sql` (a bid under the minimum,
+a bid after the close, a plain insert of either) and `concurrency_test.sh` scenarios 1 and 3.
 
 ### A declined mark receives the refund promised by the product
 
@@ -229,6 +226,13 @@ controls at signup, and the reserved list lived only in TypeScript. Anyone could
 `supabase/tests/permissions_test.sql` test 32. Deleting such a lot would orphan money and erase an
 auction's history.
 
+### A lot with a bid on it keeps its terms
+
+**Held** as of migration `0035`, via the `lots_terms_frozen` trigger. Price, mode, take-it-now and
+placement cannot change once a bid or a purchase exists on the lot; the label still can. Proved by
+`supabase/tests/auctions_test.sql`. A bid is a promise to pay a price against a set of terms, and the
+terms moving under it would make the promise mean something else.
+
 ### A musician cannot move a run to a state that is not theirs
 
 **Held** as of migration `0022`, via the `runs_status_transition` trigger. Proved by
@@ -275,9 +279,7 @@ sign-up stops linking history it cannot vouch for.
 
 ### Page rendering does not initiate global financial or auction mutations
 
-**Violated.** Enforced by Phase 3.
-
-`src/app/[slug]/[run]/page.tsx` calls `settleDueLots` during render, with the service-role
-client. Loading a public board page can close auctions, roll offers to the next bidder and send
-email. The comment there explains the reason (a daily cron is too slow for a close), which Phase 3
-must solve with a worker rather than a page.
+**Held** as of remediation Phase 3. `src/app/[slug]/[run]/page.tsx` reads the board and renders
+it; it imports nothing from `src/lib/auctions.ts` and holds no service-role client. Settlement is the
+worker at `/api/cron/auctions` (idempotent, one lot per transaction), called on a schedule by the
+database (migration `0036`) and daily by `/api/cron/daily`.
