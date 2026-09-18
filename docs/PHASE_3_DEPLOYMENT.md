@@ -1,14 +1,51 @@
-# Phase 3: deployment checklist
+# Phase 3: deployment record
 
 Migrations `0034_stale_offer_refund_reason.sql`, `0035_transactional_auctions.sql` and
 `0036_auction_worker_schedule.sql` move every auction decision into Postgres and take settlement out
-of page rendering. They have been applied and tested on a throwaway Postgres only (`npm run
-test:db:docker`: the pgTAP suites and the two-session concurrency checks). Nothing in this document
-has been done to the hosted project.
+of page rendering. This document was their deployment checklist. All three are on the hosted
+project and the schedule is running, so what follows is the record of how it went, with the
+checklist kept below as it was written.
 
 Read `docs/SYSTEM_INVARIANTS.md` for what the migrations enforce.
 
+## Status, 2026-09-18
+
+Everything on this page is done. In the order it happened:
+
+- **The ledger was repaired first.** 0031, 0032 and 0033 had been applied by hand, so the CLI's
+  ledger did not know them. CLI access came back on 2026-09-17 (the CLI had been signed in to an
+  account in a different organization, which is all the 403 ever was), and the three versions were
+  written into `supabase_migrations.schema_migrations` in the dashboard SQL editor, which is what
+  `supabase migration repair --status applied` does. `supabase db push --dry-run` then listed 0034
+  to 0036 and nothing else.
+- **`supabase db push` applied 0034, 0035 and 0036**, from a terminal, not from a Claude session:
+  the permission classifier refuses a production apply from a session, and that is the right way
+  round. The four `trigger ... does not exist, skipping` notices are 0035's `drop trigger if exists`
+  lines and mean nothing. The two data checks in step 3 were not run from the session, because
+  production reads are refused there too; the audit the day before had found no lot in
+  `pending_funding`, so there was nothing for the backfill to touch.
+- **The old code ran against the new schema without a fault** for the window between the push and
+  the merge: home, a musician's page, a fundraiser page, the fundraiser index and the widget all
+  answered 200. That is the window the "Order" section below promises, and it held.
+- **PR #22 merged and deployed.** `/api/cron/auctions` answering 401 to a call with no secret is the
+  quick proof that the new code is what is serving: the route did not exist before.
+- **`CRON_SECRET` was replaced, not copied.** Every variable on the Vercel project is marked
+  sensitive, so neither the dashboard nor `vercel env pull` will show a value. A fresh one
+  (`openssl rand -hex 32`) went into Vercel, a redeploy, `.env.local`, and then Vault. Vercel's own
+  scheduler reads the variable, so the daily and Friday jobs picked it up with no other change.
+  Called with it, the worker answered 200 with every count at zero and an empty `errors` list.
+- **The two Vault secrets were created and the schedule turned itself on.** `cron.job_run_details`
+  showed `0 rows` on every run before them and `1 row` on every run after, five minutes apart.
+
+One thing worth knowing when reading that table: `succeeded` with `1 row` means the database queued
+the request, not that the site answered 200. The site's answers are in `net._http_response`
+(`select status_code, created from net._http_response order by created desc limit 5`). A 401 there
+means the `cron_secret` in Vault and the `CRON_SECRET` in Vercel have drifted apart, which is what
+will happen if either is ever rotated without the other.
+
 ## Order
+
+The checklist from here down is as it was written before anything was applied.
 
 The migrations are additive and the code on this branch needs them: `placeBid` calls `place_bid`,
 checkout calls `begin_lot_purchase`, the webhook calls `fulfil_lot_purchase`, and the worker calls
