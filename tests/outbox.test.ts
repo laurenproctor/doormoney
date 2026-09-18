@@ -8,7 +8,7 @@
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BACKOFF_MINUTES, MAX_ATTEMPTS, backoffMinutes } from "@/lib/outbox";
+import { BACKOFF_MINUTES, MAX_ATTEMPTS, backoffMinutes, workRefundQueue } from "@/lib/outbox";
 import { refundKey } from "@/lib/refunds";
 
 test("the key names the payment and the reason, and nothing else", () => {
@@ -43,6 +43,18 @@ test("the attempts span about a day and a half, not minutes and not weeks", () =
   const total = BACKOFF_MINUTES.reduce((n, m) => n + m, 0);
   assert.ok(total > 24 * 60, `the queue gives up after ${total} minutes, which is under a day`);
   assert.ok(total < 5 * 24 * 60, `the queue keeps trying for ${total} minutes, which is over five days`);
+});
+
+test("an empty list of keys works nothing, and never falls through to the whole queue", async () => {
+  // cancelRun hands the worker the keys it queued, and a fundraiser with no money held queues none.
+  // The daily pass asks for everything due by passing no list at all; an empty list must not be
+  // read the same way, or one musician's cancel works, and reports, another musician's refunds.
+  const untouchable = {
+    from() {
+      throw new Error("the queue was read");
+    },
+  } as unknown as Parameters<typeof workRefundQueue>[0];
+  assert.deepEqual(await workRefundQueue(untouchable, []), { succeeded: 0, refundedCents: 0, retryable: 0, failed: 0 });
 });
 
 test("a first attempt never has a negative or missing wait behind it", () => {

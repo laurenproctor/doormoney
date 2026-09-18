@@ -61,12 +61,17 @@ export type QueueSummary = { succeeded: number; refundedCents: number; retryable
 export async function workRefundQueue(sb: Admin, keys?: string[], now = new Date()): Promise<QueueSummary> {
   const summary: QueueSummary = { succeeded: 0, refundedCents: 0, retryable: 0, failed: 0 };
 
+  // An empty list asks for nothing, not for everything. A cancelled fundraiser with no money held
+  // owes no refunds, and its request must not pick up another fundraiser's queue and report those
+  // as its own.
+  if (keys && keys.length === 0) return summary;
+
   const query = sb
     .from("financial_operations")
     .select("id,purchase_id,backing_id,reason,attempts,notified_at")
     .eq("kind", "refund")
     .in("status", ["pending", "retryable"]);
-  const { data, error } = keys?.length
+  const { data, error } = keys
     ? await query.in("idempotency_key", keys)
     : await query.lte("next_attempt_at", now.toISOString()).order("next_attempt_at").limit(100);
   if (error) throw new Error(`load refund queue: ${error.message}`);
@@ -202,12 +207,58 @@ export async function sweepOwed(sb: Admin) {
   return { queued };
 }
 
-/** The daily pass: free what a dead worker holds, write down what was missed, then work what is due. */
+/*
+  Rows a person finished.
+
+  A row that is out of attempts stops, and the admin page says to refund it in the Stripe Dashboard.
+  The worker never looks at failed rows again, so without this the obligation would stay listed as
+  owed for good, however many times it had been paid. The charge.refunded webhook writes
+  refunded_cents when a Dashboard refund lands, and that column is what says the money went back.
+  No Stripe call and no mail: the webhook already wrote to the patron.
+*/
+type FailedOp = { id: string; purchase_id: string | null; backing_id: string | null };
+type Refunded = { id: string; refunded_cents: number };
+
+export async function settleHandRefunded(sb: Admin) {
+  const { data } = await sb.from("financial_operations").select("id,purchase_id,backing_id").eq("kind", "refund").eq("status", "failed");
+  const failed = (data ?? []) as FailedOp[];
+  if (!failed.length) return 0;
+
+  const purchaseIds = failed.flatMap((f) => (f.purchase_id ? [f.purchase_id] : []));
+  const backingIds = failed.flatMap((f) => (f.backing_id ? [f.backing_id] : []));
+  const [{ data: purchases }, { data: backings }] = await Promise.all([
+    purchaseIds.length ? sb.from("purchases").select("id,refunded_cents").in("id", purchaseIds).gt("refunded_cents", 0) : Promise.resolve({ data: [] }),
+    backingIds.length ? sb.from("backings").select("id,refunded_cents").in("id", backingIds).gt("refunded_cents", 0) : Promise.resolve({ data: [] }),
+  ]);
+  const refunded = new Map<string, number>();
+  for (const row of [...((purchases ?? []) as Refunded[]), ...((backings ?? []) as Refunded[])]) refunded.set(row.id, row.refunded_cents);
+
+  let settled = 0;
+  for (const op of failed) {
+    const cents = refunded.get(op.purchase_id ?? op.backing_id ?? "");
+    if (cents === undefined) continue;
+    const { data: done } = await sb
+      .from("financial_operations")
+      .update({ status: "succeeded", amount_cents: cents, last_error: null, settled_at: new Date().toISOString() })
+      .eq("id", op.id)
+      .eq("status", "failed")
+      .select("id");
+    settled += done?.length ?? 0;
+  }
+  if (settled) console.error("settled", settled, "refunds a person sent by hand");
+  return settled;
+}
+
+/**
+ * The daily pass: free what a dead worker holds, close what a person finished by hand, write down
+ * what was missed, then work what is due.
+ */
 export async function runRefundJob(sb: Admin, now = new Date()) {
   const reclaimed = await reclaimStalled(sb, now);
+  const settledByHand = await settleHandRefunded(sb);
   const swept = await sweepOwed(sb);
   const worked = await workRefundQueue(sb, undefined, now);
-  return { ...worked, reclaimed, swept: swept.queued };
+  return { ...worked, reclaimed, settledByHand, swept: swept.queued };
 }
 
 /* ---------------------------------------------------------------------------------------------

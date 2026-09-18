@@ -42,11 +42,14 @@ obligation. The row carries the same idempotency key the Stripe call uses, so ne
 Stripe can be made to refund the same payment twice.
 
 `src/lib/outbox.ts` works it. The two places an obligation is born attempt it at once, which is why
-a cancellation still reports its total on the spot. The daily job retries what failed on a widening
-schedule (five minutes, then thirty, then two hours, then twelve, then a day) and stops after six
-attempts. Stopping is not giving up: the row stays, marked `failed` with its last error, counted on
-`/admin` next to the payment it belongs to. Refunding it by hand in the Stripe Dashboard is what
-clears it, and the `charge.refunded` webhook mirrors the amount the way it always did.
+a cancellation still reports its total on the spot. The daily job retries what failed and stops
+after six attempts. The row carries a widening wait (five minutes, then thirty, then two hours,
+then twelve, then a day), but the only worker after the first attempt is the daily job, so in
+practice each retry is about a day apart and the six attempts span about five days. Stopping is not
+giving up: the row stays, marked `failed` with its last error, counted on `/admin` next to the
+payment it belongs to. Refunding it by hand in the Stripe Dashboard is what clears it: the
+`charge.refunded` webhook mirrors the amount the way it always did, and the next daily job sees
+the amount and settles the row.
 
 The patron is told from the queue and nowhere else, once, by whichever attempt gets the money back.
 A refund that lands on the fourth try still sends the mail the first try would have.
