@@ -212,11 +212,12 @@ in is now enforced by PostgreSQL rather than by the WHERE clause of whichever qu
 
 ## Phase 3: transactional auctions
 
-**Status: built, not applied.** Three migrations: `0034_stale_offer_refund_reason.sql` (one enum
+**Status: done, applied to the hosted project 2026-09-18** (PR #22). The five-minute worker is
+running. Three migrations: `0034_stale_offer_refund_reason.sql` (one enum
 value, on its own because Postgres will not use it in the transaction that adds it),
 `0035_transactional_auctions.sql` (the functions, the guards, the offer version) and
 `0036_auction_worker_schedule.sql` (the database calling the worker). `docs/PHASE_3_DEPLOYMENT.md`
-has the apply order.
+has the apply order and the record of how it went.
 
 Make bidding, closing, funding, rollover and checkout safe under concurrency.
 
