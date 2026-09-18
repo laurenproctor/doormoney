@@ -1,12 +1,31 @@
-# Phase 1: deployment and token rotation checklist
+# Phase 1: deployment record and token rotation
 
 Migration `0022_security_boundary.sql` changes who can read and write what through the Supabase Data
-API. It has been applied and tested locally only. Nothing in this document has been done to the
-hosted project.
+API. This document was its deployment checklist. The migration is on the hosted project, so what
+follows is now the record of how it went, with the checklist kept below as it was written.
 
 Read `docs/SYSTEM_INVARIANTS.md` for what the migration enforces and what it does not.
 
+## Status, 2026-09-18
+
+- **Applied 2026-09-04.** The application changes merged first (PR #2), Vercel deployed them, then
+  `0022` went onto the hosted project. The checks under "Before applying" were run read-only
+  beforehand and all passed: one act per owner, every address legal and unreserved.
+- **It took every public fundraiser page to 404 and the widget to 500 for about four minutes.** The
+  permission tests passed and did not catch it. See "The trap the tests missed" below.
+  `0023_runs_owner_policy.sql` (PR #4) fixed it forward the same evening.
+- **The boundary has been extended twice since.** `0029_patron_profile_boundary.sql` brought in every
+  table 0022 never covered, and `0030_views_are_read_only.sql` took write privileges off every public
+  view. `supabase/tests/permissions_test.sql` holds all of it and runs in CI.
+- **Funding tokens: nothing to rotate.** No lot was in `pending_funding` when 0022 landed, and a
+  token only lets somebody pay for a lot in that state, so there was no live token to replace.
+- **Still open: the Supabase anon and service-role keys have not been rotated.** Step 2 under "After
+  applying" is the one item on this page nobody has done. The keys in Vercel predate 0022.
+
 ## Before applying
+
+The checklist from here down is as it was written before 0022 was applied, kept because the next
+boundary migration will want the same steps.
 
 1. **Take a backup.** The migration revokes privileges and adds constraints. Rolling it back means
    restoring grants, and a backup is the honest way to be sure.
@@ -93,6 +112,20 @@ The pieces to restore, if it comes to that:
 - `grant select on patron_names to anon, authenticated`
 - `drop trigger runs_status_transition on runs`, and the other three triggers
 - `drop index acts_one_per_owner`
+
+## The trap the tests missed
+
+A column revoke can kill an unrelated policy on another table. The owner policy on `runs`, written
+in migration 0005, asked its question inline: `exists (select 1 from acts a where ... a.owner_id =
+auth.uid())`. A policy body runs as the calling role, so it needed select on `acts.owner_id`, which
+0022 had rightly taken off `anon`. Postgres evaluates every permissive policy before OR-ing them, so
+the public read policy on `runs` never got a look in, and every read of `runs` as `anon` failed.
+`lots`, `shows` and `purchases` were spared because they ask through the `security definer` helpers
+`owns_run` and `owns_lot`. 0023 added `owns_act` and rewrote the policy to use it.
+
+Two rules came out of it. Before revoking a column, read every inline policy body that mentions it,
+on every table. And a privilege test is not enough on its own: read a fundraiser page end to end as
+`anon` before calling a grant change safe.
 
 ## A trap worth writing down
 
