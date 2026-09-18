@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(83);
+select plan(85);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -450,6 +450,15 @@ select is(
   (select public from storage.buckets where id = 'patron-photos'), false,
   'the patron photo bucket is private, so a photo needs a signed link');
 
+-- And no policy on storage.objects opens that bucket back up: the only way to a patron photo is the
+-- signed link the server mints, and a permissive select policy naming the bucket would be a second
+-- way in. tests/profile.test.ts used to grep migration 0024 for this; the catalog is the thing to ask.
+select is_empty(
+  $$select policyname from pg_policies
+     where schemaname = 'storage' and tablename = 'objects'
+       and (coalesce(qual, '') || coalesce(with_check, '')) like '%patron-photos%'$$,
+  'no storage policy names the patron photo bucket');
+
 -- The handle goes on first, and deliberately before the two assertions below.
 --
 -- Both views also require a non-null profiles.username, and the accounts in the fixtures above
@@ -487,17 +496,25 @@ select is_empty('select * from public_patron_activity',
 -- The other half of that, without which the three is_empty assertions above would all pass just
 -- as well if the view returned nothing to anybody at all. This one was bought in the open.
 --
--- It is the second purchase in the fixtures at the top, moved from requires_payment to held rather
--- than inserted fresh: purchases_live_lot_idx allows one live purchase per lot, so a second row on
--- the same lot is a duplicate key and the rest of the file never runs.
-update purchases set payment_status = 'held'
- where lot_id = 'a1000000-0000-0000-0000-000000000002'
-   and patron_id = 'c1000000-0000-0000-0000-000000000001';
-
+-- It is the second purchase in the fixtures at the top, still requires_payment when it is ticked.
+-- Ticked and unpaid, it stays off the page: the view shows only what was actually paid for (held,
+-- released or partially refunded), and this is the one assertion that holds that filter, so a
+-- later rewrite of the view cannot drop it quietly. The backing arm of the union has no fixture
+-- here and is not asserted.
 insert into patron_profile_items (profile_id, purchase_id)
   select '11111111-1111-1111-1111-111111111111', id from purchases
    where lot_id = 'a1000000-0000-0000-0000-000000000002'
      and patron_id = 'c1000000-0000-0000-0000-000000000001';
+
+select is_empty('select * from public_patron_activity',
+  'a ticked placement that was never paid for stays off the page');
+
+-- Then paid for. Moved from requires_payment to held rather than inserted fresh:
+-- purchases_live_lot_idx allows one live purchase per lot, so a second row on the same lot is a
+-- duplicate key and the rest of the file never runs.
+update purchases set payment_status = 'held'
+ where lot_id = 'a1000000-0000-0000-0000-000000000002'
+   and patron_id = 'c1000000-0000-0000-0000-000000000001';
 
 select is((select count(*)::int from public_patron_activity), 1,
   'a placement bought in the open, and ticked, is the one thing on the page');
