@@ -220,24 +220,31 @@ select option { background: var(--ground); color: var(--ink); }
 .stage-lights > .lamp {
   position: absolute; top: -6vh; width: 56vw; height: 150vh; margin-left: -28vw;
   transform-origin: 50% 0;
-  will-change: transform;
 }
 .stage-lights .swing {
   position: absolute; inset: 0; transform-origin: 50% 0;
   animation: sway var(--sway, 10s) ease-in-out infinite alternate;
-  will-change: transform;
 }
+/*
+  The cone's soft edge is a conic mask struck from the lamp itself, not a blur. A 22px blur on a
+  layer 56vw wide and 150vh tall has to be re-rastered every time the rig turns, which is most
+  frames on a page that is always swaying; the mask rasterises once and the swing then costs
+  nothing but a composited transform. The opaque core of the mask is the 14 degrees either side of
+  straight down that the old polygon cut, so the cone keeps its width, and the seven degrees past
+  that are the soft edge the blur used to give it. The gradient carries the falloff down the beam.
+*/
 .stage-lights .beam {
   position: absolute; inset: 0;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 13%, transparent) 14%,
     color-mix(in srgb, var(--accent) 9%, transparent) 30%,
     color-mix(in srgb, var(--accent) 3%, transparent) 62%,
     transparent 88%
   );
-  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
-  filter: blur(22px);
+  -webkit-mask-image: conic-gradient(from 159deg at 50% 0%, transparent 0deg, #000 7deg, #000 35deg, transparent 42deg);
+  mask-image: conic-gradient(from 159deg at 50% 0%, transparent 0deg, #000 7deg, #000 35deg, transparent 42deg);
   animation: flicker var(--flicker, 9s) linear infinite;
 }
 .stage-lights .lens {
@@ -260,7 +267,6 @@ select option { background: var(--ground); color: var(--ink); }
   background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 14%, transparent) 0%, color-mix(in srgb, var(--accent) 5%, transparent) 40%, transparent 70%);
   transform: translateX(calc(var(--p) * 22vw));
   animation: pool-breathe 7s ease-in-out infinite alternate;
-  will-change: transform;
 }
 /* A thin haze drifting through the room, so the beams have something to light. */
 .stage-lights > .haze {
@@ -269,7 +275,6 @@ select option { background: var(--ground); color: var(--ink); }
     radial-gradient(ellipse 55% 45% at 28% 68%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 65%),
     radial-gradient(ellipse 45% 40% at 74% 28%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
   animation: haze-drift 26s ease-in-out infinite alternate;
-  will-change: transform;
 }
 @keyframes sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
 @keyframes lens-breathe { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.14); } }
@@ -344,6 +349,16 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
   transform-origin: 66% 48%;
 }
 /*
+  The swell in the light rides on a second copy of the bloom fading in over the first. Animating
+  `filter: brightness()` instead would repaint the whole gradient every frame for eleven seconds
+  at a time, on every page; opacity is handed to the compositor and costs nothing.
+*/
+.hero-art > .bloom::after {
+  content: ""; position: absolute; inset: 0;
+  background: inherit;
+  animation: bloom-swell 11s ease-in-out infinite alternate;
+}
+/*
   A photograph is pulled into the room's color rather than the other way round: the image goes to
   grayscale and drops in brightness, a layer of the accent colors its tones, and the bloom keeps
   nearly its full strength on top. The room stays the same color whether or not a photo is there.
@@ -354,17 +369,24 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
 /* The light dies out before the bottom edge, so a hero never ends in a hard line. */
 .hero-art > .fade { position: absolute; inset: auto 0 0 0; height: 160px; background: linear-gradient(180deg, transparent, var(--ground)); }
 .hero-art > .flutes {
-  position: absolute; inset: 0 0 0 26%;
-  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 1px, rgba(255, 255, 255, 0.07) 1px 2px, transparent 2px 7px);
+  position: absolute; inset: 0 0 0 26%; overflow: hidden;
   -webkit-mask-image: radial-gradient(ellipse 58% 78% at 66% 48%, #000 15%, transparent 85%);
   mask-image: radial-gradient(ellipse 58% 78% at 66% 48%, #000 15%, transparent 85%);
+}
+/*
+  The lines carry the drift themselves, on a transform. Sliding `background-position` repaints the
+  pattern and re-applies the mask above every frame; the mask stays on the parent so it holds still
+  while the lines move under it. The pattern is extended a step to the left and travels 28px, four
+  whole periods of the 7px repeat, so both ends of the drift sit on the same phase.
+*/
+.hero-art > .flutes::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -28px; right: 0;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 1px, rgba(255, 255, 255, 0.07) 1px 2px, transparent 2px 7px);
   animation: flutes-drift 18s linear infinite alternate;
 }
-@keyframes flutes-drift { from { background-position: 0 0; } to { background-position: 28px 0; } }
-@keyframes breathe {
-  from { transform: scale(1); filter: brightness(1); }
-  to { transform: scale(1.06); filter: brightness(1.12); }
-}
+@keyframes flutes-drift { from { transform: translateX(0); } to { transform: translateX(28px); } }
+@keyframes breathe { from { transform: scale(1); } to { transform: scale(1.06); } }
+@keyframes bloom-swell { from { opacity: 0; } to { opacity: 0.16; } }
 @media (max-width: 860px) {
   /* On a phone the light sits in the top-right corner, above the words, and stays dim. */
   .hero-art { opacity: 0.55; }
