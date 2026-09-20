@@ -9,20 +9,15 @@ import { Theme } from "@/components/Theme";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
 import { musicSurfaces } from "@/lib/catalog";
-import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { periodOf } from "@/lib/periods";
-import type { Board } from "@/lib/sample";
+import { fundraiserLine } from "@/lib/periods";
+import { organizerLabel } from "@/lib/categories";
 import { HOUSE_RULES, SITE } from "@/lib/site";
 import { runPath } from "@/lib/urls";
 
 const HOME_SURFACES = ["kick_head", "case_sticker", "strap", "tip_jar_card", "merch_runner", "posts_email"];
 
-const KIND: Record<Board["act"]["type"], (city: string) => string> = {
-  touring_band: () => "Band, touring",
-  house_act: (city) => `House act, ${city}`,
-  soloist: (city) => `Soloist, gigging ${city}`,
-};
+
 
 /*
   The page runs in this order: the idea, the musicians raising now, how it works for each side,
@@ -94,10 +89,10 @@ export default async function HomePage() {
                   style={{ "--i": i } as CSSProperties}
                   className="lift flex flex-col gap-3 bg-ground p-7 text-ink no-underline"
                 >
-                  <span className="caps text-[14px] text-accent-ink">{KIND[b.act.type](b.act.city)}</span>
+                  <span className="caps text-[14px] text-accent-ink">{organizerLabel(b.run.categoryKey, b.act.type, b.act.city)}</span>
                   <span className="heading text-[clamp(24px,2.6vw,30px)] leading-[1.05]">{b.act.name}</span>
                   <span className="caps text-[14px] leading-[1.7] text-muted">
-                    {b.run.title}. {b.run.showCount} {periodOf(b.run.kind).units}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
+                    {fundraiserLine(b.run)}
                   </span>
                   <span className="mt-2 flex flex-wrap gap-x-7 gap-y-3 border-t border-line pt-4">
                     <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />

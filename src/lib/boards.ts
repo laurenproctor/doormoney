@@ -5,23 +5,34 @@ import { SAMPLE_BOARDS, type Backer, type Board, type BoardLot } from "@/lib/sam
 const configured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const ACT_COLUMNS = "id,slug,name,type,city,bio,photo_url,instagram,website";
-const RUN_COLUMNS = "id,slug,title,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other";
+const RUN_COLUMNS = "id,slug,title,category_key,kind,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other,purpose,audience_description,sponsor_promise";
 
-type ActRow = { id: string; slug: string; name: string; type: Board["act"]["type"]; city: string; bio: string | null; photo_url: string | null; instagram: string | null; website: string | null };
+type ActRow = { id: string; slug: string; name: string; type: Board["act"]["type"]; city: string | null; bio: string | null; photo_url: string | null; instagram: string | null; website: string | null };
 type RunRow = {
   id: string;
   slug: string;
   title: string;
-  kind: string;
-  starts_on: string;
-  ends_on: string;
-  show_count: number;
+  category_key: string;
+  kind: string | null;
+  starts_on: string | null;
+  ends_on: string | null;
+  show_count: number | null;
   expected_attendance: number | null;
   bidding_closes_at: string | null;
   status: string;
   verification_methods: string[] | null;
   verification_other: string | null;
+  purpose: string | null;
+  audience_description: string | null;
+  sponsor_promise: string | null;
 };
+
+/**
+ * A music act has to carry its act type: the whole music board is drawn from it. No other category
+ * has one, so requiring it everywhere is what used to turn a published theater fundraiser into a
+ * 404 rather than a page.
+ */
+const actFits = (actRow: ActRow, categoryKey: string) => categoryKey !== "music" || actRow.type !== null;
 
 /**
  * One public board: an act, and one of its runs.
@@ -39,7 +50,7 @@ export async function getBoard(slug: string, runSlug?: string): Promise<Board | 
 
   const sb = await supabaseServer();
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).single();
-  if (!actRow || !actRow.type) return null;
+  if (!actRow) return null;
 
   // A named run is served whether it is open, live or already closed, so a link that went out on a
   // poster still lands on the fundraiser it named. Without a name, only a running one will do.
@@ -47,12 +58,13 @@ export async function getBoard(slug: string, runSlug?: string): Promise<Board | 
   const { data: run } = runSlug
     ? await query.eq("slug", runSlug).in("status", ["open", "live", "closed"]).maybeSingle()
     : await query.in("status", ["open", "live"]).order("starts_on", { ascending: false }).limit(1).maybeSingle();
-  if (!run) return runSlug ? null : { act: shapeAct(actRow as ActRow), run: null as never, lots: [] };
+  if (!run) return runSlug || !actRow.type ? null : { act: shapeAct(actRow as ActRow), run: null as never, lots: [] };
+  if (!actFits(actRow as ActRow, (run as RunRow).category_key)) return null;
 
   return shapeBoard(sb, actRow as ActRow, run as RunRow);
 }
 
-export type ActRun = { slug: string; title: string; kind: string; startsOn: string; endsOn: string; showCount: number; status: string };
+export type ActRun = { slug: string; title: string; categoryKey: string; kind: string | null; startsOn: string | null; endsOn: string | null; showCount: number | null; status: string };
 export type ActProfile = { act: Board["act"]; running: ActRun[]; past: ActRun[] };
 
 /**
@@ -64,30 +76,33 @@ export async function getActProfile(slug: string): Promise<ActProfile | null> {
     const sample = SAMPLE_BOARDS[slug];
     if (!sample) return null;
     const r = sample.run;
-    return { act: sample.act, running: r ? [{ slug: r.slug, title: r.title, kind: r.kind, startsOn: r.startsOn, endsOn: r.endsOn, showCount: r.showCount, status: "open" }] : [], past: [] };
+    return { act: sample.act, running: r ? [{ slug: r.slug, title: r.title, categoryKey: r.categoryKey, kind: r.kind, startsOn: r.startsOn, endsOn: r.endsOn, showCount: r.showCount, status: "open" }] : [], past: [] };
   }
 
   const sb = await supabaseServer();
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).maybeSingle();
-  if (!actRow || !actRow.type) return null;
+  if (!actRow) return null;
 
   const { data: rows } = await sb
     .from("runs")
-    .select("slug,title,kind,starts_on,ends_on,show_count,status")
+    .select("slug,title,category_key,kind,starts_on,ends_on,show_count,status")
     .eq("act_id", (actRow as ActRow).id)
     .in("status", ["open", "live", "closed"])
     .order("starts_on", { ascending: false });
 
-  type Row = { slug: string; title: string; kind: string; starts_on: string; ends_on: string; show_count: number; status: string };
+  type Row = { slug: string; title: string; category_key: string; kind: string | null; starts_on: string | null; ends_on: string | null; show_count: number | null; status: string };
   const runs: ActRun[] = ((rows ?? []) as Row[]).map((r) => ({
     slug: r.slug,
     title: r.title,
+    categoryKey: r.category_key,
     kind: r.kind,
     startsOn: r.starts_on,
     endsOn: r.ends_on,
     showCount: r.show_count,
     status: r.status,
   }));
+
+  if (!actRow.type && runs.length === 0) return null;
 
   return {
     act: shapeAct(actRow as ActRow),
@@ -108,10 +123,12 @@ export async function getOwnedRunBoard(runId: string, actId: string): Promise<Bo
 
   const sb = await supabaseServer();
   const { data: run } = await sb.from("runs").select(RUN_COLUMNS).eq("id", runId).eq("act_id", actId).maybeSingle();
-  if (!run || !run.kind || !run.starts_on || !run.ends_on || run.show_count === null) return null;
+  if (!run) return null;
+  // Music cannot preview a board it has not filled in; its whole page is drawn from these.
+  if (run.category_key === "music" && (!run.kind || !run.starts_on || !run.ends_on || run.show_count === null)) return null;
 
   const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("id", actId).maybeSingle();
-  if (!actRow || !actRow.type) return null;
+  if (!actRow || !actFits(actRow as ActRow, run.category_key)) return null;
 
   return shapeBoard(sb, actRow as ActRow, run as RunRow);
 }
@@ -190,6 +207,7 @@ async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Prom
       id: run.id,
       slug: run.slug,
       title: run.title,
+      categoryKey: run.category_key,
       kind: run.kind,
       startsOn: run.starts_on,
       endsOn: run.ends_on,
@@ -199,6 +217,9 @@ async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Prom
       status: run.status,
       verificationMethods: run.verification_methods ?? [],
       verificationOther: run.verification_other,
+      purpose: run.purpose,
+      audienceDescription: run.audience_description,
+      sponsorPromise: run.sponsor_promise,
     },
     lots: shaped,
     backers,

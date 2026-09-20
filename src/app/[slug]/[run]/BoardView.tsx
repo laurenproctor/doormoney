@@ -11,7 +11,8 @@ import { CATALOG } from "@/lib/catalog";
 import { clockOf, closeStamp, formatDateRange, weekdayOf } from "@/lib/dates";
 import { instagramHandle, instagramUrl, safeWebsite, websiteLabel } from "@/lib/links";
 import { formatMoney } from "@/lib/money";
-import { periodOf } from "@/lib/periods";
+import { fundraiserLine, periodOf } from "@/lib/periods";
+import { organizerNoun } from "@/lib/categories";
 import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
 import type { Board } from "@/lib/sample";
 import { BoardLots, type LotView } from "./BoardLots";
@@ -49,8 +50,9 @@ export function BoardView({
   const theme = themeFor(slug);
   // The period by name, never "the run": docs/DECISIONS.md, decision 14.
   const period = periodOf(run.kind);
+  const music = run.categoryKey === "music";
   const season = run.kind === "season";
-  const noun = act.type === "soloist" ? "The musician" : "The band";
+  const noun = music ? (act.type === "soloist" ? "The musician" : "The band") : `The ${organizerNoun(run.categoryKey)}`;
   const auction = board.lots.some((l) => l.mode === "auction");
   const closesAt = run.biddingClosesAt;
   const closeDay = closesAt ? weekdayOf(closesAt) : null;
@@ -59,9 +61,14 @@ export function BoardView({
   const closesLabel = closesAt ? `${auction ? "bidding" : "listing"} closes ${closeDay}, ${clockOf(closesAt)}` : "no close time set";
   // The commercial context first, from the fundraiser itself; the bio's personality follows it.
   const plural = act.type !== "soloist";
-  const lead = season
-    ? `${act.name} is playing ${article(run.showCount)} ${run.showCount}-gig ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}, carrying the same case and stand into every room.`
-    : `${act.name} ${plural ? "are" : "is"} taking ${article(run.showCount)} ${run.showCount}-show ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}${
+  // Music's gate requires a show count before a board can go public, so this is never the fallback
+  // on a page a reader can reach; it is here because the column is nullable for everybody else.
+  const shows = run.showCount ?? 0;
+  const lead = !music
+    ? (run.purpose ?? "")
+    : season
+    ? `${act.name} is playing ${article(shows)} ${shows}-gig ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}, carrying the same case and stand into every room.`
+    : `${act.name} ${plural ? "are" : "is"} taking ${article(shows)} ${shows}-show ${run.title.toLowerCase()}, ${formatDateRange(run.startsOn, run.endsOn)}${
         run.expectedAttendance ? `, putting roughly ${run.expectedAttendance.toLocaleString("en-US")} people in front of the same stage setup` : ""
       }.`;
   const showBackers = slug === "rosie-bassoon";
@@ -100,7 +107,7 @@ export function BoardView({
   });
 
   const facts: [string, string][] = [
-    [String(run.showCount), period.counted],
+    ...(run.showCount !== null ? [[String(run.showCount), period.counted] as [string, string]] : []),
     ...(run.expectedAttendance ? [[`~${run.expectedAttendance.toLocaleString("en-US")}`, "expected attendance"] as [string, string]] : []),
     [String(openSpots(board)), "sponsorship options open"],
   ];
@@ -128,10 +135,16 @@ export function BoardView({
             <Eyebrow className="mb-7">{draft && !draft.published ? "Draft fundraiser" : "Open fundraiser"}</Eyebrow>
             <h1 className={`display max-w-[14ch] leading-[0.98] ${act.name.length > 14 ? "text-[clamp(40px,7vw,92px)]" : "text-[clamp(48px,8.4vw,108px)]"}`}>{act.name}</h1>
             <p className="caps mt-6 text-[14.5px] leading-[2]">
-              {run.title}. {run.showCount} {period.units}, {formatDateRange(run.startsOn, run.endsOn)}. {act.city}.
+              {fundraiserLine(run)}{act.city ? ` ${act.city}.` : ""}
             </p>
-            <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>
+            {lead && <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>}
             {act.bio && <p className="mt-5 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
+            {!music && (run.audienceDescription || run.sponsorPromise) && (
+              <p className="mt-5 max-w-[58ch] text-[16px] leading-[1.55] text-muted">
+                {run.audienceDescription && <>Who it reaches: {run.audienceDescription}{" "}</>}
+                {run.sponsorPromise && <>What a sponsor receives: {run.sponsorPromise}</>}
+              </p>
+            )}
             {(website || handle) && (
               <p className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[14.5px]">
                 {website && (
@@ -187,10 +200,11 @@ export function BoardView({
         <PlacementVerification
           actName={act.name}
           runTitle={run.title}
+          categoryKey={run.categoryKey}
           verification={{ methods: run.verificationMethods ?? [], other: run.verificationOther ?? null }}
         />
 
-        <div id="fans" className="border-t border-line py-16">
+        {music && <div id="fans" className="border-t border-line py-16">
           <div className="mx-auto grid max-w-[1120px] items-start gap-12 px-7 md:grid-cols-[1fr_400px]">
             <div>
               <Eyebrow className="mb-5">Fans</Eyebrow>
@@ -210,7 +224,7 @@ export function BoardView({
             </div>
             <WidgetFrame slug={slug} actName={act.name} source="board" theme={theme} />
           </div>
-        </div>
+        </div>}
 
         {showBackers && <RosieBackers />}
 
@@ -222,10 +236,18 @@ export function BoardView({
               marked
               lines={[
                 "The winning bidder puts the money up within 48 hours, or the spot goes to the next bid.",
-                `${noun} approves the logo. The musician always has the final say.`,
-                `${noun} plays the ${period.noun} it was already playing.`,
-                `The money reaches ${noun.toLowerCase()} week by week as the ${period.noun} goes on.`,
-                `End of the ${period.noun}, the sponsor gets a record of it: every ${period.unit}, every room, the attendance count.`,
+                music
+                  ? `${noun} approves the logo. The musician always has the final say.`
+                  : `${noun} approves the sponsor's materials. The organizer always has the final say.`,
+                music
+                  ? `${noun} plays the ${period.noun} it was already playing.`
+                  : `${noun} delivers the placement it described.`,
+                music
+                  ? `The money reaches ${noun.toLowerCase()} week by week as the ${period.noun} goes on.`
+                  : `The money reaches ${noun.toLowerCase()} week by week.`,
+                music
+                  ? `End of the ${period.noun}, the sponsor gets a record of it: every ${period.unit}, every room, the attendance count.`
+                  : "At the end, the sponsor gets a record of the sponsorship and whatever was documented for it.",
               ]}
             />
           </div>

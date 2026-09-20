@@ -18,6 +18,19 @@ export async function draftCategories(): Promise<FundraiserCategory[]> {
   return data as FundraiserCategory[];
 }
 
+/**
+ * Whether a category may leave draft status, from the registry rather than from a list in code.
+ *
+ * Unknown categories and categories nobody has turned on answer false, so the safe reading is the
+ * default one. Migration 0041 asks the same question again in the trigger.
+ */
+export async function categoryStatus(key: string): Promise<{ label: string; publishEnabled: boolean }> {
+  await requireUser("/dashboard");
+  const sb = await supabaseServer();
+  const { data } = await sb.from("fundraiser_categories").select("label,publish_enabled").eq("key", key).maybeSingle();
+  return { label: data?.label ?? "Fundraiser", publishEnabled: data?.publish_enabled === true };
+}
+
 export async function loadFundraiserDraft(id: string): Promise<FundraiserDraft | null> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);

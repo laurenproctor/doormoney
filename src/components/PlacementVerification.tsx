@@ -16,12 +16,15 @@ export function PlacementVerification({
   actName,
   runTitle,
   verification,
+  categoryKey,
 }: {
   actName: string;
   runTitle: string;
+  /** Which category's words to use. The stored keys are the same in every category. */
+  categoryKey: string;
   verification: Partial<VerificationChoice> | null | undefined;
 }) {
-  const items = verificationItems(verification);
+  const items = verificationItems(verification, categoryKey);
   if (items.length === 0) return null;
 
   return (

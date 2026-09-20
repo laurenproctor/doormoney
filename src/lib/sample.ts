@@ -31,8 +31,10 @@ export interface Board {
   act: {
     slug: string;
     name: string;
-    type: "touring_band" | "house_act" | "soloist";
-    city: string;
+    /** A music act's kind. Null for an organizer outside music, which has no act type. */
+    type: "touring_band" | "house_act" | "soloist" | null;
+    /** Null where the organizer has not given one. Nobody gets an invented city. */
+    city: string | null;
     bio: string | null;
     photoUrl?: string | null;
     /** As the musician typed them. Both are sanitised in src/lib/links.ts before they reach an href. */
@@ -44,11 +46,18 @@ export interface Board {
     /** The run's own word. The path adds "support-" in front of it (src/lib/urls.ts). */
     slug: string;
     title: string;
-    kind: string;
-    startsOn: string;
-    endsOn: string;
-    showCount: number;
+    /** Which category this fundraiser belongs to. Every board built before them is music. */
+    categoryKey: string;
+    /** Music's performance format, and its dates and count. All null outside music. */
+    kind: string | null;
+    startsOn: string | null;
+    endsOn: string | null;
+    showCount: number | null;
     expectedAttendance: number | null;
+    /** What the funding enables, who it reaches, what a sponsor receives. The shared gate. */
+    purpose?: string | null;
+    audienceDescription?: string | null;
+    sponsorPromise?: string | null;
     biddingClosesAt: string | null;
     /** Only set when the board came from the database. The samples are always open. */
     status?: string;
@@ -76,6 +85,7 @@ export const SAMPLE_BOARDS: Record<string, Board> = {
     run: {
       slug: "fall-run",
       title: "Fall run",
+      categoryKey: "music",
       kind: "tour",
       startsOn: "2026-10-03",
       endsOn: "2026-11-02",
@@ -110,6 +120,7 @@ export const SAMPLE_BOARDS: Record<string, Board> = {
     run: {
       slug: "fall-season",
       title: "Fall season",
+      categoryKey: "music",
       kind: "season",
       startsOn: "2026-09-15",
       endsOn: "2026-12-20",

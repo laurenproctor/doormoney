@@ -1,5 +1,5 @@
 /**
- * Placement verification: what a musician says patrons will get back from a run.
+ * Placement verification: what an organizer says sponsors will get back from a fundraiser.
  *
  * One list, read by the dashboard editor, the server action, the readiness checklist and the
  * public board, so the words on the board are the words the musician ticked. The keys are stored
@@ -8,6 +8,11 @@
  *
  * Nothing here promises documentation from every show, and nothing here says Door Money checked
  * anything. See CLAUDE.md, "No invented proof", and docs/DECISIONS.md, decision 9.
+ *
+ * Every category picks from the same list, and the stored keys never change: a method means the
+ * same promise whoever makes it. Only the sentence changes, because a theater company does not
+ * play shows and a team does not play nights. Category-specific evidence rules are Phase 4; this
+ * is the wording, not a new commitment.
  */
 import { z } from "zod";
 
@@ -24,6 +29,41 @@ export interface VerificationMethod {
   note: string;
 }
 
+/**
+ * The same method in another category's words. A category with nothing to say here keeps music's
+ * sentence, which is the right answer wherever the two really do describe the same thing.
+ */
+type Rewording = Partial<Record<string, { label?: string; note?: string }>>;
+
+const WORDS: Record<string, Rewording> = {
+  sports: {
+    selected_show_photos: { label: "Dated photos from selected fixtures", note: "Photos from some of the fixtures, each carrying its date." },
+    venue_date_record: { label: "Venue and fixture-date list", note: "The grounds played and the day each fixture was played." },
+    attendance_estimates: { note: "A rough headcount for the fixtures." },
+    social_post_links: { note: "Links to the posts the sponsor appeared in." },
+    short_video: { label: "Short matchday or training video", note: "One clip from a fixture, or from the session before it." },
+    end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
+    other: { note: "Something else, in the team's own words." },
+  },
+  film: {
+    selected_show_photos: { label: "Dated photos from selected shoot days", note: "Photos from some of the days on set, each carrying its date." },
+    venue_date_record: { label: "Location and screening-date list", note: "Where the work was shot or shown, and when." },
+    attendance_estimates: { note: "A rough headcount for the screenings." },
+    social_post_links: { note: "Links to the posts the sponsor appeared in." },
+    short_video: { label: "Short on-set or screening video", note: "One clip from the set, or from a screening." },
+    end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
+    other: { note: "Something else, in the filmmaker's own words." },
+  },
+  theater: {
+    selected_show_photos: { label: "Dated photos from selected performances", note: "Photos from some of the performances, each carrying its date." },
+    attendance_estimates: { note: "A rough headcount for the performances." },
+    social_post_links: { note: "Links to the posts the sponsor appeared in." },
+    short_video: { note: "One clip from a performance, or from the hour before it." },
+    end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
+    other: { note: "Something else, in the company's own words." },
+  },
+};
+
 export const VERIFICATION_METHODS: readonly VerificationMethod[] = [
   { key: "selected_show_photos", label: "Dated photos from selected shows", note: "Photos from some of the shows, each carrying its date." },
   { key: "venue_date_record", label: "Venue and performance-date list", note: "The rooms played and the night each one was played." },
@@ -34,14 +74,24 @@ export const VERIFICATION_METHODS: readonly VerificationMethod[] = [
   { key: OTHER_KEY, label: "Another verification method", note: "Something else, in the musician's own words." },
 ] as const;
 
+/**
+ * The list as this category says it, in catalog order. An unknown category gets music's words,
+ * which are the words every stored method was chosen under.
+ */
+export function verificationMethods(categoryKey: string): readonly VerificationMethod[] {
+  const words = WORDS[categoryKey];
+  if (!words) return VERIFICATION_METHODS;
+  return VERIFICATION_METHODS.map((m) => ({ ...m, ...words[m.key] }));
+}
+
 const KEYS = new Set(VERIFICATION_METHODS.map((m) => m.key));
 
 export function isVerificationKey(key: string): boolean {
   return KEYS.has(key);
 }
 
-export function methodLabel(key: string): string | null {
-  return VERIFICATION_METHODS.find((m) => m.key === key)?.label ?? null;
+export function methodLabel(key: string, categoryKey: string): string | null {
+  return verificationMethods(categoryKey).find((m) => m.key === key)?.label ?? null;
 }
 
 /** What a run carries, as the database and the sample boards both hold it. */
@@ -61,11 +111,11 @@ export type VerificationItem = { key: string; label: string; detail?: string };
  * section does not belong on the page at all: an older run that predates this feature, or a draft
  * the musician has not answered yet.
  */
-export function verificationItems(choice: Partial<VerificationChoice> | null | undefined): VerificationItem[] {
+export function verificationItems(choice: Partial<VerificationChoice> | null | undefined, categoryKey: string): VerificationItem[] {
   const selected = new Set(choice?.methods ?? []);
   const other = choice?.other?.trim() || null;
   const items: VerificationItem[] = [];
-  for (const m of VERIFICATION_METHODS) {
+  for (const m of verificationMethods(categoryKey)) {
     if (!selected.has(m.key)) continue;
     // "Another verification method" with nothing written in says nothing, so it stays off the board.
     if (m.key === OTHER_KEY) {
@@ -78,8 +128,9 @@ export function verificationItems(choice: Partial<VerificationChoice> | null | u
   return items;
 }
 
+/** Whether anything was chosen. The words differ by category; whether a key is set does not. */
 export function hasVerification(choice: Partial<VerificationChoice> | null | undefined): boolean {
-  return verificationItems(choice).length > 0;
+  return verificationItems(choice, "music").length > 0;
 }
 
 /**

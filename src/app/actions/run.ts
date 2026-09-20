@@ -9,6 +9,7 @@ import { workRefundQueue } from "@/lib/outbox";
 import { stripeConfigured } from "@/lib/stripe";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { publishBlockers } from "@/lib/readiness";
+import { categoryStatus } from "@/app/actions/drafts";
 import { slugify } from "@/lib/slug";
 import { actPath, runPath } from "@/lib/urls";
 
@@ -153,7 +154,7 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
   const sb = await supabaseServer();
   const { data: run } = await sb
     .from("runs")
-    .select("id,status,category_key,title,starts_on,ends_on,show_count,bidding_closes_at,verification_methods,verification_other")
+    .select("id,status,category_key,title,starts_on,ends_on,show_count,bidding_closes_at,verification_methods,verification_other,purpose,audience_description,sponsor_promise")
     .eq("id", runId)
     .eq("act_id", act.id)
     .maybeSingle();
@@ -167,6 +168,7 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
     run: { ...run, methods: run.verification_methods ?? [], other: run.verification_other ?? null },
     lotCount: all.length,
     auctionCount: all.filter((l) => l.mode === "auction").length,
+    categoryPublishable: (await categoryStatus(run.category_key ?? "music")).publishEnabled,
   });
   if (blockers.length) return { ok: false, error: blockers.join(" ") };
 
