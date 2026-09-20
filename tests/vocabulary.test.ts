@@ -233,3 +233,38 @@ test("active product instructions preserve open category and geographic scope", 
   assert.ok(current, "decision 17 must remain available");
   assert.equal(restrictedContract(current), false, "decision 17");
 });
+
+/*
+  The patron and sponsor profile surfaces are shared: a person, a business or a nonprofit reaches
+  them, supporting any category, so the category is never known there. Music wording stays valid
+  where the fundraiser is music; these are the pages where it cannot be assumed. Phrases rather
+  than words, because "musician" is still the right word beside a music fundraiser.
+*/
+const SHARED_PROFILE_SURFACES = [
+  "src/components/ProfileForms.tsx",
+  "src/app/dashboard/profile/page.tsx",
+  "src/app/patron/[username]/page.tsx",
+  "src/app/patron/page.tsx",
+];
+const ASSUMES_MUSIC_OR_A_CITY = [
+  /music preferences/i,
+  /musical interests/i,
+  /musicians? supported/i,
+  /back a musician/i,
+  /behind (the music|musicians|working musicians)/i,
+  /waiting on the musician/i,
+  /the musician (page|address)/i,
+  /listening for/i,
+  /\b(brooklyn|new york|nyc)\b/i,
+];
+
+test("no shared profile surface assumes music or a city", () => {
+  const found: string[] = [];
+  for (const file of SHARED_PROFILE_SURFACES) {
+    const lines = readFileSync(path.join(ROOT, file), "utf8").split("\n");
+    lines.forEach((line, i) => {
+      for (const phrase of ASSUMES_MUSIC_OR_A_CITY) if (phrase.test(line)) found.push(`${file}:${i + 1} ${line.trim()}`);
+    });
+  }
+  assert.deepEqual(found, []);
+});

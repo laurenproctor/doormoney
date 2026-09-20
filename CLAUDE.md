@@ -24,7 +24,7 @@ Shared language describes the exchange; category language describes the work. De
 - **Deliverable**: a specific promised action or appearance, with a due date or delivery window. **Evidence** documents that delivery; it is not a Door Money certification.
 - **Logo**: a sponsor's name or logo for an offer that needs it. Some offers need other materials; logo approval must not become the universal definition of delivery.
 - **Record**: the sponsor's summary of the purchased offer, delivery, evidence, and payment outcomes. Keep Stripe receipts distinct from this record.
-- **Profile**: a page about an organizer or patron; name the kind when ambiguous. Existing music preferences remain music preferences and are not silently converted into broader interests.
+- **Profile**: a page about an organizer or patron; name the kind when ambiguous. A patron profile may be for a person or an organization (`profile_kind`, optional). The field once labeled "Music preferences" is labeled **Interests**; the stored values are kept exactly as typed and are never read as categories. The categories a patron supports are a separate answer (`patron_profile_categories`, migration 0043), so "Jazz" typed in 2026 is not a vote for music.
 - **Suggested prices**: template defaults. The organizer's chosen price wins.
 
 Door Money leads with relevant audiences, specified visibility, and meaningful support. It does not guarantee sales, audience growth, impressions, distribution, or outcomes it cannot substantiate. Sponsorship is the product's exchange; patronage expresses why that exchange can matter.

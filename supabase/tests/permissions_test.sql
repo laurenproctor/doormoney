@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(116);
+select plan(119);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -654,14 +654,18 @@ select set_eq(
   $$select column_name::text from information_schema.columns
      where table_schema = 'public' and table_name = 'public_patron_profiles'$$,
   $$values ('username'::text),('display_name'),('bio'),('location'),('website'),('interests'),
-           ('photo_path'),('patron_since'),('published_at')$$,
+           ('photo_path'),('patron_since'),('published_at'),
+           -- Migration 0043: what the patron is, where else to find them, the categories they support.
+           ('profile_kind'),('links'),('category_keys'),('category_labels')$$,
   'public_patron_profiles shows these columns and no others');
 
 select set_eq(
   $$select column_name::text from information_schema.columns
      where table_schema = 'public' and table_name = 'public_patron_activity'$$,
   $$values ('username'::text),('kind'),('act_name'),('act_slug'),('run_title'),('run_status'),
-           ('detail'),('supported_at')$$,
+           ('detail'),('supported_at'),
+           -- Migration 0043: the fundraiser's own category, already public on a published fundraiser.
+           ('category_key')$$,
   'public_patron_activity shows these columns and no others');
 
 -- And the rule behind the shape, so a rename cannot walk one back in.
@@ -751,6 +755,18 @@ update purchases set payment_status = 'held'
 select is((select count(*)::int from public_patron_activity), 1,
   'a placement bought in the open, and ticked, is the one thing on the page');
 select is((select kind from public_patron_activity), 'placement', 'and it reads as a placement');
+
+-- Migration 0043. The row names its fundraiser's own category, which every fundraiser built
+-- before the expansion has: music. And a profile made before 0043 is still a valid one: it says
+-- nothing about what kind of patron it is, links nowhere and supports no category it never chose.
+select is((select category_key from public_patron_activity), 'music',
+  'the activity carries the fundraiser''s category, and an existing fundraiser is music');
+select results_eq(
+  $$select profile_kind, links, category_keys, category_labels from public_patron_profiles$$,
+  $$values (null::text, '[]'::jsonb, '{}'::text[], '{}'::text[])$$,
+  'a profile from before 0043 is still valid, and was given no kind and no category it did not choose');
+select is_empty('select * from patron_profile_categories',
+  'no existing interest was turned into a category');
 
 select * from finish();
 rollback;
