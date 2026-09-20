@@ -87,7 +87,7 @@ function reset() {
   lotOutcome = { ok: true };
 }
 
-for (const name of ["payment_intent.succeeded", "checkout.session.completed"]) {
+for (const name of ["payment_intent.succeeded", "checkout.session.completed", "transfer.created"]) {
   test(`the ${name} fixture is a real delivery, recorded at the pinned API version`, () => {
     const event = fixture(name);
     assert.equal(event.object, "event");
@@ -178,4 +178,81 @@ test("a backing that cannot be fulfilled throws, so Stripe sends the event again
   intent(event).metadata = { kind: "backing", backing_id: "b1" };
 
   await assert.rejects(() => applyStripeEvent(noDatabase, event), /no such backing/);
+});
+
+/* ---------------------------------------------------------------------------------------------
+   transfer.created, the weekly slice to an act.
+
+   The payout job records its own transfer; this handler only catches a job that died between
+   creating the transfer and writing it down. It is the other place a field's shape decides what
+   lands in the database, because it turns transfer.created into paid_at.
+   --------------------------------------------------------------------------------------------- */
+
+const transfer = (event: Stripe.Event) => event.data.object as Stripe.Transfer;
+
+/** A Supabase client that remembers the writes asked of it and answers with `result`. */
+function recordingDb(result: { error: { message: string } | null } = { error: null }) {
+  const writes: { table: string; row: Record<string, unknown>; filters: Record<string, unknown> }[] = [];
+  const sb = {
+    from(table: string) {
+      const write = { table, row: {} as Record<string, unknown>, filters: {} as Record<string, unknown> };
+      const query = {
+        update(row: Record<string, unknown>) {
+          write.row = row;
+          writes.push(write);
+          return query;
+        },
+        eq(key: string, value: unknown) {
+          write.filters[key] = value;
+          return query;
+        },
+        then<T>(resolve: (value: typeof result) => T) {
+          return Promise.resolve(result).then(resolve);
+        },
+      };
+      return query;
+    },
+  };
+  return { sb: sb as unknown as SupabaseClient, writes };
+}
+
+test("a delivered transfer carries created, not the old date field", () => {
+  // The handler turns this into paid_at. Transfer was redefined in the 2017-05-25 version, when
+  // Stripe split Transfer from Payout, and the older object dated itself differently. If this
+  // fails, paid_at is about to become Invalid Date.
+  const t = transfer(fixture("transfer.created"));
+  assert.equal(typeof t.created, "number", "the transfer has no created timestamp: the endpoint is rendering an older shape");
+  assert.ok(!("date" in t), "the transfer carries the pre-2017 date field, so the endpoint has drifted off its pinned version");
+  assert.equal(t.object, "transfer");
+});
+
+test("a transfer Door Money did not schedule is ignored before the database is touched", async () => {
+  const event = fixture("transfer.created");
+  assert.deepEqual(transfer(event).metadata, {}, "fixture drifted: this transfer used to carry no metadata");
+
+  assert.equal(await applyStripeEvent(noDatabase, event), "ignored");
+});
+
+test("a transfer that names a payout marks that payout paid, at the transfer's own time", async () => {
+  const { sb, writes } = recordingDb();
+  const event = fixture("transfer.created");
+  transfer(event).metadata = { payout_id: "po1" };
+
+  assert.equal(await applyStripeEvent(sb, event), "processed");
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0]!.table, "payout_schedule");
+  assert.equal(writes[0]!.row.status, "paid");
+  assert.equal(writes[0]!.row.stripe_transfer_id, transfer(event).id);
+  // Not "now": the row says when the money actually moved.
+  assert.equal(writes[0]!.row.paid_at, new Date(transfer(event).created * 1000).toISOString());
+  // Only a slice still waiting, so a replay cannot repay one already settled.
+  assert.deepEqual(writes[0]!.filters, { id: "po1", status: "scheduled" });
+});
+
+test("a payout that cannot be written down throws, so Stripe sends the event again", async () => {
+  const { sb } = recordingDb({ error: { message: "connection reset" } });
+  const event = fixture("transfer.created");
+  transfer(event).metadata = { payout_id: "po1" };
+
+  await assert.rejects(() => applyStripeEvent(sb, event), /connection reset/);
 });

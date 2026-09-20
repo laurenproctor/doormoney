@@ -1,0 +1,40 @@
+{
+  "id": "evt_0UHfLZonpMh0CahVoiwvI7Hm",
+  "data": {
+    "object": {
+      "id": "tr_0UHfLYonpMh0CahVevpEHSJA",
+      "amount": 1000,
+      "object": "transfer",
+      "created": 1789889976,
+      "currency": "usd",
+      "livemode": false,
+      "metadata": {},
+      "reversed": false,
+      "reversals": {
+        "url": "/v1/transfers/tr_0UHfLYonpMh0CahVevpEHSJA/reversals",
+        "data": [],
+        "object": "list",
+        "has_more": false,
+        "total_count": 0
+      },
+      "description": null,
+      "destination": "acct_1UHfLWJiiWNhg0Fm",
+      "source_type": "card",
+      "transfer_group": null,
+      "amount_reversed": 0,
+      "source_transaction": null,
+      "balance_transaction": "txn_0UHfLYonpMh0CahV9sTmHzEM",
+      "destination_payment": "py_1UHfLYJiiWNhg0Fm9llmAhUZ"
+    }
+  },
+  "type": "transfer.created",
+  "object": "event",
+  "created": 1789889977,
+  "request": {
+    "id": "req_BhsKth7iBX8Rg1",
+    "idempotency_key": "274f23f8-c5d1-440c-bc8b-d5810a51bcca"
+  },
+  "livemode": false,
+  "api_version": "2026-08-26.dahlia",
+  "pending_webhooks": 1
+}
