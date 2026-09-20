@@ -6,6 +6,7 @@ import { hasRole } from "@/lib/roles";
 import { dashboardNav } from "@/lib/dashboardModel";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
+import { embedSnippet } from "@/lib/fundraiser-identity";
 import { actPath, runPath } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "On your site" };
@@ -27,20 +28,22 @@ export default async function DashboardWidgetPage() {
     redirect(hasRole(roles, "patron") && !hasRole(roles, "musician") && !hasRole(roles, "organizer") ? "/patron" : "/dashboard/act/new");
   }
 
-  // The button links at whichever fundraiser is running. With none, it points at the act's own
-  // page, which is the address that keeps working between fundraisers.
+  // A widget is for one exact fundraiser, so there is one line per open fundraiser and each names
+  // its own. The widget sells music's backing tiers, so only music fundraisers have one. The button
+  // links at whichever fundraiser is running; with none it points at the organizer's own page,
+  // which is the address that keeps working between fundraisers.
   const sb = await supabaseServer();
-  const { data: live } = await sb
+  const { data: openRuns } = await sb
     .from("runs")
-    .select("slug,starts_on")
+    .select("id,slug,title,category_key,starts_on")
     .eq("act_id", act.id)
     .in("status", ["open", "live"])
-    .order("starts_on", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("starts_on", { ascending: false });
+  const open = (openRuns ?? []) as { id: string; slug: string; title: string; category_key: string | null }[];
+  const live = open[0] ?? null;
+  const widgets = open.filter((r) => (r.category_key ?? "music") === "music").map((r) => ({ title: r.title, snippet: embedSnippet(SITE.url, act.slug, r.id) }));
 
   const target = live ? runPath(act.slug, live.slug) : actPath(act.slug);
-  const snippet = `<script src="${SITE.url}/embed.js" data-act="${act.slug}"></script>`;
   const buttonSrc = `${SITE.url}/badge/button.svg?act=${encodeURIComponent(act.name)}`;
   const buttonSnippet = `<a href="${SITE.url}${target}"><img src="${buttonSrc}" alt="Back ${act.name} on Door Money" height="44"></a>`;
 
@@ -52,7 +55,7 @@ export default async function DashboardWidgetPage() {
       eyebrow={act.city ?? "Organizer"}
       title="On your"
       accent="site"
-      intro={<p>Everything here points at your own page, so it keeps working between fundraisers.</p>}
+      intro={<p>The widget is for one fundraiser and takes money for that one only. The button points at your own page, so it keeps working between fundraisers.</p>}
     >
       <div className="grid gap-6">
         <Card>
@@ -61,13 +64,23 @@ export default async function DashboardWidgetPage() {
             Paste this where the widget should sit: an embed block, a code block, a footer. It shows the fundraiser, the
             backing tiers and a button, and takes the payment on the page.
           </p>
-          <pre className="edge max-w-full overflow-x-auto bg-ground p-4 font-mono text-[14.5px] leading-[1.6] text-ink">
-            <code>{snippet}</code>
-          </pre>
-          {!live && (
+          {widgets.map((w) => (
+            <div key={w.snippet} className="mb-4 last:mb-0">
+              {widgets.length > 1 && <p className="caps mb-2 text-[14px] text-accent-ink">{w.title}</p>}
+              <pre className="edge max-w-full overflow-x-auto bg-ground p-4 font-mono text-[14.5px] leading-[1.6] text-ink">
+                <code>{w.snippet}</code>
+              </pre>
+            </div>
+          ))}
+          {widgets.length === 0 ? (
+            <p className="max-w-[62ch] text-[14.5px] leading-[1.6] text-muted">
+              The line appears here once a music fundraiser is published. Each fundraiser gets its own, so a backing
+              always reaches the fundraiser your visitors were reading about.
+            </p>
+          ) : (
             <p className="mt-4 max-w-[62ch] text-[14.5px] leading-[1.6] text-muted">
-              Paste it now if you like. It fills in as soon as a fundraiser is published, so the line never has to
-              change.
+              Each line is for that fundraiser only. When it closes, the widget says so and takes no more backings.
+              A line you pasted before this page showed a fundraiser in it still works, and follows your current fundraiser.
             </p>
           )}
         </Card>

@@ -3,7 +3,7 @@ import { useActionState, useState, useTransition } from "react";
 import { saveLots, type LotsState } from "@/app/actions/lots";
 import { cancelRun, publishRun, unpublishRun } from "@/app/actions/run";
 import { Button } from "@/components/Button";
-import { GROUPS, type Surface, type SurfaceGroup } from "@/lib/catalog";
+import { templateSections, type OpportunityTemplate } from "@/lib/opportunities";
 import { formatMoney } from "@/lib/money";
 
 export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string; buy_now_cents: number | null };
@@ -14,9 +14,11 @@ const initial: LotsState = { ok: false };
 const dollars = (cents: number) => (cents / 100).toFixed(cents % 100 ? 2 : 0);
 
 /**
- * The standard card for this act type, each surface a row: on or off, how many spots,
- * the price, fixed or auction. Prices start at the card default; the act's number wins.
- * An auction spot can also carry a take-it-now price, which ends the bidding when someone pays it.
+ * The templates this fundraiser's category offers, each one a row: on or off, how many spots, the
+ * price, fixed price or bidding. A row that is off is not offered and appears nowhere public. A
+ * price box starts at the suggested price where there is one and empty where there is not; the
+ * organizer's number is the price either way.
+ * A bidding spot can also carry a take-it-now price, which ends the bidding when someone pays it.
  */
 export function LotsEditor({
   runId,
@@ -27,7 +29,7 @@ export function LotsEditor({
 }: {
   runId: string;
   runStatus: string;
-  surfaces: Surface[];
+  surfaces: OpportunityTemplate[];
   lots: ExistingLot[];
   boardHref: string;
 }) {
@@ -51,16 +53,18 @@ export function LotsEditor({
   const [publishing, startPublish] = useTransition();
   const onCount = Object.values(rows).filter((r) => r.on).length;
 
-  const groups = (Object.keys(GROUPS) as SurfaceGroup[]).map((g) => ({ g, items: surfaces.filter((s) => s.group === g) })).filter((x) => x.items.length);
+  // Sections come from the templates themselves, so a category this build has no words for still
+  // draws one, under its own name.
+  const groups = templateSections(surfaces);
 
   return (
     <>
       <form action={action} noValidate>
         <input type="hidden" name="run_id" value={runId} />
-        {groups.map(({ g, items }) => (
+        {groups.map(({ group: g, eyebrow, heading, items }) => (
           <div key={g} className="mb-8">
-            <p className="caps mb-1 text-[15px] text-accent-ink">{GROUPS[g].eyebrow}</p>
-            <p className="mb-3 max-w-none text-[15px] text-muted">{GROUPS[g].heading}</p>
+            <p className={`caps text-[15px] text-accent-ink ${heading ? "mb-1" : "mb-3"}`}>{eyebrow}</p>
+            {heading && <p className="mb-3 max-w-none text-[15px] text-muted">{heading}</p>}
             <div className="edge bg-panel">
               {items.map((s) => {
                 const r = rows[s.key];
@@ -81,8 +85,8 @@ export function LotsEditor({
                     <div>
                       <b className="block text-[15px]">{s.name}</b>
                       <span className="block text-[14px] text-muted">
-                        {s.defaultPriceCents !== null && <>Card price {formatMoney(s.defaultPriceCents)} per {s.period}. </>}
-                        Seen by {s.seenBy}.
+                        {s.defaultPriceCents !== null && <>Suggested price {formatMoney(s.defaultPriceCents)} per {s.period}. </>}
+                        {s.seenBy && <>Seen by {s.seenBy}.</>}
                       </span>
                     </div>
                     <label className="caps text-[14px]">
