@@ -1,0 +1,88 @@
+{
+  "id": "evt_2UHeLMonpMh0CahV1t91KmvY",
+  "data": {
+    "object": {
+      "id": "pi_2UHeLMonpMh0CahV1KP0nOv9",
+      "amount": 2000,
+      "object": "payment_intent",
+      "review": null,
+      "source": null,
+      "status": "succeeded",
+      "created": 1789886120,
+      "currency": "usd",
+      "customer": null,
+      "livemode": false,
+      "metadata": {},
+      "shipping": {
+        "name": "Jenny Rosen",
+        "phone": null,
+        "address": {
+          "city": "San Francisco",
+          "line1": "510 Townsend St",
+          "line2": null,
+          "state": "CA",
+          "country": "US",
+          "postal_code": "94103"
+        },
+        "carrier": null,
+        "tracking_number": null
+      },
+      "processing": null,
+      "application": null,
+      "canceled_at": null,
+      "description": "(created by Stripe CLI)",
+      "next_action": null,
+      "on_behalf_of": null,
+      "client_secret": "pi_2UHeLMonpMh0CahV1KP0nOv9_secret_fkRr221OT8xwceqALswWEbcFd",
+      "latest_charge": "ch_2UHeLMonpMh0CahV1exJFM3E",
+      "receipt_email": null,
+      "transfer_data": null,
+      "amount_details": {
+        "tip": {}
+      },
+      "capture_method": "automatic",
+      "payment_method": "pm_0UHeLMonpMh0CahVe0OvBmnv",
+      "payment_record": null,
+      "transfer_group": null,
+      "amount_received": 2000,
+      "customer_account": null,
+      "managed_payments": {
+        "enabled": false
+      },
+      "amount_capturable": 0,
+      "last_payment_error": null,
+      "setup_future_usage": null,
+      "cancellation_reason": null,
+      "confirmation_method": "automatic",
+      "payment_method_types": [
+        "card"
+      ],
+      "statement_descriptor": null,
+      "application_fee_amount": null,
+      "payment_method_options": {
+        "card": {
+          "network": null,
+          "installments": null,
+          "mandate_options": null,
+          "request_three_d_secure": "automatic"
+        }
+      },
+      "automatic_payment_methods": null,
+      "statement_descriptor_suffix": null,
+      "allowed_payment_method_types": null,
+      "shared_payment_granted_token": null,
+      "excluded_payment_method_types": null,
+      "payment_method_configuration_details": null
+    }
+  },
+  "type": "payment_intent.succeeded",
+  "object": "event",
+  "created": 1789886121,
+  "request": {
+    "id": "req_HY6m6R951AmniR",
+    "idempotency_key": "834e9bfb-492d-4ae6-b242-e0124ae0beb2"
+  },
+  "livemode": false,
+  "api_version": "2026-08-26.dahlia",
+  "pending_webhooks": 7
+}
