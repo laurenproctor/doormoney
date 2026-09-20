@@ -7,7 +7,7 @@ import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { dashboardLinks } from "@/lib/roles";
+import { dashboardNav } from "@/lib/dashboardModel";
 import { SITE } from "@/lib/site";
 import { actPath, bareActUrl } from "@/lib/urls";
 
@@ -22,7 +22,7 @@ export default async function AccountPage() {
   return (
     <DashboardShell
       current="/dashboard/account"
-      links={dashboardLinks({ hasAct: Boolean(act), roles })}
+      nav={dashboardNav({ hasAct: Boolean(act), roles })}
       actName={act?.name}
       eyebrow="The account"
       title="How this account"

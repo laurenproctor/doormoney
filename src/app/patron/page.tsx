@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/Button";
 import { requireUser, currentProfile, ownedAct } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { backedBy, type PlacedBid } from "@/lib/backed";
-import { dashboardLinks } from "@/lib/roles";
+import { dashboardNav } from "@/lib/dashboardModel";
 import { formatMoney } from "@/lib/money";
 import { actPath } from "@/lib/urls";
 
@@ -53,7 +53,7 @@ export default async function PatronPage() {
   return (
     <DashboardShell
       current="/patron"
-      links={dashboardLinks({ hasAct: Boolean(act), roles: profile?.roles ?? ["patron"] })}
+      nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? ["patron"] })}
       actName={act?.name ?? name}
       eyebrow="Backed by this account"
       title={name}

@@ -4,7 +4,7 @@ import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
 import { ActivityList, ProfileDetailsForm, PublishForm, UsernameForm } from "@/components/ProfileForms";
 import { currentProfile, ownedAct, requireUser } from "@/lib/auth";
 import { fullName } from "@/lib/names";
-import { dashboardLinks } from "@/lib/roles";
+import { dashboardNav } from "@/lib/dashboardModel";
 import { SITE } from "@/lib/site";
 import { formatDay, nextUsernameChange, usernameChangeAllowed } from "@/lib/profile";
 import { eligibleActivity, linkPatronRows, ownProfile, signedPhotoUrl } from "@/lib/patronprofile";
@@ -43,7 +43,7 @@ export default async function ProfileSettingsPage() {
   return (
     <DashboardShell
       current="/dashboard/profile"
-      links={dashboardLinks({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
+      nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
       actName={act?.name ?? fullName(profile)}
       eyebrow="The public profile"
       title="What the room"
