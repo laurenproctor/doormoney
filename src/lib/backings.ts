@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { tierPlace } from "@/lib/catalog";
 import { backingNotice, backingReceipt, sendEmail } from "@/lib/email";
+import { paymentBelongsToRow } from "@/lib/fundraiser-identity";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
@@ -51,6 +52,14 @@ export async function fulfilBacking(sb: Admin, pi: Stripe.PaymentIntent) {
   if (!id) return { ok: false as const, reason: "no backing id on payment intent" };
   const b = await loadBacking(sb, id);
   if (!b) return { ok: false as const, reason: "backing not found" };
+
+  // The backing row decides which fundraiser is paid, and the payment intent has always said which
+  // one it was started for. If they disagree nothing is written, held or scheduled: the event
+  // fails, stays visible in stripe_events, and a person looks. Checked before the "already" answer
+  // so a payment for fundraiser A is never reported as settled against fundraiser B's backing.
+  if (!paymentBelongsToRow(pi.metadata, b.runs.id)) {
+    return { ok: false as const, reason: `fundraiser mismatch: the payment names ${pi.metadata?.run_id}, the backing is on ${b.runs.id}` };
+  }
   if (b.payment_status !== "requires_payment") return { ok: true as const, already: true };
 
   const { data: updated, error } = await sb
@@ -91,5 +100,8 @@ export async function fulfilBacking(sb: Admin, pi: Stripe.PaymentIntent) {
 export async function dropBacking(sb: Admin, pi: Stripe.PaymentIntent) {
   const id = pi.metadata?.backing_id;
   if (!id) return;
-  await sb.from("backings").delete().eq("id", id).eq("payment_status", "requires_payment");
+  // Only ever the unpaid row this intent was made for, on the fundraiser it was made for.
+  const runId = pi.metadata?.run_id;
+  const drop = sb.from("backings").delete().eq("id", id).eq("payment_status", "requires_payment");
+  await (runId ? drop.eq("run_id", runId) : drop);
 }

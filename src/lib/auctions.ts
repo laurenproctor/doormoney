@@ -232,6 +232,7 @@ async function chargeWinner(sb: Admin, lot: LotRow, bid: BidRow, offer: Offer): 
     const pi = await chargeSavedCard({
       purchaseId: purchase.id as string,
       lotId: lot.id,
+      runId: lot.runs.id,
       actId: lot.runs.acts.id,
       actSlug: lot.runs.acts.slug,
       customerId,

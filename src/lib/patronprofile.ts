@@ -1,6 +1,7 @@
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { CATALOG, tierPlace } from "@/lib/catalog";
-import type { SupportKind } from "@/lib/profile";
+import { readProfileLinks, type ProfileLink } from "@/lib/links";
+import type { PatronKind, SupportKind } from "@/lib/profile";
 
 /**
  * Reading a patron's public profile, and reading what the patron themselves may put on it.
@@ -30,10 +31,15 @@ const PAID = ["held", "released", "partially_refunded"];
 export type PublicProfile = {
   username: string;
   displayName: string;
+  /** An individual, a business, a brand. Null where the patron did not say. */
+  kind: PatronKind | null;
   bio: string | null;
   location: string | null;
   website: string | null;
+  links: ProfileLink[];
   interests: string[];
+  /** The categories this patron said they support, named by the registry. Not their interests. */
+  categories: { key: string; label: string }[];
   photoPath: string | null;
   patronSince: string;
 };
@@ -43,6 +49,8 @@ export type PublicActivity = {
   actName: string;
   actSlug: string;
   runTitle: string;
+  /** The fundraiser's category. It belongs to the fundraiser, never to the patron or the organizer. */
+  categoryKey: string | null;
   runStatus: string;
   detail: string;
   supportedAt: string;
@@ -51,10 +59,14 @@ export type PublicActivity = {
 type ProfileRow = {
   username: string;
   display_name: string;
+  profile_kind: PatronKind | null;
   bio: string | null;
   location: string | null;
   website: string | null;
+  links: unknown;
   interests: string[] | null;
+  category_keys: string[] | null;
+  category_labels: string[] | null;
   photo_path: string | null;
   patron_since: string;
 };
@@ -64,7 +76,7 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
   const sb = await supabaseServer();
   const { data } = await sb
     .from("public_patron_profiles")
-    .select("username,display_name,bio,location,website,interests,photo_path,patron_since")
+    .select("username,display_name,profile_kind,bio,location,website,links,interests,category_keys,category_labels,photo_path,patron_since")
     .eq("username", username)
     .maybeSingle();
   const row = data as ProfileRow | null;
@@ -72,10 +84,14 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
   return {
     username: row.username,
     displayName: row.display_name,
+    kind: row.profile_kind ?? null,
     bio: row.bio,
     location: row.location,
     website: row.website,
+    links: readProfileLinks(row.links),
     interests: row.interests ?? [],
+    // The view builds both arrays in the same order, so the two line up by position.
+    categories: (row.category_keys ?? []).map((key, i) => ({ key, label: row.category_labels?.[i] ?? key })),
     photoPath: row.photo_path,
     patronSince: row.patron_since,
   };
@@ -89,6 +105,7 @@ type ActivityRow = {
   run_status: string;
   detail: string | null;
   supported_at: string;
+  category_key: string | null;
 };
 
 /** Only what this patron ticked, newest first. Never an amount, because the view holds none. */
@@ -96,7 +113,7 @@ export async function getPublicActivity(username: string): Promise<PublicActivit
   const sb = await supabaseServer();
   const { data } = await sb
     .from("public_patron_activity")
-    .select("kind,act_name,act_slug,run_title,run_status,detail,supported_at")
+    .select("kind,act_name,act_slug,run_title,run_status,detail,supported_at,category_key")
     .eq("username", username)
     .order("supported_at", { ascending: false });
   return ((data ?? []) as ActivityRow[]).map((r) => ({
@@ -104,6 +121,7 @@ export async function getPublicActivity(username: string): Promise<PublicActivit
     actName: r.act_name,
     actSlug: r.act_slug,
     runTitle: r.run_title,
+    categoryKey: r.category_key ?? null,
     runStatus: r.run_status,
     detail: r.kind === "backing" ? `A name on ${tierPlace(r.detail ?? "")}` : (r.detail ?? "Sponsorship"),
     supportedAt: r.supported_at,
@@ -173,10 +191,14 @@ export async function currentSlugFor(retired: string): Promise<string | null> {
 
 export type OwnProfile = {
   displayName: string;
+  kind: PatronKind | null;
   bio: string | null;
   location: string | null;
   website: string | null;
+  links: ProfileLink[];
   interests: string[];
+  /** Keys of the categories this patron said they support. */
+  categoryKeys: string[];
   photoPath: string | null;
   published: boolean;
   patronSince: string;
@@ -185,17 +207,23 @@ export type OwnProfile = {
 /** This account's own profile row, under its own session. Null when it has never made one. */
 export async function ownProfile(userId: string): Promise<OwnProfile | null> {
   const sb = await supabaseServer();
-  const { data } = await sb
-    .from("patron_profiles")
-    .select("display_name,bio,location,website,interests,photo_path,published,patron_since")
-    .eq("profile_id", userId)
-    .maybeSingle();
+  const [{ data }, { data: chosen }] = await Promise.all([
+    sb
+      .from("patron_profiles")
+      .select("display_name,profile_kind,bio,location,website,links,interests,photo_path,published,patron_since")
+      .eq("profile_id", userId)
+      .maybeSingle(),
+    // Row level security scopes this to the account's own rows; the filter says so out loud.
+    sb.from("patron_profile_categories").select("category_key").eq("profile_id", userId).order("category_key"),
+  ]);
   if (!data) return null;
   const row = data as {
     display_name: string;
+    profile_kind: PatronKind | null;
     bio: string | null;
     location: string | null;
     website: string | null;
+    links: unknown;
     interests: string[] | null;
     photo_path: string | null;
     published: boolean;
@@ -203,10 +231,13 @@ export async function ownProfile(userId: string): Promise<OwnProfile | null> {
   };
   return {
     displayName: row.display_name,
+    kind: row.profile_kind ?? null,
     bio: row.bio,
     location: row.location,
     website: row.website,
+    links: readProfileLinks(row.links),
     interests: row.interests ?? [],
+    categoryKeys: ((chosen ?? []) as { category_key: string }[]).map((c) => c.category_key),
     photoPath: row.photo_path,
     published: row.published,
     patronSince: row.patron_since,
@@ -357,7 +388,7 @@ export async function eligibleActivity(userId: string, verifiedEmail: string | n
 }
 
 /**
- * When this account started backing musicians: the first thing it paid for, or the day it opened.
+ * When this account started supporting fundraisers: the first thing it paid for, or the day it opened.
  * Only ever rendered as a year.
  */
 export async function patronSinceFor(userId: string, verifiedEmail: string | null, accountCreatedAt: string): Promise<string> {

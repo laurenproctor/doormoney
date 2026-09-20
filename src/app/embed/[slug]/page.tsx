@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import { THEMES, type ThemeName } from "@/components/Theme";
-import { boardAsking, boardWorth, fanWorth, getBoard } from "@/lib/boards";
+import { boardAsking, boardWorth, fanWorth, getBoard, getBoardByRunId } from "@/lib/boards";
+import { FUNDRAISER_PARAM, fundraiserRequest } from "@/lib/fundraiser-identity";
+import { backingReturnNotice } from "@/lib/payment-returns";
 import { runUrl } from "@/lib/urls";
-import { WIDGET_TIERS, tierPlace } from "@/lib/catalog";
+import { WIDGET_TIERS } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { SITE } from "@/lib/site";
-import { stripe, stripeConfigured } from "@/lib/stripe";
+import { stripeConfigured } from "@/lib/stripe";
 import { EmbedClient } from "./EmbedClient";
 
 /**
@@ -13,6 +15,13 @@ import { EmbedClient } from "./EmbedClient";
  * No nav, no footer. Frameable by any origin (see next.config.ts).
  * Payment happens here, on Door Money's origin, never on the host page: the Payment Element
  * confirms a PaymentIntent and the webhook does the rest.
+ *
+ * Which fundraiser. /embed/<organizer>?fundraiser=<id> is one exact fundraiser and nothing else:
+ * if it has closed the widget says so, and it is never swapped for another fundraiser by the same
+ * organizer. /embed/<organizer> with no id is the compatibility path for snippets pasted before
+ * exact widgets existed, and draws the organizer's current fundraiser, as it always did. Either
+ * way the fundraiser is settled once, here, and its id is what the payment and the return carry,
+ * so what a fan read is what a fan paid for. See src/lib/fundraiser-identity.ts.
  */
 export const dynamic = "force-dynamic";
 
@@ -24,32 +33,12 @@ type Props = {
 const one = (v: string | string[] | undefined) =>
   typeof v === "string" ? v : undefined;
 
-/** A redirect-based payment method (a bank, a wallet) sends the fan back here. Confirm it is this act's backing before saying so. */
-async function returned(
-  sp: Record<string, string | string[] | undefined>,
-  slug: string,
-) {
-  const piId = one(sp.payment_intent);
-  const status = one(sp.redirect_status);
-  if (!piId || !piId.startsWith("pi_") || !stripeConfigured()) return null;
-  if (status !== "succeeded" && status !== "processing") return null;
-  try {
-    const pi = await stripe.paymentIntents.retrieve(piId);
-    if (pi.metadata?.kind !== "backing" || pi.metadata?.act_slug !== slug)
-      return null;
-    if (pi.status !== "succeeded" && pi.status !== "processing") return null;
-    return {
-      label: formatMoney(pi.amount),
-      place: tierPlace(pi.metadata.tier ?? ""),
-    };
-  } catch {
-    return null;
-  }
-}
-
 export default async function EmbedPage({ params, searchParams }: Props) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const board = await getBoard(slug);
+  // A widget that asked for one fundraiser gets that one or a 404, never a different one.
+  const request = fundraiserRequest(sp[FUNDRAISER_PARAM]);
+  if (request.kind === "invalid") notFound();
+  const board = request.kind === "exact" ? await getBoardByRunId(slug, request.id) : await getBoard(slug);
   if (!board || !board.run) notFound();
   // The widget's backing tiers are music's, in music's words: a name on the tour thank-you, a name
   // on the merch table card. Another category's fundraiser does not get offered them by accident.
@@ -59,7 +48,11 @@ export default async function EmbedPage({ params, searchParams }: Props) {
   const backers = board.backers ?? [];
   const backedCents = boardWorth(board) + fanWorth(board);
   const goalCents = boardAsking(board);
-  const done = await returned(sp, slug);
+  const fundraiserId = board.run.id ?? null;
+  const closed = board.run.status === "closed";
+  // A redirect-based payment method sends the fan back here. Only a backing of this exact
+  // fundraiser is acknowledged. See src/lib/payment-returns.ts.
+  const done = await backingReturnNotice({ paymentIntent: one(sp.payment_intent), redirectStatus: one(sp.redirect_status) }, fundraiserId);
   // The embed is lit blue on its own; the board frames it in the board's own light.
   const theme = THEMES.find((t) => t === one(sp.theme)) as
     ThemeName | undefined;
@@ -68,6 +61,8 @@ export default async function EmbedPage({ params, searchParams }: Props) {
     <div data-theme={theme}>
       <EmbedClient
         slug={slug}
+        fundraiserId={fundraiserId}
+        closed={closed}
         actName={board.act.name}
         runTitle={board.run.title}
         showCount={board.run.showCount ?? 0}

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { embedPath } from "@/lib/fundraiser-identity";
 import { periodOf } from "@/lib/periods";
 import { loadStripe, type Appearance } from "@stripe/stripe-js";
 import { elementsAppearance } from "@/lib/stripeAppearance";
@@ -19,6 +20,10 @@ type Done = { label: string; place: string };
 
 export function EmbedClient(p: {
   slug: string;
+  /** The one fundraiser this widget was rendered for. Sent with the payment and kept on the return. */
+  fundraiserId: string | null;
+  /** True when that exact fundraiser has ended. The widget says so and sells nothing. */
+  closed: boolean;
   actName: string;
   runTitle: string;
   showCount: number;
@@ -85,7 +90,7 @@ export function EmbedClient(p: {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "backing", slug: p.slug, tier: chosen.key, displayName: name, email, source: p.source, origin }),
+        body: JSON.stringify({ kind: "backing", slug: p.slug, runId: p.fundraiserId ?? undefined, tier: chosen.key, displayName: name, email, source: p.source, origin }),
       });
       const data = (await res.json().catch(() => ({}))) as { clientSecret?: string; error?: string };
       if (!res.ok || !data.clientSecret) throw new Error(data.error ?? "Payment could not start. Try once more.");
@@ -141,13 +146,20 @@ export function EmbedClient(p: {
             </div>
           )}
 
-          {clientSecret && chosen && stripePromise ? (
+          {p.closed ? (
+            <div className="px-4 pb-5 pt-4">
+              <p className="max-w-none text-[14.5px] leading-[1.6]">This fundraiser has closed, so it is not taking backings.</p>
+              <a href={p.boardUrl} target="_blank" rel="noopener" className={`${cta} w-full`}>
+                Open the fundraiser <span aria-hidden="true" className="text-[16px] leading-none">&rarr;</span>
+              </a>
+            </div>
+          ) : clientSecret && chosen && stripePromise ? (
             <Elements stripe={stripePromise} options={{ clientSecret, appearance, loader: "auto", fonts: [{ cssSrc: "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&display=swap" }] }}>
               <PayStep
                 tier={chosen}
                 name={name}
                 email={email}
-                returnUrl={`${p.siteUrl}/embed/${p.slug}${p.source === "board" ? "?source=board" : ""}`}
+                returnUrl={`${p.siteUrl}${embedPath(p.slug, p.fundraiserId, { source: p.source === "board" ? "board" : undefined })}`}
                 onBack={() => setClientSecret(null)}
                 onDone={() => setDone({ label: chosen.label, place: chosen.key === "merch_card" ? "the merch table card" : "the tour thank-you" })}
               />

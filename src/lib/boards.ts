@@ -64,6 +64,36 @@ export async function getBoard(slug: string, runSlug?: string): Promise<Board | 
   return shapeBoard(sb, actRow as ActRow, run as RunRow);
 }
 
+/**
+ * One exact fundraiser, by its id, under the organizer address it was asked for at.
+ *
+ * What an exact widget renders. Open, live or closed: a fundraiser that has ended is still that
+ * fundraiser, and the caller says "closed". It is never swapped for whatever else the organizer
+ * has running, which is the whole difference between this and getBoard(slug) with no run word.
+ * An id that belongs to another organizer is not found, so an address cannot be used to reach
+ * somebody else's fundraiser. Drafts are invisible here as everywhere: row level security.
+ */
+export async function getBoardByRunId(slug: string, runId: string): Promise<Board | null> {
+  if (!configured()) {
+    const sample = SAMPLE_BOARDS[slug] ?? null;
+    return sample && sample.run?.id === runId ? sample : null;
+  }
+
+  const sb = await supabaseServer();
+  const { data: actRow } = await sb.from("acts").select(ACT_COLUMNS).eq("slug", slug).maybeSingle();
+  if (!actRow) return null;
+  const { data: run } = await sb
+    .from("runs")
+    .select(RUN_COLUMNS)
+    .eq("id", runId)
+    .eq("act_id", (actRow as ActRow).id)
+    .in("status", ["open", "live", "closed"])
+    .maybeSingle();
+  if (!run) return null;
+  if (!actFits(actRow as ActRow, (run as RunRow).category_key)) return null;
+  return shapeBoard(sb, actRow as ActRow, run as RunRow);
+}
+
 export type ActRun = { slug: string; title: string; categoryKey: string; kind: string | null; startsOn: string | null; endsOn: string | null; showCount: number | null; status: string };
 export type ActProfile = { act: Board["act"]; running: ActRun[]; past: ActRun[] };
 

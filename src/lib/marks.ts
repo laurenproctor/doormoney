@@ -67,7 +67,7 @@ type Waiting = {
   id: string;
   created_at: string;
   patrons: { name: string; contact_email: string } | null;
-  lots: { label: string | null; surface_key: string; runs: { title: string; status: string; acts: { name: string } } };
+  lots: { label: string | null; surface_key: string; runs: { title: string; status: string; category_key?: string | null; acts: { name: string } } };
 };
 
 /**
@@ -79,7 +79,7 @@ export async function sendMarkReminders(sb: ReturnType<typeof supabaseAdmin>, no
   const cutoff = new Date(now.getTime() - REMIND_AFTER_DAYS * 24 * 3600 * 1000).toISOString();
   const { data, error } = await sb
     .from("purchases")
-    .select("id,created_at,patrons(name,contact_email),lots!inner(label,surface_key,runs!inner(title,status,acts!inner(name)))")
+    .select("id,created_at,patrons(name,contact_email),lots!inner(label,surface_key,runs!inner(title,status,category_key,acts!inner(name)))")
     .eq("mark_status", "none")
     .in("payment_status", ["held", "released"])
     .is("mark_reminded_at", null)
@@ -101,6 +101,8 @@ export async function sendMarkReminders(sb: ReturnType<typeof supabaseAdmin>, no
       lotName: row.lots.label ?? CATALOG.find((c) => c.key === row.lots.surface_key)?.name ?? row.lots.surface_key,
       runTitle: row.lots.runs.title,
       markUrl: `${SITE.url}/mark/${row.id}`,
+      // Outside music what is owed is the sponsor's materials, which may be no logo at all.
+      categoryKey: row.lots.runs.category_key,
     });
     const r = await sendEmail(mail);
     // Recorded either way: a bad address should not be retried every day.
