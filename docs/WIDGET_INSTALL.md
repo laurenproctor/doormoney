@@ -1,14 +1,50 @@
 # Installing the widget
 
-The widget is one line on the musician's site:
+The widget is one line on the organizer's site, and it is for one exact fundraiser:
+
+```html
+<script src="https://<door money domain>/embed.js" data-act="<slug>" data-fundraiser="<fundraiser id>"></script>
+```
+
+The loader injects an iframe pointing at `/embed/<slug>?fundraiser=<fundraiser id>` right after the script tag and listens for one message from it, the widget's height, so the frame never scrolls inside itself. Payment happens inside the frame, on Door Money's origin. The host page cannot read into it, and the card field is a further frame served by Stripe.
+
+The dashboard ("On your site") shows one line per open music fundraiser, each with its own id filled in, along with the link button and the badges.
+
+## One widget, one fundraiser
+
+An organizer can have more than one fundraiser open. A fan who reads "Fall run" in the widget and pays must find their money on the fall run, so the fundraiser is settled once, when the widget is drawn, and its id travels with everything after that:
+
+| Step | What carries the fundraiser |
+| --- | --- |
+| The snippet | `data-fundraiser` |
+| The frame | `/embed/<slug>?fundraiser=<id>` |
+| Starting the payment | `runId` in the request to `/api/checkout`, checked against the organizer and against the fundraiser being open |
+| The payment | `run_id` in the PaymentIntent's metadata, and on the backing row |
+| A redirect-based method coming back | the same `?fundraiser=<id>` on the return address, and the notice shows only if the payment's `run_id` is that id |
+| The webhook | the backing row decides where money goes, and is refused if the payment's `run_id` names a different fundraiser |
+| The receipt and the record | built from the backing row, so they name the fundraiser that was paid |
+
+A widget that names a fundraiser never shows another one. When that fundraiser closes, the widget says it has closed and takes no more backings. It does not move on to whatever the organizer opens next. An id that is malformed, that belongs to another organizer, or that belongs to a draft answers 404.
+
+The widget sells music's backing tiers (a name on the tour thank-you, a name on the merch table card), so it draws only for a music fundraiser and the checkout refuses a backing on any other category. Sponsorship options are never drawn in the widget: it links to the fundraiser's own page for those.
+
+## Snippets pasted before this (the compatibility path)
+
+Snippets handed out before exact widgets look like this, and are on real sites:
 
 ```html
 <script src="https://<door money domain>/embed.js" data-act="<slug>"></script>
 ```
 
-The loader injects an iframe pointing at `/embed/<slug>` right after the script tag and listens for one message from it, the widget's height, so the frame never scrolls inside itself. Payment happens inside the frame, on Door Money's origin. The host page cannot read into it, and the card field is a further frame served by Stripe.
+They keep working, deliberately, and nobody has to re-paste anything:
 
-Both snippets, the link button and the badges appear on the act's dashboard once the board is live.
+1. With no `data-fundraiser`, the loader frames `/embed/<slug>`, which draws the organizer's **current** fundraiser: the open one with the latest start date. That is what these snippets always did.
+2. The page still settles on one fundraiser when it draws, and sends that fundraiser's id with the payment and keeps it on the return address. So even an old snippet pays the fundraiser it showed, and cannot drift to another one between the page loading and the fan paying.
+3. With no fundraiser open, `/embed/<slug>` answers 404, as before.
+
+The one behavior that differs from an exact snippet: when the current fundraiser closes and another opens, an old snippet follows the organizer to the new one. An organizer who wants a widget pinned to one fundraiser replaces the line with the one from the dashboard.
+
+A widget page that was already open in somebody's browser when this shipped sends no `runId`. `/api/checkout` accepts that only when the organizer has exactly one fundraiser open, so there is nothing to confuse it with. With two or more open it answers 409 and asks for a reload, which loads a page that names its fundraiser.
 
 ## What the loader needs from a platform
 
@@ -32,7 +68,7 @@ Not yet tested on a real account. Each note is what the platform documents about
 - **Wix.** Embed HTML (the "Embed a widget" element). Wix wraps custom code in its own sandboxed iframe with a fixed size set in the editor, so the widget's resize message reaches the sandbox, not the page. Set the element's height to about 800px so the card form fits, or use the link button instead.
 - **Carrd.** An Embed element with code, which needs Carrd Pro (Standard or above). Runs on the page; resize works. Free sites cannot embed and should use the link button.
 - **Shopify.** A Custom Liquid or Custom HTML section, or a page in the theme editor. Runs on the page.
-- **Link-only platforms** (Linktree, Bandcamp, Substack footers, Instagram bios). Use the link button or the plain board address. The same payment happens on the board.
+- **Link-only platforms** (Linktree, Bandcamp, Substack footers, Instagram bios). Use the link button or the plain fundraiser address. The same payment happens on the fundraiser's page, whose own widget is framed for that exact fundraiser.
 
 ## Quirks to keep in mind
 

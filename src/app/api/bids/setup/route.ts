@@ -1,3 +1,4 @@
+import { CATEGORY_PAYMENTS_CLOSED, categoryPaymentsOpen } from "@/lib/payment-gate";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { closeTimeOf } from "@/lib/auctions";
@@ -49,11 +50,13 @@ export async function POST(req: Request) {
   // leave a patron with a saved card and nothing to show for it.
   const { data } = await sb
     .from("lots")
-    .select("id,mode,status,closes_at,runs!inner(status,bidding_closes_at)")
+    .select("id,mode,status,closes_at,runs!inner(status,bidding_closes_at,category_key)")
     .eq("id", parsed.data.lotId)
     .maybeSingle();
-  const lot = data as unknown as { id: string; mode: string; status: string; closes_at: string | null; runs: { status: string; bidding_closes_at: string | null } } | null;
+  const lot = data as unknown as { id: string; mode: string; status: string; closes_at: string | null; runs: { status: string; bidding_closes_at: string | null; category_key: string | null } } | null;
   if (!lot) return fail("That spot is not on any fundraiser.", 404);
+  // A saved card is charged at the close, so a bid is where that payment starts. Same gate as checkout.
+  if (!categoryPaymentsOpen(lot.runs.category_key)) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
   if (lot.mode !== "auction") return fail("That spot is a fixed price, not an auction.");
   if (!["open", "live"].includes(lot.runs.status) || lot.status !== "open") return fail("Bidding on that spot is over.", 409);
   const closesAt = closeTimeOf(lot, lot.runs);
