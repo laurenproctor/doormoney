@@ -116,7 +116,8 @@ export async function saveRun(_prev: RunState, form: FormData): Promise<RunState
     // A draft's address still follows its name. Once the run is published the name may still
     // change, but the address does not: it is a link on a poster by then, and 0025 refuses it.
     const { data: before } = await sb.from("runs").select("status").eq("id", runId).eq("act_id", act.id).maybeSingle();
-    const draft = (before as { status: string } | null)?.status === "draft";
+    if (!before) return { ok: false, errors: { form: "That fundraiser is not on your account." } };
+    const draft = before.status === "draft";
     const patch = draft ? { ...row, slug: await runSlugFor(sb, act.id, parsed.data.title, runId) } : row;
     const { error } = await sb.from("runs").update(patch).eq("id", runId).eq("act_id", act.id);
     if (error) return { ok: false, errors: { form: "That did not save. Try once more." } };
@@ -152,7 +153,7 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
   const sb = await supabaseServer();
   const { data: run } = await sb
     .from("runs")
-    .select("id,status,title,starts_on,ends_on,show_count,bidding_closes_at,verification_methods,verification_other")
+    .select("id,status,category_key,title,starts_on,ends_on,show_count,bidding_closes_at,verification_methods,verification_other")
     .eq("id", runId)
     .eq("act_id", act.id)
     .maybeSingle();
@@ -236,3 +237,4 @@ export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: s
       : {}),
   };
 }
+

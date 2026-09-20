@@ -5,7 +5,8 @@ const shortDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeri
 const stampDay = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: NY });
 
 /** "Oct 3 to Nov 2". Date-only strings are read as UTC so they never drift a day. */
-export function formatDateRange(startsOn: string, endsOn: string) {
+export function formatDateRange(startsOn: string | null, endsOn: string | null) {
+  if (!startsOn || !endsOn) return "Dates to be confirmed";
   return `${shortDay.format(new Date(startsOn))} to ${shortDay.format(new Date(endsOn))}`;
 }
 
@@ -26,3 +27,4 @@ export function clockOf(iso: string) {
 export function closeStamp(iso: string) {
   return `${stampDay.format(new Date(iso))}, ${clockOf(iso)}`;
 }
+

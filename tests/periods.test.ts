@@ -27,10 +27,10 @@ test("a residency counts nights", () => {
   assert.equal(p.counted, "nights of the residency");
 });
 
-test("an unknown kind falls back to the tour wording, never to the retired word", () => {
+test("an unknown kind uses neutral wording without inventing a tour", () => {
   for (const kind of ["", "residency-2", "campaign", null, undefined]) {
     const p = periodOf(kind);
-    assert.equal(p.noun, "tour", `${String(kind)} should fall back`);
+    assert.equal(p.noun, "fundraiser", `${String(kind)} should fall back`);
   }
 });
 
@@ -42,3 +42,4 @@ test("no word this module hands out is one the site retired", () => {
     }
   }
 });
+

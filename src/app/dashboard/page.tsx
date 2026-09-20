@@ -23,16 +23,26 @@ export default async function DashboardPage() {
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   // No act yet. Somebody here to back musicians belongs on their own page, not in the middle of
   // listing a band they never came to list. Anyone else is here to play, so carry on to step one.
-  if (!act) redirect(hasRole(profile?.roles, "patron") && !hasRole(profile?.roles, "musician") ? "/patron" : "/dashboard/act/new");
+  if (!act) redirect(hasRole(profile?.roles, "patron") && !hasRole(profile?.roles, "musician") && !hasRole(profile?.roles, "organizer") ? "/patron" : "/dashboard/act/new");
 
   const sb = await supabaseServer();
   const { data: runs } = await sb
     .from("runs")
-    .select("id,slug,kind,title,starts_on,ends_on,show_count,status")
+    .select("id,slug,category_key,kind,title,starts_on,ends_on,show_count,status")
     .eq("act_id", act.id)
     .neq("status", "cancelled")
     .order("starts_on", { ascending: false });
   const current = runs?.[0] ?? null;
+  if (!act.type || runs?.some((run) => run.category_key !== "music" || !run.starts_on || !run.ends_on || !run.kind)) {
+    return <DashboardShell current="/dashboard" actName={act.name} eyebrow="Your fundraisers" title={act.name} accent="">
+      <Card><CardHead eyebrow="Drafts and activity">Your fundraisers</CardHead>
+        <p className="mb-6 text-muted">Start with what the funding enables and the audience a sponsor can reach.</p>
+        {(runs ?? []).map((run) => <p key={run.id} className="my-4"><Link href={`/dashboard/runs/${run.id}`} className="underline">{run.title || "Untitled fundraiser"}</Link> · {run.status}</p>)}
+        <ButtonLink href="/dashboard/runs/new">Create a fundraiser</ButtonLink>
+      </Card>
+    </DashboardShell>;
+  }
+
 
   const { data: lots } = current
     ? await sb.from("lots").select("id,surface_key,label,price_cents,mode,status").eq("run_id", current.id).order("created_at")
@@ -86,7 +96,7 @@ export default async function DashboardPage() {
       current="/dashboard"
       links={dashboardLinks({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
-      eyebrow={act.city}
+      eyebrow={act.city ?? "Organizer"}
       title={act.name}
       accent=""
       intro={
@@ -255,3 +265,4 @@ function Fact({ n, label }: { n: string; label: string }) {
     </div>
   );
 }
+

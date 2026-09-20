@@ -53,8 +53,10 @@ export type OwnedAct = {
   id: string;
   slug: string;
   name: string;
-  type: "touring_band" | "house_act" | "soloist";
-  city: string;
+  type: "touring_band" | "house_act" | "soloist" | null;
+  city: string | null;
+  region: string | null;
+  country_code: string | null;
   bio: string | null;
   photo_url: string | null;
   instagram: string | null;
@@ -74,7 +76,7 @@ export async function ownedAct(userId: string): Promise<OwnedAct | null> {
   const sb = supabaseAdmin();
   const { data } = await sb
     .from("acts")
-    .select("id,slug,name,type,city,bio,photo_url,instagram,website,stripe_account_id,stripe_payouts_enabled,founding")
+    .select("id,slug,name,type,city,region,country_code,bio,photo_url,instagram,website,stripe_account_id,stripe_payouts_enabled,founding")
     .eq("owner_id", userId)
     .order("created_at")
     .limit(1)
@@ -87,3 +89,4 @@ export function safeNext(next: string | null | undefined, fallback = "/dashboard
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return fallback;
   return next;
 }
+

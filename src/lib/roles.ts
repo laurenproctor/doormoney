@@ -11,24 +11,24 @@ import { z } from "zod";
 
 export const ROLES = [
   {
-    key: "musician",
+    key: "organizer",
     /** On the sign-up card. What the person is, not what the system calls them. */
-    label: "I’m a musician",
+    label: "I want to raise funds",
     blurb: "Create fundraisers, offer sponsorship opportunities and receive payouts.",
     /** Where an account with this role and nothing else belongs after signing in. */
     home: "/dashboard",
   },
   {
     key: "patron",
-    label: "I want to support musicians",
+    label: "I want to sponsor or back fundraisers",
     blurb: "Back fundraisers, sponsor opportunities and keep a record of your support.",
     home: "/patron",
   },
 ] as const;
 
-export type Role = (typeof ROLES)[number]["key"];
+export type Role = (typeof ROLES)[number]["key"] | "musician";
 
-const KEYS: readonly Role[] = ROLES.map((r) => r.key);
+const KEYS: readonly Role[] = ["musician", "organizer", "patron"];
 
 export function isRole(value: string): value is Role {
   return (KEYS as readonly string[]).includes(value);
@@ -52,7 +52,7 @@ export function hasRole(roles: string[] | null | undefined, role: Role) {
  */
 export function homeFor({ roles, hasAct }: { roles: string[] | null | undefined; hasAct: boolean }) {
   if (hasAct) return "/dashboard";
-  if (hasRole(roles, "musician")) return "/dashboard";
+  if (hasRole(roles, "musician") || hasRole(roles, "organizer")) return "/dashboard";
   if (hasRole(roles, "patron")) return "/patron";
   return "/dashboard";
 }
@@ -63,7 +63,7 @@ export function homeFor({ roles, hasAct }: { roles: string[] | null | undefined;
 
 const MUSICIAN_LINKS = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/act", label: "Musician" },
+  { href: "/dashboard/act", label: "Organizer" },
   { href: "/dashboard/payouts", label: "Payouts" },
   // The widget, named for what it does. Dropped from the site nav (decision 14) and kept here,
   // because it is only worth anything to somebody who already has a fundraiser to embed. The
@@ -88,9 +88,10 @@ export type DashboardLink = { href: string; label: string };
  * stays private until the patron publishes it.
  */
 export function dashboardLinks({ hasAct, roles }: { hasAct: boolean; roles: string[] }): DashboardLink[] {
-  const musician = hasAct || roles.includes("musician");
+  const musician = hasAct || roles.includes("musician") || roles.includes("organizer");
   return [...(musician ? MUSICIAN_LINKS : []), ...PATRON_LINKS, ACCOUNT_LINK];
 }
 
 /** What a dashboard page shows when it has not worked out the account's roles. */
 export const DEFAULT_DASHBOARD_LINKS: DashboardLink[] = [...MUSICIAN_LINKS, ...PATRON_LINKS, ACCOUNT_LINK];
+

@@ -12,8 +12,8 @@ import { ROLES, RolesInput, dashboardLinks, hasRole, homeFor, isRole } from "@/l
 import { NAV } from "@/lib/site";
 
 test("there are two roles and they are the two sides of the room", () => {
-  assert.deepEqual(ROLES.map((r) => r.key), ["musician", "patron"]);
-  assert.deepEqual(ROLES.map((r) => r.label), ["I’m a musician", "I want to support musicians"]);
+  assert.deepEqual(ROLES.map((r) => r.key), ["organizer", "patron"]);
+  assert.deepEqual(ROLES.map((r) => r.label), ["I want to raise funds", "I want to sponsor or back fundraisers"]);
   assert.equal(isRole("musician"), true);
   assert.equal(isRole("admin"), false);
 });
@@ -107,4 +107,11 @@ test("the site nav no longer carries the widget, and names the browse page fundr
   assert.ok(!nav.some((n) => n.href === "/widget"), "the widget is back in the site nav");
   assert.equal(nav.find((n) => n.href === "/auctions")?.label, "Fundraisers");
   assert.ok(!nav.some((n) => /board/i.test(n.label)), "a nav label still says board");
+});
+
+
+test("organizers can also be patrons without claiming to be musicians", () => {
+  assert.deepEqual(RolesInput.parse(["patron", "organizer"]), ["organizer", "patron"]);
+  assert.equal(homeFor({ roles: ["organizer", "patron"], hasAct: false }), "/dashboard");
+  assert.ok(dashboardLinks({ roles: ["organizer"], hasAct: false }).some((link) => link.href === "/dashboard/act"));
 });
