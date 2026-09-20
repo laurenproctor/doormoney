@@ -32,8 +32,8 @@ import type { EligibleItem, OwnProfile } from "@/lib/patronprofile";
 const initial: ProfileState = { ok: false };
 const initialUsername: UsernameState = { ok: false };
 
-/** A labelled field with its hint and its error tied to the input by id. */
-function Field({
+/** A labelled field with its hint and its error tied to the input by id. Shared with AccountForms. */
+export function Field({
   id,
   label,
   hint,
