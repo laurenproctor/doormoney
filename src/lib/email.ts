@@ -87,13 +87,26 @@ function shell(paragraphs: string[], footer?: string) {
 
 const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: cents % 100 ? 2 : 0 });
 
+/** Every mail written before categories was about music, so an absent category still is. */
+const isMusic = (categoryKey: string | null | undefined) => (categoryKey ?? "music") === "music";
+
 /** To the patron, the moment a fixed-price spot is paid for. The Door Money record; Stripe may send its own receipt too. */
-export function purchaseReceipt(params: { to: string; patronName: string; lotName: string; actName: string; runTitle: string; amountCents: number; boardUrl: string; recordUrl: string }): Mail {
+export function purchaseReceipt(params: { to: string; patronName: string; lotName: string; actName: string; runTitle: string; amountCents: number; boardUrl: string; recordUrl: string; /** The fundraiser's category. Absent means music, which is every receipt sent before categories. */ categoryKey?: string | null }): Mail {
+  // Music's receipt is word for word what it has always been. Every other category is released on
+  // documented delivery and sends materials, not necessarily a logo (docs/DELIVERY_POLICY_MATRIX.md).
+  const music = isMusic(params.categoryKey);
+  const recordFills = music
+    ? "the shows, the rooms, the attendance where it is known, and where the money went"
+    : `what was delivered, the documentation ${params.actName} attaches, and where the money went`;
   const lines = [
     `${params.patronName} holds the ${params.lotName.toLowerCase()} on ${params.actName}'s ${params.runTitle.toLowerCase()}. ${money(params.amountCents)}, paid.`,
-    `Door Money holds the money and pays ${params.actName} every Friday through the fundraiser. Nothing is charged again.`,
-    `${params.actName} approves the logo before it goes on anything. Door Money emails when it is time to send one.`,
-    `The record lives at ${params.recordUrl} and fills in as the fundraiser goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    music
+      ? `Door Money holds the money and pays ${params.actName} every Friday through the fundraiser. Nothing is charged again.`
+      : `Door Money holds the money and releases ${params.actName}'s share as ${params.actName} documents what was delivered. Nothing is charged again.`,
+    music
+      ? `${params.actName} approves the logo before it goes on anything. Door Money emails when it is time to send one.`
+      : `${params.actName} accepts the sponsor's materials before anything goes up: a name as it should read, a credit line, artwork. Door Money emails when it is time to send them.`,
+    `The record lives at ${params.recordUrl} and fills in as the fundraiser goes on: ${recordFills}.`,
     `If it stops happening, saying so at ${params.recordUrl}/flag holds the rest of the money until Door Money looks.`,
     `The fundraiser: ${params.boardUrl}`,
   ];
@@ -101,7 +114,7 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
     `<b>${escape(params.patronName)}</b> holds the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())}. <b style="color:${BLUE}">${money(params.amountCents)}</b>, paid.`,
     escape(lines[1]),
     escape(lines[2]),
-    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record</a> fills in as the fundraiser goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record</a> fills in as the fundraiser goes on: ${escape(recordFills)}.`,
     `If it stops happening, <a href="${escape(params.recordUrl)}/flag" style="color:${BLUE}">saying so</a> holds the rest of the money until Door Money looks.`,
     `The fundraiser: <a href="${escape(params.boardUrl)}" style="color:${BLUE}">${escape(params.boardUrl)}</a>`,
   ]);
@@ -109,17 +122,21 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
 }
 
 /** To the musician, the moment one of their spots sells. */
-export function saleNotice(params: { to: string; actName: string; lotName: string; patronName: string; amountCents: number; netCents: number; boardUrl: string; dashboardUrl: string }): Mail {
+export function saleNotice(params: { to: string; actName: string; lotName: string; patronName: string; amountCents: number; netCents: number; boardUrl: string; dashboardUrl: string; categoryKey?: string | null }): Mail {
+  const music = isMusic(params.categoryKey);
+  const needsYes = music ? "The patron's logo needs a yes on the dashboard before it goes on anything" : "The sponsor's materials need a yes on the dashboard before anything goes up";
   const lines = [
     `${params.patronName} took the ${params.lotName.toLowerCase()} on ${params.actName}'s fundraiser for ${money(params.amountCents)}.`,
-    `${money(params.netCents)} reaches ${params.actName} in weekly slices, every Friday through the fundraiser. Door Money keeps ${SITE.feePercent}%.`,
-    `The patron's logo needs a yes on the dashboard before it goes on anything: ${params.dashboardUrl}`,
+    music
+      ? `${money(params.netCents)} reaches ${params.actName} in weekly slices, every Friday through the fundraiser. Door Money keeps ${SITE.feePercent}%.`
+      : `${money(params.netCents)} reaches ${params.actName} as each deliverable is documented on the dashboard, on the Friday after. Door Money keeps ${SITE.feePercent}%.`,
+    `${needsYes}: ${params.dashboardUrl}`,
     `The fundraiser: ${params.boardUrl}`,
   ];
   const html = shell([
     `<b>${escape(params.patronName)}</b> took the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s fundraiser for <b style="color:${BLUE}">${money(params.amountCents)}</b>.`,
     escape(lines[1]),
-    `The patron's logo needs a yes on the dashboard before it goes on anything: <a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">${escape(params.dashboardUrl)}</a>`,
+    `${escape(needsYes)}: <a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">${escape(params.dashboardUrl)}</a>`,
     `The fundraiser: <a href="${escape(params.boardUrl)}" style="color:${BLUE}">${escape(params.boardUrl)}</a>`,
   ]);
   return { to: params.to, subject: `Sold: ${params.lotName} to ${params.patronName}`, text: lines.join("\n\n"), html };
@@ -521,20 +538,24 @@ export function staleOfferRefund(params: { to: string; patronName: string; actNa
   return { to: params.to, subject: `Refunded: the ${lot} had already gone`, text: lines.join("\n\n"), html };
 }
 
-export function markReminder(params: { to: string; patronName: string; actName: string; lotName: string; runTitle: string; markUrl: string }): Mail {
+export function markReminder(params: { to: string; patronName: string; actName: string; lotName: string; runTitle: string; markUrl: string; categoryKey?: string | null }): Mail {
+  const music = isMusic(params.categoryKey);
+  const send = music ? "A logo file, a name, or both" : "A name as it should read, a credit line, artwork, or whatever it needs";
   const lines = [
     `${params.patronName} holds the ${params.lotName.toLowerCase()} on ${params.actName}'s ${params.runTitle.toLowerCase()}, paid for and waiting on one thing.`,
-    `The logo is the name or image as it will appear. Until it arrives, ${params.actName} has nothing to approve and nothing can go up.`,
-    `A logo file, a name, or both: ${params.markUrl}`,
+    music
+      ? `The logo is the name or image as it will appear. Until it arrives, ${params.actName} has nothing to approve and nothing can go up.`
+      : `That one thing is the sponsor's materials for the ${params.lotName.toLowerCase()}. Until they arrive, ${params.actName} has nothing to accept and nothing can go up.`,
+    `${send}: ${params.markUrl}`,
     `This is the only reminder Door Money sends.`,
   ];
   const html = shell([
     `<b>${escape(params.patronName)}</b> holds the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())}, paid for and waiting on one thing.`,
     escape(lines[1]),
-    `A logo file, a name, or both: <a href="${escape(params.markUrl)}" style="color:${BLUE}">send the logo</a>`,
+    `${escape(send)}: <a href="${escape(params.markUrl)}" style="color:${BLUE}">${music ? "send the logo" : "send the materials"}</a>`,
     escape(lines[3]),
   ]);
-  return { to: params.to, subject: `The ${params.lotName.toLowerCase()} is paid for. The logo is still to come.`, text: lines.join("\n\n"), html };
+  return { to: params.to, subject: `The ${params.lotName.toLowerCase()} is paid for. The ${music ? "logo is" : "materials are"} still to come.`, text: lines.join("\n\n"), html };
 }
 
 /* ---------------------------------------------------------------------------------------------
