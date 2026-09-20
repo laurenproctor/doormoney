@@ -6,6 +6,7 @@ import { NewsletterCTA } from "@/components/Newsletter";
 import { PlacementVerification } from "@/components/PlacementVerification";
 import { Theme, themeFor } from "@/components/Theme";
 import { WidgetFrame } from "@/components/WidgetFrame";
+import { AudienceSummary, SponsorPromise } from "@/components/domain";
 import { openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, closeStamp, formatDateRange, weekdayOf } from "@/lib/dates";
@@ -141,8 +142,8 @@ export function BoardView({
             {act.bio && <p className="mt-5 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
             {!music && (run.audienceDescription || run.sponsorPromise) && (
               <p className="mt-5 max-w-[58ch] text-[16px] leading-[1.55] text-muted">
-                {run.audienceDescription && <>Who it reaches: {run.audienceDescription}{" "}</>}
-                {run.sponsorPromise && <>What a sponsor receives: {run.sponsorPromise}</>}
+                <AudienceSummary variant="inline">{run.audienceDescription}</AudienceSummary>
+                <SponsorPromise variant="inline">{run.sponsorPromise}</SponsorPromise>
               </p>
             )}
             {(website || handle) && (

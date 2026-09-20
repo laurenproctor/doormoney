@@ -1,10 +1,21 @@
 "use client";
+import { categoryWords } from "@/lib/category-words";
 import { useActionState, useState } from "react";
 import { saveVerification, type VerificationState } from "@/app/actions/verification";
 import { Button } from "@/components/Button";
 import { OTHER_KEY, OTHER_MAX, OTHER_MIN, verificationMethods, type VerificationField } from "@/lib/verification";
 
 const initial: VerificationState = { ok: false };
+
+/**
+ * An example of an answer in the organizer's own words. Music keeps the one it has always shown.
+ * Every other category gets one with no musician and no music stand in it, in the category's noun.
+ */
+function otherPlaceholder(categoryKey: string): string {
+  if (categoryKey === "music") return "The musician will photograph the marked music stand at selected performances and include the venue and date with each image.";
+  const who = categoryWords(categoryKey).organizer;
+  return `The ${who} will photograph where each sponsor appears and include the place and the date with each image.`;
+}
 
 /**
  * What patrons get back from this run, as a list of ticks.
@@ -119,7 +130,7 @@ function Fields({
             onChange={(e) => setAnswer(e.target.value)}
             aria-describedby="verification-other-count"
             aria-invalid={errors.other ? true : undefined}
-            placeholder="The musician will photograph the marked music stand at selected performances and include the venue and date with each image."
+            placeholder={otherPlaceholder(categoryKey)}
             className="field w-full bg-transparent px-3.5 py-3 text-[15px] leading-[1.6]"
           />
           <p id="verification-other-count" className="mt-1.5 text-[14px] text-muted">
@@ -133,7 +144,7 @@ function Fields({
         <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the verification"}</Button>
         {ok && (
           <span className="text-[14.5px] text-muted">
-            Saved. {saved} {saved === 1 ? "method" : "methods"} on the board.
+            Saved. {saved} {saved === 1 ? "method" : "methods"} on the fundraiser.
           </span>
         )}
         {errors.form && <span className="text-[14.5px] text-accent-ink">{errors.form}</span>}

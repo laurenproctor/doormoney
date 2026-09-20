@@ -54,7 +54,7 @@ export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInp
 
       <div className="flex flex-wrap items-center gap-4">
         <ButtonLink href={previewHref} variant={draft ? "solid" : "ghost"}>
-          Preview the board
+          Preview the fundraiser
         </ButtonLink>
         <span className="max-w-[46ch] text-[14.5px] text-muted">
           {draft ? "The preview is the real page, private to this account until it is published." : "The same page the public sees."}

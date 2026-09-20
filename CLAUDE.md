@@ -59,6 +59,16 @@ Every page is a dark room with one color of light in it. The room is the same on
 - Thin 1px lines (`edge`), no hard shadows, no tilt, no rounded corners except circles. Blocks that should catch the light use `glow` or `lit`. Heroes carry a stage light (`HeroArt`); a photo dropped at `public/hero/<theme>.jpg` appears under it, or pass `photo` to name the file (the home page uses `hero/saxophone.jpg`). The other themes carry public domain Gottlieb club photographs; credits in `public/hero/CREDITS.md`.
 - Components in `src/components/`: `Logo` (the mark and wordmark, inline SVG in the current text color), `Theme`, `StageLights`, `Reveal` (blocks marked `data-reveal` rise in on scroll; `--i` staggers siblings; heroes use the `hero-in` class), `Nav`, `Footer`, `Page`, `HeroArt`, `Eyebrow`, `Stamp`, `Button`, `Section`, `SectionHead`, `Steps`, `Lines`, `NewsletterCTA` and `NewsletterStrip` (the new-fundraisers email: the band on patron pages, the strip in the footer), `PlacementVerification` (what a fundraiser promises sponsors, on its page), `VerificationEditor` and `ReadinessChecklist` (the dashboard sides of the same thing), `AuthShell` and `AuthPoints` (sign up and sign in, which carry no nav and no footer), `ProfileForms` (the four forms behind a patron's public profile). Reuse them.
 
+### Semantic domain components
+
+`src/components/domain/` is the contract between the domain and the design: `OrganizerProfileHeader`, `FundraiserHeader`, `CategoryBadge`, `FundingPurpose`, `AudienceSummary`, `SponsorPromise`, `OpportunityCard`, `OpportunityEditor`, `DeliveryCommitment`, `EvidenceSummary`, `SponsorProfileCard`, `PatronActivityItem`, `LocationSummary`, `FundraiserStatus`. A redesign changes these files and should not need to change what they are given.
+
+- They take views from `src/lib/domain.ts` and nothing else. A page loads rows, maps them to views, and passes them down. A domain component never queries Supabase, never imports a server action, never starts a payment (`OpportunityCard` is handed its `action`), and never imports `src/lib/catalog.ts`, `src/lib/sample.ts` or a music-only type. `tests/domain-components.test.ts` checks this from their source.
+- Category nouns come from `src/lib/category-words.ts`, never from a literal in a component. That is how "the musician" and "the logos" got onto a theater page. Music's words are music's and stay; they are just nobody else's default. A category's public name is data (`{ key, label }`, from the registry), so a fifth category renders with no code written for it.
+- What is not known is not drawn: no city, no count, no date, no suggested price, and no placeholder in their place.
+- `src/lib/fixtures/domain-fixtures.ts` has one full set of views for music, sports, film and theater. Render a new or redesigned component against all four before it ships; the test does.
+- Music-specific components stay music-specific and say so: `ShowsPanel`, `RunForm`, the widget's backing tiers.
+
 ## Engineering rules
 
 These describe the existing music implementation unless explicitly marked otherwise. Expansion requirements live in the product contract. Friday transfers and logo approval are current mechanics, not universal promises for new categories.
