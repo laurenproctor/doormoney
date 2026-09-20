@@ -38,6 +38,7 @@ const FILES = [
   "src/lib/roles.ts",
   "src/lib/profile.ts",
   "src/lib/periods.ts",
+  "src/lib/categories.ts",
   "src/lib/verification.ts",
   "src/lib/marks.ts",
 ];
