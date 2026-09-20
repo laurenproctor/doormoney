@@ -175,6 +175,15 @@ Privacy is the governing rule, and it is held in three separate places rather th
 
 What is on it: a photograph, a display name, the username, up to 240 characters of bio, an optional city or region, an optional https link, up to eight music preferences in the patron's own words, the year they started, and whichever placements and backings they published. What each of those says is the musician, the run, the kind of support and the month. Totals are counted from that public activity alone: "3 runs backed", "2 musicians supported".
 
+**Amended (2026-09-20, migration 0043), under decision 17.** A patron may be a person, a business, a brand, a nonprofit or a community group, supporting any category, so the page stopped assuming music. Every privacy rule above is unchanged, and nothing already stored was reinterpreted.
+
+- The profile may say what kind of patron it is for (`profile_kind`). Optional, and unset means the page says nothing: an individual is never asked a business question. It is not a payment identity; `patrons` still holds that, untouched.
+- Up to six other links, https only, held by `profile_links_ok` in the database as well as by the form. The location field takes a city, a region, a country or "Online".
+- "Music preferences" is labeled **Interests**. The stored values are kept exactly as typed and still display. They are never read as categories.
+- The categories a patron supports are their own answer, in `patron_profile_categories`, keyed to the registry, so a fifth category needs no change. Offered from the categories that can publish. Descriptive only: a row grants nothing and buys nothing.
+- Each published activity carries its fundraiser's own category. The totals follow it: a page of music still reads "2 musicians supported", a season reads "1 team supported", and a mix reads "organizers". A sponsorship and a backing keep their separate labels.
+- The two public views gained their columns at the end and are still read-only. Still no amount, email address, payment status, Stripe id, mark, record link or account id, and an anonymous bid is still refused by the view itself.
+
 **Anonymity is not reversible here.** A spot won through a bid the patron asked to keep anonymous is not offered for publication and is refused again by the public view, whatever a form says. Decision 7 made anonymity a promise on the board; publishing a profile does not take it back. Reversing an anonymous transaction on the patron's say-so is a bigger question than this page, and the safe answer for now is that it cannot be done at all.
 
 Photographs sit in a private Storage bucket and reach the page as short-lived signed links, so hiding a profile hides its photograph within the hour rather than leaving a permanent public URL behind.

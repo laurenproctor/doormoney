@@ -8,6 +8,7 @@ import { normalizeUsername, usernameProblem } from "@/lib/username";
 import { ProfileDetails, parseInterests, type ProfileField } from "@/lib/profile";
 import { eligibleActivity, patronSinceFor, linkPatronRows } from "@/lib/patronprofile";
 import { actPath } from "@/lib/urls";
+import { parseProfileLinks, PROFILE_LINKS_MAX } from "@/lib/links";
 
 /*
   A patron's public profile: the writes.
@@ -54,6 +55,7 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
 
   const parsed = ProfileDetails.safeParse({
     display_name: str(form, "display_name"),
+    profile_kind: str(form, "profile_kind"),
     bio: str(form, "bio"),
     location: str(form, "location"),
     website: str(form, "website"),
@@ -67,6 +69,17 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
 
   const interests = parseInterests(str(form, "interests"));
   if (interests.error) return { ok: false, errors: { interests: interests.error } };
+
+  const typed = parseProfileLinks(
+    Array.from({ length: PROFILE_LINKS_MAX }, (_, i) => ({ label: str(form, `link_label_${i}`), url: str(form, `link_url_${i}`) })),
+  );
+  if (typed.error) return { ok: false, errors: { links: typed.error } };
+
+  // The registry decides what a category is, so a key is checked against it and not against a list
+  // in this file. A category that cannot publish yet is not offered and is not accepted.
+  const offered = await supportableCategoryKeys();
+  const categories = [...new Set(form.getAll("categories").filter((v): v is string => typeof v === "string"))];
+  if (categories.some((key) => !offered.has(key))) return { ok: false, errors: { categories: "Choose from the categories on the list." } };
 
   const photo = form.get("photo");
   let upload: { bytes: ArrayBuffer; ext: string; type: string } | null = null;
@@ -100,9 +113,11 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
 
   const row = {
     display_name: parsed.data.display_name,
+    profile_kind: parsed.data.profile_kind,
     bio: parsed.data.bio,
     location: parsed.data.location,
     website: parsed.data.website,
+    links: typed.links,
     interests: interests.items,
     photo_path: photoPath,
     updated_at: new Date().toISOString(),
@@ -115,7 +130,7 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
       return { ok: false, errors: { form: "That did not save. Try once more." } };
     }
   } else {
-    // A first profile carries the day this account started backing musicians, which is the first
+    // A first profile carries the day this account started supporting fundraisers, which is the first
     // thing it paid for, or the day it opened. Only the year is ever shown.
     await linkPatronRows(user.id, email);
     const since = await patronSinceFor(user.id, email, user.created_at ?? new Date().toISOString());
@@ -126,6 +141,11 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     }
     await addPatronRole(user.id);
   }
+
+  // After the row, because each choice hangs off it. Only the difference is written, so saving an
+  // unchanged form touches nothing.
+  const categoryError = await saveSupportedCategories(user.id, categories);
+  if (categoryError) return { ok: false, errors: { categories: categoryError } };
 
   // The old photograph is only dropped once the new one is on the row, so nothing is ever lost
   // between two writes. Only this account's own object is touched.
@@ -140,9 +160,43 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   return { ok: true, message: "Saved." };
 }
 
+/** The categories a patron may say they support: the ones the registry lets publish. */
+async function supportableCategoryKeys(): Promise<Set<string>> {
+  const { data } = await supabaseAdmin().from("fundraiser_categories").select("key").eq("publish_enabled", true);
+  return new Set(((data ?? []) as { key: string }[]).map((c) => c.key));
+}
+
+/**
+ * Makes the stored choices match the ticked ones. Descriptive only: a row here grants nothing.
+ * Written with the service role, like the rest of this table's family (migration 0043), and always
+ * filtered to the signed-in account.
+ */
+async function saveSupportedCategories(userId: string, wanted: string[]): Promise<string | null> {
+  const admin = supabaseAdmin();
+  const { data } = await admin.from("patron_profile_categories").select("category_key").eq("profile_id", userId);
+  const have = new Set(((data ?? []) as { category_key: string }[]).map((c) => c.category_key));
+  const add = wanted.filter((key) => !have.has(key));
+  const remove = [...have].filter((key) => !wanted.includes(key));
+  if (remove.length) {
+    const { error } = await admin.from("patron_profile_categories").delete().eq("profile_id", userId).in("category_key", remove);
+    if (error) {
+      console.error("removing supported categories failed:", error.message);
+      return "The categories did not save. Try once more.";
+    }
+  }
+  if (add.length) {
+    const { error } = await admin.from("patron_profile_categories").insert(add.map((category_key) => ({ profile_id: userId, category_key })));
+    if (error && error.code !== "23505") {
+      console.error("adding supported categories failed:", error.message);
+      return "The categories did not save. Try once more.";
+    }
+  }
+  return null;
+}
+
 /** Keeping a role is doing the thing. Making a profile makes this account a patron, and nothing is taken away. */
 async function addPatronRole(userId: string) {
-  // Service role for the same reason as the musician role in actions/act.ts: after 0022 the
+  // Service role for the same reason as the organizer role (migration 0038): after 0022 the
   // browser holds no write on profiles beyond the handle, and a role is not the client's to give.
   const admin = supabaseAdmin();
   const { data } = await admin.from("profiles").select("roles").eq("id", userId).maybeSingle();
@@ -261,8 +315,8 @@ export async function setActivityShown(_prev: ProfileState, form: FormData): Pro
  * Claims the word, or moves it.
  *
  * Every rule that matters is in claim_username (migration 0024) rather than here: one word across
- * profiles and acts, one change every twelve months, retired words never reissued, and a
- * musician's board address moving in the same transaction. This checks the shape and the reserved
+ * profiles and acts, one change every twelve months, retired words never reissued, and an
+ * organizer's address moving in the same transaction. This checks the shape and the reserved
  * list first so the common mistakes come back in words, then lets the database decide.
  */
 export async function changeUsername(_prev: UsernameState, form: FormData): Promise<UsernameState> {

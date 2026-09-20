@@ -1,6 +1,7 @@
 /*
   The optional patron profile, in the parts that have no database in them: what the fields will
-  take, what a music preference may be, and when the username is allowed to move.
+  take, what an interest may be, what kind of patron a profile may be for, and when the username
+  is allowed to move.
 
   The database repeats every one of these as a constraint (migration 0024), and what the two
   public views will show is checked against a real Postgres in supabase/tests/permissions_test.sql
@@ -17,6 +18,7 @@ import {
   initialsFor,
   nextUsernameChange,
   parseInterests,
+  patronKindLabel,
   profileLink,
   usernameChangeAllowed,
 } from "@/lib/profile";
@@ -145,15 +147,39 @@ test("initials fall back to at most two letters", () => {
   assert.equal(initialsFor("   "), "?");
 });
 
-test("the totals count runs and musicians, and nothing else", () => {
+test("the totals count fundraisers and the people behind them, and nothing else", () => {
   assert.deepEqual(impactTotals([]), []);
   const activity = [
-    { actSlug: "gutter-hymns", actName: "Gutter Hymns", runTitle: "Fall run" },
-    { actSlug: "gutter-hymns", actName: "Gutter Hymns", runTitle: "Spring run" },
-    { actSlug: "rosie", actName: "Rosie", runTitle: "October" },
+    { actSlug: "gutter-hymns", actName: "Gutter Hymns", runTitle: "Fall run", categoryKey: "music" },
+    { actSlug: "gutter-hymns", actName: "Gutter Hymns", runTitle: "Spring run", categoryKey: "music" },
+    { actSlug: "rosie", actName: "Rosie", runTitle: "October", categoryKey: "music" },
   ];
+  // A page of music still says musicians: the noun follows the fundraisers, and these are music.
   assert.deepEqual(impactTotals(activity), ["3 fundraisers backed", "2 musicians supported"]);
   assert.deepEqual(impactTotals(activity.slice(0, 1)), ["1 fundraiser backed", "1 musician supported"]);
+});
+
+test("the totals never call a team or a theater company a musician", () => {
+  const season = { actSlug: "harbor-fc", actName: "Harbor FC", runTitle: "Spring season", categoryKey: "sports" };
+  const play = { actSlug: "second-stage", actName: "Second Stage", runTitle: "A Number", categoryKey: "theater" };
+  const tour = { actSlug: "gutter-hymns", actName: "Gutter Hymns", runTitle: "Fall run", categoryKey: "music" };
+  assert.deepEqual(impactTotals([season]), ["1 fundraiser backed", "1 team supported"]);
+  assert.deepEqual(impactTotals([play, { ...play, actSlug: "third-stage" }]), ["2 fundraisers backed", "2 theater companies supported"]);
+  // Across categories there is no one noun, so the shared one is used.
+  assert.deepEqual(impactTotals([season, play, tour]), ["3 fundraisers backed", "3 organizers supported"]);
+  // A category this build has no words for, and a row with no category at all, are both organizers.
+  assert.deepEqual(impactTotals([{ ...season, categoryKey: "dance" }]), ["1 fundraiser backed", "1 organizer supported"]);
+  assert.deepEqual(impactTotals([{ actSlug: "x", actName: "X", runTitle: "Y" }]), ["1 fundraiser backed", "1 organizer supported"]);
+});
+
+test("a profile may be for a person or an organization, and may decline to say", () => {
+  const base = { display_name: "Kettle St. Coffee" };
+  assert.equal(ProfileDetails.parse(base).profile_kind, null, "nothing said stores nothing");
+  assert.equal(ProfileDetails.parse({ ...base, profile_kind: "" }).profile_kind, null);
+  assert.equal(ProfileDetails.parse({ ...base, profile_kind: "business" }).profile_kind, "business");
+  assert.equal(ProfileDetails.safeParse({ ...base, profile_kind: "musician" }).success, false, "a category or a role is not a kind of patron");
+  assert.equal(patronKindLabel("nonprofit"), "Nonprofit");
+  assert.equal(patronKindLabel(null), null);
 });
 
 /*

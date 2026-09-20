@@ -26,6 +26,8 @@ export type DetailField = {
 export type CategoryLanguage = {
   /** Who is responsible for delivery: musician, team, filmmaker, theater company. */
   organizer: string;
+  /** The same, for a count: "2 theater companies supported". */
+  organizers: string;
   /** What the fundraiser's name field is called on a form. */
   titleLabel: string;
   /** The detail fields this file has words for, by key. */
@@ -45,6 +47,7 @@ export type CategoryLanguage = {
 const LANGUAGE: Record<string, CategoryLanguage> = {
   music: {
     organizer: "musician",
+    organizers: "musicians",
     titleLabel: "Fundraiser name",
     details: {
       format: {
@@ -57,6 +60,7 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
   },
   sports: {
     organizer: "team",
+    organizers: "teams",
     titleLabel: "Season or event name",
     details: {
       sport: { key: "sport", label: "Sport", placeholder: "Soccer" },
@@ -77,6 +81,7 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
   },
   film: {
     organizer: "filmmaker",
+    organizers: "filmmakers",
     titleLabel: "Production name",
     details: {
       format: { key: "format", label: "Format", placeholder: "Feature documentary" },
@@ -97,6 +102,7 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
   },
   theater: {
     organizer: "theater company",
+    organizers: "theater companies",
     titleLabel: "Production name",
     details: {
       production: { key: "production", label: "Production", placeholder: "A Number" },
@@ -114,6 +120,13 @@ function humanize(key: string): string {
 /** The noun for whoever is responsible here. Neutral for a category this file has no words for. */
 export function organizerNoun(categoryKey: string | null | undefined): string {
   return LANGUAGE[categoryKey ?? ""]?.organizer ?? "organizer";
+}
+
+/** The noun for a count of them: one "team", two "teams". Neutral where this file has no words. */
+export function organizerNounCounted(categoryKey: string | null | undefined, count: number): string {
+  const words = LANGUAGE[categoryKey ?? ""];
+  if (!words) return count === 1 ? "organizer" : "organizers";
+  return count === 1 ? words.organizer : words.organizers;
 }
 
 /** What to call the name field. Neutral for a category this file has no words for. */

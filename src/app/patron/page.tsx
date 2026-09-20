@@ -29,7 +29,7 @@ const PAYMENT: Record<string, string> = {
 
 const MARK: Record<string, string> = {
   none: "No mark sent yet",
-  submitted: "Waiting on the musician",
+  submitted: "Waiting on the organizer",
   approved: "Approved",
   declined: "Declined and refunded",
 };
@@ -37,7 +37,7 @@ const MARK: Record<string, string> = {
 const TIER: Record<string, string> = { thank_you: "Tour thank-you", merch_card: "Merch table card" };
 
 /**
- * The patron's side of the house: what this account has put behind musicians.
+ * The patron's side of the house: what this account has put behind fundraisers, in any category.
  *
  * Every row here belongs to the signed-in account. The reads use the service role because
  * purchases, backings and bids have never been open to the browser, and the rows are filtered to
@@ -68,8 +68,8 @@ export default async function PatronPage() {
         <Card className="max-w-[720px]">
           <CardHead eyebrow="Nothing here yet">Pick a fundraiser</CardHead>
           <p className="mb-6 max-w-none text-[15px] text-muted">
-            Every placement and backing shows up here: what was paid, what the musician did with it, and the record at
-            the end of the run. Bids sit here too, from the moment one is placed.
+            Every sponsorship and backing shows up here: what you paid, what the organizer did with it, and the
+            record at the end of the fundraiser. Bids sit here too, from the moment you place one.
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/auctions">See the fundraisers</ButtonLink>
@@ -169,8 +169,8 @@ export default async function PatronPage() {
       <Card className="mt-[30px] max-w-[720px]">
         <CardHead eyebrow="The public profile">A page of their own</CardHead>
         <p className="mb-6 max-w-none text-[15px] text-muted">
-          A patron can keep a public page: a name, a few words, the music they turn up for, and whichever runs they
-          choose to name. It starts private and stays private until it is published. No amount ever appears on it.
+          You can keep a public page: a name, a few words, the categories you support, and whichever fundraisers
+          you choose to name. It starts private and stays private until you publish it. No amount ever appears on it.
         </p>
         <ButtonLink href="/dashboard/profile" variant="ghost" arrow>
           The patron profile
@@ -182,5 +182,5 @@ export default async function PatronPage() {
 
 function countActs(backed: Awaited<ReturnType<typeof backedBy>>) {
   const acts = new Set([...backed.placements.map((p) => p.actSlug), ...backed.runs.map((r) => r.actSlug)]);
-  return acts.size === 1 ? "one musician" : `${acts.size} musicians`;
+  return acts.size === 1 ? "one organizer" : `${acts.size} organizers`;
 }
