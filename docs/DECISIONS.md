@@ -38,6 +38,8 @@ The copy says money reaches the act "as the run happens, weekly." Something has 
 
 **Default in code:** A, with the show-list and "played" toggle from Phase 6 layered on later as B if patrons ask for it. The `payout_schedule` table is built to support either.
 
+**Amended (2026-09-19) by decision 19:** option A still releases the money, except for the final weekly slice, which waits until the evidence the organizer chose for that run exists. Door Money checks that it is there and never whether it is good.
+
 ---
 
 ## 3. Who pays through the widget
@@ -429,3 +431,68 @@ pressure straight back onto reversals. The two decisions move together.
 
 **No copy change.** `/refunds` and `docs/REFUNDS_AND_DISPUTES.md` already carry this promise. This
 decision records why it stands and what the engineering may and may not do under it.
+
+---
+
+## 19. What releases the last slice
+
+**Blocks:** remediation Phase 4. Amends decision 2, and answers the question decision 9 left open.
+
+Today the money moves under two gates and one gap. A sponsorship's slices cannot move until the
+musician approves the logo (migration 0031), which gates on the sponsor's material arriving rather
+than on anything being delivered. After that, release is the calendar: equal weekly slices between
+the run's start and end, decision 2's option A. The gap is at the other end. A musician says what
+patrons will get back, from the fixed list in `src/lib/verification.ts`, and nothing checks that
+any of it ever arrives. A musician can be paid in full having sent nothing they promised, and the
+only thing that catches it is a patron noticing and raising a flag.
+
+Closing that gap by holding all the money until proof arrives was rejected, twice before and again
+here. It would make Door Money the judge of whether a musician performed, which is a position the
+product deliberately does not hold: rule 6 in `CLAUDE.md` forbids the copy from implying Door Money
+inspected anything, and the reason behind the rule is that Door Money genuinely does not want the
+opinion. It would also punish the wrong failure, since a band that played every show and is bad at
+uploading files would not be paid, against the whole promise of money arriving while they are still
+on the road.
+
+**Decided (2026-09-19):** the calendar still releases the money, with one exception. The final
+weekly slice of a fundraiser waits until the evidence the organizer themselves chose exists.
+
+1. **Presence, not judgment.** Door Money checks that the promised items are there. It never checks
+   whether they are any good, and nobody at Door Money rates a photograph. "Documentation comes
+   from the organizer and Door Money passes it on" stays literally true, so decision 9's third
+   limit and rule 6 both survive this.
+2. **Only what they ticked.** The gate reads `runs.verification_methods` and
+   `runs.verification_other` and holds a run to exactly those. Door Money adds nothing to the list.
+   A commitment the organizer set themselves is the one version of this they cannot call unfair.
+3. **One slice, the last one.** On the seeded five-Friday run that is about a fifth of the net.
+   The rest still moves weekly during the run, which is what patrons were promised and what
+   musicians come for.
+4. **Door Money's own outputs cannot gate anything.** `end_of_run_record` is described in
+   `src/lib/verification.ts` as the record Door Money sends every patron when the fundraiser ends,
+   so it is Door Money's work and not the organizer's. A run whose only ticked method is that one
+   has no organizer-supplied evidence to wait for, and its last slice releases on the calendar as
+   before. Publishing requires at least one method, so this is reachable and has to be handled
+   rather than assumed away. Any method added later is marked as the organizer's or Door Money's
+   when it is added.
+5. **Notice from the start, not at the end.** The dashboard says from the run's first day which
+   items the last slice waits on, and a reminder goes out before the final Friday. A musician
+   should never meet this rule for the first time in the form of a missing payment.
+
+**Why this is also the cheaper choice.** A run with its evidence attached is a run Door Money can
+defend to a bank. Every dispute won is a loss not absorbed and a recovery never attempted, which
+makes the machinery in decision 18 rarer. Integrity and self-interest point the same way here.
+
+**Not decided, and deliberately left with decision 16:** what happens when the evidence never
+arrives. This creates a second instance of the state decision 16 already describes, money held
+because something never came, and the candidates are the same: refund the patron, pay the musician
+anyway on the grounds that the shows were played, or keep holding it and write to both sides. Both
+should be answered together and with one answer, not separately.
+
+**A consequence to carry into the build.** A held final slice is unreleased money, and `refundDue`
+returns the unreleased share, so a patron who asks for a refund from a run whose evidence never
+came gets more back than they would today. That follows from the principle rather than working
+against it, but the arithmetic should be checked against the ledger when this is built.
+
+**Sequencing.** Not before remediation Phase 4 ships. This changes when money moves, and the ledger
+is the thing that would show the change went right. It lands with the expansion Phase 4 list in
+decision 17, which already carries missed evidence, delivery failures and release timing.
