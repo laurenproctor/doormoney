@@ -267,14 +267,26 @@ minimum, and the pgTAP suite shows a stale offer held and not sold, twice.
 
 Give Door Money an authoritative financial history and a way to recover.
 
-**Status: not started.** `docs/PHASE_4_INVENTORY.md` is the reading done beforehand: what exists, what
-is missing item by item, five things this list leaves out, and the decisions that have to be made
-before the dispute work can be written.
+**Status: the first of four pieces is built, on branch `remediation-phase-4-events`.**
+`docs/PHASE_4_INVENTORY.md` is the reading done beforehand: what exists, what is missing item by
+item, five things this list leaves out, and the decisions that have to be made before the dispute
+work can be written. That document proposes splitting this phase into four pieces, because it is
+larger than the three before it and its halves do not depend on each other. The first piece is
+webhook-event states and the worker that retries them: no new money behavior, and everything after
+it needs somewhere to record a failure.
 
 - Add an immutable ledger covering patron charges, Door Money fees, act liabilities, transfers,
   refunds, transfer reversals, disputes, dispute fees, recoveries and adjustments. Entries balance.
-- Redesign webhook-event storage to distinguish received, processing, processed, and failed and
-  retryable. A webhook that returns `ok: false` is not processed.
+- [x] Redesign webhook-event storage to distinguish received, processing, processed, and failed and
+  retryable. A webhook that returns `ok: false` is not processed. Migration `0039` gives
+  `stripe_events` six states, an attempt count, the error, a retry time and the payload;
+  `src/lib/stripeEvents.ts` holds the handler and the worker, reusing `outbox.ts`'s backoff rather
+  than restating it; the daily job works the queue and `/admin` shows what has not finished.
+
+  The bug underneath was worse than the item says. The route read **any** failed insert as a
+  duplicate and answered 200, so a statement timeout discarded the event: Stripe takes a 200 as
+  delivered and never sends it again. Now only a duplicate key is a duplicate, and everything else
+  asks for the event back.
 - Handle Stripe dispute events, and transfer reversals, with an explicit platform recovery policy.
 - Reconcile Stripe against the database daily, detecting missing charges, transfers, refunds,
   reversals and ledger entries.

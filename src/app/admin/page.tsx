@@ -19,7 +19,7 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
 
   const flags = await openFlags(db);
-  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns, owedRefunds] = await Promise.all([
+  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns, owedRefunds, stuckEvents] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
     db.from("lots").select("id,run_id,surface_key,label,price_cents,mode,status"),
@@ -37,6 +37,14 @@ export default async function AdminPage() {
       .eq("kind", "refund")
       .in("status", ["pending", "processing", "retryable", "failed"])
       .order("created_at", { ascending: false })
+      .limit(100),
+    // Stripe events that have not finished. A 'failed' row is out of attempts and wants a person
+    // (migration 0039, src/lib/stripeEvents.ts).
+    db
+      .from("stripe_events")
+      .select("id,type,status,attempts,last_error,next_attempt_at,received_at")
+      .in("status", ["received", "processing", "retryable", "failed"])
+      .order("received_at", { ascending: false })
       .limit(100),
   ]);
   const subscribers = (newsletter.data ?? []).filter((n) => !n.unsubscribed_at);
@@ -59,6 +67,13 @@ export default async function AdminPage() {
   const owed = (owedRefunds.data ?? []) as OwedRefund[];
   const stuckRefunds = owed.filter((o) => o.status === "failed").length;
 
+  // Every webhook Stripe sent that did not finish. Before migration 0039 these were console lines
+  // on a server nobody reads, and an event whose handler refused looked exactly like one that
+  // worked.
+  type EventRow = { id: string; type: string; status: string; attempts: number; last_error: string | null; next_attempt_at: string; received_at: string };
+  const events = (stuckEvents.data ?? []) as EventRow[];
+  const deadEvents = events.filter((e) => e.status === "failed").length;
+
   const waitingOnLogo = (purchases.data ?? [])
     .filter((p) => p.payment_status === "held" && p.mark_status !== "approved")
     .reduce((n, p) => n + p.amount_cents, 0);
@@ -73,6 +88,7 @@ export default async function AdminPage() {
           <Stat n={formatMoney(held)} label="held" />
           <Stat n={formatMoney(waitingOnLogo)} label="waiting on a logo" />
           <Stat n={String(owed.length)} label={owed.length === 1 ? "refund owed" : "refunds owed"} />
+          <Stat n={String(events.length)} label={events.length === 1 ? "event unfinished" : "events unfinished"} />
           <Stat n={String(flags.length)} label={flags.length === 1 ? "flag open" : "flags open"} />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
           <Stat n={String(subscribers.length)} label="get new fundraisers" />
@@ -99,6 +115,30 @@ export default async function AdminPage() {
                 String(o.attempts),
                 o.status === "failed" ? "stopped" : when.format(new Date(o.next_attempt_at)),
                 o.last_error ?? "",
+              ])}
+            />
+          </Card>
+        )}
+
+        {events.length > 0 && (
+          <Card>
+            <CardHead eyebrow="Stripe events">
+              {events.length} unfinished{deadEvents ? `, ${deadEvents} out of attempts` : ""}
+            </CardHead>
+            <p className="mb-5 max-w-none text-[15px] text-muted">
+              Every event Stripe delivers is written down before it is acted on, so one whose handler failed is still on the list. The daily job keeps
+              trying. A row that is out of attempts has stopped on its own and wants a person: the error says what refused, and the stored payload is
+              what a replay would use.
+            </p>
+            <Table
+              head={["Event", "Type", "State", "Tries", "Next try", "Last error"]}
+              rows={events.map((e) => [
+                e.id,
+                e.type,
+                e.status,
+                String(e.attempts),
+                e.status === "failed" ? "stopped" : when.format(new Date(e.next_attempt_at)),
+                e.last_error ?? "",
               ])}
             />
           </Card>
