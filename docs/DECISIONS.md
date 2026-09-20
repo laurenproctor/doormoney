@@ -357,3 +357,75 @@ Decisions 2, 9, and 16 describe current music mechanics, not policies to apply a
 **Still open for Phase 4:** the release-policy matrix; handling a logo or other sponsor materials that never arrive; evidence access and retention; delivery failures and make-goods; cancellation after partial payment or release; and the relationship between a missed funding goal and the purchased deliverables. Until those decisions are implemented, Phase 3's new-category checkout verification is test-mode only.
 
 **Status:** product contract established on the expansion Phase 1 branch. New-category runtime support is not implemented by this decision.
+
+---
+
+## 18. Whether Door Money ever reverses a transfer
+
+**Blocks:** the remediation plan, Phase 4. Decision 1 of `PHASE_4_INVENTORY.md`.
+
+The question looks like a choice about who absorbs a lost dispute. It is not, because the charge
+type already answers that. Door Money uses separate charges and transfers, so Stripe debits the
+disputed amount and the dispute fee from the platform balance the moment a dispute opens, before
+anyone forms a view about it. Stripe's own guidance is that this charge type suits a platform that
+is responsible for its connected accounts' negative balances. A policy saying the patron and the
+musician should settle it between themselves would not stop that debit; it would only be untrue.
+
+That liability is the price of the escrow. Direct charges would put the risk on the musician, and
+then Door Money could not hold the money in weekly slices at all. The hold and the liability are
+one decision, already made.
+
+So the real question is narrower: having already carried the loss, does Door Money claw any of it
+back out of the musician's Stripe balance.
+
+**What comparable platforms do.** Kickstarter re-presents the charge and states plainly that it
+will not force a creator to repay. GoFundMe takes the money out of the organizer's payment account,
+which can go negative, and clears the negative balance out of later donations. Metalabel lets the
+release account go negative, brokers the challenge, and absorbs the dispute fees but not the
+purchase price. Patreon leaves the creator the lost pledge and a chargeback fee. Three of the four
+put the purchase price on the creator. Door Money's written policy is more generous than all of
+them, and GoFundMe's mechanism is the one this decision keeps: recover from later money, never from
+a bank account.
+
+**Why Door Money's case differs.** The others take money for work that has not happened yet or for
+a product that has to ship. Door Money holds the money and releases a slice only after that week
+happened. Every common dispute is therefore already covered by money Door Money still holds: a
+cancelled run, a declined logo, a placement that never ran, or a worried patron who flags before
+disputing. A reversal only comes into question when slices have already gone out and the bank sides
+with the patron anyway. In exactly that case the shows were played, which is both the strongest
+evidence position for the challenge and the worst money to take back.
+
+**Decided (2026-09-19):** Door Money never reverses a transfer automatically. It records
+`transfer.reversed` if Stripe or a person performs one, and it recovers by withholding from later
+slices. Where there are no later payouts, Door Money absorbs the loss, as `/refunds` already says.
+
+A reversal stays available as a bounded last resort, on these terms:
+
+1. Never on `charge.dispute.created`. Only after `charge.dispute.closed` with a lost outcome.
+   Reversing while a dispute is open takes back money that may still be won.
+2. Never automatic. A person does it from `/admin` and writes the reason, which is stored on the
+   ledger entry. A reversal is a judgment, not an event handler.
+3. Capped at the slices already released on that one payment. Never more than the musician received
+   on the placement that was disputed.
+4. Ordered recovery, reversal last: the unreleased slices of that payment first, which is already
+   how `refundDue` works; then withholding from the musician's later slices; then a reversal, only
+   where there are no later payouts and the amount clears a threshold the owner sets. Below that
+   threshold Door Money absorbs it.
+5. `debit_negative_balances` stays off. That setting lets Stripe pull from the musician's linked
+   bank account to clear a negative balance, which is the exact act `/refunds` promises never
+   happens. `src/app/actions/payouts.ts` does not set it, so the value follows the platform default
+   in the Stripe Dashboard. Confirm it there and set it to false explicitly.
+6. Notice comes before the money moves. The musician sees the amount and the reason on the payouts
+   page before any withholding or reversal, not after.
+7. One carve-out: where the musician is the fraud, fabricated shows or fabricated evidence, a
+   reversal is available at once. `/refunds` promises an act is never asked to repay "for a run it
+   played", and a run that was never played is not that case. Treating the two alike would cost
+   Door Money the promise rather than keep it.
+
+**What this settles elsewhere.** Withholding only recovers anything if it reaches the musician's
+later fundraisers, which is the standing default in decision 2 of `PHASE_4_INVENTORY.md`. Narrowing
+that to a single fundraiser would make withholding recover close to nothing and would push the
+pressure straight back onto reversals. The two decisions move together.
+
+**No copy change.** `/refunds` and `docs/REFUNDS_AND_DISPUTES.md` already carry this promise. This
+decision records why it stands and what the engineering may and may not do under it.

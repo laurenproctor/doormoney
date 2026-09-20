@@ -84,6 +84,19 @@ A dispute is a patron asking their bank to reverse the charge. Door Money would 
 
 **Who carries the loss.** If the bank sides with the patron, the patron is made whole first, always. Money Door Money still holds covers it. If slices had already gone to the act, Door Money covers the difference and recovers it from that act's later payouts. Where there are no later payouts, Door Money absorbs it. An act is never asked to send money back out of its own pocket.
 
+**How that recovery works, and what it never does.** Door Money pays for the platform's charge type
+here: with separate charges and transfers, Stripe debits the disputed amount and the dispute fee
+from Door Money's balance as soon as a dispute opens. That is the same arrangement that lets Door
+Money hold a patron's money in weekly slices at all, so it is not a cost to push elsewhere.
+Recovery runs in order: the unreleased slices of that payment first, then withholding from the act's
+later slices, and a transfer reversal only as a last resort, only after a dispute closes as lost,
+only by a person's decision on `/admin` with the reason written down, and never for more than the
+slices that payment already released. Where there are no later payouts, Door Money absorbs it.
+`debit_negative_balances` stays off, because reaching a musician's bank account is the one thing the
+sentence above rules out. Fraud is the exception: shows that were never played, or evidence that was
+made up, are not a run the act played, and a reversal is available at once. Decision 18 in
+`docs/DECISIONS.md` holds the full terms.
+
 Stripe charges a fee for a dispute whatever the outcome. Door Money pays that and does not pass it on.
 
 **Repeat disputes.** An act whose runs are disputed more than once is taken off the board while Door Money works out why. A patron who disputes runs that demonstrably happened can be refused future placements.
