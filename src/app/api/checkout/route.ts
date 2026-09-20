@@ -4,6 +4,7 @@ import { backingFee } from "@/lib/backings";
 import { patronFor, payingProfileId } from "@/lib/patrons";
 import { buyNowOpen, checkoutRefusal } from "@/lib/auctions";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
+import { CATEGORY_PAYMENTS_CLOSED, categoryPaymentsOpen } from "@/lib/payment-gate";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
@@ -16,6 +17,11 @@ import { runPath } from "@/lib/urls";
  *   CHECKOUT_MINUTES, and returns the client secret for an embedded Checkout Session.
  * - `backing`: a fan tier through the widget. Creates the backing row and a PaymentIntent for the
  *   Payment Element inside the widget's frame; fulfilment happens in the webhook.
+ *
+ * Both name one exact fundraiser. A lot is on one by construction. A backing says which one the
+ * widget rendered (`runId`), and is only ever made on that one: never on "whichever fundraiser
+ * this organizer has running", which can be a different answer at payment time than it was at
+ * render time. See src/lib/fundraiser-identity.ts.
  * The widget lives on Door Money's origin inside a frame, so this is same-origin; it is a route handler
  * rather than a server action because the widget is a client island with no page of its own to post to.
  */
@@ -26,6 +32,12 @@ const Input = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("backing"),
     slug: z.string().trim().min(1).max(80),
+    /**
+     * The exact fundraiser the widget rendered. Every widget this site serves sends it. Optional
+     * only so a widget page loaded before this shipped can finish; see startBacking for what an
+     * absent one is allowed to mean, which is very little.
+     */
+    runId: Id.optional(),
     tier: z.enum(WIDGET_TIERS.map((t) => t.key) as [string, ...string[]]),
     displayName: z.string().trim().min(1).max(80),
     email: z.string().trim().email().max(200),
@@ -58,7 +70,7 @@ type LotRow = {
   funding_token: string | null;
   funding_deadline: string | null;
   buy_now_cents: number | null;
-  runs: { id: string; slug: string; title: string; status: string; act_id: string; acts: { id: string; slug: string; name: string } };
+  runs: { id: string; slug: string; title: string; status: string; category_key: string | null; act_id: string; acts: { id: string; slug: string; name: string } };
 };
 
 export async function POST(req: Request) {
@@ -80,13 +92,15 @@ export async function POST(req: Request) {
 
   const { data: lotData, error: lotError } = await sb
     .from("lots")
-    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,runs!inner(id,slug,title,status,act_id,acts!inner(id,slug,name))")
+    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,runs!inner(id,slug,title,status,category_key,act_id,acts!inner(id,slug,name))")
     .eq("id", input.lotId)
     .maybeSingle();
   if (lotError) return fail("That did not load. Try once more.", 500);
   const lot = lotData as unknown as LotRow | null;
   if (!lot) return fail("That spot is not on any fundraiser.", 404);
   if (!["open", "live"].includes(lot.runs.status)) return fail("That fundraiser is closed.", 400);
+  // Asked before anything is written or held: a category with no delivery policy takes no live money.
+  if (!categoryPaymentsOpen(lot.runs.category_key)) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
   if (lot.status === "sold") return fail("That spot is already taken.", 409);
   if (lot.status !== "open" && lot.status !== "pending_funding") return fail("That spot is not for sale.", 400);
 
@@ -140,6 +154,7 @@ export async function POST(req: Request) {
     const session = await createLotCheckoutSession({
       purchaseId: purchase.id,
       lotId: lot.id,
+      runId: lot.runs.id,
       actId: act.id,
       actSlug: act.slug,
       amountCents: amount,
@@ -161,6 +176,36 @@ export async function POST(req: Request) {
 
 type Admin = ReturnType<typeof supabaseAdmin>;
 
+type BackingRun = { id: string; title: string; category_key: string | null };
+
+/**
+ * The one fundraiser a backing is for.
+ *
+ * Named exactly, it is that fundraiser or nothing: it has to belong to the organizer the request
+ * named, and it has to be open. If it has closed the fan is told so. It is never swapped for
+ * another fundraiser by the same organizer, because a fan who read "Fall run" and paid must not
+ * find their money on "Winter residency".
+ *
+ * Not named, which only a widget page loaded before exact widgets shipped can do, it is the
+ * organizer's open fundraiser when there is exactly one, so there is nothing to confuse it with.
+ * With two or more open there is no honest answer, and the fan is asked to reload, which gets
+ * them a widget that names its fundraiser.
+ */
+async function backingFundraiser(sb: Admin, actId: string, runId: string | null): Promise<BackingRun | { error: string; status: number }> {
+  if (runId) {
+    const { data } = await sb.from("runs").select("id,title,status,category_key").eq("id", runId).eq("act_id", actId).maybeSingle();
+    const run = data as (BackingRun & { status: string }) | null;
+    if (!run) return { error: "That fundraiser is not on Door Money.", status: 404 };
+    if (!["open", "live"].includes(run.status)) return { error: "That fundraiser is closed.", status: 400 };
+    return { id: run.id, title: run.title, category_key: run.category_key };
+  }
+  const { data } = await sb.from("runs").select("id,title,category_key").eq("act_id", actId).in("status", ["open", "live"]).order("starts_on", { ascending: false }).limit(2);
+  const open = (data ?? []) as BackingRun[];
+  if (open.length === 0) return { error: "That fundraiser is closed.", status: 400 };
+  if (open.length > 1) return { error: "This page is out of date. Reload it and try once more.", status: 409 };
+  return open[0];
+}
+
 /** A fan tier. The row goes in first so the webhook has something to fulfil; a never-paid row is harmless and dropped if Stripe cancels the intent. */
 async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { kind: "backing" }>, profileId: string | null) {
   const tier = widgetTier(input.tier);
@@ -168,8 +213,14 @@ async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { k
 
   const { data: act } = await sb.from("acts").select("id,slug,name").eq("slug", input.slug).maybeSingle();
   if (!act) return fail("That musician is not on Door Money.", 404);
-  const { data: run } = await sb.from("runs").select("id,title").eq("act_id", act.id).in("status", ["open", "live"]).order("starts_on", { ascending: false }).limit(1).maybeSingle();
-  if (!run) return fail("That fundraiser is closed.", 400);
+
+  const run = await backingFundraiser(sb, act.id, input.runId ?? null);
+  if ("error" in run) return fail(run.error, run.status);
+
+  // The widget's tiers are music's, in music's words: a name on the tour thank-you, a name on the
+  // merch table card. The page refuses to draw them for another category; this refuses to sell them.
+  if ((run.category_key ?? "music") !== "music") return fail("That fundraiser does not take backings through the widget.", 400);
+  if (!categoryPaymentsOpen(run.category_key)) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
 
   const email = input.email.toLowerCase();
   const patronId = await patronFor(sb, input.displayName, email, profileId);

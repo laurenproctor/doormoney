@@ -4,9 +4,9 @@ import { getBoard } from "@/lib/boards";
 import { periodOf } from "@/lib/periods";
 import { currentSlugFor } from "@/lib/patronprofile";
 import { normalizeUsername } from "@/lib/username";
-import { stripe, stripeConfigured } from "@/lib/stripe";
+import { lotPaidNotice } from "@/lib/payment-returns";
 import { runPath, runSlugFromSegment } from "@/lib/urls";
-import { BoardView, type PaidNotice } from "./BoardView";
+import { BoardView } from "./BoardView";
 
 /*
   One fundraiser's page: /gutter-hymns/support-europe-tour.
@@ -31,20 +31,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-async function paidNotice(sessionId: string | undefined, slug: string): Promise<PaidNotice | null> {
-  if (!sessionId || !sessionId.startsWith("cs_") || !stripeConfigured()) return null;
-  try {
-    const s = await stripe.checkout.sessions.retrieve(sessionId);
-    if (s.metadata?.act_slug !== slug) return null;
-    const email = s.customer_details?.email ?? null;
-    if (s.status === "complete" && s.payment_status !== "unpaid") return { kind: "paid", amount: s.amount_total ?? 0, email };
-    if (s.status === "complete") return { kind: "processing", amount: s.amount_total ?? 0, email };
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function RunBoardPage({ params, searchParams }: Props) {
   const [{ slug, run: segment }, sp] = await Promise.all([params, searchParams]);
   const runSlug = runSlugFromSegment(segment);
@@ -62,7 +48,9 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
   // Rendering is read-only. An auction past its time is closed by the worker at
   // /api/cron/auctions (remediation Phase 3), never by a page load: a page that settled its own
   // lots on sight let any anonymous visitor close auctions, charge cards and send email.
-  const paid = await paidNotice(typeof sp.paid === "string" ? sp.paid : undefined, slug);
+  // Only a payment for this exact fundraiser is acknowledged here, never one for another
+  // fundraiser by the same organizer. See src/lib/payment-returns.ts.
+  const paid = await lotPaidNotice(typeof sp.paid === "string" ? sp.paid : undefined, board.run.id);
 
   return <BoardView board={board} slug={slug} paid={paid} />;
 }

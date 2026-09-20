@@ -22,6 +22,8 @@ export const CHECKOUT_MINUTES = 30;
 export async function createLotCheckoutSession(params: {
   purchaseId: string;
   lotId: string;
+  /** The exact fundraiser the lot is on. Carried on the session and on the payment intent. */
+  runId: string;
   actId: string;
   actSlug: string;
   amountCents: number;
@@ -31,7 +33,7 @@ export async function createLotCheckoutSession(params: {
   /** Where the embedded checkout sends the patron afterwards. Must contain {CHECKOUT_SESSION_ID}. */
   returnUrl: string;
 }) {
-  const metadata = { purchase_id: params.purchaseId, lot_id: params.lotId, act_id: params.actId, act_slug: params.actSlug, kind: "lot" };
+  const metadata = { purchase_id: params.purchaseId, lot_id: params.lotId, run_id: params.runId, act_id: params.actId, act_slug: params.actSlug, kind: "lot" };
   return stripe.checkout.sessions.create({
     mode: "payment",
     ui_mode: "embedded_page",
@@ -158,6 +160,8 @@ export async function createBidSetupIntent(params: { customerId: string; lotId: 
 export async function chargeSavedCard(params: {
   purchaseId: string;
   lotId: string;
+  /** The exact fundraiser the lot is on. */
+  runId: string;
   actId: string;
   actSlug: string;
   customerId: string;
@@ -180,6 +184,7 @@ export async function chargeSavedCard(params: {
         kind: "lot",
         purchase_id: params.purchaseId,
         lot_id: params.lotId,
+        run_id: params.runId,
         act_id: params.actId,
         act_slug: params.actSlug,
         won_at_auction: "true",

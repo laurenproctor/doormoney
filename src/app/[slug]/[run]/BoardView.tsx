@@ -222,7 +222,7 @@ export function BoardView({
                 </>
               )}
             </div>
-            <WidgetFrame slug={slug} actName={act.name} source="board" theme={theme} />
+            <WidgetFrame slug={slug} fundraiserId={run.id} actName={act.name} source="board" theme={theme} />
           </div>
         </div>}
 

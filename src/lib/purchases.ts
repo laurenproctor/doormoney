@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CATALOG } from "@/lib/catalog";
 import { payoutNotice, purchaseReceipt, saleNotice, sendEmail, spotTaken } from "@/lib/email";
+import { paymentBelongsToRow } from "@/lib/fundraiser-identity";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { queueRefund } from "@/lib/refunds";
 import { SITE } from "@/lib/site";
@@ -74,6 +75,7 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
     paymentIntentId: piId,
     checkoutSessionId: session.id,
     patronEmail: session.customer_details?.email ?? null,
+    metadata: session.metadata,
   });
 }
 
@@ -94,10 +96,28 @@ export async function fulfilLotPurchase(sb: Admin, session: Stripe.Checkout.Sess
  */
 export async function holdPurchase(
   sb: Admin,
-  params: { purchaseId: string; paymentIntentId: string | null; checkoutSessionId?: string | null; patronEmail?: string | null },
+  params: {
+    purchaseId: string;
+    paymentIntentId: string | null;
+    checkoutSessionId?: string | null;
+    patronEmail?: string | null;
+    /** The payment's own metadata, where there is one. A won bid charged off-session passes none. */
+    metadata?: Record<string, string> | null;
+  },
 ) {
   const p = await loadPurchase(sb, params.purchaseId);
   if (!p) return { ok: false as const, reason: "purchase not found" };
+
+  // The purchase row decides which fundraiser is paid. The payment says which one it was started
+  // for. If the two disagree nothing is written, held or scheduled: the event fails, stays visible
+  // in stripe_events, and a person looks. Checked before the "already" answer on purpose, so a
+  // payment for fundraiser A can never be reported as settled against fundraiser B's purchase.
+  if (!paymentBelongsToRow(params.metadata, p.lots.runs.id)) {
+    return { ok: false as const, reason: `fundraiser mismatch: the payment names ${params.metadata?.run_id}, the purchase is on ${p.lots.runs.id}` };
+  }
+  if (params.metadata?.lot_id && params.metadata.lot_id !== p.lot_id) {
+    return { ok: false as const, reason: `lot mismatch: the payment names ${params.metadata.lot_id}, the purchase is for ${p.lot_id}` };
+  }
   if (p.payment_status !== "requires_payment") return { ok: true as const, already: true };
 
   // The charge behind the intent, read from Stripe before the transaction rather than inside it.
@@ -177,8 +197,14 @@ async function refundStaleOffer(sb: Admin, p: PurchaseRow) {
 export async function releaseLot(sb: Admin, session: Stripe.Checkout.Session) {
   const purchaseId = session.metadata?.purchase_id;
   if (!purchaseId) return { ok: false as const, reason: "no purchase id on session" };
-  const { data: p } = await sb.from("purchases").select("id,lot_id,payment_status,lots!inner(mode,winner_bid_id)").eq("id", purchaseId).maybeSingle();
+  const { data: p } = await sb.from("purchases").select("id,lot_id,payment_status,lots!inner(mode,winner_bid_id,run_id)").eq("id", purchaseId).maybeSingle();
   if (!p) return { ok: true as const, already: true };
+  // An expired session for fundraiser A never takes the hold off a lot on fundraiser B.
+  const runId = (p as unknown as { lots: { run_id: string } }).lots.run_id;
+  if (!paymentBelongsToRow(session.metadata, runId)) {
+    console.error("release refused: fundraiser mismatch", purchaseId, session.metadata?.run_id, runId);
+    return { ok: false as const, reason: "fundraiser mismatch" };
+  }
   if (p.payment_status !== "requires_payment") return { ok: true as const, already: true }; // paid after all; leave it
   await sb.from("purchases").delete().eq("id", p.id).eq("payment_status", "requires_payment");
   // A fixed-price spot goes straight back on the board, and so does an auction lot somebody was
