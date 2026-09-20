@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { NewPasswordForm } from "@/components/PasswordForms";
+import { AccountNameForm, AccountPhotoForm } from "@/components/AccountForms";
 import { Lines } from "@/components/Brand";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
+import { accountPhotoUrl } from "@/lib/accountPhotoUrl";
 import { fullName } from "@/lib/names";
 import { usernameFor } from "@/lib/username";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -15,7 +17,12 @@ export const metadata: Metadata = { title: "Account", robots: { index: false } }
 
 export default async function AccountPage() {
   const user = await requireUser("/dashboard/account");
-  const [act, username, profile] = await Promise.all([ownedAct(user.id), usernameFor(supabaseAdmin(), user.id), currentProfile(user.id)]);
+  const [act, username, profile, photo] = await Promise.all([
+    ownedAct(user.id),
+    usernameFor(supabaseAdmin(), user.id),
+    currentProfile(user.id),
+    accountPhotoUrl(user.id),
+  ]);
   const handle = username ?? act?.slug ?? null;
   const roles = profile?.roles ?? [];
 
@@ -27,7 +34,7 @@ export default async function AccountPage() {
       eyebrow="The account"
       title="How this account"
       accent="signs in"
-      intro={<p>The email address gets in from anywhere. A musician can sign in with their address instead. The password changes here any time.</p>}
+      intro={<p>The email address gets in from anywhere. A musician can sign in with their address instead. The name, the photo and the password change here any time.</p>}
     >
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -73,6 +80,24 @@ export default async function AccountPage() {
                 and can move once every twelve months.
               </>
             )}
+          </p>
+        </Card>
+
+        <Card>
+          <CardHead eyebrow="Your name">First and last</CardHead>
+          <AccountNameForm firstName={profile?.first_name ?? null} lastName={profile?.last_name ?? null} />
+          <p className="mt-5 text-[14.5px] text-muted">
+            This is the person behind the account. A band&apos;s name lives on the musician page, and a patron profile
+            has its own display name.
+          </p>
+        </Card>
+
+        <Card>
+          <CardHead eyebrow="Your photo">Still or animated</CardHead>
+          <AccountPhotoForm photo={photo} />
+          <p className="mt-5 text-[14.5px] text-muted">
+            Only you see this photo, here on the account page. A patron profile has its own photo, and that one goes
+            public when you publish the profile.
           </p>
         </Card>
 
