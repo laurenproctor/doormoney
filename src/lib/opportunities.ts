@@ -78,7 +78,14 @@ export type TemplateRow = {
 
 const ACT_TYPES: readonly string[] = ["touring_band", "house_act", "soloist"];
 
-/** The registry's row, with the catalog's longer words added where it has any. */
+/**
+ * The registry's row, in the catalog's words where it has any.
+ *
+ * The row decides what exists and what it costs: category, section, act types, suggested price.
+ * The words a reader sees come from src/lib/catalog.ts for an option it knows, because that file is
+ * the copy held to the voice rules and the hosted rows still carry older wording ("every photo",
+ * where the file says "most crowd photos"). A row the file has never heard of speaks for itself.
+ */
 export function templateFromRow(row: TemplateRow): OpportunityTemplate {
   const words = CATALOG.find((c) => c.key === row.key);
   // An act type is a music idea. Read it only on a music template, whatever the row carries.
@@ -92,7 +99,7 @@ export function templateFromRow(row: TemplateRow): OpportunityTemplate {
     appliesTo,
     defaultPriceCents: row.default_price_cents,
     period: row.default_period,
-    seenBy: row.seen_by,
+    seenBy: words?.seenBy ?? row.seen_by,
     blurb: words?.blurb ?? null,
     active: row.active ?? true,
   };

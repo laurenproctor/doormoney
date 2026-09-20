@@ -153,6 +153,17 @@ test("the registry is read from the database, and the catalog file is only the f
   assert.ok(thrown.length > 0 && thrown.every((t) => t.category === "film"));
 });
 
+test("a known option speaks in the reviewed words, and an unknown one speaks for itself", () => {
+  // The hosted row for the kick drum head still says "every photo". The file does not promise that.
+  const hosted: TemplateRow = { key: "kick_head", name: "Kick drum head", group_key: "onstage", category_key: "music", applies_to: ["touring_band", "house_act"], default_price_cents: 120000, default_period: "run", seen_by: "the whole room, every show, every photo" };
+  const template = templateFromRow(hosted);
+  assert.equal(template.seenBy, CATALOG.find((c) => c.key === "kick_head")!.seenBy);
+  assert.doesNotMatch(template.seenBy ?? "", /every photo/);
+  assert.equal(template.defaultPriceCents, 120000, "what it costs and who it suits still come from the row");
+  assert.equal(templateFromRow(DANCE[0]).seenBy, "every class, every week");
+  assert.equal(templateFromRow(DANCE[1]).seenBy, null, "and nothing is invented where the row says nothing");
+});
+
 test("a retired template starts nothing new and is still there to be named", () => {
   const retired = templateFromRow({ ...DANCE[0], active: false });
   assert.deepEqual(templatesForFundraiser([retired], "dance", null), []);
