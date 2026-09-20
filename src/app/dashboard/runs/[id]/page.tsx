@@ -10,7 +10,7 @@ import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { draftCategories, loadFundraiserDraft } from "@/app/actions/drafts";
-import { CATALOG } from "@/lib/catalog";
+import { surfacesForCategory } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import { periodOf } from "@/lib/periods";
 import { runUrl } from "@/lib/urls";
@@ -46,7 +46,8 @@ export default async function RunPage({ params }: Props) {
 
   const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", id).order("created_at");
   const { data: shows } = await sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", id).order("played_on");
-  const surfaces = CATALOG.filter((s) => act.type !== null && s.appliesTo.includes(act.type));
+  // The options this fundraiser can price. Music narrows by act type; no other category does.
+  const surfaces = surfacesForCategory(run.category_key, act.type);
   const boardHref = runUrl(act.slug, run.slug);
   const allLots = lots ?? [];
   const methods: string[] = run.verification_methods ?? [];

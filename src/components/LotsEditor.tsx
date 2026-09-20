@@ -38,7 +38,7 @@ export function LotsEditor({
       const mine = lots.filter((l) => l.surface_key === s.key);
       r[s.key] = mine.length
         ? { on: true, count: String(mine.length), price: dollars(mine[0].price_cents), mode: mine[0].mode, buyNow: mine[0].buy_now_cents ? dollars(mine[0].buy_now_cents) : "" }
-        : { on: false, count: "1", price: dollars(s.defaultPriceCents), mode: "fixed", buyNow: "" };
+        : { on: false, count: "1", price: s.defaultPriceCents === null ? "" : dollars(s.defaultPriceCents), mode: "fixed", buyNow: "" };
     }
     return r;
   });
@@ -81,7 +81,8 @@ export function LotsEditor({
                     <div>
                       <b className="block text-[15px]">{s.name}</b>
                       <span className="block text-[14px] text-muted">
-                        Card price {formatMoney(s.defaultPriceCents)} per {s.period}. Seen by {s.seenBy}.
+                        {s.defaultPriceCents !== null && <>Card price {formatMoney(s.defaultPriceCents)} per {s.period}. </>}
+                        Seen by {s.seenBy}.
                       </span>
                     </div>
                     <label className="caps text-[14px]">

@@ -8,7 +8,7 @@ import { HeroArt } from "@/components/HeroArt";
 import { Theme } from "@/components/Theme";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
-import { CATALOG } from "@/lib/catalog";
+import { musicSurfaces } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { periodOf } from "@/lib/periods";
@@ -29,7 +29,7 @@ const KIND: Record<Board["act"]["type"], (city: string) => string> = {
   what can be sponsored, the musician's final say beside the house rules, then the two ways in.
 */
 export default async function HomePage() {
-  const featured = HOME_SURFACES.map((k) => CATALOG.find((s) => s.key === k)!);
+  const featured = HOME_SURFACES.map((k) => musicSurfaces().find((s) => s.key === k)!);
   const boards = (await listOpenBoards()).slice(0, 3);
 
   return (
