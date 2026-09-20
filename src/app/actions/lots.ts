@@ -2,7 +2,8 @@
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
-import { CATALOG } from "@/lib/catalog";
+import { templatesForFundraiser, type OpportunityTemplate } from "@/lib/opportunities";
+import { loadTemplates } from "@/lib/opportunity-templates";
 import { actPath, runPath } from "@/lib/urls";
 
 export type LotsState = { ok: boolean; error?: string; saved?: number };
@@ -13,9 +14,14 @@ const MAX_SPOTS = 6;
 
 type Row = { key: string; on: boolean; count: number; priceCents: number; mode: "fixed" | "auction"; buyNowCents: number | null };
 
-function parseRows(form: FormData): { rows: Row[]; error?: string } {
+/**
+ * Reads the form against the templates this fundraiser may use, and no others. A field naming an
+ * option from another category is never read, so it can never become a lot: the form is not what
+ * decides which options exist. Migration 0044 refuses the same thing in the database.
+ */
+function parseRows(form: FormData, templates: readonly OpportunityTemplate[]): { rows: Row[]; error?: string } {
   const rows: Row[] = [];
-  for (const s of CATALOG) {
+  for (const s of templates) {
     const on = form.get(`on_${s.key}`) === "1";
     if (!on) {
       rows.push({ key: s.key, on: false, count: 0, priceCents: 0, mode: "fixed", buyNowCents: null });
@@ -54,21 +60,32 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
 
   const runId = String(form.get("run_id") ?? "");
   const sb = await supabaseServer();
-  const { data: run } = await sb.from("runs").select("id,slug,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
+  const { data: run } = await sb.from("runs").select("id,slug,status,category_key").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
-
-  const { rows, error } = parseRows(form);
-  if (error) return { ok: false, error };
 
   const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", runId).order("created_at");
   const current = existing ?? [];
+
+  // The category is the fundraiser's, read from the row the session owns, never from the form.
+  // What may be newly offered is that category's active templates (music narrowed by act type).
+  // A template this fundraiser already has spots on stays editable even if it has since been
+  // retired or the act type moved, so an existing sponsorship is never stranded by a save.
+  const categoryKey = run.category_key ?? "music";
+  const registry = await loadTemplates(sb, categoryKey);
+  const offered = templatesForFundraiser(registry, categoryKey, act.type);
+  const offeredKeys = new Set(offered.map((t) => t.key));
+  const inUse = registry.filter((t) => !offeredKeys.has(t.key) && current.some((l) => l.surface_key === t.key));
+  const templates = [...offered, ...inUse];
+
+  const { rows, error } = parseRows(form, templates);
+  if (error) return { ok: false, error };
 
   const inserts: { run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: "open"; buy_now_cents: number | null }[] = [];
   const updates: { id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null }[] = [];
   const deletes: string[] = [];
 
   for (const r of rows) {
-    const s = CATALOG.find((c) => c.key === r.key)!;
+    const s = templates.find((t) => t.key === r.key)!;
     const mine = current.filter((l) => l.surface_key === r.key);
     const locked = mine.filter((l) => l.status !== "open");
     const open = mine.filter((l) => l.status === "open");
@@ -103,6 +120,9 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   }
   if (inserts.length) {
     const { error: e } = await sb.from("lots").insert(inserts);
+    // Migration 0044. Neither should be reachable from the editor; both are said in words if they are.
+    if (e?.message.includes("opportunity_category_mismatch")) return { ok: false, error: "One of those options belongs to a different category than this fundraiser, so nothing new was added." };
+    if (e?.message.includes("sponsorship_option_retired")) return { ok: false, error: "One of those options is no longer offered for new sponsorships. The spots you already have on it are unchanged." };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
 

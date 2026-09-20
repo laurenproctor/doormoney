@@ -1,6 +1,10 @@
 // What an organizer can offer, per category. Defaults only; the organizer's own price on a lot
 // always wins. Keep in sync with supabase/seed.sql and supabase/migrations/0040; the sync is held
 // by tests/catalog.test.ts rather than by whoever edits this next.
+//
+// This file is words, not the registry. The surfaces table decides which options a category has
+// (src/lib/opportunity-templates.ts reads it), and src/lib/opportunities.ts is the neutral model
+// over both. The music pages that describe music by name still read musicSurfaces() from here.
 
 export type ActType = "touring_band" | "house_act" | "soloist";
 /** The sections a music fundraiser draws. The pages that describe music by name use this. */
