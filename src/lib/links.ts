@@ -70,3 +70,69 @@ export function instagramHandle(raw: string | null | undefined): string | null {
 export function instagramUrl(handle: string): string {
   return `https://www.instagram.com/${handle}/`;
 }
+
+/**
+ * The other links a profile may carry, organizer or patron: up to six, each a label and an address.
+ *
+ * https only, the rule a patron's website has always been held to. The database repeats every limit
+ * here in profile_links_ok (migration 0043), because a form is a courtesy and a constraint is the
+ * rule.
+ */
+export type ProfileLink = { label: string; url: string };
+
+export const PROFILE_LINKS_MAX = 6;
+export const LINK_LABEL_MAX = 40;
+export const LINK_URL_MAX = 200;
+
+export type ProfileLinksResult = { links: ProfileLink[]; error?: string };
+
+/**
+ * The rows of a links editor, as typed. A row with no address is dropped, so an empty form saves an
+ * empty list. A row with an address that does not survive is refused rather than quietly dropped,
+ * so nobody saves a list that is not the list they typed.
+ */
+export function parseProfileLinks(rows: { label?: string | null; url?: string | null }[]): ProfileLinksResult {
+  const links: ProfileLink[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const raw = row.url?.trim() ?? "";
+    const label = (row.label ?? "").replace(/\s+/g, " ").trim();
+    if (!raw) {
+      if (label) return { links, error: `"${label}" needs an address.` };
+      continue;
+    }
+    if (label.length > LINK_LABEL_MAX) return { links, error: `Keep each label under ${LINK_LABEL_MAX} characters.` };
+    const url = safeWebsite(raw);
+    if (!url || !url.startsWith("https://") || url.length > LINK_URL_MAX) {
+      return { links, error: `"${raw.slice(0, 40)}" is not a full address starting with https://.` };
+    }
+    if (seen.has(url)) return { links, error: `${websiteLabel(url)} is on the list twice.` };
+    seen.add(url);
+    links.push({ label, url });
+  }
+  if (links.length > PROFILE_LINKS_MAX) return { links, error: `Up to ${PROFILE_LINKS_MAX} links. That is ${links.length}.` };
+  return { links };
+}
+
+/**
+ * Stored links on the way back out. The column is jsonb, so what comes back is checked again
+ * before it reaches an href: anything that is not a label and an https address is left out.
+ */
+export function readProfileLinks(raw: unknown): ProfileLink[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ProfileLink[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const { label, url } = item as { label?: unknown; url?: unknown };
+    if (typeof url !== "string") continue;
+    const safe = safeWebsite(url);
+    if (!safe || !safe.startsWith("https://")) continue;
+    out.push({ label: typeof label === "string" ? label : "", url: safe });
+  }
+  return out.slice(0, PROFILE_LINKS_MAX);
+}
+
+/** What a link is called on the page: its label, or the address's own words when it has none. */
+export function linkText(link: ProfileLink): string {
+  return link.label || websiteLabel(link.url);
+}
