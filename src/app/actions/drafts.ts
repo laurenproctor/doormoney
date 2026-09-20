@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftInput, DRAFT_COLUMNS, categoryErrors, type FundraiserCategory, type FundraiserDraft } from "@/lib/fundraiser-drafts";
+import { detailValueErrors } from "@/lib/categories";
 import { slugify } from "@/lib/slug";
 
 export type DraftState = { ok: boolean; error?: string; id?: string };
@@ -34,7 +35,11 @@ export async function saveFundraiserDraft(input: unknown): Promise<DraftState> {
   if (!act) return { ok: false, error: "Create your organizer profile first." };
   const parsed = FundraiserDraftInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(" ") };
-  const issues = categoryErrors(parsed.data, await draftCategories());
+  const categories = await draftCategories();
+  const issues = [
+    ...categoryErrors(parsed.data, categories),
+    ...detailValueErrors(parsed.data.category_key, parsed.data.category_details, categories.find((c) => c.key === parsed.data.category_key)?.detail_keys ?? []),
+  ];
   if (issues.length) return { ok: false, error: issues.join(" ") };
   const sb = await supabaseServer();
   const { id, ...fields } = parsed.data;
@@ -53,9 +58,14 @@ export async function saveFundraiserDraft(input: unknown): Promise<DraftState> {
 export async function saveDraftForm(_previous: DraftState, form: FormData): Promise<DraftState> {
   const value = (key: string) => typeof form.get(key) === "string" ? String(form.get(key)) : "";
   const optional = (key: string) => value(key) || null;
-  let category_details: unknown, activity_locations: unknown;
+  // Each category detail arrives as its own field, named for the key it is stored under. Empty
+  // answers are left out rather than stored as blanks: an unknown detail is absent, not "".
+  const category_details: Record<string, string> = {};
+  for (const [key, field] of form.entries()) {
+    if (key.startsWith("detail_") && typeof field === "string" && field.trim()) category_details[key.slice(7)] = field.trim();
+  }
+  let activity_locations: unknown;
   try {
-    category_details = JSON.parse(value("category_details") || "{}");
     activity_locations = JSON.parse(value("activity_locations") || "[]");
   } catch { return { ok: false, error: "The draft details could not be read. Reload and try again." }; }
   const result = await saveFundraiserDraft({
