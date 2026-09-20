@@ -114,22 +114,27 @@ rests on: a logo goes none, submitted, then approved or declined, and no further
 
 ### Every webhook is idempotent and retryable
 
-**Partly held.** Enforced by Phase 4.
+**Held** as of migration `0039`.
 
-`src/app/api/stripe/webhook/route.ts:32` inserts the event id first and treats a duplicate insert as
-already handled, which is the right shape. Two gaps:
+The event id is still the dedupe, but the row now carries a status, an attempt count, the error, a
+retry time and the payload, and `src/lib/stripeEvents.ts` is what writes them. A handler that
+throws and one that returns `{ ok: false }` both mark the row retryable and answer 500. A crash
+after the claim leaves the row in `processing`, which the worker takes back after fifteen minutes.
+Every handler underneath was already conditional on the state it expects, which is what makes the
+retry safe.
 
-1. When a handler **throws**, the row is deleted and a 500 is returned, so Stripe retries. Good.
-2. When a fulfilment function **returns `{ ok: false }`**, the failure is only logged and the route
-   returns 200 with the event row still in place. The event is recorded as processed though its
-   business operation never completed, and Stripe will not retry it.
-
-There is also no distinction between received, processing, processed and failed, so a crash between
-the insert and the work leaves the event permanently marked as seen.
+The gap that mattered most was not in the list above: **any** failed insert was read as a
+duplicate. A statement timeout answered Stripe 200, and Stripe never sends a delivered event again,
+so the event was lost. Only error `23505` is a duplicate now. Proved by
+`tests/stripeEvents.test.ts` and `supabase/tests/webhook_events_test.sql`.
 
 ### A webhook is not complete until its business operation completes
 
-**Violated.** Enforced by Phase 4. Same cause as above.
+**Held** as of migration `0039`. Same cause as above, and the same fix: the route answers 200 only
+when the handler finished or an earlier delivery finished it. A refusal, a throw, and a row that
+could not be written all answer 500 and leave a row saying what happened. An event this system
+deliberately does not act on settles as `ignored`, so "there was nothing to do" and "nobody looked"
+are no longer the same row.
 
 ### Refunds and cancellations survive a failure
 
