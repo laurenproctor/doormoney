@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(114);
+select plan(116);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -99,6 +99,17 @@ select throws_ok(
 select throws_ok(
   'select stripe_customer_id from patrons limit 1', '42501',
   null, 'anon cannot read a patron''s Stripe customer');
+
+-- The catalog of sponsorship options is public to read and closed to write. Migration 0040 adds a
+-- column to it, and a column added later inherits nothing, so this is the assertion that says the
+-- table did not quietly reopen along with it.
+select lives_ok(
+  'select key, name, category_key from surfaces',
+  'anon can read the sponsorship options, which is what draws them');
+
+select throws_ok(
+  $$insert into surfaces (key,name,group_key,default_period) values ('anon_test','X','stage','production')$$,
+  '42501', null, 'anon cannot add a sponsorship option');
 
 -- The boards render off this one. Migration 0022 revoked acts.owner_id from anon, and the owner
 -- policy on runs from 0005 asked its question inline, so it needed that column to evaluate at all;

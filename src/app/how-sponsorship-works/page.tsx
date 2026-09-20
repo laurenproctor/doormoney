@@ -4,7 +4,7 @@ import { Page } from "@/components/Page";
 import { Section, SectionHead, Steps } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
 import { NewsletterCTA } from "@/components/Newsletter";
-import { CATALOG, type ActType, type Period, type Surface, type SurfaceGroup } from "@/lib/catalog";
+import { musicSurfaces, type ActType, type MusicGroup, type MusicSurface, type Period } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { VERIFICATION_METHODS } from "@/lib/verification";
 import { DIAGRAMS, StageSchematic } from "./diagrams";
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 */
 
 /** The heading pair above each group of sponsorship options. Local to this page; the catalog's own labels serve Home. */
-const GROUP_HEADS: Record<SurfaceGroup, { eyebrow: string; heading: string; intro: string }> = {
+const GROUP_HEADS: Record<MusicGroup, { eyebrow: string; heading: string; intro: string }> = {
   onstage: {
     eyebrow: "Onstage",
     heading: "Where the cameras already point",
@@ -55,7 +55,7 @@ const GROUP_HEADS: Record<SurfaceGroup, { eyebrow: string; heading: string; intr
   },
 };
 
-const GROUP_ORDER: SurfaceGroup[] = ["onstage", "room", "online"];
+const GROUP_ORDER: MusicGroup[] = ["onstage", "room", "online"];
 
 /** The full-width card at the top of a group. */
 const HERO_KEYS = new Set(["kick_head", "tip_jar_card"]);
@@ -64,7 +64,7 @@ const HERO_KEYS = new Set(["kick_head", "tip_jar_card"]);
  * The five surfaces the stage drawing numbers. Soloist gear is not in the drawing, so it is not in
  * the key either: the numbers under the schematic have to match the numbers on it.
  */
-const STAGE_KEY = CATALOG.filter((s) => s.group === "onstage" && !s.appliesTo.includes("soloist"));
+const STAGE_KEY = musicSurfaces().filter((s) => s.group === "onstage" && !s.appliesTo.includes("soloist"));
 
 const FIT: Record<ActType, string> = { touring_band: "bands", house_act: "house acts", soloist: "soloists" };
 
@@ -76,7 +76,7 @@ function fitLabel(types: ActType[]): string {
 }
 
 /** A fundraiser is the period being funded, so a per-run price is a price for the whole fundraiser. */
-const PER: Record<Period, string> = { run: "per fundraiser", month: "per month", season: "per season" };
+const PER: Record<Period, string> = { run: "per fundraiser", month: "per month", season: "per season", production: "per production" };
 
 const STEPS: [string, string][] = [
   [
@@ -173,7 +173,7 @@ export default function HowSponsorshipWorksPage() {
       </Section>
 
       {GROUP_ORDER.map((g) => {
-        const surfaces = CATALOG.filter((s) => s.group === g);
+        const surfaces = musicSurfaces().filter((s) => s.group === g);
         const head = GROUP_HEADS[g];
         return (
           <Section key={g}>
@@ -273,7 +273,7 @@ export default function HowSponsorshipWorksPage() {
 }
 
 /** Head-on stage drawing with the onstage placements numbered, plus the key underneath. */
-function StageKey({ surfaces }: { surfaces: Surface[] }) {
+function StageKey({ surfaces }: { surfaces: MusicSurface[] }) {
   return (
     <div className="edge glow mt-[34px] bg-panel px-[22px] pb-[18px] pt-[22px]">
       <StageSchematic />
@@ -290,7 +290,7 @@ function StageKey({ surfaces }: { surfaces: Surface[] }) {
   );
 }
 
-function OptionCard({ surface: s, hero, diagram }: { surface: Surface; hero: boolean; diagram?: ReactNode }) {
+function OptionCard({ surface: s, hero, diagram }: { surface: MusicSurface; hero: boolean; diagram?: ReactNode }) {
   return (
     <div className={`edge glow px-6 py-[26px] ${hero ? "col-span-full lit bg-panel" : "bg-panel"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-3.5">
