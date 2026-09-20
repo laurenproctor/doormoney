@@ -10,6 +10,7 @@
  * this file. See docs/DECISIONS.md, decision 11.
  */
 import { z } from "zod";
+import { organizerNounCounted } from "@/lib/categories";
 import { safeWebsite } from "@/lib/links";
 
 export const NAME_MIN = 2;
@@ -23,12 +24,38 @@ export const INTERESTS_MAX = 8;
 export const USERNAME_MONTHS = 12;
 
 // ---------------------------------------------------------------
-// Music preferences
+// What the patron is
 // ---------------------------------------------------------------
 
 /**
- * What a patron listens for, from the lines they typed. Genres, scenes, instruments, traditions:
- * no taxonomy, just short words in their own hand.
+ * A person or an organization. Optional, so an individual is never asked a business question:
+ * nothing said stores null and the page says nothing. Mirrors the check on
+ * patron_profiles.profile_kind (migration 0043). Never a payment identity.
+ */
+export const PATRON_KINDS = [
+  { key: "individual", label: "Individual" },
+  { key: "business", label: "Business" },
+  { key: "brand", label: "Brand" },
+  { key: "nonprofit", label: "Nonprofit" },
+  { key: "community", label: "Community group" },
+  { key: "other", label: "Something else" },
+] as const;
+
+export type PatronKind = (typeof PATRON_KINDS)[number]["key"];
+
+export function patronKindLabel(kind: string | null | undefined): string | null {
+  return PATRON_KINDS.find((k) => k.key === kind)?.label ?? null;
+}
+
+// ---------------------------------------------------------------
+// Interests
+// ---------------------------------------------------------------
+
+/**
+ * What a patron cares about, from the lines they typed: no taxonomy, just short words in their
+ * own hand. The field was asked for as music preferences until migration 0043 and those values are
+ * kept exactly as typed. They are not categories: the categories a patron supports are their own
+ * answer (patron_profile_categories), and "Jazz" is never read as a vote for music.
  *
  * Commas and line breaks both separate. Whitespace inside an entry collapses to single spaces,
  * blank lines fall away, and a word said twice is refused rather than quietly deduplicated, so
@@ -64,7 +91,7 @@ export function interestsText(items: string[] | null | undefined): string {
 // The profile's own fields
 // ---------------------------------------------------------------
 
-export type ProfileField = "display_name" | "bio" | "location" | "website" | "interests" | "photo" | "form";
+export type ProfileField = "display_name" | "profile_kind" | "bio" | "location" | "website" | "links" | "categories" | "interests" | "photo" | "form";
 
 /**
  * A link a patron may put on the page. https only, and parsed rather than trusted: what renders is
@@ -90,8 +117,12 @@ export const ProfileDetails = z.object({
     .trim()
     .min(NAME_MIN, "Enter a name.")
     .max(NAME_MAX, `Keep the name under ${NAME_MAX} characters.`),
+  profile_kind: z
+    .union([z.enum(PATRON_KINDS.map((k) => k.key) as [PatronKind, ...PatronKind[]]), z.literal("")])
+    .optional()
+    .transform((v) => v || null),
   bio: optional(BIO_MAX, `Keep the bio under ${BIO_MAX} characters.`),
-  location: optional(LOCATION_MAX, `Keep the city or region under ${LOCATION_MAX} characters.`),
+  location: optional(LOCATION_MAX, `Keep the location under ${LOCATION_MAX} characters.`),
   website: z
     .string()
     .trim()
@@ -177,13 +208,21 @@ export function initialsFor(name: string): string {
   return letters.toUpperCase();
 }
 
-/** "3 fundraisers backed", "2 musicians supported": the only totals a public profile carries. */
-export function impactTotals(activity: { actSlug: string; runTitle: string; actName: string }[]): string[] {
+/**
+ * "3 fundraisers backed", "2 musicians supported": the only totals a public profile carries.
+ *
+ * The second noun follows the fundraisers. When everything shown is in one category the organizers
+ * are called what that category calls them, so a page of music still says musicians. Across
+ * categories, or where the category is not known, they are organizers.
+ */
+export function impactTotals(activity: { actSlug: string; runTitle: string; actName: string; categoryKey?: string | null }[]): string[] {
   if (activity.length === 0) return [];
   const runs = new Set(activity.map((a) => `${a.actSlug}::${a.runTitle}`)).size;
   const acts = new Set(activity.map((a) => a.actSlug)).size;
+  const categories = new Set(activity.map((a) => a.categoryKey ?? ""));
+  const category = categories.size === 1 ? [...categories][0] : "";
   return [
     `${runs} ${runs === 1 ? "fundraiser" : "fundraisers"} backed`,
-    `${acts} ${acts === 1 ? "musician" : "musicians"} supported`,
+    `${acts} ${organizerNounCounted(category, acts)} supported`,
   ];
 }

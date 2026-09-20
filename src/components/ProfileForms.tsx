@@ -10,10 +10,12 @@ import {
   INTEREST_MAX,
   LOCATION_MAX,
   NAME_MAX,
+  PATRON_KINDS,
   SUPPORT_LABEL,
   formatMonth,
   interestsText,
 } from "@/lib/profile";
+import { LINK_LABEL_MAX, PROFILE_LINKS_MAX } from "@/lib/links";
 import { slugWhileTyping } from "@/lib/slug";
 import type { EligibleItem, OwnProfile } from "@/lib/patronprofile";
 
@@ -23,7 +25,7 @@ import type { EligibleItem, OwnProfile } from "@/lib/patronprofile";
   Four forms, deliberately apart. The details say who the patron is, the publish control decides
   whether anyone can see the page at all, and each sponsorship or backing carries its own control, so
   turning one on never turns another on. The username sits on its own because it moves the address
-  of both this page and, for a musician, their board.
+  of both this page and, for an organizer, their own page.
 
   Every control here is a real button in a real form: keyboard first, no drag and drop anywhere,
   every state said in words rather than in color, and every message in a live region.
@@ -64,7 +66,16 @@ export function Field({
 // Who the patron is
 // ---------------------------------------------------------------
 
-export function ProfileDetailsForm({ profile, photo }: { profile: OwnProfile | null; photo: string | null }) {
+export function ProfileDetailsForm({
+  profile,
+  photo,
+  categories,
+}: {
+  profile: OwnProfile | null;
+  photo: string | null;
+  /** The categories the registry offers, already named. Not hardcoded here, so a fifth needs no change. */
+  categories: { key: string; label: string }[];
+}) {
   const [state, action, pending] = useActionState(saveProfileDetails, initial);
   const [bio, setBio] = useState(profile?.bio ?? "");
   const uid = useId();
@@ -76,9 +87,22 @@ export function ProfileDetailsForm({ profile, photo }: { profile: OwnProfile | n
         {(props) => <input {...props} name="display_name" type="text" autoComplete="name" maxLength={NAME_MAX} defaultValue={profile?.displayName ?? ""} className={inputClass} />}
       </Field>
 
+      <Field id={`${uid}-kind`} label="This profile is for" hint="Optional. Leave it unset and the page says nothing about it." error={err.profile_kind}>
+        {(props) => (
+          <select {...props} name="profile_kind" defaultValue={profile?.kind ?? ""} className={inputClass}>
+            <option value="">Not stated</option>
+            {PATRON_KINDS.map((k) => (
+              <option key={k.key} value={k.key}>
+                {k.label}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
+
       <Field
         id={`${uid}-bio`}
-        label="Short bio"
+        label="Short bio or description"
         hint={`${bio.length} of ${BIO_MAX} characters.`}
         error={err.bio}
       >
@@ -96,18 +120,68 @@ export function ProfileDetailsForm({ profile, photo }: { profile: OwnProfile | n
       </Field>
 
       <div className="grid gap-x-5 md:grid-cols-2">
-        <Field id={`${uid}-location`} label="City or region" hint="Optional. A neighbourhood or a city, never an address." error={err.location}>
-          {(props) => <input {...props} name="location" type="text" maxLength={LOCATION_MAX} defaultValue={profile?.location ?? ""} placeholder="Brooklyn, New York" className={inputClass} />}
+        <Field id={`${uid}-location`} label="Location" hint="Optional. A city, a region, a country, or Online. Never a street address." error={err.location}>
+          {(props) => <input {...props} name="location" type="text" maxLength={LOCATION_MAX} defaultValue={profile?.location ?? ""} className={inputClass} />}
         </Field>
         <Field id={`${uid}-website`} label="Website or social link" hint="Optional. A full address starting with https://." error={err.website}>
           {(props) => <input {...props} name="website" type="url" maxLength={200} defaultValue={profile?.website ?? ""} placeholder="https://" className={inputClass} />}
         </Field>
       </div>
 
+      <fieldset className="mb-[18px]">
+        <legend className={labelClass}>Other links</legend>
+        <div className="grid gap-2.5">
+          {Array.from({ length: PROFILE_LINKS_MAX }, (_, i) => (
+            <div key={i} className="grid gap-2.5 sm:grid-cols-[1fr_2fr]">
+              <input
+                name={`link_label_${i}`}
+                aria-label={`Link ${i + 1} label`}
+                maxLength={LINK_LABEL_MAX}
+                defaultValue={profile?.links[i]?.label ?? ""}
+                placeholder="Label"
+                className={inputClass}
+              />
+              <input
+                name={`link_url_${i}`}
+                aria-label={`Link ${i + 1} address`}
+                type="url"
+                maxLength={200}
+                defaultValue={profile?.links[i]?.url ?? ""}
+                placeholder="https://"
+                className={inputClass}
+              />
+            </div>
+          ))}
+        </div>
+        <p role={err.links ? "alert" : undefined} className={`mt-1.5 max-w-none text-[14px] ${err.links ? "text-[14.5px] text-accent-ink" : "text-muted"}`}>
+          {err.links ?? `Optional. Up to ${PROFILE_LINKS_MAX}, each a full address starting with https://. A row with no address is ignored.`}
+        </p>
+      </fieldset>
+
+      {categories.length > 0 && (
+        <fieldset className="mb-[18px]">
+          <legend className={labelClass}>Categories you support</legend>
+          <div className="flex flex-wrap gap-2.5">
+            {categories.map((c) => (
+              <label
+                key={c.key}
+                className="caps edge cursor-pointer bg-panel px-4 py-2.5 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink"
+              >
+                <input type="checkbox" name="categories" value={c.key} defaultChecked={profile?.categoryKeys.includes(c.key) ?? false} className="sr-only" />
+                {c.label}
+              </label>
+            ))}
+          </div>
+          <p role={err.categories ? "alert" : undefined} className={`mt-1.5 max-w-none text-[14px] ${err.categories ? "text-[14.5px] text-accent-ink" : "text-muted"}`}>
+            {err.categories ?? "Optional. Shown on your public page. It commits you to nothing and changes nothing you have already paid for."}
+          </p>
+        </fieldset>
+      )}
+
       <Field
         id={`${uid}-interests`}
-        label="Music preferences"
-        hint={`Up to ${INTERESTS_MAX}, one per line or separated by commas. Genres, scenes, instruments, traditions. Under ${INTEREST_MAX} characters each.`}
+        label="Interests"
+        hint={`Up to ${INTERESTS_MAX}, one per line or separated by commas, in your own words. Under ${INTEREST_MAX} characters each.`}
         error={err.interests}
       >
         {(props) => (
@@ -116,7 +190,6 @@ export function ProfileDetailsForm({ profile, photo }: { profile: OwnProfile | n
             name="interests"
             rows={4}
             defaultValue={interestsText(profile?.interests)}
-            placeholder={"Jazz\nChamber music\nNew York indie\nBassoon"}
             className={`${inputClass} leading-[1.6]`}
           />
         )}
@@ -298,7 +371,7 @@ export function UsernameForm({
           {allowed
             ? "The username can move once every twelve months. Changing it now starts a fresh twelve months."
             : `The username can move once every twelve months. The next change is allowed on ${nextChange}.`}
-          {hasAct && " It is the musician address too, so that page moves with it. The old addresses redirect to the new ones."}
+          {hasAct && " It is your organizer address too, so that page moves with it. The old addresses redirect to the new ones."}
         </p>
       )}
 

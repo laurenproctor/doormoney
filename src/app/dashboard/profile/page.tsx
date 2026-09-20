@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
 import { ActivityList, ProfileDetailsForm, PublishForm, UsernameForm } from "@/components/ProfileForms";
 import { currentProfile, ownedAct, requireUser } from "@/lib/auth";
+import { supabaseServer } from "@/lib/supabase/server";
 import { fullName } from "@/lib/names";
 import { dashboardNav } from "@/lib/dashboardModel";
 import { SITE } from "@/lib/site";
@@ -12,9 +13,9 @@ import { eligibleActivity, linkPatronRows, ownProfile, signedPhotoUrl } from "@/
 /*
   Where a patron decides what the world sees.
 
-  This page is for any account, whether or not it owns an act: a patron who has never listed a band
-  reaches it without being sent through musician onboarding, and a musician who also backs the band
-  down the street reaches the same page.
+  This page is for any account, whether or not it has an organizer profile: a patron who has never
+  raised money reaches it without being sent through organizer onboarding, and an organizer who
+  also sponsors the team down the street reaches the same page.
 
   Nothing here is on by default. The profile is private until published, and every sponsorship and
   backing is off until it is put on, one at a time. No amount is read, shown or sent to the browser.
@@ -32,6 +33,11 @@ export default async function ProfileSettingsPage() {
 
   const [profile, act, own] = await Promise.all([currentProfile(user.id), ownedAct(user.id), ownProfile(user.id)]);
   const [activity, photo] = await Promise.all([eligibleActivity(user.id, verified), signedPhotoUrl(own?.photoPath ?? null)]);
+
+  // The categories a patron may say they support come from the registry: the ones that can publish.
+  const sb = await supabaseServer();
+  const { data: registry } = await sb.from("fundraiser_categories").select("key,label").eq("publish_enabled", true).order("key");
+  const categories = (registry ?? []) as { key: string; label: string }[];
 
   const username = profile?.username ?? null;
   const nextChange = nextUsernameChange(profile?.username_set_at);
@@ -94,7 +100,7 @@ export default async function ProfileSettingsPage() {
         <Card>
           <CardHead eyebrow="The details">Who this patron is</CardHead>
           <div className="max-w-[720px]">
-            <ProfileDetailsForm profile={own} photo={photo} />
+            <ProfileDetailsForm profile={own} photo={photo} categories={categories} />
           </div>
         </Card>
 
@@ -110,7 +116,7 @@ export default async function ProfileSettingsPage() {
         <Card>
           <CardHead eyebrow="The address">The username</CardHead>
           <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-            The username is the address of the public page{act ? " and the address of the musician page" : ""}. It can move
+            The username is the address of the public page{act ? " and the address of your organizer page" : ""}. It can move
             once every twelve months, and the word it leaves behind keeps pointing here rather than going back into
             circulation.
           </p>
