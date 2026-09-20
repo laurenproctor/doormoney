@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CATALOG } from "@/lib/catalog";
 import { payoutNotice, purchaseReceipt, saleNotice, sendEmail, spotTaken } from "@/lib/email";
+import { releaseRuleForPurchase } from "@/lib/delivery";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { queueRefund } from "@/lib/refunds";
 import { SITE } from "@/lib/site";
@@ -40,14 +41,14 @@ type PurchaseRow = {
     mode: string;
     winner_bid_id: string | null;
     buy_now_cents: number | null;
-    runs: { id: string; slug: string; title: string; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
+    runs: { id: string; slug: string; title: string; category_key?: string | null; starts_on: string; ends_on: string; act_id: string; acts: { id: string; name: string; slug: string; owner_id: string | null } };
   };
 };
 
 async function loadPurchase(sb: Admin, id: string) {
   const { data, error } = await sb
     .from("purchases")
-    .select("id,amount_cents,fee_cents,payment_status,lot_id,bid_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,slug,title,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
+    .select("id,amount_cents,fee_cents,payment_status,lot_id,bid_id,patrons(name,contact_email),lots!inner(id,label,surface_key,mode,winner_bid_id,buy_now_cents,runs!inner(id,slug,title,category_key,starts_on,ends_on,act_id,acts!inner(id,name,slug,owner_id)))")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`purchase ${id}: ${error.message}`);
@@ -127,10 +128,15 @@ export async function holdPurchase(
   // bidding is over, and that nothing was charged to them.
   if (p.lots.mode === "auction" && !p.bid_id) await notifyBiddersSpotTaken(sb, p);
 
-  // The schedule: the act's share, in equal Friday slices across the run.
+  // The schedule: the act's share, in equal Friday slices across the run. That is music's rule
+  // (policy version 1, the calendar). A purchase sold under an evidence policy lays nothing here:
+  // its share is laid deliverable by deliverable as the organizer documents them
+  // (src/lib/delivery.ts). Outside music a fundraiser has no run dates at all, so a calendar built
+  // from them was one slice dated 1970, which is the bug this replaces.
   const run = p.lots.runs;
+  const rule = await releaseRuleForPurchase(sb, p.id);
   const { count } = await sb.from("payout_schedule").select("id", { count: "exact", head: true }).eq("purchase_id", p.id);
-  if (!count) {
+  if (!count && rule === "calendar") {
     const slices = weeklySlices(p.amount_cents - p.fee_cents, new Date(run.starts_on), new Date(run.ends_on));
     const rows = slices.map((s) => ({ act_id: run.act_id, purchase_id: p.id, due_on: s.dueOn.toISOString().slice(0, 10), amount_cents: s.amountCents }));
     const { error: e } = await sb.from("payout_schedule").insert(rows);
@@ -144,12 +150,12 @@ export async function holdPurchase(
   const patronEmail = params.patronEmail ?? p.patrons?.contact_email ?? null;
   const patronName = p.patrons?.name ?? "A patron";
   if (patronEmail) {
-    const r = await sendEmail(purchaseReceipt({ to: patronEmail, patronName, lotName: name, actName: act.name, runTitle: run.title, amountCents: p.amount_cents, boardUrl, recordUrl: `${SITE.url}/record/${p.id}` }));
+    const r = await sendEmail(purchaseReceipt({ to: patronEmail, patronName, lotName: name, actName: act.name, runTitle: run.title, amountCents: p.amount_cents, boardUrl, recordUrl: `${SITE.url}/record/${p.id}`, categoryKey: run.category_key }));
     if (!r.sent) console.error("receipt not sent", p.id, r.reason);
   }
   const owner = await ownerEmail(sb, act.owner_id);
   if (owner) {
-    const r = await sendEmail(saleNotice({ to: owner, actName: act.name, lotName: name, patronName, amountCents: p.amount_cents, netCents: p.amount_cents - p.fee_cents, boardUrl, dashboardUrl: `${SITE.url}/dashboard` }));
+    const r = await sendEmail(saleNotice({ to: owner, actName: act.name, lotName: name, patronName, amountCents: p.amount_cents, netCents: p.amount_cents - p.fee_cents, boardUrl, dashboardUrl: `${SITE.url}/dashboard`, categoryKey: run.category_key }));
     if (!r.sent) console.error("sale notice not sent", p.id, r.reason);
   }
   return { ok: true as const, already: false, stale: false as const };
