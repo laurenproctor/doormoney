@@ -155,6 +155,8 @@ be what settles them.
    payouts. A transfer reversal takes money out of the musician's Stripe balance, which is arguably
    their pocket. *Default: never reverse automatically. Record `transfer.reversed` if Stripe or a
    person does one, and recover only by withholding from later slices.*
+   **Decided 2026-09-19: the default stands, with a bounded last resort. Decision 18 in
+   `docs/DECISIONS.md` holds the terms, and note that it leans on decision 2 below.**
 2. **What does "recover from later payouts" reach?** Later slices of the same fundraiser only, or
    any later fundraiser by the same musician, and for how long. *Default: the same musician, any
    fundraiser, no time limit, shown to the musician on the payouts page before it happens.*
