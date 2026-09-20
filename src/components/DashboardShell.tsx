@@ -1,13 +1,22 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Nav } from "@/components/Nav";
-import { Footer } from "@/components/Footer";
+import { Logout } from "@/components/dashboard/icons";
+import { Logo } from "@/components/Logo";
 import { Eyebrow } from "@/components/Brand";
 import { Theme } from "@/components/Theme";
+import { WorkspaceMenu, WorkspaceRail } from "@/components/dashboard/WorkspaceNav";
 import { signOut } from "@/app/actions/auth";
-import { DEFAULT_DASHBOARD_LINKS } from "@/lib/roles";
+import { dashboardNav, type NavSection } from "@/lib/dashboardModel";
 
-/** The signed-in shell: public nav on top, a thin act bar under it, page content, footer. Always lit blue. */
+/**
+ * The signed-in workspace: a utility bar across the top, navigation down the left, and the page
+ * beside it. No marketing nav and no public footer, because somebody signed in is working rather
+ * than being sold to, and the newsletter has no business over a payout total.
+ *
+ * The props are the ones every dashboard page already passed, so the call sites did not have to
+ * move. `nav` is the new one; a page that does not pass it gets the musician's sections, and a
+ * page still passing the old flat `links` gets them in one unnamed group.
+ */
 export function DashboardShell({
   current,
   actName,
@@ -15,6 +24,7 @@ export function DashboardShell({
   title,
   accent,
   intro,
+  nav,
   links,
   children,
 }: {
@@ -24,57 +34,81 @@ export function DashboardShell({
   title: string;
   accent: string;
   intro?: ReactNode;
-  /** From dashboardLinks. Left out, the bar shows the musician's pages, as it always has. */
+  nav?: NavSection[];
+  /** The flat list the shell used to take. Kept so older call sites keep working. */
   links?: readonly { href: string; label: string }[];
   children: ReactNode;
 }) {
-  const bar = links ?? DEFAULT_DASHBOARD_LINKS;
+  void current;
+  const sections: NavSection[] =
+    nav ?? (links ? [{ title: "Dashboard", items: [...links] }] : dashboardNav({ hasAct: true, roles: [] }));
+
   return (
     <Theme name="blue">
-      <Nav />
-      <div className="border-b border-line bg-panel">
-        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-7 py-3">
-          <div className="caps text-[14px] text-accent-ink">{actName ? actName : "New act"}</div>
-          <div className="flex flex-wrap items-center gap-[22px]">
-            {bar.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                aria-current={current === l.href ? "page" : undefined}
-                className={`caps border-b pb-0.5 text-[14px] no-underline hover:text-ink ${current === l.href ? "border-accent text-ink" : "border-transparent text-muted"}`}
-              >
-                {l.label}
-              </Link>
-            ))}
-            <form action={signOut}>
-              <button type="submit" className="caps cursor-pointer border-b border-transparent pb-0.5 text-[14px] text-muted hover:text-ink">
-                Sign out
-              </button>
-            </form>
-          </div>
+      <a
+        href="#main"
+        className="caps sr-only bg-accent px-4 py-2 text-[14px] text-on-accent no-underline focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60]"
+      >
+        Skip to content
+      </a>
+
+      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-line bg-ground px-3 py-2.5 sm:px-4">
+        <WorkspaceMenu sections={sections} />
+        <Link
+          href="/"
+          aria-label="Door Money, home"
+          className="inline-flex min-h-[44px] items-center text-ink no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+        >
+          <Logo title="" className="h-[26px] w-auto" />
+        </Link>
+        {actName && (
+          <span className="caps hidden truncate text-[14px] text-muted sm:inline" title={actName}>
+            {actName}
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-1">
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="caps flex min-h-[44px] cursor-pointer items-center gap-2 px-3 text-[14px] text-muted outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-ink"
+            >
+              <Logout size={16} aria-hidden="true" />
+              {/* The words are the label on a screen with room, and the icon carries it when not. */}
+              <span className="max-[420px]:sr-only">Sign out</span>
+            </button>
+          </form>
         </div>
+      </header>
+
+      <div className="flex min-h-0 flex-1 items-stretch">
+        <WorkspaceRail sections={sections} />
+        <main id="main" className="min-w-0 flex-1">
+          <div className="mx-auto w-full max-w-[1180px] px-4 py-7 sm:px-6 lg:px-8">
+            <div className="mb-7">
+              <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
+              <h1 className="display text-[clamp(28px,4.4vw,44px)] leading-[1.02]">
+                {title} {accent && <em className="text-accent-ink">{accent}</em>}
+              </h1>
+              {intro && <div className="mt-4 max-w-[62ch] text-[15px] leading-[1.6] text-muted">{intro}</div>}
+            </div>
+            {children}
+          </div>
+        </main>
       </div>
-      <main id="main" className="flex-1">
-        <div className="pool">
-          <div className="hero-in mx-auto w-full max-w-[1120px] px-7 pb-[40px] pt-[64px]">
-            <Eyebrow className="mb-7">{eyebrow}</Eyebrow>
-            <h1 className="display text-[clamp(40px,7vw,88px)] leading-[0.98]">
-              {title} {accent && <em className="text-accent-ink">{accent}</em>}
-            </h1>
-            {intro && <div className="mt-5 max-w-[56ch] text-[17px]">{intro}</div>}
-          </div>
-        </div>
-        <div className="mx-auto w-full max-w-[1120px] px-7 pb-[90px]">{children}</div>
-      </main>
-      <Footer />
     </Theme>
   );
 }
 
-/** A lifted panel with one thin line around it, used for every dashboard block. `id` anchors the checklist links. */
+/**
+ * A panel for every dashboard block.
+ *
+ * Opaque rather than translucent: three stage lights swing behind this page, and a table of
+ * figures should not change contrast as they pass. Same colour the sign-up panel uses, mixed from
+ * the existing tokens rather than added to them.
+ */
 export function Card({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
   return (
-    <div id={id} className={`edge min-w-0 scroll-mt-8 bg-panel p-6 ${className}`}>
+    <div id={id} className={`edge min-w-0 scroll-mt-20 bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))] p-6 ${className}`}>
       {children}
     </div>
   );
@@ -84,7 +118,7 @@ export function CardHead({ eyebrow, children }: { eyebrow: string; children: Rea
   return (
     <>
       <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
-      <h2 className="heading mb-4 text-[clamp(24px,3.4vw,34px)] leading-none">{children}</h2>
+      <h2 className="heading mb-4 text-[clamp(20px,2.6vw,26px)] leading-tight">{children}</h2>
     </>
   );
 }

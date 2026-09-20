@@ -1,0 +1,37 @@
+"use client";
+import { useState } from "react";
+import { Copy } from "@/components/dashboard/icons";
+
+/**
+ * Copies the fundraiser's public address.
+ *
+ * Only rendered for a published fundraiser: a draft has no address a patron could open, and
+ * handing somebody a link to a 404 is worse than not offering to. The result is announced rather
+ * than only shown, because the button's own label does not change.
+ */
+export function ShareFundraiser({ url }: { url: string }) {
+  const [said, setSaid] = useState("");
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(url);
+            setSaid("Link copied to the clipboard.");
+          } catch {
+            setSaid("Could not copy. The address is on the fundraiser page.");
+          }
+        }}
+        className="caps inline-flex min-h-[44px] cursor-pointer items-center gap-2 border border-ink/40 px-4 text-[14px] text-ink outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+      >
+        <Copy size={16} aria-hidden="true" />
+        Share
+      </button>
+      <span role="status" aria-live="polite" className="sr-only">
+        {said}
+      </span>
+    </>
+  );
+}
