@@ -5,7 +5,7 @@ const id = "a0000000-0000-4000-8000-000000000001";
 const requests: { table: string; operation: string; row: Record<string, unknown>; filters: Record<string, unknown> }[] = [];
 let matched = true;
 let signedIn = true;
-const categories = ["music", "sports", "film", "theater"].map(key => ({ key, label: key, detail_keys: [], draft_enabled: true }));
+const categories = ["music", "sports", "film", "theater"].map(key => ({ key, label: key, detail_keys: [] as string[], draft_enabled: true }));
 mock.module("next/cache", { namedExports: { revalidatePath() {} } });
 mock.module("next/navigation", { namedExports: { redirect(to: string) { throw new Error(`redirect:${to}`); } } });
 mock.module("@/lib/auth", { namedExports: {
@@ -67,4 +67,25 @@ test("the form preserves exact cents and an explicit UTC auction deadline", asyn
   assert.equal(row.sponsor_promise, "Logo on the tour poster");
   form.set("goal_amount", "12.345");
   assert.equal((await saveDraftForm({ ok: false }, form)).ok, false);
+});
+
+test("category details arrive as their own fields and a closed list is enforced on the server", async () => {
+  categories.find((c) => c.key === "sports")!.detail_keys = ["sport", "level"];
+  const form = new FormData();
+  form.set("id", id);
+  form.set("category_key", "sports");
+  form.set("detail_sport", "  Roller derby  ");
+  form.set("detail_level", "club");
+  form.set("title", "Fall season");
+  assert.equal((await saveDraftForm({ ok: false }, form)).ok, true);
+  assert.deepEqual(requests.at(-1)!.row.category_details, { sport: "Roller derby", level: "club" });
+
+  form.set("detail_level", "olympic");
+  const refused = await saveDraftForm({ ok: false }, form);
+  assert.equal(refused.ok, false);
+  assert.match(refused.error!, /level of play/);
+
+  form.set("detail_level", "");
+  assert.equal((await saveDraftForm({ ok: false }, form)).ok, true);
+  assert.deepEqual(requests.at(-1)!.row.category_details, { sport: "Roller derby" }, "an unknown detail is absent, not empty");
 });

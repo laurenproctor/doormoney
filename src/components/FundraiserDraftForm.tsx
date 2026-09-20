@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { saveDraftForm } from "@/app/actions/drafts";
 import type { FundraiserCategory, FundraiserDraft } from "@/lib/fundraiser-drafts";
+import { detailFields, titleLabel, type DetailField } from "@/lib/categories";
 import { Button } from "@/components/Button";
 import { inputClass, labelClass } from "@/components/DashboardShell";
 
@@ -10,10 +11,11 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer }: {
 }) {
   const [state, action, pending] = useActionState(saveDraftForm, { ok: false });
   const [category, setCategory] = useState(draft?.category_key ?? (musicOrganizer ? "music" : ""));
+  // Details belong to the category chosen with them, so switching category starts them empty.
   const details = draft && category === draft.category_key ? draft.category_details : {};
+  const fields = detailFields(category, categories.find((item) => item.key === category)?.detail_keys ?? []);
   return <form action={action}>
     {draft && <input type="hidden" name="id" value={draft.id} />}
-    <input type="hidden" name="category_details" value={JSON.stringify(details)} />
     <input type="hidden" name="activity_locations" value={JSON.stringify(draft?.activity_locations ?? [])} />
     <p className="mb-6 text-muted">Save what is known now. Sports, film and theater are available as private drafts while their publishing flows are being built.</p>
     <label className={labelClass}>Category
@@ -22,7 +24,8 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer }: {
         {categories.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
       </select>
     </label>
-    <Field label="Fundraiser name" name="title" value={draft?.title} />
+    <Field label={titleLabel(category)} name="title" value={draft?.title} />
+    {fields.map((field) => <Detail key={`${category}-${field.key}`} field={field} value={details[field.key]} />)}
     <Field label="What will the funding enable?" name="purpose" value={draft?.purpose} />
     <label className={labelClass}>Description<textarea name="description" defaultValue={draft?.description ?? ""} rows={4} className={inputClass} /></label>
     <Field label="What can sponsors count on receiving?" name="sponsor_promise" value={draft?.sponsor_promise} />
@@ -56,6 +59,22 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer }: {
     {state.ok && <p role="status" className="my-4">Draft saved.</p>}
     <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save draft"}</Button>
   </form>;
+}
+/**
+ * One detail this category asks for. The registry decides the key; src/lib/categories.ts decides
+ * how it is asked. A closed list is a select, everything else is a line of text.
+ */
+function Detail({ field, value }: { field: DetailField; value?: string }) {
+  const name = `detail_${field.key}`;
+  return <label className={`${labelClass} my-4 block`}>{field.label}
+    {field.options
+      ? <select name={name} defaultValue={value ?? ""} className={inputClass}>
+          <option value="">Not yet known</option>
+          {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      : <input name={name} type="text" defaultValue={value ?? ""} placeholder={field.placeholder} className={inputClass} />}
+    {field.help && <span className="mt-2 block text-[14px] normal-case tracking-normal text-muted">{field.help}</span>}
+  </label>;
 }
 function Field({ label, name, value, type = "text" }: { label: string; name: string; value?: string | number | null; type?: string }) {
   return <label className={`${labelClass} my-4 block`}>{label}<input name={name} type={type} defaultValue={value ?? ""} className={inputClass} /></label>;
