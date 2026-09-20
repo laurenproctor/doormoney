@@ -22,6 +22,7 @@ const ready = (): ReadinessInput => ({
   },
   lotCount: 4,
   auctionCount: 2,
+  categoryPublishable: true,
 });
 
 test("a finished draft publishes", () => {
@@ -63,6 +64,7 @@ test("no spots, no bio, no dates: every missing thing is named at once", () => {
     run: { title: "Fall run", starts_on: null, ends_on: null, show_count: 0, bidding_closes_at: null, status: "draft", methods: [], other: null },
     lotCount: 0,
     auctionCount: 0,
+    categoryPublishable: true,
   });
   assert.equal(blockers.length, 4);
   assert.match(blockers.join(" "), /short bio/);
@@ -121,4 +123,81 @@ test("a published run reads as published even while something else is unfinished
   const publish = readiness(input).find((r) => r.key === "publish");
   assert.equal(publish?.done, true);
   assert.equal(publish?.note, "The fundraiser is public.");
+});
+
+/*
+  The second gate. Music is held to the one it has always been held to; every other category is
+  held to the product contract's own test instead. Neither is the other's default.
+*/
+
+const theater = (): ReadinessInput => ({
+  act: { name: "Foundation Theater", city: null, bio: "A company in a room above a pub.", stripe_account_id: "acct_2", stripe_payouts_enabled: true },
+  run: {
+    category_key: "theater",
+    title: "Winter production",
+    starts_on: null,
+    ends_on: null,
+    show_count: null,
+    bidding_closes_at: null,
+    status: "draft",
+    purpose: "Rights, set build and four weeks of rehearsal room.",
+    audience_description: "The company's own audience, about 90 a night for three weeks.",
+    sponsor_promise: "A credit in the program and the sponsor's name in the foyer.",
+    methods: ["selected_show_photos"],
+    other: null,
+  },
+  lotCount: 2,
+  auctionCount: 0,
+  categoryPublishable: true,
+});
+
+test("a theater fundraiser publishes on the contract's three questions, with no dates and no city", () => {
+  assert.deepEqual(publishBlockers(theater()), []);
+});
+
+test("outside music, the three questions are the gate, and the missing one is named", () => {
+  for (const [field, expected] of [
+    ["purpose", /what the funding enables/],
+    ["audience_description", /who it reaches/],
+    ["sponsor_promise", /what a sponsor receives/],
+  ] as const) {
+    const input = theater();
+    input.run[field] = null;
+    const blockers = publishBlockers(input);
+    assert.equal(blockers.length, 1, `${field} should be the only thing in the way`);
+    assert.match(blockers[0], expected);
+  }
+});
+
+test("a music fundraiser is not asked the three questions, and keeps its own gate", () => {
+  const input = ready();
+  input.run.purpose = null;
+  input.run.audience_description = null;
+  input.run.sponsor_promise = null;
+  assert.deepEqual(publishBlockers(input), [], "music publishes on the details it always published on");
+  input.run.show_count = null;
+  assert.match(publishBlockers(input).join(" "), /show count/, "and still needs those");
+});
+
+test("a category nobody has turned on cannot publish, however complete it is", () => {
+  const input = theater();
+  input.categoryPublishable = false;
+  const blockers = publishBlockers(input);
+  assert.equal(blockers.length, 1);
+  assert.match(blockers[0], /Publishing is not open for it yet/);
+});
+
+test("a city is music's requirement, not everyone's", () => {
+  const withoutCity = ready();
+  withoutCity.act.city = null;
+  assert.match(publishBlockers(withoutCity).join(" "), /name and city/, "music still wants one");
+  assert.deepEqual(publishBlockers(theater()), [], "and nobody else does");
+});
+
+test("the checklist names the organizer the way its category does", () => {
+  assert.equal(readiness(ready())[0].label, "Musician profile");
+  assert.equal(readiness(theater())[0].label, "Theater company profile");
+  const sports = theater();
+  sports.run.category_key = "sports";
+  assert.equal(readiness(sports)[0].label, "Team profile");
 });

@@ -9,6 +9,8 @@
  * Pure, and importable from a client component: nothing here reads the database.
  */
 
+import { formatDateRange } from "@/lib/dates";
+
 export type Period = {
   /** "tour". For "Back the tour", "as the tour goes on". */
   noun: string;
@@ -32,5 +34,32 @@ const PERIODS: Record<string, Period> = {
  */
 export function periodOf(kind: string | null | undefined): Period {
   return PERIODS[kind ?? ""] ?? { noun: "fundraiser", units: "activities", unit: "activity", counted: "planned activities" };
+}
+
+/** Just enough of a fundraiser to describe it in one line. */
+export type FundraiserSummary = {
+  title: string;
+  categoryKey: string;
+  kind: string | null;
+  showCount: number | null;
+  startsOn: string | null;
+  endsOn: string | null;
+};
+
+/**
+ * The line under a fundraiser's name: "Fall run. 18 shows, Oct 3 to Nov 2."
+ *
+ * Music counts shows, because a music fundraiser is built out of them. No other category has a
+ * count, so the line carries whatever it does have and stops, rather than printing a zero or
+ * inventing a unit. A fundraiser with no dates yet is just its name.
+ */
+export function fundraiserLine(run: FundraiserSummary): string {
+  const period = periodOf(run.kind);
+  const count = run.categoryKey === "music" && run.showCount !== null
+    ? `${run.showCount} ${run.showCount === 1 ? period.unit : period.units}`
+    : null;
+  const dates = run.startsOn && run.endsOn ? formatDateRange(run.startsOn, run.endsOn) : null;
+  const rest = [count, dates].filter(Boolean).join(", ");
+  return rest ? `${run.title}. ${rest}.` : `${run.title}.`;
 }
 

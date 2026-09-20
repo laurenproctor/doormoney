@@ -2,7 +2,7 @@
 import { useActionState, useState } from "react";
 import { saveVerification, type VerificationState } from "@/app/actions/verification";
 import { Button } from "@/components/Button";
-import { OTHER_KEY, OTHER_MAX, OTHER_MIN, VERIFICATION_METHODS, type VerificationField } from "@/lib/verification";
+import { OTHER_KEY, OTHER_MAX, OTHER_MIN, verificationMethods, type VerificationField } from "@/lib/verification";
 
 const initial: VerificationState = { ok: false };
 
@@ -18,11 +18,14 @@ export function VerificationEditor({
   methods,
   other,
   runStatus,
+  categoryKey,
 }: {
   runId: string;
   methods: string[];
   other: string | null;
   runStatus: string;
+  /** Which category's words to offer. The keys stored are the same in every category. */
+  categoryKey: string;
 }) {
   const [state, action, pending] = useActionState(saveVerification, initial);
 
@@ -35,7 +38,7 @@ export function VerificationEditor({
   return (
     <form action={action} noValidate>
       <input type="hidden" name="run_id" value={runId} />
-      <Fields key={stamp} startMethods={shown.methods} startOther={shown.other} errors={state.errors ?? {}} draft={runStatus === "draft"} ok={state.ok} saved={state.saved} pending={pending} />
+      <Fields key={stamp} startMethods={shown.methods} startOther={shown.other} errors={state.errors ?? {}} draft={runStatus === "draft"} ok={state.ok} saved={state.saved} pending={pending} categoryKey={categoryKey} />
     </form>
   );
 }
@@ -48,6 +51,7 @@ function Fields({
   ok,
   saved,
   pending,
+  categoryKey,
 }: {
   startMethods: string[];
   startOther: string;
@@ -56,8 +60,10 @@ function Fields({
   ok: boolean;
   saved?: number;
   pending: boolean;
+  categoryKey: string;
 }) {
-  const [picked, setPicked] = useState<string[]>(() => VERIFICATION_METHODS.filter((m) => startMethods.includes(m.key)).map((m) => m.key));
+  const available = verificationMethods(categoryKey);
+  const [picked, setPicked] = useState<string[]>(() => available.filter((m) => startMethods.includes(m.key)).map((m) => m.key));
   const [answer, setAnswer] = useState(startOther);
   const otherOn = picked.includes(OTHER_KEY);
   const toggle = (key: string, on: boolean) => setPicked((prev) => (on ? [...prev, key] : prev.filter((k) => k !== key)));
@@ -66,7 +72,7 @@ function Fields({
   return (
     <>
       <div className="edge bg-panel">
-        {VERIFICATION_METHODS.map((m) => {
+        {available.map((m) => {
           const on = picked.includes(m.key);
           return (
             <label

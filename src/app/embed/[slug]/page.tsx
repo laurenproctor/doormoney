@@ -51,6 +51,10 @@ export default async function EmbedPage({ params, searchParams }: Props) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const board = await getBoard(slug);
   if (!board || !board.run) notFound();
+  // The widget's backing tiers are music's, in music's words: a name on the tour thank-you, a name
+  // on the merch table card. Another category's fundraiser does not get offered them by accident.
+  // An exact-fundraiser widget that knows what it is selling is its own piece of Phase 3.
+  if (board.run.categoryKey !== "music") notFound();
 
   const backers = board.backers ?? [];
   const backedCents = boardWorth(board) + fanWorth(board);
@@ -66,8 +70,8 @@ export default async function EmbedPage({ params, searchParams }: Props) {
         slug={slug}
         actName={board.act.name}
         runTitle={board.run.title}
-        showCount={board.run.showCount}
-        kind={board.run.kind}
+        showCount={board.run.showCount ?? 0}
+        kind={board.run.kind ?? "tour"}
         backedLabel={formatMoney(backedCents)}
         goalLabel={goalCents > 0 ? formatMoney(goalCents) : null}
         progress={

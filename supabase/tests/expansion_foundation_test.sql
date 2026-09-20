@@ -1,7 +1,7 @@
 -- Draft category, ownership and compatibility contract. Every suite rolls back its fixtures.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(35);
 
 insert into auth.users (id,email,raw_user_meta_data) values
  ('e2000000-0000-4000-8000-000000000001','foundation-owner@example.com','{"roles":["patron"]}'),
@@ -42,7 +42,13 @@ select set_config('request.jwt.claims','',true);
 select is((select count(*) from runs where act_id='e2000000-0000-4000-8000-000000000003'),0::bigint,'anonymous readers cannot see drafts');
 select is((select count(*) from acts where slug='foundation-organizer'),0::bigint,'neutral organizer profile stays private');
 select is((select count(*) from acts where slug='gutter-hymns'),1::bigint,'existing music profile stays public');
-select throws_ok($$select sponsor_promise from runs$$,'42501',null,'new draft metadata is not added to anonymous column grants');
+-- Migration 0041 publishes the three questions, because outside music they are the page. The rest
+-- of the draft metadata is still nobody's business: money, windows, deadlines and stored details.
+select lives_ok($$select purpose, audience_description, sponsor_promise from runs$$,
+  'what a published fundraiser promises is readable, which is what draws it');
+select throws_ok($$select goal_cents from runs$$,'42501',null,'the funding goal is not');
+select throws_ok($$select category_details from runs$$,'42501',null,'nor are the stored category details');
+select throws_ok($$select delivery_due_at from runs$$,'42501',null,'nor the delivery deadline');
 reset role;
 
 insert into fundraiser_categories(key,label,detail_keys) values ('community','Community',array['project']);

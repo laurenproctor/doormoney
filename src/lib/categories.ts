@@ -149,3 +149,26 @@ export function detailValueErrors(categoryKey: string, details: Record<string, s
   }
   return out;
 }
+
+/**
+ * What a music act is, in the words the cards have always used. Only music has an act type, so this
+ * is the only category with a line of its own here.
+ */
+const MUSIC_KIND: Record<string, { plain: string; withCity: (city: string) => string }> = {
+  touring_band: { plain: "Band, touring", withCity: () => "Band, touring" },
+  house_act: { plain: "House act", withCity: (city) => `House act, ${city}` },
+  soloist: { plain: "Soloist", withCity: (city) => `Soloist, gigging ${city}` },
+};
+
+/**
+ * The small caps line above an organizer's name on a card.
+ *
+ * Music keeps the line it has always had. Every other category says what it is, and says where only
+ * when somebody said where: the product contract is explicit that nobody gets an invented city.
+ */
+export function organizerLabel(categoryKey: string, actType: string | null, city: string | null): string {
+  const music = actType ? MUSIC_KIND[actType] : null;
+  if (music) return city ? music.withCity(city) : music.plain;
+  const what = organizerNoun(categoryKey);
+  return [what.charAt(0).toUpperCase() + what.slice(1), city].filter(Boolean).join(", ");
+}

@@ -4,10 +4,10 @@ import { ButtonLink } from "@/components/Button";
 import { Countdown } from "@/components/Countdown";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
-import { clockOf, formatDateRange, weekdayOf } from "@/lib/dates";
+import { clockOf, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { periodOf } from "@/lib/periods";
-import type { Board } from "@/lib/sample";
+import { fundraiserLine, periodOf } from "@/lib/periods";
+import { organizerLabel } from "@/lib/categories";
 import { runPath } from "@/lib/urls";
 
 export const metadata: Metadata = {
@@ -20,11 +20,7 @@ export const metadata: Metadata = {
 // Fundraisers, and not everything on it is an auction: each sponsorship is fixed price or open to
 // bids, and the musician decides which. See docs/DECISIONS.md, decision 14.
 
-const KIND: Record<Board["act"]["type"], (city: string) => string> = {
-  touring_band: () => "Band, touring",
-  house_act: (city) => `House act, ${city}`,
-  soloist: (city) => `Soloist, gigging ${city}`,
-};
+
 
 export default async function AuctionsPage() {
   const boards = await listOpenBoards();
@@ -49,19 +45,19 @@ export default async function AuctionsPage() {
         {boards.map((b) => {
           return (
             <div key={b.act.slug} className="edge flex flex-col gap-3.5 bg-panel px-[26px] py-7 ">
-              <div className="caps text-[14.5px] text-accent-ink">{KIND[b.act.type](b.act.city)}</div>
+              <div className="caps text-[14.5px] text-accent-ink">{organizerLabel(b.run.categoryKey, b.act.type, b.act.city)}</div>
               <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">{b.act.name}</div>
               <div className="caps text-[14.5px] leading-[1.7] text-muted">
-                {b.run.title}. {b.run.showCount} {periodOf(b.run.kind).units}, {formatDateRange(b.run.startsOn, b.run.endsOn)}.
+                {fundraiserLine(b.run)}
               </div>
               <div className="flex flex-wrap gap-[26px] border-t border-line pt-3.5">
                 <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />
                 <Stat value={String(openSpots(b))} label="sponsorship options open" />
                 {b.run.expectedAttendance ? (
                   <Stat value={`~${b.run.expectedAttendance.toLocaleString("en-US")}`} label="expected attendance" />
-                ) : (
+                ) : b.run.showCount !== null ? (
                   <Stat value={String(b.run.showCount)} label={periodOf(b.run.kind).counted} />
-                )}
+                ) : null}
               </div>
               {b.run.biddingClosesAt && (
                 <div className="caps text-[14.5px]">

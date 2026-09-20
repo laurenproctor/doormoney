@@ -1,14 +1,23 @@
 /**
- * What a draft run still needs before its board can go public, in one place.
+ * What a draft fundraiser still needs before it can go public, in one place.
  *
- * The run dashboard reads this to draw the checklist and publishRun reads the same rules to decide,
- * so the list a musician looks at and the answer they get from the publish button cannot drift.
- * Pure: it takes rows that have already been read under the owner's session and returns words.
+ * The fundraiser dashboard reads this to draw the checklist and publishRun reads the same rules to
+ * decide, so the list an organizer looks at and the answer they get from the publish button cannot
+ * drift. Pure: it takes rows that have already been read under the owner's session and returns
+ * words. The database says the same thing again in guard_fundraiser_foundation (migration 0041),
+ * because a gate that only exists in TypeScript is not a gate.
+ *
+ * Two gates, not one. Music is held to the gate it has always been held to: a performance format,
+ * both dates and a show count. That gate predates the product contract and the fundraisers already
+ * published under it have to keep passing it. Every other category is held to the contract's own
+ * test instead, which is the one that makes a sponsorship judgeable: what the money enables, who it
+ * reaches, and what the sponsor receives. Neither gate is the other's default.
  *
  * Payout setup is on the checklist but never blocks. Door Money holds every payment on the platform
- * balance and transfers weekly (Phase 3), so a board can open before Stripe is finished; the money
+ * balance and transfers weekly, so a fundraiser can open before Stripe is finished; the money
  * simply waits. That is the existing rule and this does not change it.
  */
+import { organizerNoun } from "@/lib/categories";
 import { OTHER_KEY, OTHER_MIN, verificationPublishable, type VerificationChoice } from "@/lib/verification";
 
 export type ReadinessAct = {
@@ -27,14 +36,24 @@ export type ReadinessRun = {
   show_count: number | null;
   bidding_closes_at: string | null;
   status: string;
+  /** What the funding enables, who it reaches, what a sponsor receives. The shared gate. */
+  purpose?: string | null;
+  audience_description?: string | null;
+  sponsor_promise?: string | null;
 } & Partial<VerificationChoice>;
 
 export type ReadinessInput = {
   act: ReadinessAct;
   run: ReadinessRun;
-  /** Spots on this run, and how many of them take bids. */
+  /** Spots on this fundraiser, and how many of them take bids. */
   lotCount: number;
   auctionCount: number;
+  /**
+   * Whether this category may leave draft status at all, from fundraiser_categories.publish_enabled.
+   * Required rather than defaulted: a category that has never been considered is not publishable,
+   * and a default of true here would be the quiet way that stops being true.
+   */
+  categoryPublishable: boolean;
 };
 
 export type ReadinessRow = {
@@ -50,29 +69,56 @@ export type ReadinessRow = {
 };
 
 const filled = (v: string | null | undefined) => Boolean(v && v.trim().length > 0);
+const isMusic = (run: ReadinessRun) => (run.category_key ?? "music") === "music";
+const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
-export function profileComplete(act: ReadinessAct): boolean {
-  return filled(act.name) && filled(act.city) && filled(act.bio);
+/**
+ * The organizer page, by category.
+ *
+ * A city is required of a musician because every music fundraiser published so far has one and the
+ * board prints it. Nowhere else: the product contract is explicit that location is optional and
+ * that no fundraiser gets an invented one.
+ */
+export function profileComplete(act: ReadinessAct, run?: ReadinessRun): boolean {
+  const cityNeeded = !run || isMusic(run);
+  return filled(act.name) && filled(act.bio) && (!cityNeeded || filled(act.city));
 }
 
+/** The fundraiser's own details, under whichever of the two gates applies. */
 export function runComplete(run: ReadinessRun): boolean {
-  return filled(run.title) && filled(run.starts_on) && filled(run.ends_on) && (run.show_count ?? 0) >= 1;
+  if (!filled(run.title)) return false;
+  return isMusic(run)
+    ? filled(run.starts_on) && filled(run.ends_on) && (run.show_count ?? 0) >= 1
+    : filled(run.purpose) && filled(run.audience_description) && filled(run.sponsor_promise);
 }
 
 export function verificationComplete(run: ReadinessRun): boolean {
   return verificationPublishable(run);
 }
 
+/** What the fundraiser row still wants, named one by one. */
+function runMissing(run: ReadinessRun): string {
+  if (isMusic(run)) return "A name, both dates and a show count.";
+  const missing = [
+    !filled(run.title) && "a name",
+    !filled(run.purpose) && "what the funding enables",
+    !filled(run.audience_description) && "who it reaches",
+    !filled(run.sponsor_promise) && "what a sponsor receives",
+  ].filter((v): v is string => typeof v === "string");
+  return `${capitalize(missing.join(", "))}.`;
+}
+
 /**
- * Everything between this draft and a public fundraiser, in the order a musician would fix it.
+ * Everything between this draft and a public fundraiser, in the order an organizer would fix it.
  * Empty means publishing will go through. Each line names the thing and where it lives.
  */
-export function publishBlockers({ act, run, lotCount, auctionCount }: ReadinessInput): string[] {
+export function publishBlockers({ act, run, lotCount, auctionCount, categoryPublishable }: ReadinessInput): string[] {
   const out: string[] = [];
-  if (run.category_key && run.category_key !== "music") out.push("This category is available for drafts. Publishing is not available yet.");
-  if (!filled(act.name) || !filled(act.city)) out.push("Finish the name and city on the musician page.");
-  else if (!filled(act.bio)) out.push("Add a short bio on the musician page. The fundraiser leads with it.");
-  if (!runComplete(run)) out.push("Finish the fundraiser: a name, both dates and a show count.");
+  const noun = organizerNoun(run.category_key ?? "music");
+  if (!categoryPublishable) out.push("This category can hold drafts. Publishing is not open for it yet.");
+  if (!filled(act.name) || (isMusic(run) && !filled(act.city))) out.push(`Finish the ${isMusic(run) ? "name and city" : "name"} on the ${noun} page.`);
+  else if (!filled(act.bio)) out.push(`Add a short bio on the ${noun} page. The fundraiser leads with it.`);
+  if (!runComplete(run)) out.push(`Finish the fundraiser: ${runMissing(run).charAt(0).toLowerCase()}${runMissing(run).slice(1)}`);
   if (lotCount === 0) out.push("Add at least one spot before publishing.");
   if (auctionCount > 0 && !filled(run.bidding_closes_at)) out.push("Auction spots need a bidding close time. Set one below.");
   if (!verificationComplete(run)) {
@@ -89,26 +135,39 @@ export function publishBlockers({ act, run, lotCount, auctionCount }: ReadinessI
   return out;
 }
 
-/** The six rows on the run dashboard, in order. */
+/** The six rows on the fundraiser dashboard, in order. */
 export function readiness(input: ReadinessInput): ReadinessRow[] {
   const { act, run, lotCount, auctionCount } = input;
   const published = run.status === "open" || run.status === "live";
   const blockers = publishBlockers(input);
   const auctionsNeedClose = auctionCount > 0 && !filled(run.bidding_closes_at);
+  const profileDone = profileComplete(act, run);
+  const noun = organizerNoun(run.category_key ?? "music");
+  const placeName = [act.name, isMusic(run) ? act.city : null].filter(Boolean).join(", ");
 
   return [
     {
       key: "profile",
-      label: "Musician profile",
-      done: profileComplete(act),
-      note: profileComplete(act) ? `${act.name}, ${act.city}.` : filled(act.name) && filled(act.city) ? "A short bio is still missing." : "A name and a city are still missing.",
+      label: `${capitalize(noun)} profile`,
+      done: profileDone,
+      note: profileDone
+        ? `${placeName}.`
+        : filled(act.name) && (!isMusic(run) || filled(act.city))
+          ? "A short bio is still missing."
+          : isMusic(run)
+            ? "A name and a city are still missing."
+            : "A name is still missing.",
       href: "/dashboard/act",
     },
     {
       key: "run",
       label: "Fundraiser details",
       done: runComplete(run),
-      note: runComplete(run) ? `${run.title}, ${run.show_count} ${run.show_count === 1 ? "date" : "dates"}.` : "A name, both dates and a show count.",
+      note: runComplete(run)
+        ? isMusic(run)
+          ? `${run.title}, ${run.show_count} ${run.show_count === 1 ? "date" : "dates"}.`
+          : `${run.title}. The funding, the audience and the sponsor's side are all answered.`
+        : runMissing(run),
       href: "#run-details",
     },
     {
@@ -152,4 +211,3 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
     },
   ];
 }
-
