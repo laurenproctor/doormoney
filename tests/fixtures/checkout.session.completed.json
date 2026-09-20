@@ -1,0 +1,156 @@
+{
+  "id": "evt_0UHeeconpMh0CahVhdgIIahv",
+  "data": {
+    "object": {
+      "id": "cs_test_a1AKQKNGuWcujleIkiQ3A7BwNjL2UT7luRlAyXWosyMw9OeBtRLFBrgGZl",
+      "url": null,
+      "mode": "payment",
+      "locale": null,
+      "object": "checkout.session",
+      "status": "complete",
+      "consent": null,
+      "created": 1789887310,
+      "invoice": null,
+      "ui_mode": "hosted_page",
+      "currency": "usd",
+      "customer": "cus_VIF8lfc4KROuv1",
+      "livemode": false,
+      "metadata": {},
+      "discounts": [],
+      "cancel_url": "https://httpbin.org/post",
+      "expires_at": 1789973710,
+      "custom_text": {
+        "submit": null,
+        "after_submit": null,
+        "shipping_address": null,
+        "terms_of_service_acceptance": null
+      },
+      "permissions": null,
+      "submit_type": null,
+      "success_url": "https://httpbin.org/post",
+      "amount_total": 3000,
+      "payment_link": null,
+      "setup_intent": null,
+      "subscription": null,
+      "automatic_tax": {
+        "status": null,
+        "enabled": false,
+        "provider": null,
+        "liability": null
+      },
+      "client_secret": null,
+      "custom_fields": [],
+      "shipping_cost": null,
+      "total_details": {
+        "amount_tax": 0,
+        "amount_discount": 0,
+        "amount_shipping": 0
+      },
+      "customer_email": null,
+      "origin_context": null,
+      "payment_intent": "pi_2UHeeYonpMh0CahV1AILQBnn",
+      "payment_status": "paid",
+      "recovered_from": null,
+      "wallet_options": null,
+      "amount_subtotal": 3000,
+      "adaptive_pricing": {
+        "enabled": true
+      },
+      "after_expiration": null,
+      "customer_account": "acct_0UHeeZonpMNqJtk8",
+      "customer_details": {
+        "name": "Jenny Rosen",
+        "email": "stripe@example.com",
+        "phone": null,
+        "address": {
+          "city": "South San Francisco",
+          "line1": "354 Oyster Point Blvd",
+          "line2": null,
+          "state": "CA",
+          "country": "US",
+          "postal_code": "94080"
+        },
+        "tax_ids": [],
+        "tax_exempt": "none",
+        "business_name": null,
+        "individual_name": null
+      },
+      "invoice_creation": {
+        "enabled": false,
+        "invoice_data": {
+          "footer": null,
+          "issuer": null,
+          "metadata": {},
+          "description": null,
+          "custom_fields": null,
+          "account_tax_ids": null,
+          "rendering_options": null
+        }
+      },
+      "managed_payments": {
+        "enabled": false
+      },
+      "shipping_options": [],
+      "branding_settings": {
+        "icon": null,
+        "logo": {
+          "file": "file_FPCpMen4hm2QvA",
+          "type": "file"
+        },
+        "font_family": "default",
+        "border_style": "rounded",
+        "button_color": "#098bff",
+        "display_name": "Lauren Proctor",
+        "background_color": "#ffffff"
+      },
+      "customer_creation": "always",
+      "consent_collection": null,
+      "client_reference_id": null,
+      "currency_conversion": null,
+      "payment_method_types": [
+        "card",
+        "link"
+      ],
+      "allow_promotion_codes": null,
+      "collected_information": {
+        "business_name": null,
+        "individual_name": null,
+        "shipping_details": null
+      },
+      "integration_identifier": null,
+      "payment_method_options": {
+        "card": {
+          "request_three_d_secure": "automatic"
+        }
+      },
+      "phone_number_collection": {
+        "enabled": false
+      },
+      "payment_method_collection": "always",
+      "billing_address_collection": null,
+      "shipping_address_collection": null,
+      "allowed_payment_method_types": null,
+      "saved_payment_method_options": {
+        "payment_method_save": null,
+        "payment_method_remove": "disabled",
+        "allow_redisplay_filters": [
+          "always"
+        ]
+      },
+      "payment_method_configuration_details": {
+        "id": "pmc_0KNQJOonpMh0CahV5jrm4gkS",
+        "parent": null
+      }
+    }
+  },
+  "type": "checkout.session.completed",
+  "object": "event",
+  "created": 1789887313,
+  "request": {
+    "id": null,
+    "idempotency_key": null
+  },
+  "livemode": false,
+  "api_version": "2026-08-26.dahlia",
+  "pending_webhooks": 4
+}
