@@ -36,7 +36,7 @@ export default function NotFound() {
               <p className="mt-7 max-w-[44ch] text-[17px] text-muted">The page may have moved, changed, or been taken down.</p>
               <div className="mt-9 flex flex-wrap gap-4">
                 <ButtonLink href="/" arrow>Back to Door Money</ButtonLink>
-                <ButtonLink href="/auctions" variant="ghost">
+                <ButtonLink href="/fundraisers" variant="ghost">
                   See open fundraisers
                 </ButtonLink>
               </div>

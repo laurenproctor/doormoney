@@ -16,12 +16,15 @@ import { runPath } from "@/lib/urls";
 export const metadata: Metadata = {
   title: "Fundraisers",
   description: "Every open fundraiser on Door Money: the organizers raising now, what each one funds, and the sponsorship options still open.",
+  // One address for search engines too, now that the old one redirects here.
+  alternates: { canonical: "/fundraisers" },
 };
 
-// The route stays /auctions, because that address is already in sent email and in pasted widget
-// snippets; decision 13 settled that an address outlives the words on the page. In copy this is
-// Fundraisers, and not everything on it is an auction: each sponsorship is fixed price or open to
-// bids, and the organizer decides which. See docs/DECISIONS.md, decisions 14 and 17. A card names its
+// This page is at /fundraisers, the word the nav has always used. It began at /auctions, which is in
+// sent email and in pasted widget snippets, so that address redirects here and keeps doing so
+// (next.config.ts): decision 13 settled that an address outlives the words on the page. Not
+// everything here is an auction: each sponsorship is fixed price or open to bids, and the
+// organizer decides which. See docs/DECISIONS.md, decisions 14 and 17. A card names its
 // fundraiser's own category, from the registry, so this page never assumes whose work it is showing.
 
 
@@ -33,7 +36,7 @@ export default async function AuctionsPage() {
   return (
     <Page
       theme="magenta"
-      current="/auctions"
+      current="/fundraisers"
       eyebrow="Organizers raising now"
       title="Open"
       accent="fundraisers"

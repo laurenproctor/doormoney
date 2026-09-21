@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "How Door Money keeps the site usable for everyone, where it falls short, and how to report a problem.",
 };
 
-const UPDATED = "September 3, 2026";
+const UPDATED = "September 21, 2026";
 
 const SECTIONS: LegalSection[] = [
   {
@@ -28,12 +28,12 @@ const SECTIONS: LegalSection[] = [
       <Bullets
         items={[
           "Uses real HTML: headings in order, lists, buttons, links and landmarks, so screen readers and other assistive tools can move around the page.",
-          "Works from the keyboard alone. Every link, button and form field can be reached with the Tab key, and the focused element shows a thick red outline.",
-          "Keeps text black on paper, with contrast far above the minimum. Red is used for emphasis, never as the only signal.",
+          "Works from the keyboard alone. Every link, button and form field can be reached with the Tab key, and the focused element shows an outline in the page's accent color.",
+          "Sets light text on a dark background. Body text and small colored text meet the 4.5 to 1 contrast minimum, and color is never the only signal.",
           "Scales with the browser. Text and layout hold together at 200% zoom and on screens 380 pixels wide.",
           "Labels every form field, and reports errors in words next to the field they belong to.",
           "Hides decorative seals, stage lights and diagrams from screen readers, and gives every meaningful image a text alternative.",
-          "Turns off smooth scrolling for anyone whose system asks for reduced motion. Nothing on the site flashes or moves on its own.",
+          "Holds still for anyone whose system asks for reduced motion: the stage lights stop swaying, sections stop rising into place, and smooth scrolling turns off. Nothing on the site flashes.",
           "Gives auction closing times in words as well as a countdown, and never times out a form.",
         ]}
       />
@@ -47,11 +47,12 @@ const SECTIONS: LegalSection[] = [
         <p>Honesty helps more than a clean bill of health. These are the gaps {SITE.name} knows about.</p>
         <Bullets
           items={[
-            "Display headings use a condensed uppercase typeface, which some readers find slower to read. Body text uses a plain sans-serif face, and every page can be read at any zoom.",
-            "Eyebrow labels sit at a slight tilt. Their text is short, and each one is repeated in plain text nearby or hidden from assistive tools.",
+            "Page titles use a high-contrast serif typeface in capitals, which some readers find slower to read. Everything else uses a plain sans-serif face, and every page can be read at any zoom.",
+            "The site has one look, a dark one, and no light mode. A reader who needs dark text on a light page has to rely on the browser's reader view or a forced-colors setting, and Door Money has not tested the site in either yet.",
+            "The stage lights at the top of each page sway slowly unless the system asks for reduced motion. They are decoration and are hidden from assistive tools.",
             "The payment form comes from Stripe. It is built to be accessible, and Door Money cannot change its internals.",
             "The widget lives in a frame on an organizer's own site. Door Money's snippet gives the frame a title, and the rest of that page is the organizer's.",
-            "Photos an organizer adds to a record carry the description the organizer wrote. Door Money asks for one but cannot check it.",
+            "Photos and evidence an organizer adds to a record carry the description the organizer wrote. Door Money asks for one but cannot check it.",
             "No outside auditor has reviewed the site yet. That review is planned.",
           ]}
         />

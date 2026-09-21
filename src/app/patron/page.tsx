@@ -72,7 +72,7 @@ export default async function PatronPage() {
             record at the end of the fundraiser. Bids sit here too, from the moment you place one.
           </p>
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/auctions">See the fundraisers</ButtonLink>
+            <ButtonLink href="/fundraisers">See the fundraisers</ButtonLink>
             <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works</ButtonLink>
           </div>
         </Card>

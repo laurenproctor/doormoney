@@ -111,7 +111,7 @@ export default async function HowSponsorshipWorksPage() {
             anything appears.
           </p>
           <div className="mt-9 flex flex-wrap gap-4">
-            <ButtonLink href="/auctions" arrow>Find a sponsorship</ButtonLink>
+            <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
             <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
           </div>
         </>
@@ -218,7 +218,7 @@ export default async function HowSponsorshipWorksPage() {
           reason to put money behind the work.
         </p>
         <div className="mt-[30px] flex flex-wrap gap-5">
-          <ButtonLink href="/auctions" arrow>Find a sponsorship</ButtonLink>
+          <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
           <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
         </div>
       </Section>

@@ -5,10 +5,10 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms and conditions",
-  description: "The rules for listing an act, buying a lot and backing a run on Door Money.",
+  description: "The rules for organizing a fundraiser, buying a sponsorship and making a backing on Door Money.",
 };
 
-const UPDATED = "September 3, 2026";
+const UPDATED = "September 21, 2026";
 
 const SECTIONS: LegalSection[] = [
   {
@@ -17,13 +17,14 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          These terms are an agreement between {SITE.name} and everyone who uses the site: people who visit, acts that list a
-          run, patrons that buy a lot or back an act, and anyone acting for a business that does either. Using the site means
-          accepting the terms. Anyone who does not accept them should not use the site.
+          These terms are an agreement between {SITE.name} and everyone who uses the site: people who visit, organizers who
+          create a fundraiser, sponsors who buy a sponsorship, fans who make a backing, and anyone acting for a business or an
+          organization that does any of these. Using the site means accepting the terms. Anyone who does not accept them should
+          not use the site.
         </p>
         <p>
-          Acts and patrons must be at least 18 years old and able to enter a contract. A person who lists or pays on behalf of a
-          business confirms that the business has allowed them to.
+          Organizers, sponsors and backers must be at least 18 years old and able to enter a contract. A person who organizes or
+          pays on behalf of a business, a team or another organization confirms that it has allowed them to.
         </p>
       </>
     ),
@@ -36,14 +37,17 @@ const SECTIONS: LegalSection[] = [
         <p>The site uses a few words in a specific way. They mean the same thing in these terms.</p>
         <Bullets
           items={[
-            <Term key="act" name="Act">Any musician or group that lists: a touring band, a house act or a soloist.</Term>,
-            <Term key="patron" name="Patron">Anyone who pays. A business or brand buying a placement, or a fan backing an act.</Term>,
-            <Term key="run" name="Run">The thing a patron backs: a tour, a season, or a residency month, with a start date and an end date.</Term>,
-            <Term key="surface" name="Surface">A physical or digital place a mark can go, such as a kick drum head, a road case, a tip jar card, or a post.</Term>,
-            <Term key="lot" name="Lot">One surface, on one run, at one price. What a business patron buys.</Term>,
-            <Term key="backing" name="Backing">A fan-tier contribution through the widget, in return for recognition rather than a surface.</Term>,
-            <Term key="mark" name="Mark">The patron&apos;s name or logo, as it will appear.</Term>,
-            <Term key="record" name="Record">The end-of-run summary a patron receives.</Term>,
+            <Term key="organizer" name="Organizer">The person or organization responsible for a fundraiser and for delivering what it promises: a musician, a team, a filmmaker, a theater company or another organizer.</Term>,
+            <Term key="sponsor" name="Sponsor">A person or business that buys a sponsorship.</Term>,
+            <Term key="patron" name="Patron">Anyone with an account who supports work on {SITE.name}, as a sponsor, a backer or both. One account may organize and sponsor.</Term>,
+            <Term key="fundraiser" name="Fundraiser">One named funding effort with its own category, purpose and timeline, such as a tour, a season, a production or a screening series.</Term>,
+            <Term key="option" name="Sponsorship option">A priced offer on a fundraiser that describes the visibility a sponsor receives. A sponsorship is the purchase of one.</Term>,
+            <Term key="placement" name="Placement">Where a sponsor&apos;s name, logo, product or message appears. It may be physical, digital, printed or part of a production.</Term>,
+            <Term key="materials" name="Materials">What a sponsor hands over so the placement can be made: a name or logo, a credit line, artwork or a product.</Term>,
+            <Term key="deliverable" name="Deliverable">A specific promised action or appearance, with a due date or a delivery window.</Term>,
+            <Term key="evidence" name="Evidence">What the organizer supplies to document a deliverable, such as a photograph, a link or a note. It comes from the organizer. {SITE.name} passes it on and does not certify it.</Term>,
+            <Term key="backing" name="Backing">A fan contribution at a set tier through a music fundraiser&apos;s widget, in return for recognition and not a placement.</Term>,
+            <Term key="record" name="Record">The sponsor&apos;s summary of what was bought, what was delivered, the evidence and the payment outcomes. It is separate from Stripe&apos;s payment receipt.</Term>,
           ]}
         />
       </>
@@ -55,13 +59,39 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          {SITE.name} is a marketplace. Acts list a run, name the surfaces they offer, and set their own prices. Patrons buy lots
-          or back an act. {SITE.name} holds the money, pays the act weekly through the run, and sends the patron a record at the
-          end.
+          {SITE.name} is a sponsorship marketplace. Organizers create a fundraiser, say what the funding enables, choose the
+          sponsorship options they offer and set their own prices. Sponsors buy the visibility an option describes. {SITE.name}{" "}
+          holds the money, releases the organizer&apos;s share under the fundraiser&apos;s terms, and gives the sponsor a record.
         </p>
         <p>
-          The deal about where a mark goes is between the act and the patron. {SITE.name} is not a manager, a booking agent, or a
-          promoter. It does not book shows, promise a crowd, or guarantee that any run will finish.
+          The agreement about what appears, and where, is between the organizer and the sponsor. {SITE.name} is not a manager,
+          an agent, a producer or a promoter. It does not book work, inspect placements, promise an audience, or guarantee that
+          any fundraiser will finish.
+        </p>
+        <p>
+          A sponsorship is a purchase of visibility. It is not an investment, a loan or an ownership stake, and it carries no
+          promise of a commercial return. {SITE.name} does not treat a sponsorship or a backing as a charitable gift and makes no
+          statement about how either is taxed.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "availability",
+    heading: "Categories, places and payments",
+    body: (
+      <>
+        <p>
+          Fundraisers belong to a category, and {SITE.name} opens categories one at a time. A category may accept private
+          drafts before it can publish a fundraiser, and may publish before it can take payments. Music fundraisers take
+          payments today. A sponsorship option in a category that is not open for payment cannot be bought, and the site says so
+          at checkout.
+        </p>
+        <p>
+          A category says what kind of work a fundraiser funds. It never says where. Organizers and audiences can be anywhere,
+          and the work can be in person, online or both. Payments are narrower than that today: every price and every payment
+          is in US dollars, and {SITE.name} pays organizers through Stripe accounts in the United States. {SITE.name} will say
+          here when that changes.
         </p>
       </>
     ),
@@ -77,57 +107,74 @@ const SECTIONS: LegalSection[] = [
           straight away.
         </p>
         <p>
-          {SITE.name} can close an account that breaks these terms, and will say why. Open runs on a closed account finish under
-          these terms, so money already held still reaches the act or returns to the patron.
+          A username is an address on the site. {SITE.name} can refuse or reclaim a username that impersonates someone,
+          misleads, or uses a reserved word, and limits how often one can change.
+        </p>
+        <p>
+          {SITE.name} can close an account that breaks these terms, and will say why. Open fundraisers on a closed account
+          finish under these terms, so money already held still reaches the organizer or returns to the sponsor.
         </p>
       </>
     ),
   },
   {
-    id: "acts",
-    heading: "Listing a run",
+    id: "organizers",
+    heading: "Organizing a fundraiser",
     body: (
       <>
-        <p>An act that lists a run agrees to the following.</p>
+        <p>An organizer who publishes a fundraiser agrees to the following.</p>
         <Bullets
           items={[
-            "The act owns or controls every surface it offers, and has the right to put a patron's mark on it.",
-            "The run's dates, venues and show count are accurate, and the act tells Door Money promptly when any of them change.",
-            "The act honours every lot it accepts: the mark goes on the surface, as described, for the whole run.",
-            "The act approves or declines each mark within a reasonable time. Nothing goes up without the act's yes, and the act can say no to any mark for any reason.",
-            "No placements at weddings or private events.",
-            "The act does not list the same surface on the same run twice, or sell a surface outside Door Money that a patron has already bought here.",
+            "The organizer has the authority to offer every placement on the fundraiser, and the right to put a sponsor's materials there. A team representative has authority over the team's inventory. A league's, a venue's or a supplier's rules still apply.",
+            "The fundraiser says truthfully what the funding enables, who the audience is and what a sponsor receives. Any audience figure is an estimate, and the organizer states what it is based on.",
+            "The dates, locations and other details are accurate, and the organizer updates them promptly when they change.",
+            "The organizer delivers every sponsorship it accepts, as the option described it, and documents delivery in the ways the fundraiser said it would.",
+            "The organizer accepts or declines each sponsor's materials within a reasonable time. Nothing appears without the organizer's approval, and the organizer can decline any materials for any reason.",
+            "The organizer does not sell the same placement twice, here or anywhere else.",
+            "A music fundraiser offers no placements at weddings or private events.",
+            "Evidence that shows a child is never published. A youth team publishes no evidence at all.",
           ]}
         />
         <p>
-          The standard card on the <Link href="/how-sponsorship-works">sponsorship page</Link> lists default prices. The act&apos;s own price on
-          a lot always wins. {SITE.name} charges no listing fee and takes its fee only from lots and backings that sell.
+          {SITE.name} suggests prices only where it has a sales history to suggest from. The organizer&apos;s own price always
+          wins. {SITE.name} charges nothing to create a fundraiser and takes its fee only from sponsorships and backings that
+          sell.
         </p>
       </>
     ),
   },
   {
-    id: "patrons",
-    heading: "Buying a lot and backing an act",
+    id: "sponsors",
+    heading: "Buying a sponsorship and making a backing",
     body: (
       <>
         <p>
-          Buying a lot is a commitment. The patron pays the full price up front, before the first show, and {SITE.name} holds it
-          through the run. On a fixed-price lot the patron pays at checkout. On an auction lot each bid is a binding offer to pay
-          that amount, and the highest bid when the auction closes wins. The winner puts the money up within 48 hours or the lot
-          rolls to the next bid.
+          Buying a sponsorship is a commitment. The sponsor pays the full price up front and {SITE.name} holds it. At a fixed
+          price the sponsor pays at checkout. Where an option is open to bids, a bidder saves a card with the bid, and each bid
+          is a binding offer to pay that amount. When bidding closes, the highest bid wins and {SITE.name} charges the saved
+          card. If that charge fails, the winner has 48 hours to pay through a link sent by email. After that the option passes
+          to the next highest bid. A bidder who does not win is never charged.
         </p>
         <p>
-          The mark must be the patron&apos;s own name or logo, or one the patron has the right to use. The act may decline any mark.
-          When an act declines, the patron pays nothing and any money held goes back in full.
+          The sponsor sees what the sponsorship includes before paying. What was bought is fixed at that moment: later changes to
+          the fundraiser, the organizer&apos;s profile or the price do not rewrite a completed purchase.
         </p>
         <p>
-          Backing an act through the widget is a fan contribution at a set tier. It buys recognition, such as a name on the tour
-          thank-you or on the merch table card, not a surface. Backing follows the same holding and refund rules as a lot.
+          Materials must be the sponsor&apos;s own, or ones the sponsor has the right to use. The organizer may decline them. When an
+          organizer declines a sponsor&apos;s materials, the money held goes back in full.
         </p>
         <p>
-          A patron gets the placement described in the lot and a record at the end of the run. A patron does not get a say in
-          the act&apos;s music, set list, bookings or other patrons.
+          Some sponsorships involve a product, a service or a space that the sponsor supplies. {SITE.name} moves money and
+          nothing else. Anything supplied in kind is agreed between the organizer and the sponsor, and is not bought or sold
+          through {SITE.name}.
+        </p>
+        <p>
+          A backing through a music fundraiser&apos;s widget is a fan contribution at a set tier. It buys recognition, such as a name
+          on the tour thank-you, not a placement. A backing follows the same holding and refund rules as a music sponsorship.
+        </p>
+        <p>
+          A sponsor gets the visibility described in the option and a record. A sponsor does not get a say in the
+          organizer&apos;s work, its content, its bookings or its other sponsors.
         </p>
       </>
     ),
@@ -138,60 +185,73 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          {SITE.name} keeps {SITE.feePercent}% of every lot and every backing as its fee. The rest belongs to the act.{" "}
-          {SITE.name} releases it in equal weekly slices between the run&apos;s start date and its end date, and pays acts every
-          Friday.
+          {SITE.name} keeps {SITE.feePercent}% of every sponsorship and every backing as its fee. The rest belongs to the
+          organizer, and {SITE.name} holds it until the fundraiser&apos;s terms release it. Releases go out on Fridays.
+        </p>
+        <Bullets
+          items={[
+            <Term key="music" name="Music">The organizer&apos;s share is released in equal weekly parts between the fundraiser&apos;s first date and its last. A part is released only once the charge has cleared, the musician has approved the sponsor&apos;s logo and payout setup is finished. A part that waits is paid late, never reduced. Backings follow the dates alone.</Term>,
+            <Term key="others" name="Every other category">Nothing is released on a calendar. The organizer&apos;s share is released one deliverable at a time, as the organizer documents each one, and only after the organizer has accepted the sponsor&apos;s materials.</Term>,
+          ]}
+        />
+        <p>
+          The terms a sponsorship was bought under stay with it. A later change to a category&apos;s terms applies to later
+          purchases only.
         </p>
         <p>
-          Stripe processes every payment and every payout. {SITE.name} never sees or stores card numbers. Acts receive payouts
-          through a Stripe account and must finish Stripe&apos;s onboarding, which includes identity and bank checks, before the first
-          payout. Stripe&apos;s own terms apply to that account.
+          Stripe processes every payment and every payout. {SITE.name} never sees or stores card numbers. Organizers receive
+          payouts through a Stripe account and must finish Stripe&apos;s onboarding, which includes identity and bank checks, before
+          the first payout. Stripe&apos;s own terms apply to that account.
         </p>
         <p>
-          Each act and each patron handles their own taxes. {SITE.name} reports what the law requires it to report and nothing
-          more.
+          Each organizer and each sponsor handles their own taxes. {SITE.name} reports what the law requires it to report and
+          nothing more.
         </p>
       </>
     ),
   },
   {
     id: "refunds",
-    heading: "Refunds and cancelled runs",
+    heading: "Refunds and cancelled fundraisers",
     body: (
       <>
-        <p>Patrons pay nothing for a placement that never runs. In practice:</p>
+        <p>Money that has not been released to the organizer can always go back. In practice:</p>
         <Bullets
           items={[
-            "If an act declines a mark, the patron gets everything back.",
-            "If an act cancels a run before it starts, every patron gets everything back.",
-            "If an act cancels part way through, patrons get back the slices not yet released. Slices already paid for weeks the run played stay paid.",
-            "A patron who believes a placement did not run can flag the lot. Door Money pauses the next release for that lot while it looks, and refunds if the flag holds up.",
+            "If an organizer declines a sponsor's materials, the sponsor gets everything back.",
+            "If an organizer cancels a fundraiser, every sponsor and every backer gets back whatever has not been released. Before anything is released, that is everything.",
+            "Money already released for work that happened stays with the organizer.",
+            "A sponsor who believes a sponsorship is not being delivered can flag it from the record. Door Money holds every release still to come on that sponsorship while it looks, and refunds the unreleased part if the flag holds up.",
+            "A missed funding goal changes nothing. A sponsorship is a direct purchase, and it stands whatever the fundraiser raises.",
           ]}
         />
         <p>
-          Refunds go back to the card the patron paid with. {SITE.name} returns its fee along with the rest whenever the
-          placement never ran.
+          Refunds go back to the card the sponsor paid with. {SITE.name} returns its fee on whatever it refunds.
         </p>
         <p>
           The <Link href="/refunds">refunds and disputes policy</Link> works through the same ground in detail, including what
-          happens when a patron asks their bank instead. These terms govern if the two ever disagree.
+          happens when a sponsor asks their bank instead. These terms govern if the two ever disagree.
         </p>
       </>
     ),
   },
   {
     id: "content",
-    heading: "Marks, photos and other content",
+    heading: "Logos, photos, evidence and other content",
     body: (
       <>
         <p>
-          Anyone who uploads a mark, a logo, a photo or text keeps ownership of it and gives {SITE.name} permission to show it on
-          the board, in the widget, in records, and in emails about the run. That permission ends when the content is removed,
-          except for records already sent.
+          Anyone who uploads a logo, a photo, evidence or text keeps ownership of it and gives {SITE.name} permission to show it
+          where the site needs to: on the fundraiser, in the widget, in records, and in emails about the sponsorship. That
+          permission ends when the content is removed, except for records already sent.
+        </p>
+        <p>
+          Evidence outside music is private by default. The sponsor who bought the sponsorship, the organizer and {SITE.name} can
+          see it. An organizer may publish an item, one at a time, and never one that shows a child.
         </p>
         <p>
           Content must not be unlawful, hateful, misleading, or infringe anyone else&apos;s rights. {SITE.name} can remove content that
-          breaks this rule and can decline to run a lot whose mark does.
+          breaks this rule and can refuse a sponsorship whose materials do.
         </p>
       </>
     ),
@@ -202,7 +262,7 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Acts may embed the {SITE.name} widget on sites they control, using the snippet on the{" "}
+          The widget belongs to music fundraisers today. Musicians may embed it on sites they control, using the snippet on the{" "}
           <Link href="/widget">widget page</Link>. The widget must stay as {SITE.name} serves it: not altered, not covered, and
           not placed anywhere that misleads a fan about who is paying whom. {SITE.name} may change or withdraw the widget with
           notice.
@@ -216,8 +276,9 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          {SITE.name} provides the site as it is. It does not promise uninterrupted service, a particular level of attendance,
-          reach or sales for any patron, or that any act will complete a run.
+          {SITE.name} provides the site as it is. It does not promise uninterrupted service. It does not promise any sponsor a
+          level of attendance, reach, impressions or sales. It does not promise that a film will be distributed, that a team
+          will play, or that any organizer will finish what a fundraiser set out to do.
         </p>
         <p>
           To the extent the law allows, {SITE.name}&apos;s liability to any person is limited to the fees {SITE.name} kept from that
@@ -233,11 +294,12 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Anyone can close their account at any time by emailing <Contact />. Open runs finish under these terms first.
+          Anyone can close their account at any time by emailing <Contact />. Open fundraisers and sponsorships finish under
+          these terms first.
         </p>
         <p>
           {SITE.name} may suspend or close an account for breaking these terms, for suspected fraud, or when Stripe requires it.
-          {SITE.name} tells the account holder why, except where the law prevents it.
+          {" "}{SITE.name} tells the account holder why, except where the law prevents it.
         </p>
       </>
     ),
@@ -250,7 +312,7 @@ const SECTIONS: LegalSection[] = [
         <p>
           {SITE.name} posts changes on this page and updates the date at the top. For changes that matter, {SITE.name} emails
           account holders at least 14 days before the change takes effect. Continued use after that date means acceptance of the
-          new terms. Runs already under way finish under the terms they started with.
+          new terms. Sponsorships already bought finish under the terms they were bought under.
         </p>
       </>
     ),
@@ -261,8 +323,9 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          New York law governs these terms. Any dispute goes to the state or federal courts in New York County, New York. Before
-          either side files anything, both agree to try to settle it by email for thirty days.
+          {SITE.name} is based in New York, and New York law governs these terms wherever an organizer or a sponsor is. Any
+          dispute goes to the state or federal courts in New York County, New York. Before either side files anything, both
+          agree to try to settle it by email for thirty days.
         </p>
       </>
     ),
@@ -287,8 +350,8 @@ export default function TermsPage() {
       accent="conditions"
       intro={
         <p>
-          The rules for using {SITE.name}. They cover acts that list, patrons that pay, and anyone who visits. Plain language on
-          purpose. Where a sentence sounds firm, it is.
+          The rules for using {SITE.name}. They cover organizers who raise money, sponsors and backers who pay, and anyone who
+          visits. Plain language on purpose. Where a sentence sounds firm, it is.
         </p>
       }
       stamp={

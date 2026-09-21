@@ -17,7 +17,7 @@
   tested directly.
 */
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { CONTACT_REASON_KEYS } from "@/lib/contact";
@@ -201,11 +201,11 @@ test("the way in goes through the new fundraiser flow, for somebody new and for 
 
 test("no acquisition surface still says List an act, and every call to action points somewhere that answers", () => {
   const surfaces = [
-    "src/app/page.tsx", "src/app/list/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/auctions/page.tsx",
+    "src/app/page.tsx", "src/app/list/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/fundraisers/page.tsx",
     "src/components/Nav.tsx", "src/components/Footer.tsx", "src/lib/site.ts", "src/lib/contact.ts", "src/app/signup/page.tsx", "src/app/login/page.tsx",
   ];
   const routes: Record<string, string> = {
-    "/": "src/app/page.tsx", "/list": "src/app/list/page.tsx", "/auctions": "src/app/auctions/page.tsx", "/contact": "src/app/contact/page.tsx",
+    "/": "src/app/page.tsx", "/list": "src/app/list/page.tsx", "/fundraisers": "src/app/fundraisers/page.tsx", "/contact": "src/app/contact/page.tsx",
     "/widget": "src/app/widget/page.tsx", "/login": "src/app/login/page.tsx", "/signup": "src/app/signup/page.tsx",
     "/how-sponsorship-works": "src/app/how-sponsorship-works/page.tsx", "/how-sponsorship-works/music": "src/app/how-sponsorship-works/music/page.tsx",
   };
@@ -221,4 +221,21 @@ test("no acquisition surface still says List an act, and every call to action po
 test("the widget page is music's and says so, and the contact keys are the stored ones", () => {
   assert.match(code("src/app/widget/page.tsx"), /title: "Music fundraiser widget"/);
   assert.deepEqual([...CONTACT_REASON_KEYS], ["list_an_act", "back_a_run", "partnership", "venue", "press", "payment_or_placement", "something_else"]);
+});
+
+test("no link inside the site still points at the index's old address", () => {
+  // /auctions redirects, so a stale link would still arrive, one hop late and unnoticed. This is
+  // what notices. The cron route and the bidding module keep the word: neither is a page.
+  const walk = (dir: string): string[] => readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? walk(path.join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [path.join(dir, e.name)] : []);
+  const stale: string[] = [];
+  for (const file of walk("src")) {
+    code(file).split("\n").forEach((line, i) => {
+      if (/["'`/]\/?auctions\b/.test(line) && !/@\/lib\/auctions|api\/cron\/auctions/.test(line) && /\/auctions/.test(line)) stale.push(`${file}:${i + 1} ${line.trim().slice(0, 90)}`);
+    });
+  }
+  assert.deepEqual(stale, []);
+  assert.match(read("src/lib/outbox.ts"), /\$\{SITE\.url\}\/fundraisers/, "the one email that links to the index uses the new address");
+  assert.match(read("src/app/sitemap.ts"), /"\/fundraisers"/);
+  assert.match(read("src/app/fundraisers/page.tsx"), /alternates: \{ canonical: "\/fundraisers" \}/);
 });

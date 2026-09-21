@@ -300,7 +300,7 @@ async function notifyRefunded(sb: Admin, source: "purchases" | "backings", id: s
     const what = lotName(p.lots);
     mail =
       reason === "mark_declined"
-        ? markDeclined({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, lotName: what, refundedCents, boardsUrl: `${SITE.url}/auctions`, categoryKey: (p.lots.runs as { category_key?: string | null }).category_key })
+        ? markDeclined({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, lotName: what, refundedCents, boardsUrl: `${SITE.url}/fundraisers`, categoryKey: (p.lots.runs as { category_key?: string | null }).category_key })
         : reason === "stale_offer"
           ? staleOfferRefund({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, lotName: what, refundedCents, boardUrl: runUrl(p.lots.runs.acts.slug, p.lots.runs.slug) })
           : cancellationNotice({ to, patronName: p.patrons?.name ?? "A patron", actName: p.lots.runs.acts.name, runTitle: p.lots.runs.title, lotName: what, refundedCents, amountCents: p.amount_cents, recordUrl });

@@ -193,7 +193,7 @@ export default async function PatronProfilePage({ params }: Props) {
             Organizers set their own prices.
           </p>
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/auctions" arrow>
+            <ButtonLink href="/fundraisers" arrow>
               See the fundraisers
             </ButtonLink>
             <ButtonLink href="/how-sponsorship-works" variant="ghost">

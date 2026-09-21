@@ -11,8 +11,12 @@
  *
  * Every category picks from the same list, and the stored keys never change: a method means the
  * same promise whoever makes it. Only the sentence changes, because a theater company does not
- * play shows and a team does not play nights. Category-specific evidence rules are Phase 4; this
- * is the wording, not a new commitment.
+ * play shows and a team does not play nights. This is the wording, not a new commitment: what a
+ * category owes as evidence, and when money is released, is its delivery policy (migration 0045).
+ *
+ * A category in the registry needs a rewording here. One without it is shown music's sentences,
+ * which is how a hospitality draft came to ask a restaurant about "selected shows".
+ * tests/verification.test.ts reads the registry from the migrations and refuses that.
  */
 import { z } from "zod";
 
@@ -61,6 +65,17 @@ const WORDS: Record<string, Rewording> = {
     short_video: { note: "One clip from a performance, or from the hour before it." },
     end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
     other: { note: "Something else, in the company's own words." },
+  },
+  // A venue's evidence is of the placement: the cart, the plaque, the sign, the menu. Guests are
+  // in the room and are not what is being documented, and a meal program names nobody it serves.
+  hospitality: {
+    selected_show_photos: { label: "Dated photos from selected days or events", note: "Photos of the placement on some of the days or events, each carrying its date. Photograph the placement, not the guests." },
+    venue_date_record: { label: "Venue and date list", note: "Where the program took place, and the dates it was on." },
+    attendance_estimates: { note: "A rough count of guests for the dates or events." },
+    social_post_links: { note: "Links to the posts the sponsor appeared in." },
+    short_video: { label: "Short video from the venue or an event", note: "One clip of the placement in use, or of the hour before service." },
+    end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
+    other: { note: "Something else, in the venue's own words." },
   },
 };
 

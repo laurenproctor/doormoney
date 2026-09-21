@@ -7,13 +7,14 @@
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { RESERVED_SLUGS } from "@/lib/slug";
 // Through the alias, because the test resolver only adds the ".ts" for "@/" paths.
 import nextConfig from "@/../next.config";
 
-const dir = path.join(import.meta.dirname, "..", "supabase", "migrations");
+const root = path.join(import.meta.dirname, "..");
+const dir = path.join(root, "supabase", "migrations");
 
 /**
  * Every name any migration seeds into reserved_handles.
@@ -65,12 +66,23 @@ test("every address the site redirects from the root is a name nobody can claim"
   }
 });
 
-test("the word in the nav reaches the page the nav links to", async () => {
+test("the index lives at the word the nav uses, and its first address still arrives", async () => {
   const redirects = await nextConfig.redirects!();
   const to = (source: string) => redirects.find((r) => r.source === source);
-  assert.equal(to("/fundraisers")?.destination, "/auctions");
-  // Temporary: a permanent redirect is cached for good, and this may be the real address one day.
-  assert.equal(to("/fundraisers")?.permanent, false);
+  // /auctions is in sent email and in snippets pasted on other people's sites.
+  assert.equal(to("/auctions")?.destination, "/fundraisers");
+  assert.equal(to("/fundraiser")?.destination, "/fundraisers", "and the singular, which is what people type");
+  // Temporary: a browser caches a permanent redirect for good. That is what made turning this one around safe.
+  for (const r of redirects) assert.equal(r.permanent, false, r.source);
+  // Nothing redirects away from the real address, or the two would chase each other.
+  assert.equal(to("/fundraisers"), undefined);
+  assert.ok(existsSync(path.join(root, "src/app/fundraisers/page.tsx")), "the page is where the redirect sends people");
+  assert.equal(existsSync(path.join(root, "src/app/auctions")), false, "and there is one index, not two");
+  // The five-minute worker is called by the database from a URL held in Vault. It is not a page and did not move.
+  assert.ok(existsSync(path.join(root, "src/app/api/cron/auctions/route.ts")));
+  assert.ok(redirects.every((r) => !r.source.startsWith("/api")), "no redirect touches an API route");
+  // All three words stay unclaimable, the old one included: it is still an address of the site's.
+  for (const name of ["fundraisers", "fundraiser", "auctions"]) assert.ok(RESERVED_SLUGS.has(name), name);
 });
 
 test("the migration is numbered past the branch that already used 0020 and 0021", () => {

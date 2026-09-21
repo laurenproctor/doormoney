@@ -130,6 +130,6 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   revalidatePath(`/dashboard/runs/${runId}`);
   revalidatePath(actPath(act.slug));
   revalidatePath(runPath(act.slug, run.slug));
-  revalidatePath("/auctions");
+  revalidatePath("/fundraisers");
   return { ok: true, saved: updates.length + inserts.length };
 }

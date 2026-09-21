@@ -18,14 +18,22 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "6mb" },
   },
   async redirects() {
-    // The nav calls the index "Fundraisers" and the index lives at /auctions, because addresses
-    // outlive words. Somebody who types the word they just read should still arrive. Temporary on
-    // purpose: a permanent redirect is cached by the browser for good, and these may be the real
-    // address one day. Every source here has to be in RESERVED_SLUGS (src/lib/slug.ts) and in
-    // reserved_handles, or a musician could claim the name and never see their own page.
+    // The index lives at /fundraisers, the word the nav calls it. /auctions was its address first
+    // and is in sent email and in snippets pasted on other people's sites, so it has to keep
+    // arriving: addresses outlive words. The singular is what somebody types from memory.
+    //
+    // Temporary on purpose, as these always were: a browser caches a permanent redirect for good,
+    // which is what made it safe to turn this one around. Make it permanent only once nobody
+    // expects to turn it back.
+    //
+    // /api/cron/auctions is not a page and does not move. The database calls it from a URL held in
+    // Vault (migration 0036), and a redirect there would cost the five-minute worker its header.
+    //
+    // Every source here has to be in RESERVED_SLUGS (src/lib/slug.ts) and in reserved_handles, or
+    // an organizer could claim the name and never see their own page.
     return [
-      { source: "/fundraisers", destination: "/auctions", permanent: false },
-      { source: "/fundraiser", destination: "/auctions", permanent: false },
+      { source: "/auctions", destination: "/fundraisers", permanent: false },
+      { source: "/fundraiser", destination: "/fundraisers", permanent: false },
     ];
   },
   async headers() {
