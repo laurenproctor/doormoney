@@ -9,10 +9,18 @@ import { supabaseServer } from "@/lib/supabase/server";
  * anon may read the key and the label and nothing else (migration 0043).
  *
  * A key with no row gets no label, and the caller leaves the name out instead of inventing one.
- * The four names the registry was seeded with (migration 0038) stand in before a database is
- * connected, the way src/lib/sample.ts stands in for the fundraisers.
+ * The names the registry holds (migrations 0038, 0047 and 0049) stand in before a database is
+ * connected, the way src/lib/sample.ts stands in for the fundraisers. A name here opens nothing:
+ * whether a category may save a draft, publish or be paid for is decided in the database.
  */
-const SEEDED: Record<string, string> = { music: "Music", sports: "Sports teams", film: "Film", theater: "Theater" };
+const SEEDED: Record<string, string> = {
+  music: "Music",
+  sports: "Sports teams",
+  film: "Film",
+  theater: "Theater",
+  hospitality: "Restaurants & hospitality",
+  other: "Other",
+};
 
 const configured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 

@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import { Section, SectionHead } from "@/components/Brand";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
 
 /** The pitch, in one place so every page says the same thing. */
 export const NEWSLETTER = {
   eyebrow: "New fundraisers by email",
   title: "The next fundraiser, before the sponsorships go.",
-  body: "New organizers open fundraisers on Door Money across the starting categories: music, sports teams, film, and theater. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week, nothing else in it.",
+  body: `New organizers open fundraisers on Door Money across a growing set of starting categories: ${STARTING_CATEGORIES_LIST}. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week, nothing else in it.`,
   fine: "Every email has an unsubscribe link. Door Money never shares an address.",
 } as const;
 

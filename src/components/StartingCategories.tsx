@@ -3,18 +3,19 @@ import { Section, SectionHead } from "@/components/Brand";
 import { AVAILABILITY_NOTE, CATEGORY_TEST, STARTING_CATEGORIES, STARTING_CATEGORIES_NOTE } from "@/lib/starting-categories";
 
 /**
- * The four starting categories, as cards, with the two sentences that keep them honest: the set is
- * a start and not a limit, and not all four are open to sponsors yet.
+ * The starting categories, as cards, with the two sentences that keep them honest: the set is a
+ * start and not a limit, and not every category is open to sponsors yet. The cards are drawn from
+ * the list, so the heading never counts them.
  *
  * `labels` is the registry's name for each key (getCategoryLabels). A card falls back to its own
  * label, so the section still renders before a database is connected.
  */
-export function StartingCategories({ labels = {}, heading = "Four categories to start", className = "" }: { labels?: Record<string, string>; heading?: string; className?: string }) {
+export function StartingCategories({ labels = {}, heading = "The categories Door Money starts with", className = "" }: { labels?: Record<string, string>; heading?: string; className?: string }) {
   return (
     <Section className={className}>
       <SectionHead eyebrow="Starting categories">{heading}</SectionHead>
       <p className="max-w-[62ch] text-muted">{STARTING_CATEGORIES_NOTE}</p>
-      <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
         {STARTING_CATEGORIES.map((c, i) => (
           <div key={c.key} data-reveal style={{ "--i": i } as CSSProperties} className="lift flex flex-col bg-ground p-7">
             <h3 className="heading text-[24px] leading-[1.1]">{labels[c.key] ?? c.label}</h3>

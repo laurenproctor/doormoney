@@ -10,16 +10,17 @@
  *   open         the category is one Door Money has, so the example links into the new fundraiser
  *                form with its kit chosen (/dashboard/runs/new?template=<key>)
  *   draft_only   the category exists and its kits are held to private drafts: the link works and
- *                the example says "Private draft"
+ *                the example says "Private draft". Restaurants & hospitality stands here today.
  *   coming_soon  the registry has no such category. The example is shown as an example and links
- *                nowhere near the form, which would refuse it. Hospitality stands here today.
+ *                nowhere near the form, which would refuse it. A database without migration 0047
+ *                reads hospitality this way, which is the safe reading.
  *
  * So the day a category is added to `fundraiser_categories`, its examples start linking, and not
  * before. Nothing here can present a category as live.
  *
  * Pure, and importable from a client component: nothing here reads the database.
  */
-import { STARTING_CATEGORIES } from "@/lib/starting-categories";
+import { SEEDED_CATEGORY_KEYS } from "@/lib/starting-categories";
 import { starterKit, type StarterKit } from "@/lib/starter-kits";
 
 export type OrganizerExample = {
@@ -95,12 +96,13 @@ export const EXAMPLE_STATUS_LABEL: Record<Exclude<ExampleStatus, "open">, string
 /**
  * Where a category stands, from the registry's public labels (src/lib/category-registry.ts).
  *
- * A category is known when the registry names it. The four starting categories count as known even
- * when the read came back empty, the way every other page falls back to their seeded names, so a
- * database hiccup never relabels music as coming soon. Any other category has to be in the registry.
+ * A category is known when the registry names it. The four categories the registry was seeded
+ * with count as known even when the read came back empty, the way every other page falls back to
+ * their seeded names, so a database hiccup never relabels music as coming soon. Any category added
+ * since, starting category or not, has to be in the registry.
  */
 export function exampleStatus(kit: Pick<StarterKit, "categoryKey" | "draftOnly" | "enabled">, registryLabels: Readonly<Record<string, string>>): ExampleStatus {
-  const known = kit.categoryKey in registryLabels || STARTING_CATEGORIES.some((c) => c.key === kit.categoryKey);
+  const known = kit.categoryKey in registryLabels || SEEDED_CATEGORY_KEYS.includes(kit.categoryKey);
   if (!known || !kit.enabled) return "coming_soon";
   return kit.draftOnly ? "draft_only" : "open";
 }

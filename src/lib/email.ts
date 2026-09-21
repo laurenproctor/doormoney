@@ -2,6 +2,7 @@
 // Without RESEND_API_KEY and EMAIL_FROM the app still runs; sends are skipped and reported as such.
 
 import { SITE } from "@/lib/site";
+import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
 
 export type Mail = { to: string; subject: string; text: string; html: string; replyTo?: string };
 
@@ -464,7 +465,7 @@ export function newsletterWelcome(params: { to: string; firstName?: string | nul
   const lines = [
     ...(greeting ? [greeting] : []),
     `This address is on the ${SITE.name} new-fundraisers email.`,
-    `New organizers open fundraisers on ${SITE.name} across the starting categories: music, sports teams, film, and theater. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week.`,
+    `New organizers open fundraisers on ${SITE.name} across a growing set of starting categories: ${STARTING_CATEGORIES_LIST}. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week.`,
     `Nothing to do now. The next one arrives the week a fundraiser opens.`,
     `To stop the emails: ${params.unsubscribeUrl}`,
   ];

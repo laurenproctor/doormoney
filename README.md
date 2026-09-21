@@ -1,6 +1,6 @@
 # Door Money
 
-Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, and theater. The product is city-agnostic and designed to expand to as many categories as can sustain a clear, deliverable sponsorship promise. Every sponsorship explains what the funding enables and what the sponsor can count on receiving.
+Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, theater, and restaurants and hospitality, with Other for a project that fits none of them. Restaurants & hospitality and Other hold private drafts only until their delivery and payment policies are deliberately enabled. The product is city-agnostic and designed to expand to as many categories as can sustain a clear, deliverable sponsorship promise. Every sponsorship explains what the funding enables and what the sponsor can count on receiving.
 
 NYC may be a source of early testers, not a limit on who the product is for. The technology must support new categories and locations without rebuilding the shared sponsorship workflow. Payment availability remains explicit about the countries and currencies actually supported.
 

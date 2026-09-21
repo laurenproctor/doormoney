@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AuthPoints, AuthShell } from "@/components/AuthShell";
 import { SignUpForm } from "@/components/SignUpForm";
 import { safeNext } from "@/lib/auth";
+import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
 
 /*
   The patron's door.
@@ -30,7 +31,7 @@ export default async function PatronSignUpPage({ searchParams }: Props) {
       intro={
         <p>
           An account for anyone who puts money behind work they care about: a local business, a brand, or one
-          person. Music, sports teams, film, and theater are the starting categories.
+          person. The starting categories are {STARTING_CATEGORIES_LIST}, and the set is growing.
         </p>
       }
       aside={

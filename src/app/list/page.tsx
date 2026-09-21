@@ -36,6 +36,8 @@ const ORGANIZERS: [string, string][] = [
   ["Teams", "A team, or a representative with authority over what the team offers."],
   ["Filmmakers", "A filmmaker or a production organization."],
   ["Theater companies", "A company, or an authorized producer."],
+  ["Hospitality venues", "Restaurants, bars, hospitality venues, caterers and community kitchens."],
+  ["Other projects", "A project outside the named categories that can still state its purpose, its audience and what the sponsor receives."],
   ["Organizations", "A group that organizes the work and answers for its delivery."],
   ["What comes next", "Any organizer who can state the funding purpose, the audience, what the sponsor receives and how delivery will be documented."],
 ];
@@ -166,7 +168,7 @@ export default async function ListPage() {
       <Section>
         <SectionHead eyebrow="Who organizes">Any organizer with a clear promise</SectionHead>
         <p className="max-w-[62ch] text-muted">{STARTING_CATEGORIES_NOTE}</p>
-        <dl className="mt-9 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="mt-9 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
           {ORGANIZERS.map(([who, what]) => (
             <div key={who} className="bg-ground p-6">
               <dt className="heading text-[20px] leading-[1.2]">{who}</dt>
@@ -184,7 +186,7 @@ export default async function ListPage() {
           musician&apos;s inventory and a filmmaker is never asked about a stage. Offer only what you have the
           authority to deliver.
         </p>
-        <div className="mt-9 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-9 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {STARTING_CATEGORIES.map((c) => (
             <div key={c.key} className="flex flex-col bg-ground p-6">
               <div className="caps text-[14px] text-accent-ink">{labels[c.key] ?? c.label}</div>
