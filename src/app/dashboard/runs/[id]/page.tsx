@@ -6,6 +6,8 @@ import { RunForm, type RunInput } from "@/components/RunForm";
 import { LotsEditor, type ExistingLot } from "@/components/LotsEditor";
 import { ShowsPanel, type ShowRow } from "@/components/ShowsPanel";
 import { VerificationEditor } from "@/components/VerificationEditor";
+import { DeliveryPanel } from "@/components/DeliveryPanel";
+import { loadRunDelivery } from "@/lib/delivery-dashboard";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
@@ -35,7 +37,7 @@ export default async function RunPage({ params }: Props) {
   const sb = await supabaseServer();
   const { data: run } = await sb
     .from("runs")
-    .select("id,slug,category_key,kind,title,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other,purpose,audience_description,sponsor_promise")
+    .select("id,slug,category_key,category_details,kind,title,starts_on,ends_on,show_count,expected_attendance,bidding_closes_at,status,verification_methods,verification_other,purpose,audience_description,sponsor_promise")
     .eq("id", id)
     .eq("act_id", act.id)
     .maybeSingle();
@@ -64,6 +66,9 @@ export default async function RunPage({ params }: Props) {
   const surfaces = templatesForFundraiser(await loadTemplates(sb, run.category_key ?? "music"), run.category_key ?? "music", act.type);
   const boardHref = runUrl(act.slug, run.slug);
   const allLots = lots ?? [];
+  // What this fundraiser still owes its sponsors. Read under the organizer's own session, so row
+  // level security decides. Empty for music, which releases on its calendar and owes no rows.
+  const delivery = await loadRunDelivery(sb, allLots.map((l) => l.id));
   const methods: string[] = run.verification_methods ?? [];
   const settled = run.status === "closed" || run.status === "cancelled";
 
@@ -118,6 +123,17 @@ export default async function RunPage({ params }: Props) {
         </p>
         <VerificationEditor runId={run.id} methods={methods} other={run.verification_other ?? null} runStatus={run.status} categoryKey={run.category_key ?? "music"} />
       </Card>
+
+      {delivery.length > 0 && (
+        <Card id="delivery" className="mb-10 max-w-[860px]">
+          <CardHead eyebrow="Delivery">Document what you delivered</CardHead>
+          <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
+            Door Money holds each sponsor&apos;s money until you document what they bought, and releases your share on the Friday after. Add a
+            link or a note for each one. Door Money checks that it is there, never whether it is good, and passes it on to the sponsor.
+          </p>
+          <DeliveryPanel rows={delivery} youth={(run.category_details as Record<string, string> | null)?.level === "youth"} />
+        </Card>
+      )}
 
       {music && <Card className="mb-10">
         <CardHead eyebrow="The shows">Every date on the {periodOf(run.kind).noun}</CardHead>
