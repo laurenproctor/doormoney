@@ -31,6 +31,18 @@ export function policyAllowsPayment(status: PolicyStatus | null | undefined, liv
   return false;
 }
 
+/**
+ * Which of a category's policies a new purchase is sold under: the newest one switched on, and only
+ * failing that the newest proposal. A draft of a later version changes nothing until the owner
+ * switches it on. The database chooses the same way (migration 0046), so the version the checkout
+ * gate asks about is the version the purchase is recorded under.
+ */
+export function currentPolicy<T extends { version: number; status: string }>(rows: readonly T[]): T | null {
+  const usable = rows.filter((r) => r.status === "active" || r.status === "proposed");
+  if (usable.length === 0) return null;
+  return [...usable].sort((a, b) => Number(b.status === "active") - Number(a.status === "active") || b.version - a.version)[0];
+}
+
 /** The release rule a purchase was sold under, from its snapshot. Calendar where nothing says otherwise: that is every purchase made before policies existed. */
 export function releaseRuleOf(snapshot: unknown): ReleaseRule {
   const rule = (snapshot as { policy?: { release_rule?: unknown } } | null)?.policy?.release_rule;

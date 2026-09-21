@@ -150,3 +150,16 @@ test("evidence is private unless one item is published, and some items never can
   assert.match(evidenceProblem({ kind: "photo", url: "https://a.example/x.jpg", visibility: "public" }, { youth: true }) ?? "", /youth/);
   assert.equal(evidenceProblem({ kind: "photo", url: "https://a.example/x.jpg", visibility: "private" }, { youth: true }), null, "a youth team can still document delivery, in private");
 });
+
+test("the current policy is the newest one switched on, and only failing that a proposal", async () => {
+  const { currentPolicy } = await import("@/lib/delivery-policy");
+  const v = (version: number, status: string) => ({ version, status });
+  assert.deepEqual(currentPolicy([v(1, "active")]), v(1, "active"));
+  assert.deepEqual(currentPolicy([v(1, "active"), v(2, "proposed")]), v(1, "active"), "a draft of version 2 changes nothing until it is switched on");
+  assert.deepEqual(currentPolicy([v(1, "active"), v(2, "active")]), v(2, "active"));
+  assert.deepEqual(currentPolicy([v(1, "proposed"), v(2, "proposed")]), v(2, "proposed"), "with nothing switched on, the newest proposal is what test mode verifies");
+  assert.deepEqual(currentPolicy([v(1, "retired"), v(2, "proposed")]), v(2, "proposed"));
+  assert.equal(currentPolicy([v(1, "retired")]), null, "a retired policy sells nothing");
+  assert.equal(currentPolicy([]), null);
+  assert.equal(currentPolicy([v(3, "whatever")]), null, "an unknown status is not a usable policy");
+});

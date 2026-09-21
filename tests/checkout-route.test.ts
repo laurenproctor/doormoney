@@ -24,6 +24,10 @@ const LOT_THEATER = "10000000-0000-4000-8000-00000000000d";
 
 type Run = { id: string; act_id: string; slug: string; title: string; status: string; category_key: string | null; starts_on: string };
 let runs: Run[] = [];
+/** delivery_policies, as production has them: music switched on, theater only proposed. */
+type Policy = { category_key: string; version: number; status: string };
+let policies: Policy[] | "unreadable" = [];
+const resetPolicies = () => { policies = [{ category_key: "music", version: 1, status: "active" }, { category_key: "theater", version: 1, status: "proposed" }]; };
 const resetRuns = () => {
   runs = [
     { id: A, act_id: ACT.id, slug: "fall-run", title: "Fall run", status: "open", category_key: "music", starts_on: "2026-10-03" },
@@ -57,6 +61,7 @@ function from(table: string) {
       out = [...out].sort((x, y) => y.starts_on.localeCompare(x.starts_on));
       return s.limit ? out.slice(0, s.limit) : out;
     }
+    if (table === "delivery_policies") return policies === "unreadable" ? [] : policies.filter((p) => p.category_key === s.filters.category_key);
     if (table === "lots") return [lotOn(LOT_A, A, ACT), lotOn(LOT_B, B, ACT), lotOn(LOT_THEATER, THEATER, OTHER_ACT)].filter((l) => l.id === s.filters.id);
     return [];
   };
@@ -65,6 +70,7 @@ function from(table: string) {
       writes.push({ table, verb: s.verb, payload: s.payload, filters: s.filters });
       return { data: s.verb === "insert" ? { id: `${table}-row-${writes.length}` } : null, error: null };
     }
+    if (table === "delivery_policies" && policies === "unreadable") return { data: null, error: { message: "relation does not exist" } };
     return { data: rows(), error: null };
   };
   const b = {
@@ -102,7 +108,7 @@ const post = (body: Record<string, unknown>) => POST(new Request("http://localho
 const backing = (extra: Record<string, unknown>) => post({ kind: "backing", slug: ACT.slug, tier: "thank_you", displayName: "Dana", email: "dana@example.com", ...extra });
 const lot = (lotId: string) => post({ kind: "lot", lotId, patronName: "Kettle St. Coffee", email: "owner@kettle.example" });
 const restoreKey = () => { if (secretKey === undefined) delete process.env.STRIPE_SECRET_KEY; else process.env.STRIPE_SECRET_KEY = secretKey; };
-const reset = () => { resetRuns(); writes = []; rpcs = []; intents = []; sessions = []; restoreKey(); };
+const reset = () => { resetRuns(); resetPolicies(); writes = []; rpcs = []; intents = []; sessions = []; restoreKey(); };
 const backingRows = () => writes.filter((w) => w.table === "backings" && w.verb === "insert").map((w) => w.payload!);
 
 
@@ -256,5 +262,52 @@ test("and a live key changes nothing for music", async () => {
   assert.equal((await backing({ runId: A })).status, 200);
   assert.equal(sessions[0].runId, A);
   assert.equal(backingRows()[0].run_id, A);
+  restoreKey();
+});
+
+// ---------------------------------------------------------------
+// The switch is the category's delivery policy
+// ---------------------------------------------------------------
+
+test("switching theater's policy to active is what opens it for live money, and nothing else does", async () => {
+  reset();
+  process.env.STRIPE_SECRET_KEY = "sk_live_abc";
+  assert.equal((await lot(LOT_THEATER)).status, 403, "proposed: refused");
+  policies = [{ category_key: "music", version: 1, status: "active" }, { category_key: "theater", version: 1, status: "active" }];
+  const res = await lot(LOT_THEATER);
+  assert.equal(res.status, 200, "active: open");
+  assert.equal(sessions[0].runId, THEATER);
+  restoreKey();
+});
+
+test("a draft of a later version never closes a category that is switched on", async () => {
+  reset();
+  process.env.STRIPE_SECRET_KEY = "sk_live_abc";
+  // Music version 2 is being drafted beside the active version 1. Live music checkout carries on.
+  policies = [{ category_key: "music", version: 1, status: "active" }, { category_key: "music", version: 2, status: "proposed" }];
+  assert.equal((await lot(LOT_A)).status, 200);
+  assert.equal((await backing({ runId: A })).status, 200);
+  restoreKey();
+});
+
+test("a category with no usable policy takes nothing, in either mode", async () => {
+  for (const key of ["sk_test_abc", "sk_live_abc"]) {
+    reset();
+    process.env.STRIPE_SECRET_KEY = key;
+    policies = [{ category_key: "music", version: 1, status: "active" }, { category_key: "theater", version: 1, status: "retired" }];
+    assert.equal((await lot(LOT_THEATER)).status, 403, key);
+    assert.deepEqual(rpcs, [], "nothing was held");
+  }
+  restoreKey();
+});
+
+test("when the policies cannot be read, music stays open and nothing else opens for live money", async () => {
+  reset();
+  policies = "unreadable";
+  process.env.STRIPE_SECRET_KEY = "sk_live_abc";
+  assert.equal((await lot(LOT_A)).status, 200, "a database hiccup does not close music");
+  assert.equal((await lot(LOT_THEATER)).status, 403, "and does not open theater");
+  process.env.STRIPE_SECRET_KEY = "sk_test_abc";
+  assert.equal((await lot(LOT_THEATER)).status, 200, "test mode still verifies it");
   restoreKey();
 });

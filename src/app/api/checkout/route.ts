@@ -4,7 +4,7 @@ import { backingFee } from "@/lib/backings";
 import { patronFor, payingProfileId } from "@/lib/patrons";
 import { buyNowOpen, checkoutRefusal } from "@/lib/auctions";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
-import { CATEGORY_PAYMENTS_CLOSED, categoryPaymentsOpen } from "@/lib/payment-gate";
+import { CATEGORY_PAYMENTS_CLOSED, paymentsOpenFor } from "@/lib/payment-gate";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
@@ -99,8 +99,9 @@ export async function POST(req: Request) {
   const lot = lotData as unknown as LotRow | null;
   if (!lot) return fail("That spot is not on any fundraiser.", 404);
   if (!["open", "live"].includes(lot.runs.status)) return fail("That fundraiser is closed.", 400);
-  // Asked before anything is written or held: a category with no delivery policy takes no live money.
-  if (!categoryPaymentsOpen(lot.runs.category_key)) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
+  // Asked before anything is written or held: only a category whose delivery policy the owner has
+  // switched on takes live money. A proposed policy is test mode only.
+  if (!(await paymentsOpenFor(sb, lot.runs.category_key))) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
   if (lot.status === "sold") return fail("That spot is already taken.", 409);
   if (lot.status !== "open" && lot.status !== "pending_funding") return fail("That spot is not for sale.", 400);
 
@@ -220,7 +221,7 @@ async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { k
   // The widget's tiers are music's, in music's words: a name on the tour thank-you, a name on the
   // merch table card. The page refuses to draw them for another category; this refuses to sell them.
   if ((run.category_key ?? "music") !== "music") return fail("That fundraiser does not take backings through the widget.", 400);
-  if (!categoryPaymentsOpen(run.category_key)) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
+  if (!(await paymentsOpenFor(sb, run.category_key))) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
 
   const email = input.email.toLowerCase();
   const patronId = await patronFor(sb, input.displayName, email, profileId);
