@@ -233,9 +233,9 @@ test("the widget page says it is music's, and the organizer page does not sell i
 test("labels moved, and the one address that moved left its old one working", () => {
   // The index went to /fundraisers, the word the nav already used. /auctions redirects there
   // (tests/reserved-names.test.ts holds the redirect). Every other address is where it was.
-  assert.deepEqual(NAV.map((n) => n.href), ["/how-sponsorship-works", "/fundraisers", "/list", "/contact"]);
+  assert.deepEqual(NAV.map((n) => n.href), ["/fundraisers", "/how-sponsorship-works", "/list", "/contact"]);
   assert.match(read("next.config.ts"), /\{ source: "\/auctions", destination: "\/fundraisers", permanent: false \}/);
-  assert.deepEqual(NAV.map((n) => n.label), ["How sponsorship works", "Fundraisers", "For organizers", "Contact"]);
+  assert.deepEqual(NAV.map((n) => n.label), ["Fundraisers", "How it works", "For organizers", "Contact"]);
   for (const route of ["src/app/fundraisers/page.tsx", "src/app/list/page.tsx", "src/app/board/[slug]/page.tsx", "src/app/mark/[id]/page.tsx", "src/app/embed/[slug]/page.tsx", "src/app/widget/page.tsx", "src/app/record/[id]/page.tsx", "src/app/claim/[token]/page.tsx", "src/app/patron/[username]/page.tsx"]) {
     assert.ok(existsSync(path.join(ROOT, route)), `${route} still answers`);
   }

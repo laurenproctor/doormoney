@@ -51,8 +51,8 @@ export const SITE = {
   (next.config.ts). /list stays where it is for the same reason.
 */
 export const NAV = [
-  { href: "/how-sponsorship-works", label: "How sponsorship works" },
   { href: "/fundraisers", label: "Fundraisers" },
+  { href: "/how-sponsorship-works", label: "How it works" },
   { href: "/list", label: "For organizers" },
   { href: "/contact", label: "Contact" },
 ] as const;
