@@ -38,3 +38,15 @@ export const runUrl = (actSlug: string, runSlug: string) => `${SITE.url}${runPat
 
 /** The address a musician is shown for their own page, without the scheme. */
 export const bareActUrl = (actSlug: string) => `${SITE.url.replace(/^https?:\/\//, "")}${actPath(actSlug)}`;
+
+/**
+ * Where somebody with no session is sent, and where they come back to.
+ *
+ * The whole address comes back, query string included. The proxy used to keep the path alone, so a
+ * link to /dashboard/runs/new?template=fund_tour opened while signed out came back as the empty
+ * form. The value is one encoded parameter, and safeNext in src/lib/auth.ts still decides whether
+ * it is a path inside the site before anybody is redirected to it.
+ */
+export function signInPath(pathname: string, search: string = ""): string {
+  return `/login?next=${encodeURIComponent(`${pathname}${search}`)}`;
+}

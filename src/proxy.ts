@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { signInPath } from "@/lib/urls";
 
 /** Nothing to do on these once somebody is already signed in, and where to send them instead. */
 const GUEST_ONLY: Record<string, string> = {
@@ -38,10 +39,8 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin"))) {
-    const to = request.nextUrl.clone();
-    to.pathname = "/login";
-    to.search = `?next=${encodeURIComponent(path)}`;
-    return NextResponse.redirect(to);
+    // The query string comes back too, so a link to a starter kit survives signing in.
+    return NextResponse.redirect(new URL(signInPath(path, request.nextUrl.search), request.nextUrl.origin));
   }
   if (user && GUEST_ONLY[path]) {
     const to = request.nextUrl.clone();
