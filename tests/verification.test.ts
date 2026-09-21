@@ -4,6 +4,8 @@
   result here is the case where the section does not appear at all.
 */
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { test } from "node:test";
 import {
   OTHER_KEY,
@@ -138,7 +140,7 @@ test("an unknown key stored by some older write is dropped on the way out", () =
 */
 
 test("every category offers the same methods, in the same order, under the same keys", () => {
-  for (const category of ["music", "sports", "film", "theater", "community"]) {
+  for (const category of ["music", "sports", "film", "theater", "hospitality", "community"]) {
     assert.deepEqual(
       verificationMethods(category).map((m) => m.key),
       VERIFICATION_METHODS.map((m) => m.key),
@@ -160,6 +162,38 @@ test("the words follow the category, so nobody is asked to photograph a show the
   assert.equal(methodLabel("attendance_estimates", "film"), "Attendance estimates", "a label that already travels is left alone");
 });
 
+test("a hospitality venue is asked about days and events, and to photograph the placement and not the guests", () => {
+  assert.equal(methodLabel("selected_show_photos", "hospitality"), "Dated photos from selected days or events");
+  assert.equal(methodLabel("short_video", "hospitality"), "Short video from the venue or an event");
+  assert.equal(methodLabel("end_of_run_record", "hospitality"), "End-of-fundraiser placement record");
+  assert.equal(methodLabel("attendance_estimates", "hospitality"), "Attendance estimates", "a label that already travels is left alone");
+  const photos = verificationMethods("hospitality").find((m) => m.key === "selected_show_photos")!;
+  assert.match(photos.note, /Photograph the placement, not the guests\./);
+  assert.match(verificationMethods("hospitality").find((m) => m.key === "other")!.note, /in the venue's own words/);
+});
+
+test("every category in the registry has its own wording, and none of it is music's", () => {
+  // The fallback to music's sentences is for a key nobody has heard of. A category Door Money added
+  // on purpose must not reach it: that is how a hospitality draft asked a restaurant about "selected
+  // shows". The registry is read from the migrations, so the next category fails here until it has words.
+  const dir = path.join(import.meta.dirname, "..", "supabase/migrations");
+  const sql = readdirSync(dir).filter((f) => f.endsWith(".sql")).map((f) => readFileSync(path.join(dir, f), "utf8").replace(/--.*$/gm, "")).join("\n");
+  const registered = new Set<string>();
+  for (const insert of sql.matchAll(/insert into public\.fundraiser_categories \([^)]*\) values([\s\S]*?);/g)) {
+    for (const row of insert[1].matchAll(/\('([a-z][a-z0-9_]*)',\s*'/g)) registered.add(row[1]);
+  }
+  assert.deepEqual([...registered].sort(), ["film", "hospitality", "music", "sports", "theater"], "the registry, as the migrations leave it");
+
+  const MUSIC_ONLY = /musician|\bbands?\b|\bshows?\b|\btours?\b|\bmerch\b|\blogos?\b|\bgigs?\b|\bruns?\b|\bpatrons?\b/i;
+  for (const category of [...registered].filter((c) => c !== "music")) {
+    assert.notDeepEqual(verificationMethods(category), VERIFICATION_METHODS, `${category} has no wording of its own`);
+    for (const method of verificationMethods(category)) {
+      assert.doesNotMatch(`${method.label} ${method.note}`, MUSIC_ONLY, `${category}.${method.key}`);
+      assert.doesNotMatch(`${method.label} ${method.note}`, /\u2014|guarantee|verified|certif|\bevery (show|fixture|performance|screening|day|event|dinner|date)\b/i, `${category}.${method.key}: no invented proof, and no documentation promised from every date`);
+    }
+  }
+});
+
 test("a board renders the category's words for what the organizer ticked", () => {
   const choice = { methods: ["selected_show_photos", "end_of_run_record"], other: null };
   assert.deepEqual(verificationItems(choice, "theater").map((i) => i.label), [
@@ -175,7 +209,7 @@ test("a board renders the category's words for what the organizer ticked", () =>
 test("no category's wording quietly changes what was stored", () => {
   // The constraint in migration 0020 lists the keys. A reworded method that shipped a new key would
   // fail that constraint on the first save, which is the failure this catches at the words instead.
-  for (const category of ["sports", "film", "theater"]) {
+  for (const category of ["sports", "film", "theater", "hospitality"]) {
     for (const method of verificationMethods(category)) assert.equal(isVerificationKey(method.key), true, `${category}.${method.key}`);
   }
 });
