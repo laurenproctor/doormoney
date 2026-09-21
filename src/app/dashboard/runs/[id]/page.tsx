@@ -9,7 +9,7 @@ import { VerificationEditor } from "@/components/VerificationEditor";
 import { DeliveryPanel } from "@/components/DeliveryPanel";
 import { loadRunDelivery } from "@/lib/delivery-dashboard";
 import { requireUser, ownedAct } from "@/lib/auth";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { categoryStatus, draftCategories, loadFundraiserDraft } from "@/app/actions/drafts";
 import { runComplete } from "@/lib/readiness";
@@ -68,7 +68,9 @@ export default async function RunPage({ params }: Props) {
   const allLots = lots ?? [];
   // What this fundraiser still owes its sponsors. Read under the organizer's own session, so row
   // level security decides. Empty for music, which releases on its calendar and owes no rows.
-  const delivery = await loadRunDelivery(sb, allLots.map((l) => l.id));
+  // What a waiting sponsor sent is read with the service role, and only for the purchases the
+  // organizer's own session returned, so it cannot reach anybody else's fundraiser.
+  const delivery = await loadRunDelivery(sb, allLots.map((l) => l.id), supabaseAdmin());
   const methods: string[] = run.verification_methods ?? [];
   const settled = run.status === "closed" || run.status === "cancelled";
 
@@ -126,12 +128,13 @@ export default async function RunPage({ params }: Props) {
 
       {delivery.length > 0 && (
         <Card id="delivery" className="mb-10 max-w-[860px]">
-          <CardHead eyebrow="Delivery">Document what you delivered</CardHead>
+          <CardHead eyebrow="Delivery">Accept what sponsors send, then document what you delivered</CardHead>
           <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
+            Each sponsor sends what their sponsorship needs: a name as it should read, a credit line, artwork. Accept it or decline it here.{" "}
             Door Money holds each sponsor&apos;s money until you document what they bought, and releases your share on the Friday after. Add a
             link or a note for each one. Door Money checks that it is there, never whether it is good, and passes it on to the sponsor.
           </p>
-          <DeliveryPanel rows={delivery} youth={(run.category_details as Record<string, string> | null)?.level === "youth"} />
+          <DeliveryPanel rows={delivery} categoryKey={run.category_key ?? "music"} youth={(run.category_details as Record<string, string> | null)?.level === "youth"} />
         </Card>
       )}
 

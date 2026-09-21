@@ -13,8 +13,15 @@ import type { EvidenceKind } from "@/lib/delivery-policy";
 
 export type DeliveryEvidence = { id: string; kind: EvidenceKind; url: string | null; note: string | null; isPublic: boolean; showsMinor: boolean; createdAt: string };
 
+/** What a sponsor sent and the organizer has not answered yet. Never read by the browser's own session. */
+export type SubmittedMaterials = { text: string | null; note: string | null; fileUrl: string | null };
+
 export type DeliveryRow = {
   deliverableId: string;
+  /** The sponsorship this deliverable belongs to. The decision on its materials is made against it. */
+  purchaseId: string;
+  /** Set only while the sponsor's materials are waiting for the organizer's answer. */
+  submitted: SubmittedMaterials | null;
   title: string;
   sponsorName: string | null;
   /** purchases.mark_status: whether the organizer has accepted what the sponsor sent. */
@@ -40,11 +47,18 @@ export type RawDeliverable = {
 const MATERIALS = ["none", "submitted", "approved", "declined"] as const;
 
 /** Rows as the panel draws them. Oldest purchase first is not knowable here, so: by title, then position. */
-export function shapeDelivery(rows: readonly RawDeliverable[], buyers: readonly { lot_id: string; name: string }[]): DeliveryRow[] {
+export function shapeDelivery(
+  rows: readonly RawDeliverable[],
+  buyers: readonly { lot_id: string; name: string }[],
+  materials: ReadonlyMap<string, SubmittedMaterials> = new Map(),
+): DeliveryRow[] {
   const names = new Map(buyers.map((b) => [b.lot_id, b.name]));
   return rows
     .map((d) => ({
       deliverableId: d.id,
+      purchaseId: d.purchases.id,
+      // Only while it is waiting: once decided, what was sent is on the record, not on a to-do list.
+      submitted: d.purchases.mark_status === "submitted" ? (materials.get(d.purchases.id) ?? { text: null, note: null, fileUrl: null }) : null,
       title: d.title,
       sponsorName: names.get(d.purchases.lot_id) ?? null,
       materials: (MATERIALS as readonly string[]).includes(d.purchases.mark_status) ? (d.purchases.mark_status as DeliveryRow["materials"]) : "none",
@@ -63,7 +77,7 @@ export function shapeDelivery(rows: readonly RawDeliverable[], buyers: readonly 
  * The deliverables on one fundraiser's sponsorships. Empty for a music fundraiser, which owes no
  * deliverable rows, and empty before migration 0045 is applied, where the read errors.
  */
-export async function loadRunDelivery(sb: SupabaseClient, lotIds: string[]): Promise<DeliveryRow[]> {
+export async function loadRunDelivery(sb: SupabaseClient, lotIds: string[], admin?: SupabaseClient): Promise<DeliveryRow[]> {
   if (lotIds.length === 0) return [];
   try {
     const { data, error } = await sb
@@ -73,10 +87,29 @@ export async function loadRunDelivery(sb: SupabaseClient, lotIds: string[]): Pro
       .order("position");
     if (error || !data) return [];
     const { data: buyers } = await sb.from("lot_buyers").select("lot_id,name").in("lot_id", lotIds);
-    return shapeDelivery(data as unknown as RawDeliverable[], (buyers ?? []) as { lot_id: string; name: string }[]);
+    const rows = data as unknown as RawDeliverable[];
+    return shapeDelivery(rows, (buyers ?? []) as { lot_id: string; name: string }[], admin ? await loadSubmittedMaterials(admin, rows) : new Map());
   } catch {
     return [];
   }
+}
+
+/**
+ * What each waiting sponsor sent. The organizer's own session cannot read these columns (migration
+ * 0029 took the name, the file and the note off the Data API), so this read uses the service role,
+ * the way the workspace dashboard reads its logo queue. It is safe on the same terms: it is asked
+ * only for purchases that the organizer's own session just returned under row level security, so
+ * it can never reach a sponsorship on somebody else's fundraiser.
+ */
+async function loadSubmittedMaterials(admin: SupabaseClient, rows: readonly RawDeliverable[]): Promise<Map<string, SubmittedMaterials>> {
+  const ids = [...new Set(rows.filter((r) => r.purchases.mark_status === "submitted").map((r) => r.purchases.id))];
+  const out = new Map<string, SubmittedMaterials>();
+  if (ids.length === 0) return out;
+  const { data } = await admin.from("purchases").select("id,mark_text,mark_note,mark_url").in("id", ids).eq("mark_status", "submitted");
+  for (const p of (data ?? []) as { id: string; mark_text: string | null; mark_note: string | null; mark_url: string | null }[]) {
+    out.set(p.id, { text: p.mark_text, note: p.mark_note, fileUrl: p.mark_url && p.mark_url.startsWith("https://") ? p.mark_url : null });
+  }
+  return out;
 }
 
 /** One line on where a deliverable stands, in the organizer's own second person. */
