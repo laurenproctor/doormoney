@@ -277,7 +277,7 @@ export default async function AdminPage() {
         <Card>
           <CardHead eyebrow="Mail sent on a schedule">{(mailRuns.data ?? []).length} runs</CardHead>
           <p className="mb-5 max-w-none text-[15px] text-muted">
-            The new-boards email and this digest both go out weekly, from the daily job. Neither sends twice in a week, and a board is only ever in one of them.
+            The new-fundraisers email and this digest both go out weekly, from the daily job. Neither sends twice in a week, and a fundraiser is only ever in one of them.
           </p>
           <Table
             head={["When", "What", "Sent", "Failed"]}

@@ -65,3 +65,13 @@ export function releaseSentence(w: RecordWords, organizerName: string): string {
     ? `Door Money holds the money and pays ${organizerName} weekly through the ${w.periodNoun}.`
     : `Door Money holds the money and releases ${organizerName}'s share as ${organizerName} documents each deliverable. Documentation comes from ${organizerName}, and Door Money passes it on.`;
 }
+
+/**
+ * The line beside a pay button: how the money moves, and who has the final say on what appears.
+ * Music's is the promise music has always made. Nobody else is told about Fridays or a logo.
+ */
+export function checkoutTerms(w: RecordWords, organizerName: string): string {
+  return w.music
+    ? `Door Money holds the money and pays ${organizerName} every Friday through the ${w.periodNoun}. ${organizerName} approves the logo before anything goes up.`
+    : `${releaseSentence(w, organizerName)} ${organizerName} accepts the sponsor's materials before anything goes up.`;
+}

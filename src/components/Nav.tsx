@@ -2,7 +2,7 @@ import Link from "next/link";
 import { NAV, SITE } from "@/lib/site";
 import { Logo } from "@/components/Logo";
 
-/** The top bar: wordmark, the site's pages in the middle, sign in and the act call to action on the right. */
+/** The top bar: wordmark, the site's pages in the middle, sign in and the organizer call to action on the right. */
 export function Nav({ current }: { current?: string }) {
   const links = NAV.filter((n) => n.href !== "/list");
   return (
@@ -46,7 +46,7 @@ export function Nav({ current }: { current?: string }) {
               current === "/list" ? "border-accent" : "border-ink/40"
             }`}
           >
-            List an act
+            Create a fundraiser
           </Link>
         </div>
       </div>

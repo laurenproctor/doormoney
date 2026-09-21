@@ -36,19 +36,20 @@ const dueForAnother = (last: Date | null, now: Date) => !last || now.getTime() -
 type RunRow = {
   id: string;
   title: string;
-  kind: string;
-  starts_on: string;
-  ends_on: string;
-  show_count: number;
+  category_key: string | null;
+  kind: string | null;
+  starts_on: string | null;
+  ends_on: string | null;
+  show_count: number | null;
   slug: string;
-  acts: { name: string; slug: string; city: string };
+  acts: { name: string; slug: string; city: string | null };
 };
 
 /** Boards that have opened and never been in an email. */
 async function unannouncedBoards(sb: Admin): Promise<{ runs: RunRow[]; boards: NewBoard[] }> {
   const { data } = await sb
     .from("runs")
-    .select("id,slug,title,kind,starts_on,ends_on,show_count,acts!inner(name,slug,city)")
+    .select("id,slug,title,category_key,kind,starts_on,ends_on,show_count,acts!inner(name,slug,city)")
     .is("announced_at", null)
     .in("status", ["open", "live"])
     .order("created_at");
@@ -61,8 +62,9 @@ async function unannouncedBoards(sb: Admin): Promise<{ runs: RunRow[]; boards: N
       actName: r.acts.name,
       city: r.acts.city,
       runTitle: r.title,
-      showCount: r.show_count,
-      dates: formatDateRange(r.starts_on, r.ends_on),
+      // Only music counts shows, and nobody outside it has to have dates. An absent fact stays absent.
+      showCount: (r.category_key ?? "music") === "music" ? r.show_count : null,
+      dates: r.starts_on && r.ends_on ? formatDateRange(r.starts_on, r.ends_on) : null,
       openSpots: open.length,
       fromCents: open.length ? Math.min(...open.map((l) => l.price_cents as number)) : null,
       boardUrl: runUrl(r.acts.slug, r.slug),

@@ -1,3 +1,4 @@
+import { getCategoryLabels } from "@/lib/category-registry";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireUser, ownedAct } from "@/lib/auth";
@@ -26,5 +27,6 @@ export default async function RunPreviewPage({ params }: Props) {
   const board = await getOwnedRunBoard(id, act.id);
   if (!board || !board.run) notFound();
 
-  return <BoardView board={board} slug={act.slug} draft={{ backHref: `/dashboard/runs/${id}`, published: board.run.status === "open" || board.run.status === "live" }} />;
+  const labels = await getCategoryLabels();
+  return <BoardView board={board} slug={act.slug} categoryName={labels[board.run.categoryKey]} draft={{ backHref: `/dashboard/runs/${id}`, published: board.run.status === "open" || board.run.status === "live" }} />;
 }

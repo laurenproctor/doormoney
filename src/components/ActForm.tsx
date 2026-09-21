@@ -6,11 +6,17 @@ import { inputClass, labelClass } from "@/components/DashboardShell";
 import { slugify, slugWhileTyping } from "@/lib/slug";
 import type { OwnedAct } from "@/lib/auth";
 
+/*
+  acts.type is a music subtype and nothing else: the enum holds three kinds of music act, and a
+  team, a filmmaker or a theater company has no answer here. So the field is optional, says it is
+  about music, and leads with "Not specified". It is never a classification of organizers; what an
+  organizer's work is belongs to each fundraiser's category. The stored values do not change.
+*/
 const ACT_TYPES = [
-  ["", "Other organizer"],
-  ["touring_band", "Band"],
+  ["", "Not specified"],
+  ["touring_band", "Touring band"],
   ["house_act", "House act"],
-  ["soloist", "Solo"],
+  ["soloist", "Soloist"],
 ] as const;
 
 const initial: ActState = { ok: false };
@@ -26,7 +32,10 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
   return (
     <form action={action} noValidate encType="multipart/form-data">
       <fieldset className="mb-[18px] flex flex-wrap gap-3.5">
-        <legend className={labelClass}>Organizer type</legend>
+        <legend className={labelClass}>Music profile type, optional</legend>
+        <p className="mb-1 w-full max-w-none text-[14px] text-muted">
+          Only for music. Teams, filmmakers, theater companies and every other organizer leave this as Not specified. A fundraiser&apos;s category is chosen on the fundraiser.
+        </p>
         {ACT_TYPES.map(([value, label]) => (
           <label
             key={value}

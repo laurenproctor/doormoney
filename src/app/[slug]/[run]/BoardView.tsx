@@ -6,7 +6,7 @@ import { NewsletterCTA } from "@/components/Newsletter";
 import { PlacementVerification } from "@/components/PlacementVerification";
 import { Theme, themeFor } from "@/components/Theme";
 import { WidgetFrame } from "@/components/WidgetFrame";
-import { AudienceSummary, SponsorPromise } from "@/components/domain";
+import { AudienceSummary, CategoryBadge, FundingPurpose, SponsorPromise } from "@/components/domain";
 import { openSpots } from "@/lib/boards";
 import { CATALOG } from "@/lib/catalog";
 import { clockOf, closeStamp, formatDateRange, weekdayOf } from "@/lib/dates";
@@ -14,6 +14,7 @@ import { instagramHandle, instagramUrl, safeWebsite, websiteLabel } from "@/lib/
 import { formatMoney } from "@/lib/money";
 import { fundraiserLine, periodOf } from "@/lib/periods";
 import { organizerNoun } from "@/lib/categories";
+import { checkoutTerms, recordWords, releaseSentence } from "@/lib/record-words";
 import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
 import type { Board } from "@/lib/sample";
 import { BoardLots, type LotView } from "./BoardLots";
@@ -38,9 +39,12 @@ export function BoardView({
   slug,
   paid = null,
   draft = null,
+  categoryName,
 }: {
   board: Board;
   slug: string;
+  /** The category's public name, from the registry. With none, the badge tidies the key. */
+  categoryName?: string;
   paid?: PaidNotice | null;
   /** The banner for a private preview: where to go back to, and whether it is already up. */
   draft?: { backHref: string; published: boolean } | null;
@@ -133,15 +137,20 @@ export function BoardView({
         <section className="relative overflow-hidden">
           <HeroArt theme={theme} src={act.photoUrl} />
           <div className="hero-in relative mx-auto max-w-[1120px] px-7 pb-10 pt-[72px]">
-            <Eyebrow className="mb-7">{draft && !draft.published ? "Draft fundraiser" : "Open fundraiser"}</Eyebrow>
+            <div className="mb-7 flex flex-wrap items-center gap-4">
+              <Eyebrow>{draft && !draft.published ? "Draft fundraiser" : "Open fundraiser"}</Eyebrow>
+              <CategoryBadge category={{ key: run.categoryKey, label: categoryName }} />
+            </div>
             <h1 className={`display max-w-[14ch] leading-[0.98] ${act.name.length > 14 ? "text-[clamp(40px,7vw,92px)]" : "text-[clamp(48px,8.4vw,108px)]"}`}>{act.name}</h1>
             <p className="caps mt-6 text-[14.5px] leading-[2]">
               {fundraiserLine(run)}{act.city ? ` ${act.city}.` : ""}
             </p>
             {lead && <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>}
             {act.bio && <p className="mt-5 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
-            {!music && (run.audienceDescription || run.sponsorPromise) && (
+            {/* The three answers, whenever the organizer gave them. Outside music the purpose is already the lead above. */}
+            {((music && run.purpose) || run.audienceDescription || run.sponsorPromise) && (
               <p className="mt-5 max-w-[58ch] text-[16px] leading-[1.55] text-muted">
+                {music && <FundingPurpose variant="inline">{run.purpose}</FundingPurpose>}
                 <AudienceSummary variant="inline">{run.audienceDescription}</AudienceSummary>
                 <SponsorPromise variant="inline">{run.sponsorPromise}</SponsorPromise>
               </p>
@@ -188,14 +197,16 @@ export function BoardView({
               <Eyebrow className="mb-3">{paid.kind === "paid" ? "Paid" : "Payment on its way"}</Eyebrow>
               <p className="max-w-none text-[16px]">
                 {paid.kind === "paid"
-                  ? `${formatMoney(paid.amount)} received. The spot is taken, and this page shows it within a minute.`
-                  : `${formatMoney(paid.amount)} is clearing. The spot is held until it lands, and this page updates on its own.`}
+                  ? `${formatMoney(paid.amount)} received. The sponsorship is taken, and this page shows it within a minute.`
+                  : `${formatMoney(paid.amount)} is clearing. The sponsorship is held until it lands, and this page updates on its own.`}
                 {paid.email ? ` A record is on its way to ${paid.email}.` : ""}
               </p>
-              <p className="mt-2 max-w-none text-[15px] text-muted">Door Money holds the money and pays {act.name} every Friday as the {period.noun} goes on.</p>
+              <p className="mt-2 max-w-none text-[15px] text-muted">
+                {music ? `Door Money holds the money and pays ${act.name} every Friday as the ${period.noun} goes on.` : releaseSentence(recordWords(run.categoryKey, run.kind), act.name)}
+              </p>
             </div>
           )}
-          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={`Back the ${period.noun}`} />
+          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={music ? `Back the ${period.noun}` : "Sponsorship options"} terms={checkoutTerms(recordWords(run.categoryKey, run.kind), act.name)} />
         </div>
 
         <PlacementVerification
@@ -231,12 +242,12 @@ export function BoardView({
 
         <div className="border-t border-line py-16">
           <div className="mx-auto max-w-[1120px] px-7">
-            <Eyebrow className="mb-5">If a bid wins</Eyebrow>
-            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">What happens after {closeFull ?? "the close"}</h2>
+            <Eyebrow className="mb-5">{auction ? "If a bid wins" : "After a sponsorship sells"}</Eyebrow>
+            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">{auction ? `What happens after ${closeFull ?? "the close"}` : "What happens next"}</h2>
             <Lines
               marked
               lines={[
-                "The winning bidder puts the money up within 48 hours, or the spot goes to the next bid.",
+                ...(auction ? ["The winning bidder puts the money up within 48 hours, or the sponsorship goes to the next bid."] : []),
                 music
                   ? `${noun} approves the logo. The musician always has the final say.`
                   : `${noun} approves the sponsor's materials. The organizer always has the final say.`,
@@ -245,10 +256,10 @@ export function BoardView({
                   : `${noun} delivers the placement it described.`,
                 music
                   ? `The money reaches ${noun.toLowerCase()} week by week as the ${period.noun} goes on.`
-                  : `The money reaches ${noun.toLowerCase()} week by week.`,
+                  : `Door Money holds the money and releases it as ${noun.toLowerCase()} documents each deliverable.`,
                 music
                   ? `End of the ${period.noun}, the sponsor gets a record of it: every ${period.unit}, every room, the attendance count.`
-                  : "At the end, the sponsor gets a record of the sponsorship and whatever was documented for it.",
+                  : `The sponsor's record keeps the purchased offer and what ${noun.toLowerCase()} documented for it.`,
               ]}
             />
           </div>

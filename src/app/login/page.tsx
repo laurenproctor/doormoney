@@ -14,15 +14,15 @@ export default async function LoginPage({ searchParams }: Props) {
 
   return (
     <AuthShell
-      eyebrow="Musicians and patrons"
+      eyebrow="Organizers and sponsors"
       title="Sign"
       accent="in"
-      intro={<p>One account, both sides of the room. Musicians land on their fundraiser, patrons on what they have backed.</p>}
+      intro={<p>One account to create fundraisers, sponsor work, or do both. Organizers land on their fundraisers, sponsors on what they have supported.</p>}
       aside={
         <AuthPoints
           heading="What is waiting inside"
           points={[
-            "The fundraiser: spots, prices, what has sold, and the logos waiting on a yes.",
+            "Your fundraisers: sponsorship options, prices, what has sold, and the sponsor materials waiting on your answer.",
             "Every sponsorship and backing, with the record behind it.",
             "Bids in progress, and the ones that won.",
             "Payouts: what has been sent, and what is still to come.",

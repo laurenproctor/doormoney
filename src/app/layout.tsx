@@ -10,7 +10,7 @@ const archivo = Archivo({ weight: ["400", "500", "700"], subsets: ["latin"], var
 
 export const metadata: Metadata = {
   title: { default: `${SITE.name}. ${SITE.strap}.`, template: `%s. ${SITE.name}.` },
-  description: "Patronage for working musicians. Businesses, brands and fans put money behind the shows, tours and residencies already happening in New York.",
+  description: `${SITE.taglineSecond} Starting with music, sports teams, film, and theater.`,
   metadataBase: new URL(SITE.url),
 };
 

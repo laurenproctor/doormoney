@@ -69,7 +69,7 @@ test("no spots, no bio, no dates: every missing thing is named at once", () => {
   assert.equal(blockers.length, 4);
   assert.match(blockers.join(" "), /short bio/);
   assert.match(blockers.join(" "), /Finish the fundraiser/);
-  assert.match(blockers.join(" "), /at least one spot/);
+  assert.match(blockers.join(" "), /at least one sponsorship option/);
   assert.match(blockers.join(" "), /at least one way/);
 });
 

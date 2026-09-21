@@ -60,7 +60,7 @@ test("the welcome email greets by name and still reads without one", () => {
   assert.match(plain.text, /^This address is on the/);
   for (const mail of [named, plain]) {
     assert.match(mail.html, /new-fundraisers email/);
-    assert.match(mail.html, /New musicians open fundraisers/);
+    assert.match(mail.html, /New organizers open fundraisers/);
     assert.match(mail.html, /Nothing to do now/);
   }
 });

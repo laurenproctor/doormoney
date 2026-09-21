@@ -1,5 +1,6 @@
 "use client";
 import { materialsWords } from "@/lib/materials-words";
+import { periodOf } from "@/lib/periods";
 import { useActionState, useState } from "react";
 import { submitMark, type MarkState } from "@/app/actions/marks";
 import { Button } from "@/components/Button";
@@ -51,7 +52,7 @@ export function MarkForm({
           <p className="max-w-[46ch] text-[17px]">{w.music ? "The logo is" : "Your materials are"} with {actName}.</p>
           <p className="mt-3 max-w-[46ch] text-[15px] text-muted">
             {w.music
-              ? `Nothing goes on the ${surface.toLowerCase()} without their yes. Door Money sends an email either way, and the record of the run fills in from the first show.`
+              ? `Nothing goes on the ${surface.toLowerCase()} without their yes. Door Money sends an email either way, and the record of the ${periodOf(kind).noun} fills in from the first ${periodOf(kind).unit}.`
               : `Nothing goes up for the ${surface.toLowerCase()} without their yes. Door Money sends an email either way, and holds the money until ${actName} documents what was delivered.`}
           </p>
         </div>

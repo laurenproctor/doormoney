@@ -108,11 +108,11 @@ export default async function RunPage({ params }: Props) {
       )}
 
       <Card id="placements" className="mb-10">
-        <CardHead eyebrow="Step three of four">Price the spots</CardHead>
+        <CardHead eyebrow="Step three of four">Price the sponsorship options</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           {music
-            ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold spots stay as they are."
-            : "No prices are suggested here yet, so your own number is the only number. Offer only what you can deliver. Sold spots stay as they are."}
+            ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold options stay as they are."
+            : "No prices are suggested here yet, so your own number is the only number. Offer only what you can deliver. Sold options stay as they are."}
         </p>
         <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={allLots as ExistingLot[]} boardHref={boardHref} />
       </Card>
@@ -120,7 +120,7 @@ export default async function RunPage({ params }: Props) {
       <Card id="verification" className="mb-10 max-w-[860px]">
         <CardHead eyebrow="Step four of four">How the placements will be recorded</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
-          Select what patrons will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
+          Select what sponsors will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
           claims more than that.
         </p>
         <VerificationEditor runId={run.id} methods={methods} other={run.verification_other ?? null} runStatus={run.status} categoryKey={run.category_key ?? "music"} />

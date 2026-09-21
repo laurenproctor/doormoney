@@ -92,8 +92,8 @@ export function LotsEditor({
         ))}
 
         <div className="flex flex-wrap items-center gap-4">
-          <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the spots"}</Button>
-          {state.ok && <span className="text-[14.5px] text-muted">Saved {state.saved} {state.saved === 1 ? "spot" : "spots"}.</span>}
+          <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the sponsorship options"}</Button>
+          {state.ok && <span className="text-[14.5px] text-muted">Saved {state.saved} {state.saved === 1 ? "sponsorship option" : "sponsorship options"}.</span>}
           {state.error && <span className="text-[14.5px] text-accent-ink">{state.error}</span>}
         </div>
       </form>
@@ -102,7 +102,7 @@ export function LotsEditor({
         {runStatus === "draft" ? (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
-              The board is private until it is published. Publishing puts it at the board address and on the live boards page. Save the spots first.
+              The fundraiser is private until it is published. Publishing puts it at its own address and on the fundraisers page. Save the sponsorship options first.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Button
@@ -123,7 +123,7 @@ export function LotsEditor({
           </>
         ) : runStatus === "cancelled" || cancelled ? (
           <p className="max-w-[56ch] text-[15px]">
-            This run is cancelled. The spots are off the board
+            This fundraiser is cancelled. Its sponsorship options are off the page
             {cancelled && cancelled.patrons > 0 ? `, and ${formatMoney(cancelled.refundedCents)} went back to ${cancelled.patrons === 1 ? "one patron" : `${cancelled.patrons} patrons`}` : ""}.
           </p>
         ) : runStatus === "closed" ? (
@@ -131,7 +131,7 @@ export function LotsEditor({
         ) : (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
-              The board is live at <a href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{boardHref}</a>. Prices on open spots can still change here.
+              The fundraiser is live at <a href={boardHref} className="break-all text-accent-ink underline decoration-1 underline-offset-4">{boardHref}</a>. Prices on open sponsorship options can still change here.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {runStatus === "open" && (
@@ -147,12 +147,12 @@ export function LotsEditor({
                     })
                   }
                 >
-                  Take the board down
+                  Take the fundraiser down
                 </Button>
               )}
               {!confirmCancel && (
                 <button type="button" onClick={() => setConfirmCancel(true)} className="caps cursor-pointer text-[14px] text-muted hover:text-accent-ink">
-                  Cancel the run
+                  Cancel the fundraiser
                 </button>
               )}
               {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
@@ -160,7 +160,7 @@ export function LotsEditor({
             {confirmCancel && (
               <div className="edge mt-5 max-w-[620px] bg-panel p-5">
                 <p className="max-w-none text-[15px]">
-                  Cancelling takes every spot off the board and refunds each patron the slices not yet released, fee included. Slices already paid for weeks the run played stay paid. This cannot be undone.
+                  Cancelling takes every sponsorship option off the page and refunds each patron the share not yet released, fee included. Anything already released stays released. This cannot be undone.
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-4">
                   <Button

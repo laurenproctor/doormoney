@@ -71,7 +71,10 @@ export function BoardLots({
   closesAt,
   closesLabel,
   heading,
+  terms,
 }: {
+  /** The line beside the pay button, in this fundraiser's own words (checkoutTerms). */
+  terms?: string;
   lots: LotView[];
   closesAt: string | null;
   closesLabel: string;
@@ -187,7 +190,7 @@ export function BoardLots({
                 </div>
 
                 {open?.id === l.id && open.kind === "take" && (
-                  <LotCheckout lotId={l.id} lotName={l.name.toLowerCase()} priceLabel={formatMoney(l.priceCents)} onClose={() => setOpen(null)} />
+                  <LotCheckout lotId={l.id} lotName={l.name.toLowerCase()} priceLabel={formatMoney(l.priceCents)} terms={terms} onClose={() => setOpen(null)} />
                 )}
                 {open?.id === l.id && open.kind === "buyNow" && l.buyNowCents !== null && (
                   <LotCheckout
@@ -196,6 +199,7 @@ export function BoardLots({
                     priceLabel={formatMoney(l.buyNowCents)}
                     buyNow
                     note="Taking it now ends the bidding on this spot. Anyone who bid is told, and nothing is charged to them."
+                    terms={terms}
                     onClose={() => setOpen(null)}
                   />
                 )}

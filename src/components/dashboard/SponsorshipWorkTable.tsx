@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Launch, Search } from "@/components/dashboard/icons";
 import { MarkDecision } from "@/components/MarkDecision";
 import { formatMoney } from "@/lib/money";
-import { LOGO_LABELS, filterWork, paymentLabel, workAction, workCounts, type WorkFilter, type WorkRow } from "@/lib/dashboardModel";
+import { filterWork, materialsLabels, paymentLabel, workAction, workCounts, type WorkFilter, type WorkRow } from "@/lib/dashboardModel";
 
 /**
  * Every sponsorship on the selected fundraiser, and the one thing worth doing to each.
@@ -18,16 +18,19 @@ import { LOGO_LABELS, filterWork, paymentLabel, workAction, workCounts, type Wor
  * lose the caret.
  */
 
-const FILTERS: { key: WorkFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "review", label: "Needs review" },
-  { key: "waiting", label: "Waiting for logo" },
-  { key: "approved", label: "Approved" },
-  { key: "declined", label: "Declined" },
-];
+/** The filters, in the fundraiser's own word for what a sponsor sends: a logo in music, materials elsewhere. */
+function filtersFor(categoryKey: string): { key: WorkFilter; label: string }[] {
+  return [
+    { key: "all", label: "All" },
+    { key: "review", label: "Needs review" },
+    { key: "waiting", label: materialsLabels(categoryKey).waiting },
+    { key: "approved", label: "Approved" },
+    { key: "declined", label: "Declined" },
+  ];
+}
 
 /** A chip carries its state in words. Colour is the second signal, never the only one. */
-function LogoChip({ row }: { row: WorkRow }) {
+function LogoChip({ row, categoryKey }: { row: WorkRow; categoryKey: string }) {
   const tone =
     row.logo === "review"
       ? "border-accent-ink text-accent-ink"
@@ -36,21 +39,21 @@ function LogoChip({ row }: { row: WorkRow }) {
         : row.logo === "declined"
           ? "border-line text-muted line-through"
           : "border-line text-muted";
-  return <span className={`caps inline-block border px-2 py-1 text-[14px] ${tone}`}>{LOGO_LABELS[row.logo]}</span>;
+  return <span className={`caps inline-block border px-2 py-1 text-[14px] ${tone}`}>{materialsLabels(categoryKey)[row.logo]}</span>;
 }
 
-function Action({ row }: { row: WorkRow }) {
-  const action = workAction(row);
+function Action({ row, categoryKey }: { row: WorkRow; categoryKey: string }) {
+  const action = workAction(row, categoryKey);
   if (action.kind === "review") {
     return (
       <div className="grid gap-2">
         {(row.markText || row.markUrl) && (
           <p className="text-[14px] text-muted">
-            {row.markText ? `"${row.markText}"` : "A logo file was sent."}
+            {row.markText ? `"${row.markText}"` : categoryKey === "music" ? "A logo file was sent." : "A file was sent."}
             {row.markNote ? ` ${row.markNote}` : ""}
           </p>
         )}
-        <MarkDecision purchaseId={row.id} />
+        <MarkDecision purchaseId={row.id} categoryKey={categoryKey} />
       </div>
     );
   }
@@ -65,7 +68,9 @@ function Action({ row }: { row: WorkRow }) {
   );
 }
 
-export function SponsorshipWorkTable({ rows }: { rows: WorkRow[] }) {
+export function SponsorshipWorkTable({ rows, categoryKey = "music" }: { rows: WorkRow[]; /** The fundraiser's category, for the words. Music when none is passed, which is what this table was built for. */ categoryKey?: string }) {
+  const FILTERS = filtersFor(categoryKey);
+  const materialsTitle = categoryKey === "music" ? "Logo" : "Materials";
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<WorkFilter>("all");
   const counts = useMemo(() => workCounts(rows), [rows]);
@@ -74,7 +79,7 @@ export function SponsorshipWorkTable({ rows }: { rows: WorkRow[] }) {
   if (rows.length === 0) {
     return (
       <p className="text-[15px] leading-[1.6] text-muted">
-        No sponsorships yet on this fundraiser. They appear here as patrons take them, with whatever you need to do next.
+        No sponsorships yet on this fundraiser. They appear here as sponsors take them, with whatever you need to do next.
       </p>
     );
   }
@@ -96,7 +101,7 @@ export function SponsorshipWorkTable({ rows }: { rows: WorkRow[] }) {
             className="field w-full bg-ground py-2.5 pl-10 pr-3.5 text-[14.5px] text-ink"
           />
         </div>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by logo state">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Filter by ${categoryKey === "music" ? "logo" : "materials"} state`}>
           {FILTERS.map((f) => {
             const on = filter === f.key;
             return (
@@ -128,7 +133,7 @@ export function SponsorshipWorkTable({ rows }: { rows: WorkRow[] }) {
               <caption className="sr-only">Sponsorships on this fundraiser</caption>
               <thead>
                 <tr className="border-b border-line">
-                  {["Sponsor", "Sponsorship option", "Paid", "Logo", "Payment", "Next"].map((h) => (
+                  {["Sponsor", "Sponsorship option", "Paid", materialsTitle, "Payment", "Next"].map((h) => (
                     <th key={h} scope="col" className="caps py-2.5 pr-4 text-[14px] font-normal text-muted">
                       {h}
                     </th>
@@ -141,9 +146,9 @@ export function SponsorshipWorkTable({ rows }: { rows: WorkRow[] }) {
                     <th scope="row" className="py-3.5 pr-4 text-[14.5px] font-medium text-ink">{row.sponsor}</th>
                     <td className="py-3.5 pr-4 text-[14.5px] text-muted">{row.option}</td>
                     <td className="py-3.5 pr-4 text-[14.5px] tabular-nums text-ink">{formatMoney(row.amountCents)}</td>
-                    <td className="py-3.5 pr-4"><LogoChip row={row} /></td>
+                    <td className="py-3.5 pr-4"><LogoChip row={row} categoryKey={categoryKey} /></td>
                     <td className="py-3.5 pr-4 text-[14px] text-muted">{paymentLabel(row.paymentStatus)}</td>
-                    <td className="py-3.5"><Action row={row} /></td>
+                    <td className="py-3.5"><Action row={row} categoryKey={categoryKey} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -160,12 +165,12 @@ export function SponsorshipWorkTable({ rows }: { rows: WorkRow[] }) {
                   <dd className="text-muted">{row.option}</dd>
                   <dt className="caps text-[14px] text-muted">Paid</dt>
                   <dd className="tabular-nums text-ink">{formatMoney(row.amountCents)}</dd>
-                  <dt className="caps text-[14px] text-muted">Logo</dt>
-                  <dd><LogoChip row={row} /></dd>
+                  <dt className="caps text-[14px] text-muted">{materialsTitle}</dt>
+                  <dd><LogoChip row={row} categoryKey={categoryKey} /></dd>
                   <dt className="caps text-[14px] text-muted">Payment</dt>
                   <dd className="text-muted">{paymentLabel(row.paymentStatus)}</dd>
                 </dl>
-                <div className="mt-3"><Action row={row} /></div>
+                <div className="mt-3"><Action row={row} categoryKey={categoryKey} /></div>
               </li>
             ))}
           </ul>

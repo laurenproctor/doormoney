@@ -9,6 +9,7 @@
  * There is no goal column, so there is no percent to goal. There is no ledger, so nothing here is
  * an available balance. A price on an unsold lot is an asking price, not money, and never counts.
  */
+import { categoryWords } from "@/lib/category-words";
 import { runPath } from "@/lib/urls";
 
 /* ---------------------------------------------------------------------------------------------
@@ -161,6 +162,15 @@ export const LOGO_LABELS: Record<LogoState, string> = {
   declined: "Declined and refunded",
 };
 
+/**
+ * The same four states for any category. `mark_status` means "the organizer accepted the sponsor's
+ * materials", whatever they are, and only music calls them a logo. Music's labels are LOGO_LABELS,
+ * unchanged; every other category, and one nobody has named yet, says "materials".
+ */
+export function materialsLabels(categoryKey: string | null | undefined): Record<LogoState, string> {
+  return { ...LOGO_LABELS, waiting: `Waiting for ${categoryWords(categoryKey).materials}` };
+}
+
 export function logoState(markStatus: string): LogoState {
   if (markStatus === "submitted") return "review";
   if (markStatus === "approved") return "approved";
@@ -206,8 +216,8 @@ export type WorkRow = {
  */
 export type WorkAction = { kind: "review"; label: string } | { kind: "record"; label: string; href: string };
 
-export function workAction(row: WorkRow): WorkAction {
-  if (row.logo === "review") return { kind: "review", label: "Review logo" };
+export function workAction(row: WorkRow, categoryKey: string | null | undefined = "music"): WorkAction {
+  if (row.logo === "review") return { kind: "review", label: `Review ${categoryWords(categoryKey).materials}` };
   return { kind: "record", label: "View record", href: `/record/${row.id}` };
 }
 

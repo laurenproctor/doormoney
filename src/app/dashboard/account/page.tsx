@@ -34,7 +34,7 @@ export default async function AccountPage() {
       eyebrow="The account"
       title="How this account"
       accent="signs in"
-      intro={<p>The email address gets in from anywhere. A musician can sign in with their address instead. The name, the photo and the password change here any time.</p>}
+      intro={<p>The email address gets in from anywhere. An organizer can sign in with their username instead. The name, the photo and the password change here any time.</p>}
     >
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -59,23 +59,23 @@ export default async function AccountPage() {
                   </Link>
                 </>
               ) : (
-                <>The username is claimed with a musician page, or with a patron profile.</>
+                <>The username is claimed with an organizer profile, or with a patron profile.</>
               ),
             ]}
           />
           <p className="mt-5 text-[14.5px] text-muted">
             {act || roles.includes("musician") ? (
               <>
-                A musician&apos;s username and board address are one word, claimed together on{" "}
-                <Link href="/dashboard/act" className="text-accent-ink underline underline-offset-4">the musician page</Link>.
+                An organizer&apos;s username and public address are one word, claimed together on{" "}
+                <Link href="/dashboard/act" className="text-accent-ink underline underline-offset-4">the organizer profile</Link>.
                 It can move once every twelve months, and both addresses move with it. The date it next can, and the
                 same change for a patron page, are on{" "}
                 <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">the profile page</Link>.
               </>
             ) : (
               <>
-                Backing musicians needs only the email address above. A username comes with a board, or with an
-                optional{" "}
+                Sponsoring a fundraiser needs only the email address above. A username comes with an organizer
+                profile, or with an optional{" "}
                 <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">patron profile</Link>,
                 and can move once every twelve months.
               </>
@@ -87,7 +87,7 @@ export default async function AccountPage() {
           <CardHead eyebrow="Your name">First and last</CardHead>
           <AccountNameForm firstName={profile?.first_name ?? null} lastName={profile?.last_name ?? null} />
           <p className="mt-5 text-[14.5px] text-muted">
-            This is the person behind the account. A band&apos;s name lives on the musician page, and a patron profile
+            This is the person behind the account. An organizer&apos;s name lives on the organizer profile, and a patron profile
             has its own display name.
           </p>
         </Card>

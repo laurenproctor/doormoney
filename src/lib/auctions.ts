@@ -126,7 +126,7 @@ type LotRow = {
   winner_bid_id: string | null;
   funding_deadline: string | null;
   closing_soon_sent_at: string | null;
-  runs: { id: string; slug: string; title: string; status: string; act_id: string; bidding_closes_at: string | null; acts: { id: string; name: string; slug: string; owner_id: string | null } };
+  runs: { id: string; slug: string; title: string; category_key?: string | null; status: string; act_id: string; bidding_closes_at: string | null; acts: { id: string; name: string; slug: string; owner_id: string | null } };
 };
 
 type BidRow = {
@@ -161,7 +161,7 @@ type RollRow = {
 };
 
 const LOT_SELECT =
-  "id,label,surface_key,price_cents,status,closes_at,winner_bid_id,funding_deadline,closing_soon_sent_at,runs!inner(id,slug,title,status,act_id,bidding_closes_at,acts!inner(id,name,slug,owner_id))";
+  "id,label,surface_key,price_cents,status,closes_at,winner_bid_id,funding_deadline,closing_soon_sent_at,runs!inner(id,slug,title,category_key,status,act_id,bidding_closes_at,acts!inner(id,name,slug,owner_id))";
 
 /** Every bid on a lot, highest first, newest first on a tie. */
 async function bidsFor(sb: Admin, lotId: string) {
@@ -194,6 +194,7 @@ async function offerByEmail(lot: LotRow, bid: BidRow, offer: Offer) {
       hours: FUNDING_HOURS,
       deadline: new Date(offer.funding_deadline),
       payUrl: `${SITE.url}/claim/${offer.funding_token}`,
+      categoryKey: lot.runs.category_key ?? null,
     }),
   );
   if (!r.sent) console.error("auction won notice not sent", lot.id, r.reason);

@@ -1,7 +1,8 @@
-// The reasons a person can pick on /contact. Keys match the check constraint in 0004_contact_messages.sql.
+// The reasons a person can pick on /contact. Keys match the check constraint in 0004_contact_messages.sql
+// and never change; only the label a reader sees moved to the shared vocabulary.
 export const CONTACT_REASONS = [
-  ["list_an_act", "List an act"],
-  ["back_a_run", "Back a run"],
+  ["list_an_act", "Create a fundraiser"],
+  ["back_a_run", "Sponsor a fundraiser"],
   ["partnership", "Brand or business partnership"],
   ["venue", "Venue"],
   ["press", "Press"],

@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Eyebrow, Stamp } from "@/components/Brand";
 import { HeroArt } from "@/components/HeroArt";
 import { Theme, type ThemeName } from "@/components/Theme";
+import { SITE } from "@/lib/site";
 
 /** Subpage shell: the page's light, nav, eyebrow, big serif heading with an italic accent word, intro, then content. */
 export function Page({
@@ -14,7 +15,7 @@ export function Page({
   accent,
   intro,
   stamp,
-  strap = "Musicians. Patrons. Together.",
+  strap = SITE.signoff,
   headline = "lg",
   children,
   footerNote,

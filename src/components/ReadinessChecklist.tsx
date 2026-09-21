@@ -16,9 +16,9 @@ export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInp
     <>
       <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
         {!draft
-          ? "The fundraiser is public. Everything below can still change while spots are open."
+          ? "The fundraiser is public. Everything below can still change while sponsorship options are open."
           : left === 0
-            ? "Everything is in place. Look it over, then publish it at the end of the spots."
+            ? "Everything is in place. Look it over, then publish it below the sponsorship options."
             : `${left} ${left === 1 ? "thing is" : "things are"} still missing. The fundraiser stays private until they are done.`}
       </p>
 

@@ -119,8 +119,8 @@ export function publishBlockers({ act, run, lotCount, auctionCount, categoryPubl
   if (!filled(act.name) || (isMusic(run) && !filled(act.city))) out.push(`Finish the ${isMusic(run) ? "name and city" : "name"} on the ${noun} page.`);
   else if (!filled(act.bio)) out.push(`Add a short bio on the ${noun} page. The fundraiser leads with it.`);
   if (!runComplete(run)) out.push(`Finish the fundraiser: ${runMissing(run).charAt(0).toLowerCase()}${runMissing(run).slice(1)}`);
-  if (lotCount === 0) out.push("Add at least one spot before publishing.");
-  if (auctionCount > 0 && !filled(run.bidding_closes_at)) out.push("Auction spots need a bidding close time. Set one below.");
+  if (lotCount === 0) out.push("Add at least one sponsorship option before publishing.");
+  if (auctionCount > 0 && !filled(run.bidding_closes_at)) out.push("Sponsorship options open to bids need a bidding close time. Set one below.");
   if (!verificationComplete(run)) {
     const pickedOther = (run.methods ?? []).includes(OTHER_KEY);
     const answer = run.other?.trim() ?? "";
@@ -178,8 +178,8 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
         lotCount === 0
           ? "Nothing priced yet."
           : auctionsNeedClose
-            ? `${lotCount} priced, but the auction spots need a bidding close time.`
-            : `${lotCount} ${lotCount === 1 ? "spot" : "spots"} priced.`,
+            ? `${lotCount} priced, but the options open to bids need a bidding close time.`
+            : `${lotCount} ${lotCount === 1 ? "sponsorship option" : "sponsorship options"} priced.`,
       href: "#placements",
     },
     {

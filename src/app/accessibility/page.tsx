@@ -50,8 +50,8 @@ const SECTIONS: LegalSection[] = [
             "Display headings use a condensed uppercase typeface, which some readers find slower to read. Body text uses a plain sans-serif face, and every page can be read at any zoom.",
             "Eyebrow labels sit at a slight tilt. Their text is short, and each one is repeated in plain text nearby or hidden from assistive tools.",
             "The payment form comes from Stripe. It is built to be accessible, and Door Money cannot change its internals.",
-            "The widget lives in a frame on an act's own site. Door Money's snippet gives the frame a title, and the rest of that page is the act's.",
-            "Photos an act adds to a record carry the description the act wrote. Door Money asks for one but cannot check it.",
+            "The widget lives in a frame on an organizer's own site. Door Money's snippet gives the frame a title, and the rest of that page is the organizer's.",
+            "Photos an organizer adds to a record carry the description the organizer wrote. Door Money asks for one but cannot check it.",
             "No outside auditor has reviewed the site yet. That review is planned.",
           ]}
         />
@@ -87,7 +87,7 @@ const SECTIONS: LegalSection[] = [
     heading: "Doing it by hand",
     body: (
       <p>
-        Nothing on {SITE.name} has to be done on the site. Anyone who cannot list an act, buy a lot, back a run or read a record
+        Nothing on {SITE.name} has to be done on the site. Anyone who cannot create a fundraiser, buy a sponsorship, make a backing or read a record
         because of an accessibility barrier can email <Contact />, and {SITE.name} will do it with them by email or by phone.
       </p>
     ),
@@ -103,7 +103,7 @@ export default function AccessibilityPage() {
       accent="statement"
       intro={
         <p>
-          {SITE.name} wants every musician, patron and fan to be able to use the site. This page says what that means in
+          {SITE.name} wants every organizer, sponsor, patron and fan to be able to use the site. This page says what that means in
           practice, where the site falls short, and how to report a problem.
         </p>
       }
