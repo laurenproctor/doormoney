@@ -53,7 +53,7 @@ function Action({ row, categoryKey }: { row: WorkRow; categoryKey: string }) {
             {row.markNote ? ` ${row.markNote}` : ""}
           </p>
         )}
-        <MarkDecision purchaseId={row.id} />
+        <MarkDecision purchaseId={row.id} categoryKey={categoryKey} />
       </div>
     );
   }

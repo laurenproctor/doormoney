@@ -155,11 +155,8 @@ function sweep(): Hit[] {
   with this file green. This reads those lines: text standing alone between tags, outside a block
   comment, with nothing on it that makes it code.
 
-  The two files behind /mark/<id> are left to the branch that rewrites them
-  (feat/materials-not-logos, which replaces both with category-aware words). Remove them from
-  BARE_LINE_PENDING when that lands; until then the rule still covers everything else.
 */
-const BARE_LINE_PENDING = new Set(["src/app/mark/[id]/MarkForm.tsx", "src/app/mark/[id]/page.tsx"]);
+const BARE_LINE_PENDING = new Set<string>();
 
 function bareJsxLines(source: string): { line: number; text: string }[] {
   const found: { line: number; text: string }[] = [];
