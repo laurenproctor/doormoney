@@ -2,6 +2,8 @@
 
 The policy, and what enforces each part of it. The public version is at `/refunds`; keep the two in step.
 
+**2026-09-21:** `/refunds` and `/terms` were rewritten in the current vocabulary (organizer, sponsor, fundraiser, sponsorship option, materials) and now state both release rules from `DELIVERY_POLICY_MATRIX.md`: music on the calendar, every other category on evidence. They also say what is true of decisions 16 and 19's open half: money waiting on materials or evidence stays held, with no deadline set. No policy changed. The music mechanics below are as they were, in the words the code still uses (act, run, lot, slice).
+
 ## The principle
 
 A patron pays nothing for a placement that never ran. Everything below follows from that and from one fact about how the money moves: a patron pays the whole amount up front, Door Money holds it, and it reaches the act in equal weekly slices across the run. Money that has not been released can always go back.

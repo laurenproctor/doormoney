@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   description: "The few cookies Door Money sets, what each one does, and what the banner at the bottom of the page is for.",
 };
 
-const UPDATED = "September 3, 2026";
+const UPDATED = "September 21, 2026";
 
 const COOKIES: { name: string; setBy: string; purpose: string; lasts: string }[] = [
   {
     name: "sb-…-auth-token",
     setBy: SITE.name,
-    purpose: "Keeps a signed-in act or patron signed in between pages. Set only after sign-in.",
+    purpose: "Keeps a signed-in organizer or patron signed in between pages. Set only after sign-in.",
     lasts: "Refreshes while the person keeps using the site, and ends at sign-out.",
   },
   {
@@ -110,7 +110,7 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          When an act embeds the widget, it loads inside a frame served by {SITE.name}. The widget sets no cookies until a fan
+          When a musician embeds the widget, it loads inside a frame served by {SITE.name}. The widget sets no cookies until a fan
           starts a payment, at which point Stripe&apos;s two cookies apply inside the frame only. The organizer&apos;s own site may set cookies
           of its own; those are the organizer&apos;s, and the organizer&apos;s own policy covers them. See the{" "}
           <Link href="/widget">widget page</Link> for how the embed works.

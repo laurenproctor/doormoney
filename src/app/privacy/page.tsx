@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "What Door Money collects, why, who else sees it, and how long it stays.",
 };
 
-const UPDATED = "September 3, 2026";
+const UPDATED = "September 21, 2026";
 
 const SECTIONS: LegalSection[] = [
   {
@@ -29,10 +29,11 @@ const SECTIONS: LegalSection[] = [
         <p>Only what the marketplace needs to run. By where it comes from:</p>
         <Bullets
           items={[
-            <Term key="newsletter" name="The new-boards email">Email address and the page it was entered on.</Term>,
-            <Term key="accounts" name="Accounts">Email address and sign-in details. A name for the account.</Term>,
-            <Term key="acts" name="Acts">Act name, the run&apos;s dates and venues, the show list, prices, and optionally a photo per show and a self-reported attendance figure. Stripe collects identity and bank details directly for payouts; {SITE.name} stores only the Stripe account reference.</Term>,
-            <Term key="patrons" name="Patrons">Name or business name, email address, the mark (a name or a logo), what they bought or bid on, and the payment status. Card numbers go straight to Stripe and never touch {SITE.name}.</Term>,
+            <Term key="newsletter" name="The new-fundraisers email">Email address, a first name where one is given, and the page it was entered on.</Term>,
+            <Term key="accounts" name="Accounts">Email address and sign-in details, a first and last name, and an account photo where one is added.</Term>,
+            <Term key="organizers" name="Organizers">The profile: a name, an address on the site, and optionally a description, a photo, a website, a social handle and a city, region and country. The fundraiser: its category, purpose, audience, dates, locations, goal, sponsorship options and prices. For music, the list of shows, and optionally a photo per show and a self-reported attendance figure. Evidence of delivery, which may be a photograph, a link, a document or a note. Stripe collects identity and bank details directly for payouts; {SITE.name} stores only the Stripe account reference.</Term>,
+            <Term key="sponsors" name="Sponsors">Name or business name, email address, the materials sent for a placement (a name, a logo, a credit line or artwork), what they bought or bid on, and the payment status. Card numbers go straight to Stripe and never touch {SITE.name}. A bidder saves a card with Stripe when bidding; {SITE.name} stores Stripe&apos;s reference to the customer and the card, not the card.</Term>,
+            <Term key="profiles" name="Public patron profiles">Optional, and off until the patron turns one on: a display name, a username, whether the profile is for a person or an organization, a description, a location, a website, interests, the categories supported and a photo.</Term>,
             <Term key="fans" name="Fans who back through the widget">Display name, email address and the tier chosen.</Term>,
             <Term key="auto" name="Automatically">Server logs with IP address, browser type and the pages requested, kept briefly for security and debugging. {SITE.name} counts page views with Vercel Web Analytics, which sets no cookies and stores no IP addresses. No tracking pixels.</Term>,
           ]}
@@ -47,16 +48,16 @@ const SECTIONS: LegalSection[] = [
       <>
         <Bullets
           items={[
-            "To run the marketplace: list runs, hold money, pay acts, and send records.",
-            "To show patron names on boards and marks on surfaces, as the act and the patron agreed.",
-            "To send email about the run: confirmations, approvals, payouts, and the end-of-run record.",
+            "To run the marketplace: publish fundraisers, hold money, pay organizers, and send records.",
+            "To show sponsors where the organizer and the sponsor agreed they would appear.",
+            "To send email about a sponsorship: confirmations, approvals, reminders, payouts, and the record.",
             "To prevent fraud and meet legal duties, including the checks Stripe requires.",
             "To answer questions and fix problems.",
           ]}
         />
         <p>
           {SITE.name} does not sell personal information and does not use it for advertising. It sends marketing email only to
-          people who asked for the new-boards email, and only about boards on {SITE.name}. Every such email has an unsubscribe link.
+          people who asked for the new-fundraisers email, and only about fundraisers on {SITE.name}. Every such email has an unsubscribe link.
         </p>
       </>
     ),
@@ -67,13 +68,23 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Boards are public pages. A board shows the act&apos;s name, the run, each lot, its price, and the name of the patron who
-          bought or is bidding on it. A patron who bids anonymously in an auction is shown as an anonymous patron on the board;
-          the act still sees who they are, since the act has to approve the mark.
+          A published fundraiser is a public page. It shows the organizer&apos;s name and profile, the fundraiser, each sponsorship
+          option, its price, and the name of the sponsor who bought it or is bidding on it. A sponsor who bids anonymously is
+          shown as an anonymous sponsor, and that bid can never be published on a profile. The organizer still sees who they
+          are, since the organizer has to approve the materials. A draft is private, and so are its options and prices.
         </p>
         <p>
-          The widget shows how much of a run is backed and can show the display names of fans who backed it. The end-of-run
-          record goes to the patron and to the act, not to the public.
+          A music fundraiser&apos;s widget shows how much has been backed and can show the display names of fans who backed it.
+        </p>
+        <p>
+          A patron&apos;s public profile is off until the patron turns it on. Each sponsorship or backing on it is published one at a
+          time, by the patron. The profile photo is kept in private storage and shown through links that expire.
+        </p>
+        <p>
+          The record goes to the sponsor and the organizer. Its page is not listed anywhere and search engines are told not to
+          index it, but anyone holding its link can open it. For music, the show photos on a record are stored publicly.
+          Outside music, evidence is private: only the sponsor, the organizer and {SITE.name} can see an item unless the
+          organizer publishes it. An item that shows a child is never published, and nothing from a youth team is.
         </p>
       </>
     ),
@@ -85,18 +96,18 @@ const SECTIONS: LegalSection[] = [
       <>
         <Bullets
           items={[
-            <Term key="stripe" name="Stripe">Processes payments and payouts and runs fraud checks. Stripe sees payment details and, for acts, identity and bank details. Stripe&apos;s own privacy policy covers what it does with them.</Term>,
-            <Term key="supabase" name="Supabase">Hosts the database, sign-in, and uploaded files such as logos and photos.</Term>,
+            <Term key="stripe" name="Stripe">Processes payments and payouts and runs fraud checks. Stripe sees payment details and, for organizers, identity and bank details. Stripe&apos;s own privacy policy covers what it does with them.</Term>,
+            <Term key="supabase" name="Supabase">Hosts the database, sign-in, and uploaded files such as logos, photos and evidence.</Term>,
             <Term key="resend" name="Resend">Delivers email on {SITE.name}&apos;s behalf.</Term>,
-            <Term key="hosting" name="The hosting provider">Serves the site and keeps short-lived server logs.</Term>,
-            <Term key="acts" name="Acts">See the name and email of each patron who buys their lots or backs them, so they can approve the mark and thank them.</Term>,
-            <Term key="patrons" name="Patrons">See the act&apos;s name, the run, and what the record shows.</Term>,
+            <Term key="hosting" name="Vercel">Serves the site, counts page views without cookies, and keeps short-lived server logs.</Term>,
+            <Term key="organizers" name="Organizers">See the name and email of each sponsor who buys from them and each fan who backs them, and the materials a sponsor sent, so they can approve the materials and thank them.</Term>,
+            <Term key="sponsors" name="Sponsors">See the organizer&apos;s name, the fundraiser, and what the record shows, including the evidence for what they bought.</Term>,
           ]}
         />
         <p>
           {SITE.name} also shares information when the law requires it, or to protect someone&apos;s safety or {SITE.name}&apos;s rights.
-          These providers store data in the United States. {SITE.name} never gives anyone else a list of its acts, patrons or
-          fans.
+          These providers store data in the United States. {SITE.name} never gives anyone else a list of its organizers, sponsors,
+          patrons or fans.
         </p>
       </>
     ),
@@ -107,10 +118,10 @@ const SECTIONS: LegalSection[] = [
     body: (
       <Bullets
         items={[
-          "New-boards email addresses: until the person unsubscribes or asks to be removed.",
+          "New-fundraisers email addresses: until the person unsubscribes or asks to be removed.",
           "Account details: while the account is open, then 30 days.",
-          "Transactions, records and payout history: seven years after the run ends, as financial records law requires.",
-          "Photos from a run: as long as the record they belong to.",
+          "Transactions, records and payout history: seven years after the fundraiser ends, as financial records law requires.",
+          "Photos and evidence: as long as the record they belong to.",
           "Server logs: 30 days.",
         ]}
       />
@@ -161,8 +172,8 @@ const SECTIONS: LegalSection[] = [
     heading: "Children",
     body: (
       <p>
-        The site is for adults. {SITE.name} does not knowingly collect information from anyone under 18 and deletes it on
-        request when it finds out.
+        Accounts are for adults. {SITE.name} does not knowingly collect information from anyone under 18 and deletes it on
+        request when it finds out. A youth team&apos;s organizer is an adult, and evidence that shows a child stays private.
       </p>
     ),
   },
