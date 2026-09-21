@@ -95,7 +95,7 @@ async function load(id: string) {
 
 type Delivery = {
   rule: "calendar" | "evidence";
-  bought: { opportunity: string | null; promise: string | null; release: string | null } | null;
+  bought: { opportunity: string | null; purpose: string | null; promise: string | null; release: string | null } | null;
   deliverables: { id: string; title: string; status: string; due_at: string | null; evidenceCount: number }[];
   /** Only what this visitor may see: their own as a party to the purchase, plus anything published. */
   evidence: { deliverable: string; kind: string; url: string | null; note: string | null; isPublic: boolean }[];
@@ -133,10 +133,10 @@ async function loadDelivery(sb: ReturnType<typeof supabaseAdmin>, purchaseId: st
       .filter((e) => titles.has(e.deliverable))
       .map((e) => ({ ...e, isPublic: true }));
 
-    const o = snapshot as { opportunity?: { label?: string | null; template?: { name?: string } }; fundraiser?: { sponsor_promise?: string | null }; policy?: { terms?: { release?: string } } } | null;
+    const o = snapshot as { opportunity?: { label?: string | null; template?: { name?: string } }; fundraiser?: { purpose?: string | null; sponsor_promise?: string | null }; policy?: { terms?: { release?: string } } } | null;
     return {
       rule: releaseRuleOf(snapshot),
-      bought: o ? { opportunity: o.opportunity?.label ?? o.opportunity?.template?.name ?? null, promise: o.fundraiser?.sponsor_promise ?? null, release: o.policy?.terms?.release ?? null } : null,
+      bought: o ? { opportunity: o.opportunity?.label ?? o.opportunity?.template?.name ?? null, purpose: o.fundraiser?.purpose ?? null, promise: o.fundraiser?.sponsor_promise ?? null, release: o.policy?.terms?.release ?? null } : null,
       deliverables,
       evidence: mine.length ? mine : open,
     };
@@ -250,10 +250,24 @@ export default async function RecordPage({ params }: Props) {
         <Section>
           <SectionHead eyebrow="Delivery">{STATE_LABEL[standing.state]}</SectionHead>
           {delivery.bought && (
-            <p className="max-w-[62ch] text-[15px] leading-[1.6] text-muted">
-              What was bought, as it stood on the day: {[delivery.bought.opportunity, delivery.bought.promise].filter(Boolean).join(". ")}.{" "}
-              Changes to the fundraiser since then do not change it. {releaseSentence(words, act.name)}
-            </p>
+            <>
+              {/* All three from the purchase snapshot, so a later edit to the fundraiser cannot change what this says. */}
+              <dl className="grid max-w-[62ch] gap-5">
+                {([
+                  ["What was purchased", delivery.bought.opportunity],
+                  ["What the funding supports", delivery.bought.purpose],
+                  [`What ${act.name} promised`, delivery.bought.promise],
+                ] as [string, string | null][]).filter(([, value]) => value?.trim()).map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="caps text-[14px] text-accent-ink">{label}</dt>
+                    <dd className="mt-1.5 text-[15px] leading-[1.6]">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
+                This is the offer as it stood on the day of purchase. Changes to the fundraiser since then do not change it. {releaseSentence(words, act.name)}
+              </p>
+            </>
           )}
           <ol className="mt-8 grid gap-px bg-line">
             {delivery.deliverables.map((d) => (
@@ -342,9 +356,9 @@ export default async function RecordPage({ params }: Props) {
 
       {/* Optional, and after the record itself: nothing here interrupts a payment or a receipt. */}
       <Section>
-        <SectionHead eyebrow="A patron page">Say what this patron listens for</SectionHead>
+        <SectionHead eyebrow="A patron page">Say what this patron supports</SectionHead>
         <p className="mb-8 max-w-[56ch] text-[15px] text-muted">
-          Patrons can keep a page at Door Money: a name, a few words, the music they turn up for, and whichever
+          Patrons can keep a page at Door Money: a name, a few words, the categories they support, and whichever
           fundraisers they choose to name. It starts private, nothing appears on it without being put there, and no
           amount is ever on it.
         </p>

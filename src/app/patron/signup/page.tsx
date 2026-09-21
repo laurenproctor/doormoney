@@ -8,9 +8,10 @@ import { safeNext } from "@/lib/auth";
   The patron's door.
 
   The same account, the same auth, the same server action as /signup. What changes is the question
-  it does not ask: a patron who came here to back musicians has already said so by walking through
-  this door, so the roles are settled and no board address is wanted. They land on the profile page,
-  which is optional and private, rather than in the middle of listing a band they never had.
+  it does not ask: a patron who came here to support work has already said so by walking through
+  this door, so the roles are settled and no organizer address is wanted. They land on the profile
+  page, which is optional and private, rather than in the middle of creating a fundraiser they never
+  had. It names no category: a patron may support any of them.
 */
 
 export const metadata: Metadata = { title: "Open a patron account" };
@@ -24,12 +25,12 @@ export default async function PatronSignUpPage({ searchParams }: Props) {
   return (
     <AuthShell
       eyebrow="Patrons"
-      title="Back the"
-      accent="music"
+      title="Support the"
+      accent="work"
       intro={
         <p>
-          An account for anyone who puts money behind working musicians: a local business, a gear brand, or one
-          person who wants the band down the street to keep playing.
+          An account for anyone who puts money behind work they care about: a local business, a brand, or one
+          person. Music, sports teams, film, and theater are the starting categories.
         </p>
       }
       aside={
@@ -39,7 +40,7 @@ export default async function PatronSignUpPage({ searchParams }: Props) {
             "Every sponsorship and backing in one place, with the record behind it.",
             "Bids in progress, and how each one ended.",
             "An optional public page, private until it is published, with no amounts on it ever.",
-            "Door Money holds the money and pays the musician weekly while the shows happen.",
+            "Door Money holds the money and releases it to the organizer under the fundraiser's terms.",
             "Opening an account costs nothing and commits to nothing.",
           ]}
         />
@@ -47,9 +48,9 @@ export default async function PatronSignUpPage({ searchParams }: Props) {
     >
       <SignUpForm next={next} fixedRoles={["patron"]} submitLabel="Open the account" />
       <p className="mt-5 border-t border-line pt-5 text-[14.5px] text-muted">
-        Musicians open a board from{" "}
+        Organizers start from{" "}
         <Link href="/list" className="text-accent-ink underline underline-offset-4">
-          List an act
+          Create a fundraiser
         </Link>
         . One account can do both.
       </p>

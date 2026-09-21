@@ -111,8 +111,8 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>
           When an act embeds the widget, it loads inside a frame served by {SITE.name}. The widget sets no cookies until a fan
-          starts a payment, at which point Stripe&apos;s two cookies apply inside the frame only. The act&apos;s own site may set cookies
-          of its own; those are the act&apos;s, and the act&apos;s own policy covers them. See the{" "}
+          starts a payment, at which point Stripe&apos;s two cookies apply inside the frame only. The organizer&apos;s own site may set cookies
+          of its own; those are the organizer&apos;s, and the organizer&apos;s own policy covers them. See the{" "}
           <Link href="/widget">widget page</Link> for how the embed works.
         </p>
       </>
@@ -136,7 +136,7 @@ const SECTIONS: LegalSection[] = [
         <p>
           Every browser lets a person see, block and delete cookies through its settings, usually under privacy. Blocking all
           cookies on {SITE.name} has two effects: sign-in stops working, and Stripe may decline a payment it cannot check for
-          fraud. Everything else on the site, including every board and every public page, works without cookies.
+          fraud. Everything else on the site, including every fundraiser and every public page, works without cookies.
         </p>
       </>
     ),

@@ -50,7 +50,6 @@ export default async function UnsubscribePage({ searchParams }: Props) {
           <p>The link was cut short by the mail client, or it belongs to an address that is no longer on file. Any address that still gets the emails can use the link in the latest one.</p>
         )
       }
-      strap="Musicians. Patrons. Together."
     >
       <Section>
         <div className="flex flex-wrap gap-4">

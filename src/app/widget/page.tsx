@@ -9,11 +9,14 @@ import { WidgetFrame } from "@/components/WidgetFrame";
 import { actPath, runPath } from "@/lib/urls";
 
 export const metadata: Metadata = {
-  title: "The widget",
-  description: "Turn a musician's own website into a place people can back them. One embed, always current.",
+  title: "Music fundraiser widget",
+  description: "For music fundraisers: turn a musician's own website into a place fans can back them. One embed, always current.",
 };
 
-// This page speaks to the musician directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
+// This page is music's, and says so. The widget takes backings, and a backing and its tiers (a name on the
+// tour thank-you, a name on the merch table card) exist for music only. No other category has a widget
+// yet, so nothing here, on Home or on /list may present it as something every organizer gets.
+// It speaks to the musician directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
 
 const DEMO_SLUG = "gutter-hymns";
 
@@ -44,22 +47,26 @@ export default async function WidgetPage() {
     <Page
       theme="teal"
       current="/widget"
-      eyebrow="For every musician with a website"
+      eyebrow="Music fundraiser widget"
       title="Turn your own website into a place"
       accent="people can back you."
       headline="md"
       intro={
         <>
           <p>
-            Every Door Money board can live directly on the musician&apos;s website. Fans and patrons can see the
-            current run, choose a placement and pay without leaving the page.
+            Every music fundraiser on Door Money can live directly on the musician&apos;s website. Fans can see the
+            current fundraiser, choose a backing and pay without leaving the page.
+          </p>
+          <p className="mt-4 text-[15px] text-muted">
+            The widget is built for music today. Backings and their tiers are music&apos;s, and other categories do
+            not have a widget yet.
           </p>
           <p className="caps mt-6 text-[14.5px] leading-[2] text-accent-ink">One embed. Always current.</p>
           <Lines
             className="mt-[30px]"
             lines={[
               "You paste one line into your site.",
-              "The widget shows the current run and takes the payment.",
+              "The widget shows your current fundraiser and takes the payment.",
               "Door Money holds the money and pays you weekly.",
               "Every fan stays on your own page.",
             ]}
@@ -181,7 +188,7 @@ export default async function WidgetPage() {
           <div className="edge bg-panel px-[22px] py-6 ">
             <h3 className="heading mb-2 text-[22px]">The full widget</h3>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">
-              Anywhere that accepts custom code or an embed block. Fans pay on the page, the run and the totals show
+              Anywhere that accepts custom code or an embed block. Fans pay on the page, the fundraiser and the totals show
               live, and the visitor never leaves your site.
             </p>
             <Platforms list={FULL} />
@@ -190,7 +197,7 @@ export default async function WidgetPage() {
             <h3 className="heading mb-2 text-[22px]">The link button</h3>
             <p className="max-w-none text-[15px] leading-[1.6] text-muted">
               For platforms that only allow links: link-in-bio pages, Bandcamp, a Substack footer, an Instagram bio.
-              The button sends the fan to your board on Door Money, where the same payment happens.
+              The button sends the fan to your fundraiser on Door Money, where the same payment happens.
             </p>
             <Platforms list={LINK} />
             <a
@@ -204,13 +211,13 @@ export default async function WidgetPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="List an act">The widget comes with the fundraiser</SectionHead>
+        <SectionHead eyebrow="For musicians">The widget comes with a music fundraiser</SectionHead>
         <p className="text-muted">
-          Every musician who lists on Door Money gets the snippet and the link button on day one. Nothing extra to set
+          Every musician who opens a fundraiser on Door Money gets the snippet and the link button on day one. Nothing extra to set
           up, nothing extra to pay.
         </p>
         <div className="mt-[34px] flex flex-wrap gap-[22px]">
-          <ButtonLink href="/list">List an act</ButtonLink>
+          <ButtonLink href="/list">Create a fundraiser</ButtonLink>
           <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works</ButtonLink>
         </div>
       </Section>

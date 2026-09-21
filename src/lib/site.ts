@@ -1,5 +1,7 @@
 // One place for the strings that appear on every page.
-// The tagline was settled on 2026-09-03; see docs/DECISIONS.md, decision 1.
+// Decision 17 made the shared site category-neutral: these lines describe the exchange (an organizer,
+// a sponsor, specified visibility), never one category's work. Decision 1's music tagline stays
+// available for music-specific surfaces as `musicTagline`.
 // Both lines show in the home hero. Footer and email use the first line alone.
 
 /**
@@ -17,12 +19,19 @@ function siteUrl(): string {
 
 export const SITE = {
   name: "Door Money",
-  tagline: "Put money behind the music.",
-  taglineSecond: "Help working musicians fund the shows, tours and residencies you want to keep happening.",
-  strap: "A new way to back working musicians",
+  tagline: "Put money behind work people care about.",
+  taglineSecond: "Organizers fund work with a clear purpose. Sponsors receive the visibility described in the offer.",
+  strap: "Relevant audiences. Meaningful sponsorships.",
   /** The idea behind the company, for pages that need to say it in one line. */
-  thesis: "Patronage for working musicians.",
+  thesis: "Meaningful sponsorships for relevant audiences.",
+  /** Decision 1's line. For a surface that is about music and nothing else. */
+  musicTagline: "Put money behind the music.",
+  /** The three parties, for the foot of the hero and the footer. */
+  signoff: "Organizers. Sponsors. Meaningful work.",
+  /** Where the company is. Never where an organizer, a sponsor or an audience has to be. */
   city: "New York",
+  /** "Designed for", not "open to": payments run in USD through the countries Stripe supports, and the line must not say otherwise. */
+  origin: "Built in New York. Designed for organizers anywhere.",
   url: siteUrl(),
   feePercent: 15,
   /** Address on the legal pages. Placeholder domain until decision 5 is settled. */
@@ -36,11 +45,13 @@ export const SITE = {
   musician installing it, and the page it points at is only useful to somebody who already has a
   fundraiser, so it lives in the dashboard instead (MUSICIAN_LINKS in src/lib/roles.ts).
   See docs/DECISIONS.md, decision 14.
+
+  The addresses stay: /auctions and /list are in sent email and pasted snippets. Only the labels moved.
 */
 export const NAV = [
   { href: "/how-sponsorship-works", label: "How sponsorship works" },
   { href: "/auctions", label: "Fundraisers" },
-  { href: "/list", label: "List an act" },
+  { href: "/list", label: "For organizers" },
   { href: "/contact", label: "Contact" },
 ] as const;
 
@@ -53,11 +64,16 @@ export const LEGAL = [
   { href: "/accessibility", label: "Accessibility" },
 ] as const;
 
-/** The house rules, in the words decision 14 settled. Shown on Home; keep one copy. */
+/**
+ * The house rules. Shown on Home; keep one copy.
+ *
+ * These hold for every category, so none of them names a payout day, a refund term or a kind of
+ * materials: those belong to a fundraiser's own terms (docs/DELIVERY_POLICY_MATRIX.md).
+ */
 export const HOUSE_RULES = [
-  "Nothing goes up without the musician's yes.",
-  "Patrons put the money up before the first show.",
-  "Musicians get paid every Friday. No chasing.",
-  "Patrons pay nothing for a sponsorship that never runs.",
-  "No sponsorships at weddings or private events.",
+  "The organizer decides what to offer, and at what price.",
+  "A sponsor sees what a sponsorship includes before paying.",
+  "No sponsor's materials appear without the organizer's approval.",
+  "Every sponsorship states what the organizer will deliver, and how it will be documented.",
+  "Door Money promises no sales, reach or results it cannot substantiate.",
 ] as const;

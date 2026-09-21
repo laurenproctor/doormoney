@@ -19,6 +19,7 @@ export function LotCheckout({
   token,
   buyNow,
   note,
+  terms = "Door Money holds the money and releases it under the fundraiser's terms. The organizer approves the sponsor's materials before anything goes up.",
   onClose,
 }: {
   lotId: string;
@@ -30,6 +31,8 @@ export function LotCheckout({
   buyNow?: boolean;
   /** An extra line above the form, for anything the patron should know before paying. */
   note?: string;
+  /** How the money moves on this fundraiser, from checkoutTerms in src/lib/record-words.ts. The default names no category. */
+  terms?: string;
   /** Null on the claim page, where there is nothing to go back to. */
   onClose: (() => void) | null;
 }) {
@@ -99,8 +102,8 @@ export function LotCheckout({
             {pending ? "One second" : "Continue to payment"}
           </Button>
           <p className="max-w-none text-[14px] leading-[1.6] text-muted md:col-span-3">
-            Door Money holds the money and pays the musician every Friday through the run. The musician approves the mark before anything goes up.
-            {!token && " The spot is held for thirty minutes while payment goes through."}
+            {terms}
+            {!token && " The sponsorship is held for thirty minutes while payment goes through."}
           </p>
           {error && (
             <p role="alert" className="text-[14.5px] text-accent-ink md:col-span-3">

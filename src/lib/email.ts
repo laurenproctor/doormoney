@@ -274,12 +274,16 @@ export function closingSoon(params: { to: string; patronName: string; actName: s
 }
 
 /** To the winning bidder, with the private link that takes the money. Also used when a lot rolls down. */
-export function auctionWon(params: { to: string; patronName: string; actName: string; runTitle: string; lotName: string; amountCents: number; hours: number; deadline: Date; payUrl: string }): Mail {
+export function auctionWon(params: { to: string; patronName: string; actName: string; runTitle: string; lotName: string; amountCents: number; hours: number; deadline: Date; payUrl: string; categoryKey?: string | null }): Mail {
+  // Music's words are what they were. Outside music nothing is paid weekly and nothing is called a logo.
+  const music = isMusic(params.categoryKey);
   const lines = [
     `${params.patronName} won the ${params.lotName.toLowerCase()} on ${params.actName}'s ${params.runTitle.toLowerCase()} at ${money(params.amountCents)}.`,
     `The spot is held until ${when(params.deadline)}, ${params.hours} hours from the close. After that it goes to the next bid.`,
     `Put the money up here: ${params.payUrl}`,
-    `Door Money holds it and pays ${params.actName} weekly through the fundraiser. ${params.actName} approves the logo before it goes on anything.`,
+    music
+      ? `Door Money holds it and pays ${params.actName} weekly through the fundraiser. ${params.actName} approves the logo before it goes on anything.`
+      : `Door Money holds it and releases ${params.actName}'s share as ${params.actName} documents what was delivered. ${params.actName} accepts the sponsor's materials before anything goes up.`,
   ];
   const html = shell([
     `<b>${escape(params.patronName)}</b> won the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())} at <b style="color:${BLUE}">${money(params.amountCents)}</b>.`,
@@ -368,7 +372,18 @@ export function flagConfirmation(params: { to: string; patronName: string; what:
    Phase 7: the mail that goes out on a schedule. One to the mailing list, one to Door Money.
    --------------------------------------------------------------------------------------------- */
 
-export type NewBoard = { actName: string; city: string; runTitle: string; showCount: number; dates: string; openSpots: number; fromCents: number | null; boardUrl: string };
+/**
+ * One fundraiser in the new-fundraisers email. City, show count and dates are whatever the
+ * fundraiser really has: only music counts shows, and a fundraiser outside music may have no dates
+ * and no city at all. What is not known is left out of the line, never printed as a zero or a blank.
+ */
+export type NewBoard = { actName: string; city: string | null; runTitle: string; showCount: number | null; dates: string | null; openSpots: number; fromCents: number | null; boardUrl: string };
+
+/** "Fall tour, 12 shows, Oct 3 to Nov 2" with whichever of the three exist. */
+function newBoardFacts(b: NewBoard): string {
+  const count = b.showCount !== null ? `${b.showCount} ${b.showCount === 1 ? "show" : "shows"}` : null;
+  return [b.runTitle, count, b.dates].filter(Boolean).join(", ");
+}
 
 /** The new-fundraisers email: the week's openings, to everyone on the list. */
 export function newBoardsEmail(params: { to: string; firstName?: string | null; boards: NewBoard[]; unsubscribeUrl: string }): Mail {
@@ -376,20 +391,20 @@ export function newBoardsEmail(params: { to: string; firstName?: string | null; 
   // Addresses collected before the form asked for a name have none, so the greeting is dropped
   // rather than faked. Never "Hi there": an empty greeting reads better than a placeholder one.
   const greeting = params.firstName?.trim() ? `${params.firstName.trim()},` : null;
-  const heading = n === 1 ? `${params.boards[0].actName} opened a fundraiser on ${SITE.name}.` : `${n} musicians opened fundraisers on ${SITE.name} this week.`;
+  const heading = n === 1 ? `${params.boards[0].actName} opened a fundraiser on ${SITE.name}.` : `${n} organizers opened fundraisers on ${SITE.name} this week.`;
   const line = (b: NewBoard) => {
     const open = b.openSpots === 1 ? "one sponsorship open" : `${b.openSpots} sponsorships open`;
     const from = b.fromCents ? `, from ${money(b.fromCents)}` : "";
-    return `${b.actName}, ${b.city}. ${b.runTitle}, ${b.showCount} ${b.showCount === 1 ? "show" : "shows"}, ${b.dates}. ${open}${from}. ${b.boardUrl}`;
+    return `${[b.actName, b.city].filter(Boolean).join(", ")}. ${newBoardFacts(b)}. ${open}${from}. ${b.boardUrl}`;
   };
-  const lines = [...(greeting ? [greeting] : []), heading, ...params.boards.map(line), `Backing a fundraiser puts money behind musicians who are already playing. Door Money holds it and pays them weekly through the fundraiser.`, `To stop these emails: ${params.unsubscribeUrl}`];
+  const lines = [...(greeting ? [greeting] : []), heading, ...params.boards.map(line), `A sponsorship puts money behind work with an audience that cares about it. Each fundraiser says what the funding enables and what a sponsor receives.`, `To stop these emails: ${params.unsubscribeUrl}`];
   const html = shell([
     ...(greeting ? [escape(greeting)] : []),
     `<b>${escape(heading)}</b>`,
     ...params.boards.map((b) => {
       const open = b.openSpots === 1 ? "one sponsorship open" : `${b.openSpots} sponsorships open`;
       const from = b.fromCents ? `, from ${money(b.fromCents)}` : "";
-      return `<a href="${escape(b.boardUrl)}" style="color:${BLUE};font-weight:bold">${escape(b.actName)}</a>, ${escape(b.city)}.<br>${escape(b.runTitle)}, ${b.showCount} ${b.showCount === 1 ? "show" : "shows"}, ${escape(b.dates)}.<br>${escape(open)}${escape(from)}.`;
+      return `<a href="${escape(b.boardUrl)}" style="color:${BLUE};font-weight:bold">${escape(b.actName)}</a>${b.city ? `, ${escape(b.city)}` : ""}.<br>${escape(newBoardFacts(b))}.<br>${escape(open)}${escape(from)}.`;
     }),
     escape(lines[lines.length - 2]),
   ], `${SITE.tagline} <a href="${escape(params.unsubscribeUrl)}" style="color:${BLUE}">Unsubscribe</a>.`);
@@ -420,7 +435,7 @@ export function weeklyDigest(params: { to: string; n: DigestNumbers; adminUrl: s
     ["Fundraisers opened", String(n.boardsOpened)],
     ["Sponsorships sold", `${n.spotsSold} for ${money(n.soldCents)}`],
     ["Fan backings", `${n.backings} for ${money(n.backedCents)}`],
-    ["Sent to musicians", money(n.paidOutCents)],
+    ["Sent to organizers", money(n.paidOutCents)],
     ["Held for later weeks", money(n.heldCents)],
     ["Flags waiting", String(n.openFlags)],
     ["New on the fundraisers email", String(n.newSubscribers)],
@@ -429,7 +444,7 @@ export function weeklyDigest(params: { to: string; n: DigestNumbers; adminUrl: s
   const lines = [
     `${SITE.name}, the week to ${n.to}.`,
     ...rows.map(([k, v]) => `${k}: ${v}`),
-    `Running total: ${n.actsTotal} ${n.actsTotal === 1 ? "musician" : "musicians"} listed, ${n.boardsLive} ${n.boardsLive === 1 ? "fundraiser" : "fundraisers"} up.`,
+    `Running total: ${n.actsTotal} ${n.actsTotal === 1 ? "organizer" : "organizers"} listed, ${n.boardsLive} ${n.boardsLive === 1 ? "fundraiser" : "fundraisers"} up.`,
     `Everything: ${params.adminUrl}`,
   ];
   const html = shell([
@@ -449,7 +464,7 @@ export function newsletterWelcome(params: { to: string; firstName?: string | nul
   const lines = [
     ...(greeting ? [greeting] : []),
     `This address is on the ${SITE.name} new-fundraisers email.`,
-    `New musicians open fundraisers on ${SITE.name} every week: a band about to tour, a house act starting a residency, a soloist booking a season. One short email says who they are, where they play and what is still open to back. Never more than once a week.`,
+    `New organizers open fundraisers on ${SITE.name} across the starting categories: music, sports teams, film, and theater. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week.`,
     `Nothing to do now. The next one arrives the week a fundraiser opens.`,
     `To stop the emails: ${params.unsubscribeUrl}`,
   ];
@@ -601,7 +616,7 @@ export function payoutProblem(params: { to: string; ranOn: string; failures: { p
   const detail = params.failures.map((f) => `${f.payoutId}: ${f.message}`);
   const lines = [
     head,
-    `The rows are still scheduled, so the next job tries them again. A transfer that keeps failing usually means the musician's Stripe account cannot receive yet.`,
+    `The rows are still scheduled, so the next job tries them again. A transfer that keeps failing usually means the organizer's Stripe account cannot receive yet.`,
     ...detail,
     params.adminUrl,
   ];

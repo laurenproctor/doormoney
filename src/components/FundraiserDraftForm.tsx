@@ -3,6 +3,7 @@ import { useActionState, useState } from "react";
 import { saveDraftForm } from "@/app/actions/drafts";
 import type { FundraiserCategory, FundraiserDraft } from "@/lib/fundraiser-drafts";
 import { detailFields, titleLabel, type DetailField } from "@/lib/categories";
+import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 import { Button } from "@/components/Button";
 import { inputClass, labelClass } from "@/components/DashboardShell";
 
@@ -17,15 +18,20 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer }: {
   return <form action={action}>
     {draft && <input type="hidden" name="id" value={draft.id} />}
     <input type="hidden" name="activity_locations" value={JSON.stringify(draft?.activity_locations ?? [])} />
-    <p className="mb-6 text-muted">Save what is known now. Sports, film and theater are available as private drafts while their publishing flows are being built.</p>
+    <p className="mb-3 text-muted">Save what is known now. Anything you do not know yet can stay empty: an unknown is never filled in for you.</p>
+    <p className="mb-6 text-muted">{AVAILABILITY_NOTE}</p>
     <label className={labelClass}>Category
       <select name="category_key" value={category} onChange={(e) => setCategory(e.target.value)} required className={inputClass}>
         <option value="">Choose a category</option>
         {categories.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
       </select>
+      <span className="mt-2 block text-[14px] normal-case tracking-normal text-muted">
+        The category belongs to this fundraiser, not to your account. It sets the words and the details this form asks for. These are the starting categories, and more can be added.
+      </span>
     </label>
     <Field label={titleLabel(category)} name="title" value={draft?.title} />
     {fields.map((field) => <Detail key={`${category}-${field.key}`} field={field} value={details[field.key]} />)}
+    <p className="mt-6 text-[14.5px] text-muted">A sponsor needs two answers from every fundraiser: what the funding enables, and what they can count on receiving.</p>
     <Field label="What will the funding enable?" name="purpose" value={draft?.purpose} />
     <label className={labelClass}>Description<textarea name="description" defaultValue={draft?.description ?? ""} rows={4} className={inputClass} /></label>
     <Field label="What can sponsors count on receiving?" name="sponsor_promise" value={draft?.sponsor_promise} />

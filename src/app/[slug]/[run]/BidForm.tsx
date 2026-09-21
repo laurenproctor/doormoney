@@ -146,7 +146,7 @@ export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lot
 
           <label className="flex items-center gap-2.5 text-[14.5px] text-muted md:col-span-4">
             <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
-            Show the bid as &quot;Anonymous patron&quot; on this page. The musician still sees the name.
+            Show the bid as &quot;Anonymous patron&quot; on this page. The organizer still sees the name.
           </label>
           {/* Left empty by people, filled in by robots. */}
           <input value={website} onChange={(e) => setWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />

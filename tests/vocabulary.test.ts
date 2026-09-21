@@ -41,6 +41,10 @@ const FILES = [
   "src/lib/categories.ts",
   "src/lib/verification.ts",
   "src/lib/marks.ts",
+  "src/lib/contact.ts",
+  "src/lib/category-words.ts",
+  "src/lib/record-words.ts",
+  "src/lib/starting-categories.ts",
 ];
 
 /**
@@ -141,6 +145,55 @@ function sweep(): Hit[] {
   }
   return hits;
 }
+
+/*
+  The sentence the sweep above cannot see.
+
+  JSX_TEXT wants the ">" and the "<" on one line, so a paragraph wrapped across lines was never
+  read: "The board is private until it is published" sat in the options editor, "Take the board
+  down" and "Cancel the run" were buttons, and the widget page still said "the current run", all
+  with this file green. This reads those lines: text standing alone between tags, outside a block
+  comment, with nothing on it that makes it code.
+
+  The two files behind /mark/<id> are left to the branch that rewrites them
+  (feat/materials-not-logos, which replaces both with category-aware words). Remove them from
+  BARE_LINE_PENDING when that lands; until then the rule still covers everything else.
+*/
+const BARE_LINE_PENDING = new Set(["src/app/mark/[id]/MarkForm.tsx", "src/app/mark/[id]/page.tsx"]);
+
+function bareJsxLines(source: string): { line: number; text: string }[] {
+  const found: { line: number; text: string }[] = [];
+  let inBlock = false;
+  source.split("\n").forEach((raw, i) => {
+    const t = raw.trim();
+    if (inBlock) {
+      if (t.includes("*/")) inBlock = false;
+      return;
+    }
+    if (t.startsWith("/*") || t.startsWith("{/*")) {
+      inBlock = !t.includes("*/");
+      return;
+    }
+    if (!/^[A-Za-z][^=;{}()<>]*$/.test(t) || t.split(/\s+/).length < 4) return;
+    if (/^(import|export|const|let|return|if|else|type|case|default)\b/.test(t)) return;
+    found.push({ line: i + 1, text: t });
+  });
+  return found;
+}
+
+test("a sentence wrapped across lines is read too", () => {
+  assert.deepEqual(bareJsxLines("<p>\n  The board is private until it is published.\n</p>").map((l) => l.text), ["The board is private until it is published."]);
+  assert.deepEqual(bareJsxLines("/*\n  The board is private until it is published.\n*/"), [], "a block comment is not a page");
+  assert.deepEqual(bareJsxLines("const a = the board is private"), [], "and neither is code");
+  const hits: string[] = [];
+  for (const file of sourceFiles().filter((f) => f.endsWith(".tsx") && !BARE_LINE_PENDING.has(f))) {
+    for (const { line, text } of bareJsxLines(readFileSync(path.join(ROOT, file), "utf8"))) {
+      const word = RETIRED.find(([re]) => re.test(text));
+      if (word) hits.push(`  ${file}:${line}  (${word[1]})\n    ${text.slice(0, 100)}`);
+    }
+  }
+  assert.equal(hits.length, 0, `${hits.length} retired word${hits.length === 1 ? "" : "s"} in wrapped copy:\n${hits.join("\n")}`);
+});
 
 test("the sweep looks at the pages it claims to", () => {
   const files = sourceFiles();

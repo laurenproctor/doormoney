@@ -369,6 +369,8 @@ Decisions 2, 9, and 16 describe current music mechanics, not policies to apply a
 
 **Status:** product contract established on the expansion Phase 1 branch. New-category runtime support is not implemented by this decision.
 
+**Shared copy applied (2026-09-20, `feat/frontend-category-agnostic-copy`):** the owner chose the shared lines this decision left open. The company tagline is "Put money behind work people care about.", the strap is "Relevant audiences. Meaningful sponsorships.", and the second line is "Organizers fund work with a clear purpose. Sponsors receive the visibility described in the offer." All three live in `SITE` in `src/lib/site.ts`. Decision 1's music tagline is kept as `SITE.musicTagline` for music's own surfaces, and is on `/how-sponsorship-works/music`, where music's options, suggested prices and stage drawing moved when `/how-sponsorship-works` became the shared page. The visible labels "List an act" and "Back a musician" are now "Create a fundraiser" and "Find a sponsorship", which settles the question decision 14 left open; `/list` and `/auctions` keep their addresses. The house rules name no payout day, refund term or kind of materials, because those now differ by category. The widget stays music's and its page says so. `tests/category-neutral-copy.test.ts` holds all of it.
+
 ---
 
 ## 18. Whether Door Money ever reverses a transfer

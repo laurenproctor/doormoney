@@ -8,36 +8,40 @@ import { clockOf, weekdayOf } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { fundraiserLine, periodOf } from "@/lib/periods";
 import { organizerLabel } from "@/lib/categories";
+import { getCategoryLabels } from "@/lib/category-registry";
+import { CategoryBadge } from "@/components/domain";
+import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 import { runPath } from "@/lib/urls";
 
 export const metadata: Metadata = {
   title: "Fundraisers",
-  description: "Every open fundraiser on Door Money: the musicians raising now, what has sold and been bid so far, and when bidding closes.",
+  description: "Every open fundraiser on Door Money: the organizers raising now, what each one funds, and the sponsorship options still open.",
 };
 
 // The route stays /auctions, because that address is already in sent email and in pasted widget
 // snippets; decision 13 settled that an address outlives the words on the page. In copy this is
 // Fundraisers, and not everything on it is an auction: each sponsorship is fixed price or open to
-// bids, and the musician decides which. See docs/DECISIONS.md, decision 14.
+// bids, and the organizer decides which. See docs/DECISIONS.md, decisions 14 and 17. A card names its
+// fundraiser's own category, from the registry, so this page never assumes whose work it is showing.
 
 
 
 export default async function AuctionsPage() {
-  const boards = await listOpenBoards();
+  const [boards, labels] = await Promise.all([listOpenBoards(), getCategoryLabels()]);
   const count = boards.length === 1 ? "One fundraiser is" : `${boards.length} fundraisers are`;
 
   return (
     <Page
       theme="magenta"
       current="/auctions"
-      eyebrow="Musicians raising now"
+      eyebrow="Organizers raising now"
       title="Open"
       accent="fundraisers"
       intro={
         <p>
-          Every open fundraiser on Door Money: who&apos;s playing, what has sold and been bid so far, and when
-          bidding closes. Each sponsorship is fixed price or open to bids; the musician decides which. {count} up
-          this week.
+          Every open fundraiser on Door Money: who is raising, what the funding is for, and which sponsorship
+          options are still open. Each sponsorship is either fixed-price or open to bids; the organizer decides
+          which. {count} open now.
         </p>
       }
     >
@@ -45,6 +49,7 @@ export default async function AuctionsPage() {
         {boards.map((b) => {
           return (
             <div key={b.act.slug} className="edge flex flex-col gap-3.5 bg-panel px-[26px] py-7 ">
+              <CategoryBadge category={{ key: b.run.categoryKey, label: labels[b.run.categoryKey] }} className="self-start" />
               <div className="caps text-[14.5px] text-accent-ink">{organizerLabel(b.run.categoryKey, b.act.type, b.act.city)}</div>
               <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">{b.act.name}</div>
               <div className="caps text-[14.5px] leading-[1.7] text-muted">
@@ -55,7 +60,7 @@ export default async function AuctionsPage() {
                 <Stat value={String(openSpots(b))} label="sponsorship options open" />
                 {b.run.expectedAttendance ? (
                   <Stat value={`~${b.run.expectedAttendance.toLocaleString("en-US")}`} label="expected attendance" />
-                ) : b.run.showCount !== null ? (
+                ) : b.run.categoryKey === "music" && b.run.showCount !== null ? (
                   <Stat value={String(b.run.showCount)} label={periodOf(b.run.kind).counted} />
                 ) : null}
               </div>
@@ -71,13 +76,12 @@ export default async function AuctionsPage() {
         })}
 
         <div className="edge flex flex-col items-start justify-center gap-3.5 bg-panel px-[26px] py-7 text-ink ">
-          <div className="caps text-[14.5px] text-accent-ink">Any musician</div>
+          <div className="caps text-[14.5px] text-accent-ink">For organizers</div>
           <div className="heading text-[clamp(28px,4vw,40px)] leading-[0.95]">The next fundraiser is open</div>
           <div className="text-[14.5px] leading-[1.7] text-muted">
-            Bands, house acts, soloists. Musicians choose what they offer, set the prices and keep the final
-            say.
+            Organizers choose what they offer, set the prices and keep the final say. {AVAILABILITY_NOTE}
           </div>
-          <ButtonLink href="/list" className="self-start">List an act</ButtonLink>
+          <ButtonLink href="/list" className="self-start">Create a fundraiser</ButtonLink>
         </div>
       </div>
 

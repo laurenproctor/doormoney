@@ -1,3 +1,4 @@
+import { getCategoryLabels } from "@/lib/category-registry";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getBoard } from "@/lib/boards";
@@ -52,5 +53,6 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
   // fundraiser by the same organizer. See src/lib/payment-returns.ts.
   const paid = await lotPaidNotice(typeof sp.paid === "string" ? sp.paid : undefined, board.run.id);
 
-  return <BoardView board={board} slug={slug} paid={paid} />;
+  const labels = await getCategoryLabels();
+  return <BoardView board={board} slug={slug} paid={paid} categoryName={labels[board.run.categoryKey]} />;
 }

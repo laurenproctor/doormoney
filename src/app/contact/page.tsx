@@ -6,11 +6,11 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Door Money about listing as a musician, backing a fundraiser, partnerships, press, or another question.",
+  description: "Contact Door Money about creating a fundraiser, sponsoring one, partnerships, press, or another question.",
 };
 
 const WHAT_HELPS = [
-  "The musician, business, venue, or publication name",
+  "The organizer, business, venue, or publication name",
   "The fundraiser or sponsorship involved, when applicable",
   "A clear question or proposed next step",
   "A deadline, when one is real",
@@ -28,7 +28,7 @@ export default function ContactPage() {
         <>
           <p className="text-[15px] text-accent-ink">Questions, introductions, and useful propositions start here.</p>
           <p className="mt-4">
-            Musicians can ask about listing. Patrons and brands can ask about backing a run. Venues, press, and
+            Organizers can ask about creating a fundraiser. Sponsors can ask about a sponsorship. Venues, press, and
             potential partners can introduce themselves. A person reads every note and answers plainly.
           </p>
         </>
@@ -43,7 +43,7 @@ export default function ContactPage() {
         <SectionHead eyebrow={`Contact ${SITE.name}`}>Put a name to the question</SectionHead>
         <p>
           Pick the closest reason, add the details, and send it through. Messages about an active payment or placement
-          should include the musician or run name.
+          should include the organizer or fundraiser name.
         </p>
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_280px] md:gap-12">
           <ContactForm />

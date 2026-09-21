@@ -109,10 +109,10 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   if (!view.selected) {
     return (
-      <DashboardShell {...shell} intro={<p>Open a fundraiser and patrons can start backing the work.</p>}>
+      <DashboardShell {...shell} intro={<p>Open a fundraiser and sponsors can start putting money behind the work.</p>}>
         <DashboardEmptyState
           heading="No fundraiser yet"
-          body="A fundraiser is one tour, residency or season, with the sponsorships you want to offer on it. Nothing goes public until you publish it."
+          body="A fundraiser is one named funding effort, such as a tour, a season or a production, with the sponsorship options you choose to offer on it. Nothing goes public until you publish it."
           action={{ href: "/dashboard/runs/new", label: "Create a fundraiser" }}
         />
       </DashboardShell>
