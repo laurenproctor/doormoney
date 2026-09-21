@@ -2,6 +2,8 @@
 import { useActionState, useId } from "react";
 import { setEvidenceVisibilityAction, submitEvidenceAction, type DeliveryState } from "@/app/actions/delivery";
 import { Button } from "@/components/Button";
+import { MarkDecision } from "@/components/MarkDecision";
+import { decisionWords, materialsWords } from "@/lib/materials-words";
 import { inputClass, labelClass } from "@/components/DashboardShell";
 import { deliveryStatusLine, type DeliveryRow } from "@/lib/delivery-dashboard";
 import { EVIDENCE_KINDS } from "@/lib/delivery-policy";
@@ -90,7 +92,35 @@ function VisibilityButton({ evidenceId, isPublic, label }: { evidenceId: string;
   );
 }
 
-export function DeliveryPanel({ rows, youth }: { rows: DeliveryRow[]; /** A youth team's documentation is never published. */ youth: boolean }) {
+/**
+ * What the sponsor sent, and the organizer's yes or no. This is the only place an organizer outside
+ * music can answer: the workspace table that holds the same buttons is music's dashboard.
+ */
+function MaterialsDecision({ row, categoryKey }: { row: DeliveryRow; categoryKey: string }) {
+  if (!row.submitted) return null;
+  const words = decisionWords(materialsWords(categoryKey));
+  return (
+    <div className="edge mt-4 bg-panel p-4">
+      <p className="caps text-[14px] text-accent-ink">{words.heading}</p>
+      <div className="mt-3 grid gap-2 text-[15px]">
+        {row.submitted.text && <p className="max-w-none">&ldquo;{row.submitted.text}&rdquo;</p>}
+        {row.submitted.fileUrl && (
+          <p className="max-w-none">
+            <a href={row.submitted.fileUrl} rel="noopener noreferrer" target="_blank" className="text-accent-ink underline decoration-1 underline-offset-4">
+              {words.fileSent}
+            </a>
+          </p>
+        )}
+        {row.submitted.note && <p className="max-w-none text-[14.5px] text-muted">{row.submitted.note}</p>}
+        {!row.submitted.text && !row.submitted.fileUrl && !row.submitted.note && <p className="max-w-none text-muted">{words.fileSent}</p>}
+      </div>
+      <p className="mb-3 mt-3 max-w-[62ch] text-[14.5px] text-muted">{words.declineWarning}</p>
+      <MarkDecision purchaseId={row.purchaseId} categoryKey={categoryKey} />
+    </div>
+  );
+}
+
+export function DeliveryPanel({ rows, youth, categoryKey }: { rows: DeliveryRow[]; /** A youth team's documentation is never published. */ youth: boolean; /** The fundraiser's category, for the words. */ categoryKey: string }) {
   return (
     <ul className="grid gap-px bg-line">
       {rows.map((row) => (
@@ -104,6 +134,7 @@ export function DeliveryPanel({ rows, youth }: { rows: DeliveryRow[]; /** A yout
           </div>
           <p className={`caps mt-2 text-[14px] ${row.delivered ? "text-accent-ink" : "text-muted"}`}>{row.delivered ? "Documented" : "Not documented yet"}</p>
           <p className="mt-2 max-w-[62ch] text-[15px] text-muted">{deliveryStatusLine(row)}</p>
+          <MaterialsDecision row={row} categoryKey={categoryKey} />
 
           {row.evidence.length > 0 && (
             <ul className="mt-4 divide-y divide-line border-y border-line">

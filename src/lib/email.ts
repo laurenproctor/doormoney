@@ -502,35 +502,46 @@ export function markWaiting(params: { to: string; actName: string; patronName: s
 }
 
 /** To the patron, when the musician says yes. */
-export function markApproved(params: { to: string; patronName: string; actName: string; lotName: string; recordUrl: string }): Mail {
+export function markApproved(params: { to: string; patronName: string; actName: string; lotName: string; recordUrl: string; categoryKey?: string | null }): Mail {
+  // Outside music what was accepted may be a line of text or a name to be said, and accepting it is
+  // not delivery: the money is still held until the organizer documents what was delivered.
+  const music = isMusic(params.categoryKey);
+  const verb = music ? "approved the logo" : "accepted your materials";
+  const fills = music ? "the shows, the rooms, the attendance where it is known, and where the money went" : `what was delivered, the documentation ${params.actName} attaches, and where the money went`;
   const lines = [
-    `${params.actName} approved the logo for the ${params.lotName.toLowerCase()}.`,
-    `It stays on the ${params.lotName.toLowerCase()} for the whole fundraiser. Nothing else is needed.`,
-    `The record fills in as the fundraiser goes on: the shows, the rooms, the attendance where it is known, and where the money went. ${params.recordUrl}`,
+    `${params.actName} ${verb} for the ${params.lotName.toLowerCase()}.`,
+    music
+      ? `It stays on the ${params.lotName.toLowerCase()} for the whole fundraiser. Nothing else is needed.`
+      : `Nothing else is needed from you. Door Money holds the money until ${params.actName} documents that the ${params.lotName.toLowerCase()} was delivered.`,
+    `The record fills in as the fundraiser goes on: ${fills}. ${params.recordUrl}`,
   ];
   const html = shell([
-    `<b>${escape(params.actName)}</b> approved the logo for the ${escape(params.lotName.toLowerCase())}.`,
+    `<b>${escape(params.actName)}</b> ${verb} for the ${escape(params.lotName.toLowerCase())}.`,
     escape(lines[1]),
-    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record</a> fills in as the fundraiser goes on: the shows, the rooms, the attendance where it is known, and where the money went.`,
+    `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record</a> fills in as the fundraiser goes on: ${escape(fills)}.`,
   ]);
-  return { to: params.to, subject: `${params.actName} approved the logo`, text: lines.join("\n\n"), html };
+  return { to: params.to, subject: `${params.actName} ${verb}`, text: lines.join("\n\n"), html };
 }
 
 /** To the patron, when the musician says no. The sponsorship never runs, so the money goes back. */
-export function markDeclined(params: { to: string; patronName: string; actName: string; lotName: string; refundedCents: number; boardsUrl: string }): Mail {
+export function markDeclined(params: { to: string; patronName: string; actName: string; lotName: string; refundedCents: number; boardsUrl: string; categoryKey?: string | null }): Mail {
+  const music = isMusic(params.categoryKey);
+  const declined = music ? "declined the logo" : "declined your materials";
   const lines = [
-    `${params.actName} declined the logo for the ${params.lotName.toLowerCase()}, so the sponsorship never runs.`,
+    `${params.actName} ${declined} for the ${params.lotName.toLowerCase()}, so the sponsorship never runs.`,
     `${money(params.refundedCents)} goes back to the card it was paid with. Refunds take five to ten business days to show up, depending on the bank.`,
-    `Every musician keeps the final say on what appears beside their name. That rule is what makes a sponsorship worth having.`,
+    music
+      ? `Every musician keeps the final say on what appears beside their name. That rule is what makes a sponsorship worth having.`
+      : `Every organizer keeps the final say on what appears beside their name. That rule is what makes a sponsorship worth having.`,
     `The open fundraisers: ${params.boardsUrl}`,
   ];
   const html = shell([
-    `<b>${escape(params.actName)}</b> declined the logo for the ${escape(params.lotName.toLowerCase())}, so the sponsorship never runs.`,
+    `<b>${escape(params.actName)}</b> ${declined} for the ${escape(params.lotName.toLowerCase())}, so the sponsorship never runs.`,
     `<b style="color:${BLUE}">${money(params.refundedCents)}</b> goes back to the card it was paid with. Refunds take five to ten business days to show up, depending on the bank.`,
     escape(lines[2]),
     `The <a href="${escape(params.boardsUrl)}" style="color:${BLUE}">open fundraisers</a>`,
   ]);
-  return { to: params.to, subject: `${params.actName} declined the logo, and the money went back`, text: lines.join("\n\n"), html };
+  return { to: params.to, subject: `${params.actName} ${declined}, and the money went back`, text: lines.join("\n\n"), html };
 }
 
 /** To the patron whose spot is paid for but whose logo has not arrived. Sent once. */
