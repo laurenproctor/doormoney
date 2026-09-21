@@ -3,6 +3,8 @@ import { useActionState, useState, useTransition } from "react";
 import { saveLots, type LotsState } from "@/app/actions/lots";
 import { cancelRun, publishRun, unpublishRun } from "@/app/actions/run";
 import { Button } from "@/components/Button";
+import { OpportunityEditor } from "@/components/domain";
+import type { OpportunityDraft } from "@/lib/domain";
 import { templateSections, type OpportunityTemplate } from "@/lib/opportunities";
 import { formatMoney } from "@/lib/money";
 
@@ -69,77 +71,20 @@ export function LotsEditor({
               {items.map((s) => {
                 const r = rows[s.key];
                 const locked = lockedKeys.has(s.key);
+                // The row is the domain component: it knows a template and a draft, and nothing about
+                // music, the catalog or saving. This file stays the adapter between them.
+                const draft: OpportunityDraft = { on: r.on, count: r.count, price: r.price, saleMethod: r.mode, buyNow: r.buyNow };
                 return (
-                  <div key={s.key} className={`grid gap-3 border-b border-line p-4 last:border-b-0 md:grid-cols-[28px_1fr_80px_120px_150px_130px] md:items-center ${r.on ? "" : "opacity-80"}`}>
-                    <input
-                      type="checkbox"
-                      name={`on_${s.key}`}
-                      value="1"
-                      checked={r.on}
-                      disabled={locked}
-                      onChange={(e) => set(s.key, { on: e.target.checked })}
-                      aria-label={s.name}
-                      className="h-5 w-5 accent-[var(--accent)]"
-                    />
-                    {locked && <input type="hidden" name={`on_${s.key}`} value="1" />}
-                    <div>
-                      <b className="block text-[15px]">{s.name}</b>
-                      <span className="block text-[14px] text-muted">
-                        {s.defaultPriceCents !== null && <>Suggested price {formatMoney(s.defaultPriceCents)} per {s.period}. </>}
-                        {s.seenBy && <>Seen by {s.seenBy}.</>}
-                      </span>
-                    </div>
-                    <label className="caps text-[14px]">
-                      Spots
-                      <input
-                        type="number"
-                        name={`count_${s.key}`}
-                        min={1}
-                        max={6}
-                        value={r.count}
-                        disabled={!r.on}
-                        onChange={(e) => set(s.key, { count: e.target.value.replace(/[^0-9]/g, "").slice(0, 1) })}
-                        onBlur={() => set(s.key, { count: String(Math.max(1, Math.min(6, Number(r.count) || 1))) })}
-                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
-                      />
-                    </label>
-                    <label className="caps text-[14px]">
-                      Price, dollars
-                      <input
-                        name={`price_${s.key}`}
-                        inputMode="decimal"
-                        value={r.price}
-                        disabled={!r.on}
-                        onChange={(e) => set(s.key, { price: e.target.value })}
-                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
-                      />
-                    </label>
-                    <label className="caps text-[14px]">
-                      Sold as
-                      <select
-                        name={`mode_${s.key}`}
-                        value={r.mode}
-                        disabled={!r.on}
-                        onChange={(e) => set(s.key, { mode: e.target.value as "fixed" | "auction" })}
-                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
-                      >
-                        <option value="fixed">Fixed price</option>
-                        <option value="auction">Auction, price is the reserve</option>
-                      </select>
-                    </label>
-                    <label className={`caps text-[14px] ${r.mode === "auction" ? "" : "max-md:hidden md:invisible"}`}>
-                      Take it now
-                      <input
-                        name={`buynow_${s.key}`}
-                        inputMode="decimal"
-                        value={r.buyNow}
-                        placeholder="Optional"
-                        disabled={!r.on || r.mode !== "auction"}
-                        onChange={(e) => set(s.key, { buyNow: e.target.value })}
-                        className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]"
-                      />
-                    </label>
-                  </div>
+                  <OpportunityEditor
+                    key={s.key}
+                    template={{ key: s.key, name: s.name, seenBy: s.seenBy, suggestedPriceCents: s.defaultPriceCents, period: s.period }}
+                    value={draft}
+                    locked={locked}
+                    onChange={(patch) => {
+                      const { saleMethod, ...rest } = patch;
+                      set(s.key, saleMethod ? { ...rest, mode: saleMethod } : rest);
+                    }}
+                  />
                 );
               })}
             </div>

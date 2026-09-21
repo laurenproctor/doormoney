@@ -288,7 +288,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
         </div>
       </div>
       <p id="signup-name-help" className={`${helpClass} mb-[18px]`}>
-        The person holding the account. A band or a business gets its own name later, and nothing here
+        The person holding the account. An organizer or a business gets its own name later, and nothing here
         appears publicly unless it is put on a page on purpose.
       </p>
 

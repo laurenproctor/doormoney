@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Eyebrow, Section, SectionHead } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
@@ -7,9 +6,11 @@ import { Footer } from "@/components/Footer";
 import { HeroArt } from "@/components/HeroArt";
 import { Nav } from "@/components/Nav";
 import { Theme } from "@/components/Theme";
+import { PatronActivityItem } from "@/components/domain";
+import type { PatronActivityView } from "@/lib/domain";
 import { linkText, websiteLabel } from "@/lib/links";
 import { SITE } from "@/lib/site";
-import { formatMonth, impactTotals, initialsFor, patronKindLabel, profileLink, SUPPORT_LABEL, yearOf } from "@/lib/profile";
+import { formatMonth, impactTotals, initialsFor, patronKindLabel, profileLink, yearOf } from "@/lib/profile";
 import { normalizeUsername } from "@/lib/username";
 import {
   currentUsernameFor,
@@ -178,7 +179,7 @@ export default async function PatronProfilePage({ params }: Props) {
               </ul>
               <ul className="divide-y divide-line border-y border-line">
                 {activity.map((a, i) => (
-                  <ActivityRow key={`${a.kind}-${a.actSlug}-${a.runTitle}-${i}`} item={a} category={a.categoryKey ? (labels[a.categoryKey] ?? null) : null} />
+                  <PatronActivityItem key={`${a.kind}-${a.actSlug}-${a.runTitle}-${i}`} item={activityView(a, labels)} />
                 ))}
               </ul>
             </>
@@ -232,36 +233,20 @@ function Avatar({ name, photo }: { name: string; photo: string | null }) {
 }
 
 /**
- * One thing a patron chose to show: who, which fundraiser, what kind of support, its category and
- * when. No amount. A sponsorship and a backing keep their own labels; the category is the
- * fundraiser's, named by the registry, and is left out when the registry has no name for it.
+ * The public activity row, as the domain component takes it. No amount: the view carries none.
+ * The category is the fundraiser's own, named by the registry, and is left out when the registry
+ * has no name for it. A sponsorship and a backing keep their own labels.
  */
-function ActivityRow({ item, category }: { item: PublicActivity; category: string | null }) {
+function activityView(item: PublicActivity, labels: Record<string, string>): PatronActivityView {
   const live = item.runStatus === "open" || item.runStatus === "live";
-  return (
-    <li className="grid gap-1.5 py-5 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-6">
-      <div className="min-w-0">
-        <b className="block text-[16px] font-medium">
-          {live ? (
-            <Link href={actPath(item.actSlug)} className="text-accent-ink underline decoration-1 underline-offset-4">
-              {item.actName}
-            </Link>
-          ) : (
-            item.actName
-          )}
-          , {item.runTitle}
-        </b>
-        <span className="block text-[14.5px] text-muted">{item.detail}</span>
-      </div>
-      <span className="caps text-[14px] text-muted sm:justify-self-end sm:text-right">
-        {SUPPORT_LABEL[item.kind]} <span aria-hidden="true">&middot;</span>{" "}
-        {category && (
-          <>
-            {category} <span aria-hidden="true">&middot;</span>{" "}
-          </>
-        )}
-        {formatMonth(item.supportedAt)}
-      </span>
-    </li>
-  );
+  const label = item.categoryKey ? labels[item.categoryKey] : undefined;
+  return {
+    support: item.kind === "backing" ? "backing" : "sponsorship",
+    organizerName: item.actName,
+    organizerHref: live ? actPath(item.actSlug) : null,
+    fundraiserTitle: item.runTitle,
+    category: item.categoryKey && label ? { key: item.categoryKey, label } : null,
+    detail: item.detail,
+    month: formatMonth(item.supportedAt),
+  };
 }

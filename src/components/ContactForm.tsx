@@ -85,7 +85,7 @@ export function ContactForm() {
           />
         </Field>
         <Field
-          label="Musician, business, venue, or publication"
+          label="Organizer, business, venue, or publication"
           hint="Optional"
           id={fieldId("organization")}
           errorId={errorId("organization")}
