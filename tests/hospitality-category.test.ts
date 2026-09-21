@@ -46,18 +46,28 @@ test("migration 0047 adds the category for drafts, with publishing written out a
   assert.match(m, /hospitality already has a delivery policy/);
 });
 
-test("no other migration opens it: the only files that name hospitality are 0047 and the privacy fix found with it", () => {
+test("no other migration opens it: the files that name hospitality are 0047, the privacy fix found with it, and the one that gave it its public name", () => {
   const dir = path.join(ROOT, "supabase/migrations");
   const naming = readdirSync(dir).filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))).sort();
-  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql"]);
+  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql"]);
+  // 0049 changes the label and nothing else about it: same key, no publishing, no policy, and it stops if either is there.
+  const name = sql("supabase/migrations/0049_restaurants_and_other_categories.sql");
+  assert.match(name, /set label = 'Restaurants & hospitality'\s+where key = 'hospitality' and label = 'Hospitality'/);
+  assert.doesNotMatch(name, /'restaurants'/, "no second key: that would split the templates, the words and the future policy");
+  assert.doesNotMatch(name, /publish_enabled\s*=\s*true/i);
+  assert.doesNotMatch(name, /insert into (?:public\.)?(?:delivery_policies|surfaces)/i);
+  assert.match(name, /hospitality or other is already enabled for publishing/);
+  assert.match(name, /hospitality or other already has a delivery policy/);
   const fix = sql("supabase/migrations/0048_draft_options_are_private.sql");
   assert.doesNotMatch(fix, /hospitality/i, "0048 names it in a comment only: the rule is for every category");
   assert.match(fix, /status <> 'draft'/);
   assert.match(fix, /create policy "public read lots" on public\.lots for select to anon, authenticated\s+using \(public\.run_has_left_draft\(run_id\)\)/);
 });
 
-test("hospitality is not a starting category, and the page that lists those does not list it", () => {
-  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater"]);
+test("hospitality is a starting category since 2026-09-21, and being listed opens nothing", () => {
+  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "other"]);
+  assert.equal(STARTING_CATEGORIES.find((c) => c.key === "hospitality")!.label, "Restaurants & hospitality");
+  assert.doesNotMatch(read("src/lib/starting-categories.ts"), /key: "restaurants"/);
   // The patron-side pickers read the registry with publish_enabled = true, so a draft-only category is not offered there.
   assert.match(read("src/app/dashboard/profile/page.tsx"), /from\("fundraiser_categories"\)\.select\("key,label"\)\.eq\("publish_enabled", true\)/);
   assert.match(read("src/app/actions/profile.ts"), /from\("fundraiser_categories"\)\.select\("key"\)\.eq\("publish_enabled", true\)/);
@@ -76,7 +86,7 @@ test("the organizer is a hospitality venue, because a restaurant is one kind and
   assert.equal(organizerLabel("hospitality", null, "Lisbon"), "Hospitality venue, Lisbon");
   const words = categoryWords("hospitality");
   assert.deepEqual([words.organizer, words.fundraiser, words.materials, words.appearances], ["hospitality venue", "fundraiser", "materials", "sponsors"], "nothing of music's: no tour, no logo");
-  assert.equal(categoryLabel({ key: "hospitality", label: "Hospitality" }), "Hospitality");
+  assert.equal(categoryLabel({ key: "hospitality", label: "Restaurants & hospitality" }), "Restaurants & hospitality", "the name is the registry's, whatever it says");
 });
 
 test("the category language covers the six things asked for", () => {

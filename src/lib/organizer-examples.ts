@@ -75,7 +75,7 @@ export const EXAMPLE_GROUPS: readonly ExampleGroup[] = [
   },
   {
     categoryKey: "hospitality",
-    heading: "Restaurants and hospitality",
+    heading: "Restaurants & hospitality",
     examples: [
       { kitKey: "sponsored_martini_cart", title: "A sponsored martini cart", line: "A spirits brand pays for a tableside cart, and its name or product appears on it." },
       { kitKey: "sponsored_table_plaque", title: "A branded table plaque", line: "A regular or a local firm pays toward the dining room, and a plaque at a table says so." },
@@ -83,6 +83,22 @@ export const EXAMPLE_GROUPS: readonly ExampleGroup[] = [
       { kitKey: "dinner_series", title: "A sponsored dinner series", line: "A producer or a winery pays toward a set of dinners, and is named on each menu." },
     ],
   },
+];
+
+/**
+ * Who organizes, on the organizer page. Kept here with the page's other words, so the page itself
+ * names no category: tests/organizer-acquisition.test.ts holds it to that. The last card is the
+ * test every later category has to pass, which is why the list never reads as closed.
+ */
+export const WHO_ORGANIZES: readonly (readonly [string, string])[] = [
+  ["Musicians", "Bands, ensembles, soloists and music organizations."],
+  ["Teams", "A team, or a representative with authority over what the team offers."],
+  ["Filmmakers", "A filmmaker or a production organization."],
+  ["Theater companies", "A company, or an authorized producer."],
+  ["Hospitality venues", "Restaurants, bars, hospitality venues, caterers and community kitchens."],
+  ["Other projects", "A project outside the named categories that can still state its purpose, its audience and what the sponsor receives."],
+  ["Organizations", "A group that organizes the work and answers for its delivery."],
+  ["What comes next", "Any organizer who can state the funding purpose, the audience, what the sponsor receives and how delivery will be documented."],
 ];
 
 export type ExampleStatus = "open" | "draft_only" | "coming_soon";

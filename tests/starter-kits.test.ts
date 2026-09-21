@@ -56,10 +56,13 @@ function registry(): KitCategory[] {
   const launch = [...seed[1].matchAll(/\('([a-z_]+)',\s*'([^']+)',\s*array\[([^\]]*)\]\)/g)].map((m) => ({
     key: m[1], label: m[2], detail_keys: keys(m[3]), draft_enabled: true, publish_enabled: publishable.has(m[1]),
   }));
-  const later = [...SQL.matchAll(/insert into public\.fundraiser_categories \(key, label, detail_keys, draft_enabled, publish_enabled\) values\s*\('([a-z_]+)',\s*'([^']+)',\s*array\[([^\]]*)\],\s*(true|false),\s*(true|false)\)/g)].map((m) => ({
+  const later = [...SQL.matchAll(/insert into public\.fundraiser_categories \(key, label, detail_keys, draft_enabled, publish_enabled\) values\s*\('([a-z_]+)',\s*'([^']+)',\s*array\[([^\]]*)\](?:::text\[\])?,\s*(true|false),\s*(true|false)\)/g)].map((m) => ({
     key: m[1], label: m[2], detail_keys: keys(m[3]), draft_enabled: m[4] === "true", publish_enabled: m[5] === "true" || publishable.has(m[1]),
   }));
-  return [...launch, ...later];
+  // A later migration may rename a category (0049 gave hospitality its public name). The key never moves.
+  const renamed = new Map<string, string>();
+  for (const m of SQL.matchAll(/update public\.fundraiser_categories\s+set label = '([^']+)'\s+where key = '([a-z_]+)'/g)) renamed.set(m[2], m[1]);
+  return [...launch, ...later].map((c) => ({ ...c, label: renamed.get(c.key) ?? c.label }));
 }
 
 const REGISTRY = registry();
@@ -85,9 +88,11 @@ const words = (kit: StarterKit) => [
 // ---------------------------------------------------------------
 
 test("the test reads the real category registry", () => {
-  assert.deepEqual(REGISTRY.map((c) => c.key), [...LAUNCH, "hospitality"]);
+  assert.deepEqual(REGISTRY.map((c) => c.key), [...LAUNCH, "hospitality", "other"]);
   assert.ok(REGISTRY.filter((c) => LAUNCH.includes(c.key)).every((c) => c.publish_enabled), "0041 turned publishing on for the four");
-  assert.deepEqual(REGISTRY.find((c) => c.key === "hospitality"), { key: "hospitality", label: "Hospitality", detail_keys: ["venue_kind", "format"], draft_enabled: true, publish_enabled: false }, "0047 adds hospitality for drafts only");
+  assert.deepEqual(REGISTRY.find((c) => c.key === "hospitality"), { key: "hospitality", label: "Restaurants & hospitality", detail_keys: ["venue_kind", "format"], draft_enabled: true, publish_enabled: false }, "0047 adds hospitality for drafts only, and 0049 gives it its public name");
+  assert.deepEqual(REGISTRY.find((c) => c.key === "other"), { key: "other", label: "Other", detail_keys: [], draft_enabled: true, publish_enabled: false }, "0049 adds Other for drafts only, with no details of its own");
+  assert.equal(REGISTRY.some((c) => c.key === "restaurants"), false, "there is one hospitality key");
 });
 
 test("the starting kits are the ones asked for, under the registry's category keys", () => {
@@ -162,7 +167,7 @@ test("enabled kits and draft-only kits are separate lists", () => {
 
 test("hospitality is draft only twice over: in the registry, and on every one of its kits", () => {
   // The registry: one migration names the category, it says publishing is off, and nothing later turns it on.
-  assert.deepEqual(MIGRATIONS.filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))), ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql"]);
+  assert.deepEqual(MIGRATIONS.filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))), ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql"]);
   assert.doesNotMatch(SQL, /publish_enabled\s*=\s*true[^;]*hospitality/i, "no migration switches hospitality publishing on");
   // No delivery policy: that row is what would let one be bought, in test mode first (0045).
   assert.doesNotMatch(SQL, /insert into (?:public\.)?delivery_policies[^;]*hospitality/i, "no migration gives hospitality a delivery policy");
@@ -202,7 +207,9 @@ test("the registry decides availability, and this file can only be stricter", ()
 test("a picker shows the registry's categories, in its order and under its names, with hospitality marked draft only", () => {
   const groups = starterKitGroups(REGISTRY);
   assert.deepEqual(groups.map((g) => g.category.key), [...LAUNCH, "hospitality"]);
-  assert.deepEqual(groups.map((g) => g.label), ["Music", "Sports teams", "Film", "Theater", "Hospitality"]);
+  assert.deepEqual(groups.map((g) => g.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality"]);
+  assert.equal(groups.some((g) => g.category.key === "other"), false, "Other has no kits, so it draws no group: an example there would be an invented promise");
+  assert.deepEqual(starterKitsForCategory("other"), []);
   for (const g of groups) assert.ok(g.kits.every((k) => k.availability === (g.category.key === "hospitality" ? "draft_only" : "publishable")), g.category.key);
   assert.equal(groups.flatMap((g) => g.kits).length, 19);
 

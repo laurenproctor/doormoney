@@ -22,6 +22,7 @@ import { catalogTemplates } from "@/lib/opportunities";
 import { initialKitDraft, kitDraftReducer, type KitDraftAction, type KitDraftState } from "@/lib/starter-kit-draft";
 import { kitRecommendations } from "@/lib/starter-kit-recommendations";
 import { STARTER_KITS, starterKit, starterKitFromLink, type KitCategory } from "@/lib/starter-kits";
+import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 
 // The form posts to a server action that reaches the database, and borrows two class names from
 // the dashboard shell, whose sign-out action reaches it too. Neither is what is being tested.
@@ -334,11 +335,18 @@ test("with the category in the registry, a hospitality kit works as a draft and 
   assert.deepEqual(categoryErrors(parsed.data, REGISTRY), ["Choose an available category."], "and without the row the save is refused, before the database refuses it too");
 });
 
-test("hospitality is not advertised as one of Door Money's categories anywhere a visitor reads them", () => {
+test("hospitality is named as a starting category from one list, and never as open to sponsors", () => {
   assert.match(read("tests/starter-kits.test.ts"), /hospitality is draft only twice over/, "the registry test that holds the switches is still there");
-  for (const file of ["src/lib/starting-categories.ts", "src/lib/category-registry.ts", "src/app/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/signup/page.tsx", "src/app/fundraisers/page.tsx"]) {
-    assert.doesNotMatch(read(file), /hospitality|restaurant/i, file);
+  // Since 2026-09-21 the starting set names it (decision 17's dated entry). One file says so, and the pages read that file.
+  assert.match(read("src/lib/starting-categories.ts"), /key: "hospitality"/);
+  for (const file of ["src/app/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/signup/page.tsx", "src/app/fundraisers/page.tsx"]) {
+    assert.doesNotMatch(read(file), /hospitality|restaurant/i, `${file} writes no category of its own`);
   }
+  // Listed is not open: the sentence that says what sponsors can buy today names music and no draft-only category.
+  assert.match(AVAILABILITY_NOTE, /Music fundraisers are open to sponsors today/);
+  assert.doesNotMatch(AVAILABILITY_NOTE, /hospitality|restaurant/i);
+  // The new-fundraisers pitch does not say a hospitality fundraiser can open.
+  assert.doesNotMatch(read("src/components/Newsletter.tsx"), /hospitality|restaurant/i);
 });
 
 // ---------------------------------------------------------------

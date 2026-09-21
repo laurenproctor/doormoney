@@ -172,6 +172,16 @@ test("a hospitality venue is asked about days and events, and to photograph the 
   assert.match(verificationMethods("hospitality").find((m) => m.key === "other")!.note, /in the venue's own words/);
 });
 
+test("Other borrows nobody's words: a place, a date and an audience, in the organizer's own voice", () => {
+  assert.equal(methodLabel("selected_show_photos", "other"), "Dated photos from selected dates");
+  assert.equal(methodLabel("venue_date_record", "other"), "Place and date list");
+  assert.equal(methodLabel("short_video", "other"), "Short video of the placement");
+  assert.match(verificationMethods("other").find((m) => m.key === "venue_date_record")!.note, /in person or online/, "online is a place a fundraiser can be");
+  assert.match(verificationMethods("other").find((m) => m.key === "other")!.note, /in the organizer's own words/);
+  const spoken = verificationMethods("other").map((m) => `${m.label} ${m.note}`).join(" ");
+  assert.doesNotMatch(spoken, /venue|guest|fixture|screening|performance|squad|dinner/i, "and nothing of any named category's");
+});
+
 test("every category in the registry has its own wording, and none of it is music's", () => {
   // The fallback to music's sentences is for a key nobody has heard of. A category Door Money added
   // on purpose must not reach it: that is how a hospitality draft asked a restaurant about "selected
@@ -182,7 +192,7 @@ test("every category in the registry has its own wording, and none of it is musi
   for (const insert of sql.matchAll(/insert into public\.fundraiser_categories \([^)]*\) values([\s\S]*?);/g)) {
     for (const row of insert[1].matchAll(/\('([a-z][a-z0-9_]*)',\s*'/g)) registered.add(row[1]);
   }
-  assert.deepEqual([...registered].sort(), ["film", "hospitality", "music", "sports", "theater"], "the registry, as the migrations leave it");
+  assert.deepEqual([...registered].sort(), ["film", "hospitality", "music", "other", "sports", "theater"], "the registry, as the migrations leave it");
 
   const MUSIC_ONLY = /musician|\bbands?\b|\bshows?\b|\btours?\b|\bmerch\b|\blogos?\b|\bgigs?\b|\bruns?\b|\bpatrons?\b/i;
   for (const category of [...registered].filter((c) => c !== "music")) {
@@ -209,7 +219,7 @@ test("a board renders the category's words for what the organizer ticked", () =>
 test("no category's wording quietly changes what was stored", () => {
   // The constraint in migration 0020 lists the keys. A reworded method that shipped a new key would
   // fail that constraint on the first save, which is the failure this catches at the words instead.
-  for (const category of ["sports", "film", "theater", "hospitality"]) {
+  for (const category of ["sports", "film", "theater", "hospitality", "other"]) {
     for (const method of verificationMethods(category)) assert.equal(isVerificationKey(method.key), true, `${category}.${method.key}`);
   }
 });

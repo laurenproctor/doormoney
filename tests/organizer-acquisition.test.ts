@@ -33,7 +33,7 @@ const code = (file: string) => read(file).replace(/\{\/\*[\s\S]*?\*\/\}/g, "").r
 /** What getCategoryLabels returns before migration 0047 is applied: the four rows 0038 seeded. */
 const LABELS = { music: "Music", sports: "Sports teams", film: "Film", theater: "Theater" };
 /** And after it: anon may read a category's key and label (0043), so the fifth name arrives with the row. */
-const LABELS_0047 = { ...LABELS, hospitality: "Hospitality" };
+const LABELS_0047 = { ...LABELS, hospitality: "Restaurants & hospitality" };
 const examples = EXAMPLE_GROUPS.flatMap((g) => g.examples.map((e) => ({ ...e, categoryKey: g.categoryKey })));
 
 /** The safeNext rule from src/lib/auth.ts, which imports the database and so is restated, then checked against its source. */
@@ -46,7 +46,7 @@ const safeNext = (next: string) => next.startsWith("/") && !next.startsWith("//"
 test("the organizer page has ideas for the five kinds of organizer, in this order", () => {
   assert.deepEqual(EXAMPLE_GROUPS.map((g) => g.categoryKey), ["music", "sports", "film", "theater", "hospitality"]);
   assert.deepEqual(EXAMPLE_GROUPS.map((g) => g.heading), [
-    "Musicians and tours", "Sports teams and tournaments", "Filmmakers and screenings", "Theater productions", "Restaurants and hospitality",
+    "Musicians and tours", "Sports teams and tournaments", "Filmmakers and screenings", "Theater productions", "Restaurants & hospitality",
   ]);
 });
 
@@ -169,8 +169,9 @@ test("the page takes every status from the registry and hard-codes none", () => 
   assert.match(list, /Example only/);
   assert.match(list, /has opened this category for private drafts only/);
   assert.match(list, /cannot be\s+published or paid for yet\./);
-  // Hospitality is not added to the places that list Door Money's categories.
-  for (const file of ["src/lib/starting-categories.ts", "src/lib/category-registry.ts", "src/app/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/signup/page.tsx"]) {
+  // Since 2026-09-21 hospitality is a starting category, named in one list and the registry's fallback.
+  // The pages that show the set read that list: none of them writes a category of its own.
+  for (const file of ["src/app/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/signup/page.tsx"]) {
     assert.doesNotMatch(read(file), /hospitality|restaurant/i, file);
   }
 });
