@@ -1,4 +1,5 @@
 "use server";
+import { materialsWords } from "@/lib/materials-words";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
@@ -21,14 +22,14 @@ import { actPath } from "@/lib/urls";
 export async function decideMark(purchaseId: string, decision: "approved" | "declined"): Promise<{ ok: boolean; error?: string }> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
-  if (!act) return { ok: false, error: "No act on this account." };
+  if (!act) return { ok: false, error: "No organizer profile on this account." };
 
   const sb = await supabaseServer();
   const { data: p } = await sb.from("purchases").select("id,mark_status,lot_id,payment_status").eq("id", purchaseId).maybeSingle();
-  if (!p) return { ok: false, error: "That logo is not on this account's fundraiser." };
-  if (p.mark_status !== "submitted") return { ok: false, error: "That mark has already been decided." };
+  if (!p) return { ok: false, error: "That sponsorship is not on this account's fundraiser." };
+  if (p.mark_status !== "submitted") return { ok: false, error: "That has already been decided." };
   if (decision === "declined" && ["held", "released"].includes(p.payment_status) && !stripeConfigured()) {
-    return { ok: false, error: "Declining refunds the patron, and refunds are not switched on yet. Contact Door Money." };
+    return { ok: false, error: "Declining refunds the sponsor, and refunds are not switched on yet. Contact Door Money." };
   }
 
   const admin = supabaseAdmin();
@@ -53,13 +54,15 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
     const target = await markTarget(purchaseId);
     const patronEmail = await patronAddress(admin, purchaseId);
     if (target && patronEmail) {
-      const mail = markApproved({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: markSurface(target), recordUrl: `${SITE.url}/record/${purchaseId}` });
+      const mail = markApproved({ to: patronEmail, patronName: target.patrons?.name ?? "A patron", actName: act.name, lotName: markSurface(target), recordUrl: `${SITE.url}/record/${purchaseId}`, categoryKey: target.lots.runs.category_key });
       const r = await sendEmail(mail);
       if (!r.sent) console.error("mark decision not sent", purchaseId, r.reason);
     }
   }
 
-  revalidatePath("/dashboard");
+  // The decision is made from the workspace table for music and from the fundraiser's own page
+  // for every other category, so everything under the dashboard is refreshed.
+  revalidatePath("/dashboard", "layout");
   revalidatePath(`/mark/${purchaseId}`);
   return { ok: true };
 }
@@ -111,11 +114,11 @@ export async function submitMark(_prev: MarkState, form: FormData): Promise<Mark
   const target = await markTarget(purchase_id);
   if (!target) return { ok: false, error: "That link is not right." };
   if (!markOpen(target)) {
-    if (target.mark_status === "approved") return { ok: false, error: "That mark is already approved. Contact Door Money to change it." };
+    if (target.mark_status === "approved") return { ok: false, error: "That is already accepted. Contact Door Money to change it." };
     if (target.mark_status === "declined") return { ok: false, error: "That sponsorship was declined and refunded." };
-    return { ok: false, error: "That run was cancelled." };
+    return { ok: false, error: "That fundraiser was cancelled." };
   }
-  if (!upload && !mark_text && !target.mark_url) return { ok: false, error: "Add a logo file, a name, or both." };
+  if (!upload && !mark_text && !target.mark_url) return { ok: false, error: materialsWords(target.lots.runs.category_key, target.lots.runs.kind).emptyError };
 
   const admin = supabaseAdmin();
   let url = target.mark_url;
