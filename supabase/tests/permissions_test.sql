@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(119);
+select plan(124);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -30,6 +30,14 @@ update acts set stripe_account_id='acct_secret', stripe_payouts_enabled=true whe
 update lots set funding_token='tok_secret' where id=(select id from lots order by id limit 1);
 -- A patron who asked to stay anonymous still has a real name on the row.
 update patrons set name='Dana Whitfield' where id=(select patron_id from bids where anonymous order by id limit 1);
+
+-- A draft with a priced option, owned by the first account. Migration 0048: a draft's options are
+-- as private as the draft, in every category. This one is music, where the hole was oldest.
+-- It carries music's own details, so the suites below that cancel every fundraiser of this act can.
+insert into runs (id,act_id,title,slug,status,category_key,kind,starts_on,ends_on,show_count)
+  select 'a0480000-0000-4000-8000-000000000001', id, 'Unannounced tour', 'unannounced-tour-0048', 'draft', 'music', 'tour', '2027-03-01', '2027-03-20', 12 from acts where slug='gutter-hymns';
+insert into lots (id,run_id,surface_key,price_cents,mode) values
+  ('a0480000-0000-4000-8000-0000000000a1','a0480000-0000-4000-8000-000000000001','posts_email',77700,'fixed');
 
 -- Two accounts with paid history, for the patron profile tests below.
 --   user 1 owns Kettle St. Coffee (a placement won in the open) and the anonymous bidder's row.
@@ -128,6 +136,13 @@ select lives_ok(
   'select id, price_cents, status from lots',
   'anon can still read a lot''s public terms');
 
+select ok((select count(*) from lots l join runs r on r.id = l.run_id where r.status in ('open','live','closed')) > 0,
+  'and the options of a published fundraiser are all still there, which is what draws its page');
+select is((select count(*)::int from lots where id='a0480000-0000-4000-8000-0000000000a1'), 0,
+  'anon cannot read an option priced on a draft (0048)');
+select is((select count(*)::int from lots where price_cents=77700), 0,
+  'nor find it by its price');
+
 select lives_ok(
   'select amount_cents, anonymous from bids',
   'anon can still read bid amounts for the board');
@@ -158,6 +173,8 @@ reset role;
 -- The musician who owns the act
 -- ===============================================================
 select tests.as_user('11111111-1111-1111-1111-111111111111');
+select is((select count(*)::int from lots where id='a0480000-0000-4000-8000-0000000000a1'), 1,
+  'the organizer still reads the options on their own draft (0048 leaves "owner all lots" alone)');
 
 select throws_ok(
   $$update acts set stripe_account_id='acct_attacker' where slug='gutter-hymns'$$, '42501',
@@ -217,6 +234,8 @@ reset role;
 -- A different musician
 -- ===============================================================
 select tests.as_user('22222222-2222-2222-2222-222222222222');
+select is((select count(*)::int from lots where id='a0480000-0000-4000-8000-0000000000a1'), 0,
+  'another signed-in account cannot read somebody else''s draft options either (0048)');
 
 select is(
   (select count(*)::int from acts where slug='gutter-hymns' and name='Gutter Hymns'), 1,
