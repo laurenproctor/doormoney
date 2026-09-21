@@ -201,7 +201,7 @@ export default async function RecordPage({ params }: Props) {
   return (
     <Page
       theme={themeFor(act.slug)}
-      current="/auctions"
+      current="/fundraisers"
       eyebrow={`Record of the ${words.periodNoun}`}
       title={act.name}
       accent=""

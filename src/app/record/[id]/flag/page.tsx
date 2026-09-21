@@ -36,7 +36,7 @@ export default async function FlagPage({ params }: Props) {
   return (
     <Page
       theme={themeFor(target.actSlug)}
-      current="/auctions"
+      current="/fundraisers"
       eyebrow={open ? "Door Money is looking" : "Something wrong"}
       title="Say what"
       accent="happened"

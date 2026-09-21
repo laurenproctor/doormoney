@@ -63,7 +63,7 @@ export default async function ClaimPage({ params }: Props) {
   return (
     <Page
       theme={themeFor(act.slug)}
-      current="/auctions"
+      current="/fundraisers"
       eyebrow={paid ? "Paid" : expired ? "The window closed" : "Won at auction"}
       title={name}
       accent=""

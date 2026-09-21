@@ -53,7 +53,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
     >
       <Section>
         <div className="flex flex-wrap gap-4">
-          <ButtonLink href="/auctions" arrow>See the fundraisers</ButtonLink>
+          <ButtonLink href="/fundraisers" arrow>See the fundraisers</ButtonLink>
           <ButtonLink href="/" variant="ghost">Back to Door Money</ButtonLink>
         </div>
       </Section>

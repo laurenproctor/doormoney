@@ -46,11 +46,13 @@ export const SITE = {
   fundraiser, so it lives in the dashboard instead (MUSICIAN_LINKS in src/lib/roles.ts).
   See docs/DECISIONS.md, decision 14.
 
-  The addresses stay: /auctions and /list are in sent email and pasted snippets. Only the labels moved.
+  The index is at /fundraisers, the word the nav has always used for it. /auctions was its first
+  address and is in sent email and pasted snippets, so it redirects there and always will
+  (next.config.ts). /list stays where it is for the same reason.
 */
 export const NAV = [
   { href: "/how-sponsorship-works", label: "How sponsorship works" },
-  { href: "/auctions", label: "Fundraisers" },
+  { href: "/fundraisers", label: "Fundraisers" },
   { href: "/list", label: "For organizers" },
   { href: "/contact", label: "Contact" },
 ] as const;

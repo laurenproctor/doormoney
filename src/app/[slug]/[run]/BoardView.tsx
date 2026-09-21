@@ -119,7 +119,7 @@ export function BoardView({
 
   return (
     <Theme name={theme}>
-      <Nav current="/auctions" />
+      <Nav current="/fundraisers" />
       {draft && (
         <div className="border-b border-line bg-panel">
           <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-7 py-3">

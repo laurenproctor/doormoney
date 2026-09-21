@@ -12,7 +12,7 @@ type Props = { params: Promise<{ id: string }> };
  *
  * Private three times over: the route signs the visitor in first, the run is read filtered on the
  * act this account owns, and RLS refuses a draft run to anybody but its owner even if that filter
- * were wrong. Nothing links here from a public page, /auctions and the sitemap both list only open
+ * were wrong. Nothing links here from a public page, /fundraisers and the sitemap both list only open
  * runs, and robots.txt has disallowed /dashboard since Phase 2. Publishing is still the only thing
  * that makes a board public.
  */

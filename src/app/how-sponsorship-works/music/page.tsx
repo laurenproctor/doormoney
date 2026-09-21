@@ -136,7 +136,7 @@ export default function HowMusicSponsorshipWorksPage() {
             Musicians choose what they offer, set their own prices, and approve every name and logo before it appears.
           </p>
           <div className="mt-9 flex flex-wrap gap-4">
-            <ButtonLink href="/auctions" arrow>Browse fundraisers</ButtonLink>
+            <ButtonLink href="/fundraisers" arrow>Browse fundraisers</ButtonLink>
             <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works, for every category</ButtonLink>
           </div>
         </>
@@ -265,7 +265,7 @@ export default function HowMusicSponsorshipWorksPage() {
           back the music.
         </p>
         <div className="mt-[30px] flex flex-wrap gap-5">
-          <ButtonLink href="/auctions" arrow>Browse fundraisers</ButtonLink>
+          <ButtonLink href="/fundraisers" arrow>Browse fundraisers</ButtonLink>
           <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
         </div>
       </Section>

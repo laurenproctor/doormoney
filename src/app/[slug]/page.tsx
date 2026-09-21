@@ -109,7 +109,7 @@ export default async function ActPage({ params }: Props) {
 
   return (
     <Theme name={theme}>
-      <Nav current="/auctions" />
+      <Nav current="/fundraisers" />
       <main id="main" className="flex-1">
         <section className="relative overflow-hidden border-b border-line">
           <HeroArt theme={theme} src={act.photoUrl} />
