@@ -2,8 +2,8 @@
  * What each category calls its organizer, its work and its details, in words.
  *
  * Having words here opens nothing. Whether a category may save a draft, publish or be paid for is
- * decided in the database (`fundraiser_categories`, `delivery_policies`). Hospitality has words and
- * is draft-only.
+ * decided in the database (`fundraiser_categories`, `delivery_policies`). Restaurants & hospitality
+ * (key `hospitality`) and Other both have words and are draft-only.
  *
  * The database registry decides which categories exist and which detail keys each one allows
  * (`fundraiser_categories`, migration 0038). This file only supplies the words, the way
@@ -36,6 +36,8 @@ export type CategoryLanguage = {
   titleLabel: string;
   /** The detail fields this file has words for, by key. */
   details: Record<string, DetailField>;
+  /** One line the draft form says under the category, where choosing it changes what the organizer has to write. Second person: a form talks to one person. */
+  formNote?: string;
 };
 
 /**
@@ -113,9 +115,11 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
       venue: { key: "venue", label: "Venue or stage", help: "Leave this empty until the venue is settled.", placeholder: "Bushwick Starr" },
     },
   },
-  // A draft-only category (migration 0047). The organizer is a venue, because a restaurant is one
-  // kind of hospitality organizer and not the only one: a hotel bar, a caterer and a community
-  // kitchen raise money here too. Both details are free text and both can stay empty.
+  // Restaurants & hospitality, a draft-only category (migration 0047; the public name is the
+  // registry's, from 0049). The organizer is a venue, because a restaurant is one kind of
+  // hospitality organizer and not the only one: a hotel bar, a caterer and a community kitchen
+  // raise money here too. Both details are free text and both can stay empty. Nothing here names a
+  // city: a venue is wherever its organizer says it is, and a program can be online.
   hospitality: {
     organizer: "hospitality venue",
     organizers: "hospitality venues",
@@ -135,6 +139,17 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
       },
     },
   },
+  // Other, a draft-only category (migration 0049). The neutral words, written out so the choice is
+  // in the file and not a fallback somebody might change. No details, on purpose: the registry
+  // allows none, and the shared fields are the whole form. There are no templates and no starter
+  // kits either, so the organizer's own sponsor promise is the only description of what is sold.
+  other: {
+    organizer: "organizer",
+    organizers: "organizers",
+    titleLabel: "Fundraiser name",
+    details: {},
+    formNote: "Other has no suggested sponsorship options and no examples. Say in your own words what the funding enables, who it reaches and what a sponsor receives.",
+  },
 };
 
 /** "production_stage" reads as "Production stage" until somebody writes it a better label. */
@@ -153,6 +168,11 @@ export function organizerNounCounted(categoryKey: string | null | undefined, cou
   const words = LANGUAGE[categoryKey ?? ""];
   if (!words) return count === 1 ? "organizer" : "organizers";
   return count === 1 ? words.organizer : words.organizers;
+}
+
+/** What the draft form says under the category select, or null. Only a category whose choice changes what has to be written has one. */
+export function categoryFormNote(categoryKey: string | null | undefined): string | null {
+  return LANGUAGE[categoryKey ?? ""]?.formNote ?? null;
 }
 
 /** What to call the name field. Neutral for a category this file has no words for. */

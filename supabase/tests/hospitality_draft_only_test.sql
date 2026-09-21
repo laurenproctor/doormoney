@@ -8,7 +8,7 @@
 -- switches stay two switches.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(33);
 
 insert into auth.users (id,email,raw_user_meta_data) values
  ('e7000000-0000-4000-8000-000000000001','hospitality-venue@example.com','{"roles":["organizer"]}'),
@@ -22,8 +22,10 @@ insert into patrons (id,name,contact_email,profile_id) values
 -- The category, as the migration leaves it
 -- ---------------------------------------------------------------
 select results_eq($$select label, draft_enabled, publish_enabled from fundraiser_categories where key='hospitality'$$,
-  $$values ('Hospitality', true, false)$$,
-  'hospitality takes drafts and cannot publish');
+  $$values ('Restaurants & hospitality', true, false)$$,
+  'hospitality takes drafts and cannot publish, under the public name 0049 gave it');
+select is((select count(*)::int from fundraiser_categories where key='restaurants'),0,
+  'and there is one key for it: a second would split its templates, words and future policy');
 select is((select detail_keys from fundraiser_categories where key='hospitality'), array['venue_kind','format'],
   'two optional details, neither of them restaurant-only');
 select is((select count(*)::int from delivery_policies where category_key='hospitality'),0,

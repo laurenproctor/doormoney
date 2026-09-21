@@ -3,6 +3,7 @@ import { Archivo, Bodoni_Moda } from "next/font/google";
 import { Analytics } from "@/components/Analytics";
 import { CookieBanner } from "@/components/CookieBanner";
 import { SITE } from "@/lib/site";
+import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
 import "./globals.css";
 
 const bodoni = Bodoni_Moda({ subsets: ["latin"], style: ["normal", "italic"], axes: ["opsz"], variable: "--font-bodoni" });
@@ -10,7 +11,7 @@ const archivo = Archivo({ weight: ["400", "500", "700"], subsets: ["latin"], var
 
 export const metadata: Metadata = {
   title: { default: `${SITE.name}. ${SITE.strap}.`, template: `%s. ${SITE.name}.` },
-  description: `${SITE.taglineSecond} Starting with music, sports teams, film, and theater.`,
+  description: `${SITE.taglineSecond} Starting with ${STARTING_CATEGORIES_LIST}, and growing.`,
   metadataBase: new URL(SITE.url),
 };
 

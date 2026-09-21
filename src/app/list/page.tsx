@@ -11,7 +11,7 @@ import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { SITE } from "@/lib/site";
 import { currentUser } from "@/lib/auth";
-import { EXAMPLE_GROUPS, EXAMPLE_STATUS_LABEL, exampleHref, exampleStatus, newFundraiserPath } from "@/lib/organizer-examples";
+import { EXAMPLE_GROUPS, EXAMPLE_STATUS_LABEL, exampleHref, exampleStatus, newFundraiserPath, WHO_ORGANIZES } from "@/lib/organizer-examples";
 import { starterKit } from "@/lib/starter-kits";
 
 export const metadata: Metadata = {
@@ -29,15 +29,6 @@ const STEPS: [string, string][] = [
   ["Set prices", "Your price is the price, fixed or open to bids. Door Money suggests one only where it has a sales history to suggest from."],
   ["State what sponsors receive", "What appears, where, and how you will document it. That statement is the promise a sponsor buys, so keep it the size you can deliver."],
   ["Publish when the fundraiser is ready", "A draft holds what is known so far. Publishing asks for the answers a sponsor needs, and nothing is public before then."],
-];
-
-const ORGANIZERS: [string, string][] = [
-  ["Musicians", "Bands, ensembles, soloists and music organizations."],
-  ["Teams", "A team, or a representative with authority over what the team offers."],
-  ["Filmmakers", "A filmmaker or a production organization."],
-  ["Theater companies", "A company, or an authorized producer."],
-  ["Organizations", "A group that organizes the work and answers for its delivery."],
-  ["What comes next", "Any organizer who can state the funding purpose, the audience, what the sponsor receives and how delivery will be documented."],
 ];
 
 const MONEY: [string, string][] = [
@@ -166,8 +157,8 @@ export default async function ListPage() {
       <Section>
         <SectionHead eyebrow="Who organizes">Any organizer with a clear promise</SectionHead>
         <p className="max-w-[62ch] text-muted">{STARTING_CATEGORIES_NOTE}</p>
-        <dl className="mt-9 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
-          {ORGANIZERS.map(([who, what]) => (
+        <dl className="mt-9 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+          {WHO_ORGANIZES.map(([who, what]) => (
             <div key={who} className="bg-ground p-6">
               <dt className="heading text-[20px] leading-[1.2]">{who}</dt>
               <dd className="mt-2 text-[15px] leading-[1.6] text-muted">{what}</dd>
@@ -184,7 +175,7 @@ export default async function ListPage() {
           musician&apos;s inventory and a filmmaker is never asked about a stage. Offer only what you have the
           authority to deliver.
         </p>
-        <div className="mt-9 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-9 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {STARTING_CATEGORIES.map((c) => (
             <div key={c.key} className="flex flex-col bg-ground p-6">
               <div className="caps text-[14px] text-accent-ink">{labels[c.key] ?? c.label}</div>

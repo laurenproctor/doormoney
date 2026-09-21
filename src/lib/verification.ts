@@ -77,6 +77,17 @@ const WORDS: Record<string, Rewording> = {
     end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
     other: { note: "Something else, in the venue's own words." },
   },
+  // Other (migration 0049) borrows nobody's words. There is no shared shape to name, so each line
+  // says only what any placement has: a place, a date, an audience. Nothing here mentions a show.
+  other: {
+    selected_show_photos: { label: "Dated photos from selected dates", note: "Photos of the placement on some of the dates, each carrying its date." },
+    venue_date_record: { label: "Place and date list", note: "Where the activity took place, in person or online, and the dates." },
+    attendance_estimates: { note: "A rough count of the audience for the dates." },
+    social_post_links: { note: "Links to the posts the sponsor appeared in." },
+    short_video: { label: "Short video of the placement", note: "One clip of the placement where the audience sees it." },
+    end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
+    other: { note: "Something else, in the organizer's own words." },
+  },
 };
 
 export const VERIFICATION_METHODS: readonly VerificationMethod[] = [

@@ -43,22 +43,24 @@ const MUSIC_ONLY = /musician|\bbands?\b|\bshows?\b|\btours?\b|\bmerch\b|\blogos?
 // The four starting categories, and the sentence that keeps them a start
 // ---------------------------------------------------------------
 
-test("the starting categories are the contract's four, by the registry's keys and names", () => {
-  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater"]);
-  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.label), ["Music", "Sports teams", "Film", "Theater"]);
+test("the starting categories are the contract's six, by the registry's keys and names", () => {
+  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "other"]);
+  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Other"]);
   for (const c of STARTING_CATEGORIES) {
     assert.match(c.placements, /^Possible placements include /, `${c.key}: an example is a possibility, never an included benefit`);
     assert.doesNotMatch(`${c.funds} ${c.placements}`, /guarantee|verified|certif|impressions/i, c.key);
   }
 });
 
-test("the section renders all four, says they are a start and not a limit, and says what is open today", () => {
+test("the section renders all six without counting them, says they are a start and not a limit, and says what is open today", () => {
   const out = text(renderToStaticMarkup(createElement(StartingCategories, { labels: {} })));
-  for (const name of ["Music", "Sports teams", "Film", "Theater"]) assert.ok(out.includes(name), name);
+  for (const name of ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Other"]) assert.ok(out.includes(name), name);
+  assert.doesNotMatch(out, /\b(?:four|five|six) categories\b/i, "the heading never counts a set that grows");
   assert.ok(out.includes(STARTING_CATEGORIES_NOTE));
   assert.match(out, /A start, not a limit/);
   for (const line of CATEGORY_TEST) assert.ok(out.includes(line), line);
-  assert.ok(out.includes(AVAILABILITY_NOTE), "and it never implies all four can be sponsored already");
+  assert.ok(out.includes(AVAILABILITY_NOTE), "and it never implies every category can be sponsored already");
+  assert.doesNotMatch(AVAILABILITY_NOTE, /hospitality|restaurant|\bOther\b/, "a draft-only category is never named as open");
   assert.match(AVAILABILITY_NOTE, /Music fundraisers are open/);
   assert.match(AVAILABILITY_NOTE, /private drafts/);
   // The registry's name wins over the fallback, so a renamed category is renamed here too.

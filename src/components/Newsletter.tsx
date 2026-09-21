@@ -6,7 +6,7 @@ import { NewsletterForm } from "@/components/NewsletterForm";
 export const NEWSLETTER = {
   eyebrow: "New fundraisers by email",
   title: "The next fundraiser, before the sponsorships go.",
-  body: "New organizers open fundraisers on Door Money across the starting categories: music, sports teams, film, and theater. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week, nothing else in it.",
+  body: `New organizers open fundraisers on Door Money as each category opens to sponsors, starting with music. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week, nothing else in it.`,
   fine: "Every email has an unsubscribe link. Door Money never shares an address.",
 } as const;
 

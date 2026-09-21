@@ -437,6 +437,10 @@ export const STARTER_KITS: readonly StarterKit[] = [
     },
     enabled: true, draftOnly: true,
   },
+
+  // Other (migration 0049) has no kits, on purpose. A kit is a situation Door Money can describe,
+  // and Other is whatever the named categories do not cover, so any example written here would be
+  // an invented promise. The picker says there are none and the form works without one.
 ];
 
 // ---------------------------------------------------------------

@@ -464,7 +464,7 @@ export function newsletterWelcome(params: { to: string; firstName?: string | nul
   const lines = [
     ...(greeting ? [greeting] : []),
     `This address is on the ${SITE.name} new-fundraisers email.`,
-    `New organizers open fundraisers on ${SITE.name} across the starting categories: music, sports teams, film, and theater. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week.`,
+    `New organizers open fundraisers on ${SITE.name} as each category opens to sponsors, starting with music. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week.`,
     `Nothing to do now. The next one arrives the week a fundraiser opens.`,
     `To stop the emails: ${params.unsubscribeUrl}`,
   ];

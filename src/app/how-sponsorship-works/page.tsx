@@ -6,9 +6,10 @@ import { NewsletterCTA } from "@/components/Newsletter";
 import { StartingCategories } from "@/components/StartingCategories";
 import { getCategoryLabels } from "@/lib/category-registry";
 import { SITE } from "@/lib/site";
+import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
 
 const DESCRIPTION =
-  "How Door Money works: organizers fund work with a clear purpose, and sponsors receive the visibility described in the offer. Starting with music, sports teams, film, and theater.";
+  `How Door Money works: organizers fund work with a clear purpose, and sponsors receive the visibility described in the offer. Starting with ${STARTING_CATEGORIES_LIST}, and growing.`;
 
 export const metadata: Metadata = {
   title: { absolute: "How Sponsorship Works | Door Money" },

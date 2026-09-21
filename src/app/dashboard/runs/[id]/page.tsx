@@ -126,6 +126,13 @@ export default async function RunPage({ params, searchParams }: Props) {
             Nothing is offered until you tick it and set its price.
           </p>
         )}
+        {/* A category with no templates (Other, today). Nothing is invented to fill the list. */}
+        {surfaces.length === 0 && (
+          <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
+            This category has no sponsorship options to choose from yet. Your draft keeps what you wrote about the funding, the
+            audience and what a sponsor receives, and that statement is the whole offer for now.
+          </p>
+        )}
         <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={allLots as ExistingLot[]} boardHref={boardHref} publishable={categoryPublishable} />
       </Card>
 

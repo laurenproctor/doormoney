@@ -166,10 +166,11 @@ export const CATALOG: Surface[] = [
     seenBy: "the company's own followers and mailing list",
     blurb: "A named credit in the company's own announcements and mailing list, written by the company." },
 
-  // Hospitality. A draft-only category (migration 0047): these can be priced on a private draft and
-  // cannot be published or bought. No suggested price, for the same reason as above. Each one says
-  // what kind of sponsorship it suits, because here the sponsor's side may be money, product or a
-  // service, and Door Money only ever moves the money.
+  // Restaurants & hospitality (key `hospitality`). A draft-only category (migration 0047): these
+  // can be priced on a private draft and cannot be published or bought. No suggested price, for
+  // the same reason as above. Each one says what kind of sponsorship it suits, because here the
+  // sponsor's side may be money, product or a service, and Door Money only ever moves the money.
+  // Other (migration 0049) has no templates here or in the registry, on purpose.
   { key: "sponsored_martini_cart", name: "Sponsored martini cart", group: "guest_experience", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "season",
     seenBy: "guests at the tables the cart visits", kinds: ["guest_experience", "product", "cash"],
     blurb: "A tableside cart that carries the sponsor's name or product. A cash sponsorship pays for the cart and the staff who work it. A beverage brand may also supply what is poured, which the venue and the sponsor agree between them. The venue confirms what its license allows." },

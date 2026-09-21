@@ -2,7 +2,7 @@
 import { useActionState, useReducer } from "react";
 import { saveDraftForm } from "@/app/actions/drafts";
 import type { FundraiserDraft } from "@/lib/fundraiser-drafts";
-import { detailFields, titleLabel, type DetailField } from "@/lib/categories";
+import { categoryFormNote, detailFields, titleLabel, type DetailField } from "@/lib/categories";
 import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 import { STARTER_KIT_ERROR_MESSAGE, starterKit, starterKitGroups, type KitCategory, type KitTextField, type StarterKitError } from "@/lib/starter-kits";
 import { initialKitDraft, kitDraftReducer, type KitDraftAction, type KitDraftState } from "@/lib/starter-kit-draft";
@@ -40,6 +40,7 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer, starter
   const { fields } = form;
   const category = fields.category_key;
   const detailInputs = detailFields(category, categories.find((item) => item.key === category)?.detail_keys ?? []);
+  const formNote = categoryFormNote(category);
   const kit = starterKit(form.kitKey);
   /** True while a field still holds the kit's own example, which is when the hint under it is true. */
   const isExample = (name: KitTextField) => Boolean(kit?.prefill[name]) && fields[name] === kit?.prefill[name];
@@ -73,6 +74,7 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer, starter
         The category belongs to this fundraiser, not to your account. It sets the words and the details this form asks for. These are the starting categories, and more can be added.
       </span>
     </label>
+    {formNote && <p className="my-4 text-[14.5px] text-accent-ink">{formNote}</p>}
     {form.notice && <p role="alert" className="my-4 text-accent-ink">{STARTER_KIT_ERROR_MESSAGE[form.notice]}</p>}
     {starterKits && form.mode === "idea" && <StarterKitPicker
       group={starterKitGroups(categories).find((group) => group.category.key === category) ?? null}

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AuthShell, AuthPoints } from "@/components/AuthShell";
 import { SignUpForm } from "@/components/SignUpForm";
 import { safeNext } from "@/lib/auth";
-import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
+import { AVAILABILITY_NOTE, STARTING_CATEGORIES_NOTE } from "@/lib/starting-categories";
 
 export const metadata: Metadata = { title: "Sign up" };
 
@@ -33,7 +33,7 @@ export default async function SignUpPage({ searchParams }: Props) {
             "Turn sponsorship opportunities into meaningful income, without chasing agreements, payments or updates across email.",
             "See what your support helps make possible and what you can count on receiving.",
             "Keep every fundraiser, sponsorship, payment and backing organized in one place.",
-            "Music, sports teams, film, and theater are the starting categories. The product is designed to expand as new categories can support a clear sponsorship promise.",
+            STARTING_CATEGORIES_NOTE,
             `Join free. ${AVAILABILITY_NOTE}`,
           ]}
         />
