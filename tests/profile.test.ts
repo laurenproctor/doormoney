@@ -196,3 +196,49 @@ test("a profile may be for a person or an organization, and may decline to say",
   would have left it passing while the view leaked. Each of the four was confirmed to fail against
   a deliberately broken view before the move.
 */
+
+// ---------------------------------------------------------------
+// The Other tag and the page color (migration 0050)
+// ---------------------------------------------------------------
+
+test("the Other tag is a few of the patron's own words, and nothing when Other is not ticked", async () => {
+  const { CUSTOM_TAG_MAX, parseCustomTag } = await import("@/lib/profile");
+  assert.deepEqual(parseCustomTag(false, "Community radio"), { value: null }, "unticked clears it");
+  assert.deepEqual(parseCustomTag(true, "  Community \n radio "), { value: "Community radio" }, "one line, tidied");
+  assert.ok(parseCustomTag(true, "").error, "ticked and empty says so instead of saving nothing quietly");
+  assert.ok(parseCustomTag(true, "x".repeat(CUSTOM_TAG_MAX + 1)).error);
+  assert.equal(parseCustomTag(true, "x".repeat(CUSTOM_TAG_MAX)).value?.length, CUSTOM_TAG_MAX);
+  assert.ok(parseCustomTag(true, "www.spam.example").error, "a tag is not a link");
+  // It stays text. Typing a real category's name does not become that category.
+  assert.deepEqual(parseCustomTag(true, "Music"), { value: "Music" });
+});
+
+test("the page colors are the design system's themes, the same list the database checks, and mono is not one", async () => {
+  const { DEFAULT_PROFILE_THEME, PROFILE_THEMES, isProfileTheme, profileTheme } = await import("@/lib/profile");
+  const { THEMES } = await import("@/components/Theme");
+  const { readFileSync } = await import("node:fs");
+  const keys = PROFILE_THEMES.map((t) => t.key);
+  for (const key of keys) assert.ok((THEMES as readonly string[]).includes(key), `${key} is a real theme with tokens in globals.css`);
+  assert.equal(keys.includes("mono" as never), false, "mono is the legal pages' light");
+  const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+  for (const key of keys) assert.match(css, new RegExp(`\\[data-theme="${key}"\\]`), `${key} has tokens`);
+  const sql = readFileSync(new URL("../supabase/migrations/0050_patron_profile_customization.sql", import.meta.url), "utf8");
+  const allowed = sql.match(/theme in \(([^)]*)\)/)![1].split(",").map((k) => k.trim().replace(/'/g, ""));
+  assert.deepEqual([...allowed].sort(), [...keys].sort(), "the form and the constraint offer the same lights");
+
+  assert.equal(DEFAULT_PROFILE_THEME, "blue", "a profile that never chose is lit as it always was");
+  assert.equal(profileTheme(null), "blue");
+  assert.equal(profileTheme("teal"), "teal");
+  for (const bad of ["#ff00ff", "mono", "", "Teal", "red;"]) {
+    assert.equal(profileTheme(bad), "blue", `${bad}: an unknown value never reaches a page`);
+    assert.equal(isProfileTheme(bad), false, bad);
+  }
+});
+
+test("the public page is lit by the profile and writes no color of its own", async () => {
+  const { readFileSync } = await import("node:fs");
+  const page = readFileSync(new URL("../src/app/patron/[username]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<Theme name=\{theme\}>/);
+  assert.match(page, /<HeroArt theme=\{theme\} src=\{header\} signed=\{Boolean\(header\)\} \/>/, "the header is a signed link from the private bucket, never a public address");
+  assert.doesNotMatch(page, /#[0-9a-f]{6}\b|style=\{\{[^}]*color/i, "no hex and no inline color");
+});

@@ -1,7 +1,7 @@
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { CATALOG, tierPlace } from "@/lib/catalog";
 import { readProfileLinks, type ProfileLink } from "@/lib/links";
-import type { PatronKind, SupportKind } from "@/lib/profile";
+import { isProfileTheme, profileTheme, type PatronKind, type ProfileTheme, type SupportKind } from "@/lib/profile";
 
 /**
  * Reading a patron's public profile, and reading what the patron themselves may put on it.
@@ -40,7 +40,13 @@ export type PublicProfile = {
   interests: string[];
   /** The categories this patron said they support, named by the registry. Not their interests. */
   categories: { key: string; label: string }[];
+  /** A kind of work they support, in their own words. Text, never a category. */
+  customTag: string | null;
   photoPath: string | null;
+  /** The header image, in the same private bucket as the photo. */
+  headerPath: string | null;
+  /** The light the page is lit with. Always one of the design system's themes. */
+  theme: ProfileTheme;
   patronSince: string;
 };
 
@@ -69,6 +75,9 @@ type ProfileRow = {
   category_labels: string[] | null;
   photo_path: string | null;
   patron_since: string;
+  custom_tag: string | null;
+  header_path: string | null;
+  theme: string | null;
 };
 
 /** The published profile at this username, or null. A private one reads exactly like a missing one. */
@@ -76,7 +85,7 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
   const sb = await supabaseServer();
   const { data } = await sb
     .from("public_patron_profiles")
-    .select("username,display_name,profile_kind,bio,location,website,links,interests,category_keys,category_labels,photo_path,patron_since")
+    .select("username,display_name,profile_kind,bio,location,website,links,interests,category_keys,category_labels,photo_path,patron_since,custom_tag,header_path,theme")
     .eq("username", username)
     .maybeSingle();
   const row = data as ProfileRow | null;
@@ -92,7 +101,10 @@ export async function getPublicProfile(username: string): Promise<PublicProfile 
     interests: row.interests ?? [],
     // The view builds both arrays in the same order, so the two line up by position.
     categories: (row.category_keys ?? []).map((key, i) => ({ key, label: row.category_labels?.[i] ?? key })),
+    customTag: row.custom_tag,
     photoPath: row.photo_path,
+    headerPath: row.header_path,
+    theme: profileTheme(row.theme),
     patronSince: row.patron_since,
   };
 }
@@ -199,7 +211,11 @@ export type OwnProfile = {
   interests: string[];
   /** Keys of the categories this patron said they support. */
   categoryKeys: string[];
+  customTag: string | null;
   photoPath: string | null;
+  headerPath: string | null;
+  /** Null where the patron has never chosen: the page is then lit in the default. */
+  theme: ProfileTheme | null;
   published: boolean;
   patronSince: string;
 };
@@ -210,7 +226,7 @@ export async function ownProfile(userId: string): Promise<OwnProfile | null> {
   const [{ data }, { data: chosen }] = await Promise.all([
     sb
       .from("patron_profiles")
-      .select("display_name,profile_kind,bio,location,website,links,interests,photo_path,published,patron_since")
+      .select("display_name,profile_kind,bio,location,website,links,interests,photo_path,published,patron_since,custom_tag,header_path,theme")
       .eq("profile_id", userId)
       .maybeSingle(),
     // Row level security scopes this to the account's own rows; the filter says so out loud.
@@ -228,6 +244,9 @@ export async function ownProfile(userId: string): Promise<OwnProfile | null> {
     photo_path: string | null;
     published: boolean;
     patron_since: string;
+    custom_tag: string | null;
+    header_path: string | null;
+    theme: string | null;
   };
   return {
     displayName: row.display_name,
@@ -238,7 +257,10 @@ export async function ownProfile(userId: string): Promise<OwnProfile | null> {
     links: readProfileLinks(row.links),
     interests: row.interests ?? [],
     categoryKeys: ((chosen ?? []) as { category_key: string }[]).map((c) => c.category_key),
+    customTag: row.custom_tag,
     photoPath: row.photo_path,
+    headerPath: row.header_path,
+    theme: row.theme && isProfileTheme(row.theme) ? row.theme : null,
     published: row.published,
     patronSince: row.patron_since,
   };

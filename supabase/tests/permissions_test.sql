@@ -675,7 +675,9 @@ select set_eq(
   $$values ('username'::text),('display_name'),('bio'),('location'),('website'),('interests'),
            ('photo_path'),('patron_since'),('published_at'),
            -- Migration 0043: what the patron is, where else to find them, the categories they support.
-           ('profile_kind'),('links'),('category_keys'),('category_labels')$$,
+           ('profile_kind'),('links'),('category_keys'),('category_labels'),
+           -- Migration 0050: a tag in the patron's own words, the header's path in the private bucket, the page's light.
+           ('custom_tag'),('header_path'),('theme')$$,
   'public_patron_profiles shows these columns and no others');
 
 select set_eq(

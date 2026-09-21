@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser, currentProfile } from "@/lib/auth";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { normalizeUsername, usernameProblem } from "@/lib/username";
-import { ProfileDetails, parseInterests, type ProfileField } from "@/lib/profile";
+import { ProfileDetails, isProfileTheme, parseCustomTag, parseInterests, type ProfileField } from "@/lib/profile";
 import { eligibleActivity, patronSinceFor, linkPatronRows } from "@/lib/patronprofile";
 import { actPath } from "@/lib/urls";
 import { parseProfileLinks, PROFILE_LINKS_MAX } from "@/lib/links";
@@ -29,8 +29,21 @@ const str = (form: FormData, key: string) => {
   return typeof v === "string" ? v : "";
 };
 
-const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+/** A profile photo may move. A header may not: a moving image the width of the page is not an avatar. Mirrors the bucket in migration 0050. */
+const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+const HEADER_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 const PHOTO_MAX = 5 * 1024 * 1024;
+
+type Upload = { bytes: ArrayBuffer; ext: string; type: string };
+
+/** One image off the form, checked. Null where nothing was chosen. */
+async function readImage(value: FormDataEntryValue | null, types: Record<string, string>, wrongType: string, tooBig: string): Promise<{ upload: Upload | null; error?: string }> {
+  if (!(value instanceof File) || value.size === 0) return { upload: null };
+  const ext = types[value.type];
+  if (!ext) return { upload: null, error: wrongType };
+  if (value.size > PHOTO_MAX) return { upload: null, error: tooBig };
+  return { upload: { bytes: await value.arrayBuffer(), ext, type: value.type } };
+}
 const PHOTO_BUCKET = "patron-photos";
 
 /** The verified address on the session, or null. A typed address never counts. */
@@ -76,27 +89,37 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   if (typed.error) return { ok: false, errors: { links: typed.error } };
 
   // The registry decides what a category is, so a key is checked against it and not against a list
-  // in this file. A category that cannot publish yet is not offered and is not accepted.
+  // in this file. Only a category the registry offers as a preference is accepted (migration 0050).
   const offered = await supportableCategoryKeys();
   const categories = [...new Set(form.getAll("categories").filter((v): v is string => typeof v === "string"))];
   if (categories.some((key) => !offered.has(key))) return { ok: false, errors: { categories: "Choose from the categories on the list." } };
 
-  const photo = form.get("photo");
-  let upload: { bytes: ArrayBuffer; ext: string; type: string } | null = null;
-  if (photo instanceof File && photo.size > 0) {
-    const ext = PHOTO_TYPES[photo.type];
-    if (!ext) return { ok: false, errors: { photo: "Use a JPG, PNG or WebP." } };
-    if (photo.size > PHOTO_MAX) return { ok: false, errors: { photo: "Keep the photo under 5MB." } };
-    upload = { bytes: await photo.arrayBuffer(), ext, type: photo.type };
-  }
+  // "Other" is a tag in the patron's own words. It is never a category key and is never checked
+  // against the registry, so it cannot be mistaken for the `other` fundraiser category.
+  const custom = parseCustomTag(str(form, "category_other") === "on", str(form, "custom_tag"));
+  if (custom.error) return { ok: false, errors: { custom_tag: custom.error } };
+
+  // The light is one of the design system's themes or it is nothing. A typed color never gets here.
+  const themeRaw = str(form, "theme");
+  if (themeRaw && !isProfileTheme(themeRaw)) return { ok: false, errors: { theme: "Choose a color from the list." } };
+  const theme = themeRaw && isProfileTheme(themeRaw) ? themeRaw : null;
+
+  const photoRead = await readImage(form.get("photo"), PHOTO_TYPES, "Use a JPG, PNG, WebP or GIF.", "Keep the photo under 5MB.");
+  if (photoRead.error) return { ok: false, errors: { photo: photoRead.error } };
+  const upload = photoRead.upload;
+  const headerRead = await readImage(form.get("header"), HEADER_TYPES, "Use a JPG, PNG or WebP for the header.", "Keep the header under 5MB.");
+  if (headerRead.error) return { ok: false, errors: { header: headerRead.error } };
+  const headerUpload = headerRead.upload;
+  const removeHeader = str(form, "remove_header") === "on" && !headerUpload;
 
   // Read under the account's own session, so row level security scopes it to one row. Write with
   // the service role: the browser holds no write grant on this table (migration 0029), because a
   // profile row carries `published` and `patron_since`, neither of which is settable by hand.
   const sb = await supabaseServer();
   const admin = supabaseAdmin();
-  const { data: existing } = await sb.from("patron_profiles").select("photo_path").eq("profile_id", user.id).maybeSingle();
+  const { data: existing } = await sb.from("patron_profiles").select("photo_path,header_path").eq("profile_id", user.id).maybeSingle();
   const previousPhoto = (existing as { photo_path: string | null } | null)?.photo_path ?? null;
+  const previousHeader = (existing as { header_path: string | null } | null)?.header_path ?? null;
 
   // The photograph goes up before the row is written, so a failed upload never leaves a row
   // pointing at nothing. The bucket is private: nothing here is readable without a signed link.
@@ -111,6 +134,18 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     photoPath = path;
   }
 
+  // The header follows the same rule, in the same private bucket, under the same account's folder.
+  let headerPath = removeHeader ? null : previousHeader;
+  if (headerUpload) {
+    const path = `${user.id}/header-${randomUUID()}.${headerUpload.ext}`;
+    const { error } = await admin.storage.from(PHOTO_BUCKET).upload(path, headerUpload.bytes, { contentType: headerUpload.type, upsert: false });
+    if (error) {
+      console.error("patron header upload failed:", error.message);
+      return { ok: false, errors: { header: "The header did not upload. Try once more." } };
+    }
+    headerPath = path;
+  }
+
   const row = {
     display_name: parsed.data.display_name,
     profile_kind: parsed.data.profile_kind,
@@ -119,7 +154,10 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     website: parsed.data.website,
     links: typed.links,
     interests: interests.items,
+    custom_tag: custom.value,
     photo_path: photoPath,
+    header_path: headerPath,
+    theme,
     updated_at: new Date().toISOString(),
   };
 
@@ -153,6 +191,10 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     const { error } = await admin.storage.from(PHOTO_BUCKET).remove([previousPhoto]);
     if (error) console.error("old patron photo not removed:", error.message);
   }
+  if (previousHeader && previousHeader !== headerPath && previousHeader.startsWith(`${user.id}/`)) {
+    const { error } = await admin.storage.from(PHOTO_BUCKET).remove([previousHeader]);
+    if (error) console.error("old patron header not removed:", error.message);
+  }
 
   revalidatePath("/dashboard/profile");
   const profile = await currentProfile(user.id);
@@ -160,9 +202,13 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   return { ok: true, message: "Saved." };
 }
 
-/** The categories a patron may say they support: the ones the registry lets publish. */
+/**
+ * The categories a patron may say they support: the ones the registry offers as a preference
+ * (migration 0050). That is its own switch. It is not publish_enabled, so hospitality can be
+ * supported here while it still cannot publish, and listing one opens nothing.
+ */
 async function supportableCategoryKeys(): Promise<Set<string>> {
-  const { data } = await supabaseAdmin().from("fundraiser_categories").select("key").eq("publish_enabled", true);
+  const { data } = await supabaseAdmin().from("fundraiser_categories").select("key").eq("preference_enabled", true);
   return new Set(((data ?? []) as { key: string }[]).map((c) => c.key));
 }
 

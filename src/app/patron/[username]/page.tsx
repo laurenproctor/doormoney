@@ -83,17 +83,25 @@ export default async function PatronProfilePage({ params }: Props) {
   if ("moved" in found) permanentRedirect(`/patron/${found.moved}`);
 
   const profile = found.profile;
-  const [activity, photo, labels] = await Promise.all([getPublicActivity(profile.username), signedPhotoUrl(profile.photoPath), getCategoryLabels()]);
+  const [activity, photo, header, labels] = await Promise.all([
+    getPublicActivity(profile.username),
+    signedPhotoUrl(profile.photoPath),
+    signedPhotoUrl(profile.headerPath),
+    getCategoryLabels(),
+  ]);
+  // The patron's own light, from the design system's themes. Never a typed color (src/lib/profile.ts).
+  const theme = profile.theme;
   const link = profileLink(profile.website);
   const totals = impactTotals(activity);
   const kind = profile.kind === "other" ? null : patronKindLabel(profile.kind);
 
   return (
-    <Theme name="blue">
+    <Theme name={theme}>
       <Nav />
       <main id="main" className="flex-1">
         <section className="relative overflow-hidden border-b border-line">
-          <HeroArt theme="blue" />
+          {/* A header the patron chose sits under the stage light, in the page's light, as an act's photo does. */}
+          <HeroArt theme={theme} src={header} signed={Boolean(header)} />
           <div className="hero-in relative mx-auto w-full max-w-[1120px] px-7 pb-[64px] pt-[80px]">
             <Eyebrow className="mb-8">Patron profile</Eyebrow>
             <div className="grid items-start gap-8 sm:grid-cols-[160px_1fr] sm:gap-10">
@@ -137,7 +145,7 @@ export default async function PatronProfilePage({ params }: Props) {
           </div>
         </section>
 
-        {profile.categories.length > 0 && (
+        {(profile.categories.length > 0 || profile.customTag) && (
           <Section>
             <SectionHead eyebrow="Categories">What this patron supports</SectionHead>
             <ul className="mt-7 flex flex-wrap gap-2.5">
@@ -146,6 +154,10 @@ export default async function PatronProfilePage({ params }: Props) {
                   {c.label}
                 </li>
               ))}
+              {/* Their own words, beside the registry's. It is a tag and links nowhere: it is not a category. */}
+              {profile.customTag && (
+                <li className="edge caps bg-panel px-4 py-2.5 text-[14px] text-ink">{profile.customTag}</li>
+              )}
             </ul>
           </Section>
         )}

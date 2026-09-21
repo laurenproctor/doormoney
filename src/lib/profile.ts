@@ -91,7 +91,61 @@ export function interestsText(items: string[] | null | undefined): string {
 // The profile's own fields
 // ---------------------------------------------------------------
 
-export type ProfileField = "display_name" | "profile_kind" | "bio" | "location" | "website" | "links" | "categories" | "interests" | "photo" | "form";
+export type ProfileField = "display_name" | "profile_kind" | "bio" | "location" | "website" | "links" | "categories" | "custom_tag" | "interests" | "photo" | "header" | "theme" | "form";
+
+// ---------------------------------------------------------------
+// A category in the patron's own words
+// ---------------------------------------------------------------
+
+export const CUSTOM_TAG_MAX = 40;
+
+export type CustomTagResult = { value: string | null; error?: string };
+
+/**
+ * The tag behind "Other" on the profile form: support that fits no category on the list.
+ *
+ * It is text and stays text. It is never matched against the category registry, the way interests
+ * never are: "Dance" typed here adds no dance category and is a vote for nothing. Unticking Other
+ * clears it, so a hidden field never keeps a tag on the public page.
+ */
+export function parseCustomTag(ticked: boolean, raw: string | null | undefined): CustomTagResult {
+  if (!ticked) return { value: null };
+  const value = (raw ?? "").replace(/\s+/g, " ").trim();
+  if (!value) return { value: null, error: "Type the tag, or untick Other." };
+  if (value.length > CUSTOM_TAG_MAX) return { value: null, error: `Keep the tag under ${CUSTOM_TAG_MAX} characters.` };
+  if (/https?:|www\./i.test(value)) return { value: null, error: "A tag is a few words, not a link." };
+  return { value };
+}
+
+// ---------------------------------------------------------------
+// The light the public page is lit with
+// ---------------------------------------------------------------
+
+/**
+ * The lights a patron may choose. These are the design system's own themes (src/components/Theme.tsx,
+ * tokens in globals.css), so every one already has an accent that clears contrast on the ground.
+ * There is no free color: a hex typed by a visitor would be a new color with unchecked contrast.
+ * Mono is left out because it is the legal pages' light. Mirrors the check in migration 0050.
+ */
+export const PROFILE_THEMES = [
+  { key: "blue", label: "Blue" },
+  { key: "lime", label: "Lime" },
+  { key: "magenta", label: "Magenta" },
+  { key: "amber", label: "Amber" },
+  { key: "teal", label: "Teal" },
+  { key: "violet", label: "Violet" },
+  { key: "red", label: "Red" },
+] as const;
+export type ProfileTheme = (typeof PROFILE_THEMES)[number]["key"];
+export const DEFAULT_PROFILE_THEME: ProfileTheme = "blue";
+
+/** A stored or submitted theme, or the default. An unknown value never reaches a page. */
+export function profileTheme(raw: string | null | undefined): ProfileTheme {
+  return PROFILE_THEMES.find((t) => t.key === raw)?.key ?? DEFAULT_PROFILE_THEME;
+}
+export function isProfileTheme(raw: string): raw is ProfileTheme {
+  return PROFILE_THEMES.some((t) => t.key === raw);
+}
 
 /**
  * A link a patron may put on the page. https only, and parsed rather than trusted: what renders is
