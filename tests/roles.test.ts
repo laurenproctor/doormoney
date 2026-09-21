@@ -105,7 +105,7 @@ test("the site nav no longer carries the widget, and names the browse page fundr
   // widget back would widen the union again and this assertion would then fail, which is the point.
   const nav: readonly { href: string; label: string }[] = NAV;
   assert.ok(!nav.some((n) => n.href === "/widget"), "the widget is back in the site nav");
-  assert.equal(nav.find((n) => n.href === "/auctions")?.label, "Fundraisers");
+  assert.equal(nav.find((n) => n.href === "/fundraisers")?.label, "Fundraisers");
   assert.ok(!nav.some((n) => /board/i.test(n.label)), "a nav label still says board");
 });
 

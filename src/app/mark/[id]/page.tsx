@@ -50,7 +50,7 @@ export default async function MarkPage({ params }: Props) {
   return (
     <Page
       theme={themeFor(act.slug)}
-      current="/auctions"
+      current="/fundraisers"
       eyebrow={w.title}
       title={w.music ? "Send the logo for the" : "Send your materials for the"}
       accent={surface.toLowerCase()}

@@ -57,7 +57,7 @@ export default async function HomePage() {
             the funding enables, who the audience is and what a sponsor can count on receiving.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <ButtonLink href="/auctions" arrow>Find a sponsorship</ButtonLink>
+            <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
             <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
           </div>
           <div className="caps mt-auto flex items-end justify-between gap-4 pt-20 text-[14px] text-muted">
@@ -117,7 +117,7 @@ export default async function HomePage() {
             })}
           </div>
           <div className="mt-7">
-            <ButtonLink href="/auctions" variant="ghost" arrow>All fundraisers</ButtonLink>
+            <ButtonLink href="/fundraisers" variant="ghost" arrow>All fundraisers</ButtonLink>
           </div>
         </Section>
       )}
@@ -205,7 +205,7 @@ export default async function HomePage() {
           the funding enables, describe the audience and publish when the fundraiser is ready. {SITE.origin}
         </p>
         <div className="mt-9 flex flex-wrap gap-4">
-          <ButtonLink href="/auctions" arrow>Find a sponsorship</ButtonLink>
+          <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
           <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
         </div>
       </Section>

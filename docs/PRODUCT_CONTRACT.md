@@ -90,7 +90,7 @@ Phase 4 captures an immutable purchased-offer snapshot, including the applicable
 - Preserve existing music rows, IDs, ownership, purchased benefits, fee behavior, and historical payment records.
 - Preserve `/<organizer-slug>` and `/<organizer-slug>/support-<fundraiser-slug>`. Published fundraiser slugs remain frozen; existing username and retired-address rules remain.
 - Preserve `/board/<slug>`, `/mark/<id>`, record and claim links, and installed widget snippets.
-- Add canonical discovery at `/fundraisers` in Phase 3. Keep `/auctions` compatible, update internal links deliberately, and reserve the new path in both namespace guards after checking for collisions.
+- Canonical discovery is at `/fundraisers` (built 2026-09-21; `/auctions` redirects to it). The rule that got it there still holds for the next address that moves: keep `/auctions` compatible, update internal links deliberately, and reserve the new path in both namespace guards after checking for collisions.
 - Keep existing `acts`, `runs`, `lots`, `patrons`, and `mark_*` names where changing them would break consumers. Neutral product language does not require wholesale table renaming.
 - Existing `musician` roles must continue to sign in, retain ownership, and reach their dashboard when neutral account concepts arrive.
 - Widgets must identify the intended fundraiser through rendering, payment creation, webhook fulfillment, return handling, and the final record. Never silently switch a new exact-fundraiser widget to another fundraiser. Existing profile-based snippets need a documented compatibility path.

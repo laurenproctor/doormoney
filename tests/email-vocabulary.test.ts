@@ -62,7 +62,7 @@ const MAILS = [
   auctionUnsold({ to, actName: common.actName, lotName: common.lotName, reserveCents: 45000, dashboardUrl: urls.dashboardUrl }),
   markWaiting({ to, actName: common.actName, patronName: common.patronName, lotName: common.lotName, note: "Logo attached.", dashboardUrl: urls.dashboardUrl }),
   markApproved({ ...common, recordUrl: urls.recordUrl }),
-  markDeclined({ ...common, refundedCents: 120000, boardsUrl: "https://example.test/auctions" }),
+  markDeclined({ ...common, refundedCents: 120000, boardsUrl: "https://example.test/fundraisers" }),
   markReminder({ ...common, markUrl: "https://example.test/mark/1" }),
   payoutsOn({ to, actName: common.actName, dashboardUrl: urls.dashboardUrl }),
   refundIssued({ ...common, what: "the kick drum head", refundedCents: 60000, full: false, recordUrl: urls.recordUrl }),

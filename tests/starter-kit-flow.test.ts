@@ -336,7 +336,7 @@ test("with the category in the registry, a hospitality kit works as a draft and 
 
 test("hospitality is not advertised as one of Door Money's categories anywhere a visitor reads them", () => {
   assert.match(read("tests/starter-kits.test.ts"), /hospitality is draft only twice over/, "the registry test that holds the switches is still there");
-  for (const file of ["src/lib/starting-categories.ts", "src/lib/category-registry.ts", "src/app/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/signup/page.tsx", "src/app/auctions/page.tsx"]) {
+  for (const file of ["src/lib/starting-categories.ts", "src/lib/category-registry.ts", "src/app/page.tsx", "src/app/how-sponsorship-works/page.tsx", "src/app/signup/page.tsx", "src/app/fundraisers/page.tsx"]) {
     assert.doesNotMatch(read(file), /hospitality|restaurant/i, file);
   }
 });

@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/Button";
 
 /** The two ways in, repeated at the foot of every page. */
 const WAYS = [
-  { href: "/auctions", label: "Find a sponsorship", blurb: "Pick a fundraiser, read what the sponsorship includes, and put money behind the work." },
+  { href: "/fundraisers", label: "Find a sponsorship", blurb: "Pick a fundraiser, read what the sponsorship includes, and put money behind the work." },
   { href: "/list", label: "Create a fundraiser", blurb: "Say what the funding enables, who the audience is and what sponsors receive." },
 ] as const;
 

@@ -178,7 +178,7 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
   await revalidateBoards(sb, act.slug, runId);
-  revalidatePath("/auctions");
+  revalidatePath("/fundraisers");
   return { ok: true };
 }
 
@@ -197,7 +197,7 @@ export async function unpublishRun(runId: string): Promise<{ ok: boolean; error?
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
   await revalidateBoards(sb, act.slug, runId);
-  revalidatePath("/auctions");
+  revalidatePath("/fundraisers");
   return { ok: true };
 }
 
@@ -227,7 +227,7 @@ export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: s
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/runs/${runId}`);
   await revalidateBoards(sb, act.slug, runId);
-  revalidatePath("/auctions");
+  revalidatePath("/fundraisers");
 
   const waiting = done.retryable + done.failed;
   return {
