@@ -4,13 +4,17 @@ import type { ReactNode } from "react";
 import { changeUsername, saveProfileDetails, setActivityShown, setProfileVisibility, type ProfileState, type UsernameState } from "@/app/actions/profile";
 import { Button } from "@/components/Button";
 import { inputClass, labelClass } from "@/components/DashboardShell";
+import { ImageDropField } from "@/components/ImageDropField";
 import {
   BIO_MAX,
+  CUSTOM_TAG_MAX,
+  DEFAULT_PROFILE_THEME,
   INTERESTS_MAX,
   INTEREST_MAX,
   LOCATION_MAX,
   NAME_MAX,
   PATRON_KINDS,
+  PROFILE_THEMES,
   SUPPORT_LABEL,
   formatMonth,
   interestsText,
@@ -27,9 +31,18 @@ import type { EligibleItem, OwnProfile } from "@/lib/patronprofile";
   turning one on never turns another on. The username sits on its own because it moves the address
   of both this page and, for an organizer, their own page.
 
-  Every control here is a real button in a real form: keyboard first, no drag and drop anywhere,
-  every state said in words rather than in color, and every message in a live region.
+  Every control here is a real control in a real form: keyboard first, every state said in words
+  rather than in color, and every message in a live region. The two images can be dropped onto
+  their fields, and that is only ever a second way in: each is a real file input underneath
+  (src/components/ImageDropField.tsx). The page color is a choice among the site's own lights,
+  named in words beside each swatch.
 */
+
+const PHOTO_ACCEPT = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+const HEADER_ACCEPT = ["image/jpeg", "image/png", "image/webp"] as const;
+const IMAGE_MAX = 5 * 1024 * 1024;
+const chipClass =
+  "caps edge cursor-pointer bg-panel px-4 py-2.5 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink";
 
 const initial: ProfileState = { ok: false };
 const initialUsername: UsernameState = { ok: false };
@@ -69,15 +82,19 @@ export function Field({
 export function ProfileDetailsForm({
   profile,
   photo,
+  header,
   categories,
 }: {
   profile: OwnProfile | null;
   photo: string | null;
+  /** The header image on the profile now, already signed. */
+  header: string | null;
   /** The categories the registry offers, already named. Not hardcoded here, so a fifth needs no change. */
   categories: { key: string; label: string }[];
 }) {
   const [state, action, pending] = useActionState(saveProfileDetails, initial);
   const [bio, setBio] = useState(profile?.bio ?? "");
+  const [other, setOther] = useState(Boolean(profile?.customTag));
   const uid = useId();
   const err = state.errors ?? {};
 
@@ -158,25 +175,37 @@ export function ProfileDetailsForm({
         </p>
       </fieldset>
 
-      {categories.length > 0 && (
-        <fieldset className="mb-[18px]">
-          <legend className={labelClass}>Categories you support</legend>
-          <div className="flex flex-wrap gap-2.5">
-            {categories.map((c) => (
-              <label
-                key={c.key}
-                className="caps edge cursor-pointer bg-panel px-4 py-2.5 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink"
-              >
-                <input type="checkbox" name="categories" value={c.key} defaultChecked={profile?.categoryKeys.includes(c.key) ?? false} className="sr-only" />
-                {c.label}
-              </label>
-            ))}
-          </div>
-          <p role={err.categories ? "alert" : undefined} className={`mt-1.5 max-w-none text-[14px] ${err.categories ? "text-[14.5px] text-accent-ink" : "text-muted"}`}>
-            {err.categories ?? "Optional. Shown on your public page. It commits you to nothing and changes nothing you have already paid for."}
-          </p>
-        </fieldset>
-      )}
+      <fieldset className="mb-[18px]">
+        <legend className={labelClass}>Categories you support</legend>
+        <div className="flex flex-wrap gap-2.5">
+          {categories.map((c) => (
+            <label key={c.key} className={chipClass}>
+              <input type="checkbox" name="categories" value={c.key} defaultChecked={profile?.categoryKeys.includes(c.key) ?? false} className="sr-only" />
+              {c.label}
+            </label>
+          ))}
+          {/* Not a category: a tag in the patron's own words, stored as text (migration 0050). */}
+          <label className={chipClass}>
+            <input type="checkbox" name="category_other" checked={other} onChange={(e) => setOther(e.target.checked)} aria-controls={`${uid}-custom`} className="sr-only" />
+            Other
+          </label>
+        </div>
+        <p role={err.categories ? "alert" : undefined} className={`mt-1.5 max-w-none text-[14px] ${err.categories ? "text-[14.5px] text-accent-ink" : "text-muted"}`}>
+          {err.categories ?? "Optional. Shown on your public page. It commits you to nothing and changes nothing you have already paid for."}
+        </p>
+        <div id={`${uid}-custom`} hidden={!other} className="mt-4">
+          <Field
+            id={`${uid}-custom-input`}
+            label="Your own tag"
+            hint={`A few words for what you support that is not on the list. Up to ${CUSTOM_TAG_MAX} characters. It appears beside your categories.`}
+            error={err.custom_tag}
+          >
+            {(props) => (
+              <input {...props} name="custom_tag" type="text" maxLength={CUSTOM_TAG_MAX} defaultValue={profile?.customTag ?? ""} disabled={!other} placeholder="Community radio" className={inputClass} />
+            )}
+          </Field>
+        </div>
+      </fieldset>
 
       <Field
         id={`${uid}-interests`}
@@ -195,17 +224,69 @@ export function ProfileDetailsForm({
         )}
       </Field>
 
-      <Field id={`${uid}-photo`} label="Profile photo" hint="JPG, PNG or WebP, under 5MB. Choosing a new one replaces the old one." error={err.photo}>
+      <Field id={`${uid}-photo`} label="Profile photo" hint="JPG, PNG, WebP or GIF, under 5MB. Choosing a new one replaces the old one." error={err.photo}>
+        {(props) => (
+          <ImageDropField
+            id={props.id}
+            describedBy={props["aria-describedby"]}
+            invalid={props["aria-invalid"]}
+            name="photo"
+            accept={PHOTO_ACCEPT}
+            acceptWords="JPG, PNG, WebP or GIF"
+            maxBytes={IMAGE_MAX}
+            current={photo}
+            currentAlt="The photo on the profile now"
+            shape="circle"
+          />
+        )}
+      </Field>
+
+      <Field
+        id={`${uid}-header`}
+        label="Header image"
+        hint="Optional. JPG, PNG or WebP, under 5MB, wider than it is tall. It sits beside your name at the top of the page, under the stage light and tinted in your page color."
+        error={err.header}
+      >
         {(props) => (
           <>
-            {photo && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photo} alt="The photo on the profile now" width={96} height={96} className="edge mb-3 h-[96px] w-[96px] rounded-full object-cover" />
+            <ImageDropField
+              id={props.id}
+              describedBy={props["aria-describedby"]}
+              invalid={props["aria-invalid"]}
+              name="header"
+              accept={HEADER_ACCEPT}
+              acceptWords="JPG, PNG or WebP"
+              maxBytes={IMAGE_MAX}
+              current={header}
+              currentAlt="The header image on the profile now"
+              shape="wide"
+            />
+            {header && (
+              <label className="mt-3 flex cursor-pointer items-center gap-2.5 text-[15px]">
+                <input type="checkbox" name="remove_header" className="h-4 w-4 accent-[var(--accent)]" />
+                Remove the header image
+              </label>
             )}
-            <input {...props} name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block text-[15px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink" />
           </>
         )}
       </Field>
+
+      <fieldset className="mb-[18px]">
+        <legend className={labelClass}>Page color</legend>
+        <div className="flex flex-wrap gap-2.5">
+          {PROFILE_THEMES.map((t) => (
+            <label key={t.key} className="caps edge flex cursor-pointer items-center gap-2.5 bg-panel px-4 py-2.5 text-[14px] has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-ground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink">
+              <input type="radio" name="theme" value={t.key} defaultChecked={(profile?.theme ?? DEFAULT_PROFILE_THEME) === t.key} className="sr-only" />
+              {/* The swatch sits in its own theme, so it shows that light's real accent. The name beside it is what says which. */}
+              <span data-theme={t.key} aria-hidden="true" className="inline-block h-4 w-4 flex-none rounded-full bg-accent" />
+              {t.label}
+            </label>
+          ))}
+        </div>
+        <p role={err.theme ? "alert" : undefined} className={`mt-1.5 max-w-none text-[14px] ${err.theme ? "text-[14.5px] text-accent-ink" : "text-muted"}`}>
+          {err.theme ?? "The color of light on your public page. These are Door Money's own colors, each already checked for readable text."}
+        </p>
+      </fieldset>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the profile"}</Button>

@@ -167,7 +167,7 @@ test("enabled kits and draft-only kits are separate lists", () => {
 
 test("hospitality is draft only twice over: in the registry, and on every one of its kits", () => {
   // The registry: one migration names the category, it says publishing is off, and nothing later turns it on.
-  assert.deepEqual(MIGRATIONS.filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))), ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql"]);
+  assert.deepEqual(MIGRATIONS.filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))), ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql", "0050_patron_profile_customization.sql"]);
   assert.doesNotMatch(SQL, /publish_enabled\s*=\s*true[^;]*hospitality/i, "no migration switches hospitality publishing on");
   // No delivery policy: that row is what would let one be bought, in test mode first (0045).
   assert.doesNotMatch(SQL, /insert into (?:public\.)?delivery_policies[^;]*hospitality/i, "no migration gives hospitality a delivery policy");

@@ -28,7 +28,7 @@ const SECTIONS: LegalSection[] = [
       <Bullets
         items={[
           "Uses real HTML: headings in order, lists, buttons, links and landmarks, so screen readers and other assistive tools can move around the page.",
-          "Works from the keyboard alone. Every link, button and form field can be reached with the Tab key, and the focused element shows an outline in the page's accent color.",
+          "Works from the keyboard alone, including the two image fields on a patron's profile, where dragging a file in is only a second way to choose one. Every link, button and form field can be reached with the Tab key, and the focused element shows an outline in the page's accent color.",
           "Sets light text on a dark background. Body text and small colored text meet the 4.5 to 1 contrast minimum, and color is never the only signal.",
           "Scales with the browser. Text and layout hold together at 200% zoom and on screens 380 pixels wide.",
           "Labels every form field, and reports errors in words next to the field they belong to.",
@@ -50,6 +50,7 @@ const SECTIONS: LegalSection[] = [
             "Page titles use a high-contrast serif typeface in capitals, which some readers find slower to read. Everything else uses a plain sans-serif face, and every page can be read at any zoom.",
             "The site has one look, a dark one, and no light mode. A reader who needs dark text on a light page has to rely on the browser's reader view or a forced-colors setting, and Door Money has not tested the site in either yet.",
             "The stage lights at the top of each page sway slowly unless the system asks for reduced motion. They are decoration and are hidden from assistive tools.",
+            "A patron's profile photo may be an animated GIF. Door Money cannot pause one for a reader who asks for reduced motion. A header image is never animated.",
             "The payment form comes from Stripe. It is built to be accessible, and Door Money cannot change its internals.",
             "The widget lives in a frame on an organizer's own site. Door Money's snippet gives the frame a title, and the rest of that page is the organizer's.",
             "Photos and evidence an organizer adds to a record carry the description the organizer wrote. Door Money asks for one but cannot check it.",

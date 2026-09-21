@@ -49,7 +49,13 @@ test("migration 0047 adds the category for drafts, with publishing written out a
 test("no other migration opens it: the files that name hospitality are 0047, the privacy fix found with it, and the one that gave it its public name", () => {
   const dir = path.join(ROOT, "supabase/migrations");
   const naming = readdirSync(dir).filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))).sort();
-  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql"]);
+  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql", "0050_patron_profile_customization.sql"]);
+  // 0050 lets a patron say they support it, on a switch of its own. It opens nothing: no publishing, no policy, no template.
+  const preference = sql("supabase/migrations/0050_patron_profile_customization.sql");
+  assert.match(preference, /set preference_enabled = true where publish_enabled or key = 'hospitality'/);
+  assert.doesNotMatch(preference, /publish_enabled\s*=\s*true/i);
+  assert.doesNotMatch(preference, /insert into (?:public\.)?(?:delivery_policies|surfaces)/i);
+  assert.match(preference, /a draft-only category can publish/, "and it stops if a draft-only category can");
   // 0049 changes the label and nothing else about it: same key, no publishing, no policy, and it stops if either is there.
   const name = sql("supabase/migrations/0049_restaurants_and_other_categories.sql");
   assert.match(name, /set label = 'Restaurants & hospitality'\s+where key = 'hospitality' and label = 'Hospitality'/);
@@ -68,9 +74,11 @@ test("hospitality is a starting category since 2026-09-21, and being listed open
   assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "other"]);
   assert.equal(STARTING_CATEGORIES.find((c) => c.key === "hospitality")!.label, "Restaurants & hospitality");
   assert.doesNotMatch(read("src/lib/starting-categories.ts"), /key: "restaurants"/);
-  // The patron-side pickers read the registry with publish_enabled = true, so a draft-only category is not offered there.
-  assert.match(read("src/app/dashboard/profile/page.tsx"), /from\("fundraiser_categories"\)\.select\("key,label"\)\.eq\("publish_enabled", true\)/);
-  assert.match(read("src/app/actions/profile.ts"), /from\("fundraiser_categories"\)\.select\("key"\)\.eq\("publish_enabled", true\)/);
+  // The patron-side pickers read the registry's own preference switch (migration 0050), in both places, and never
+  // publish_enabled: a patron can say they support restaurants while no hospitality fundraiser can be published.
+  assert.match(read("src/app/dashboard/profile/page.tsx"), /from\("fundraiser_categories"\)\.select\("key,label"\)\.eq\("preference_enabled", true\)/);
+  assert.match(read("src/app/actions/profile.ts"), /from\("fundraiser_categories"\)\.select\("key"\)\.eq\("preference_enabled", true\)/);
+  for (const file of ["src/app/dashboard/profile/page.tsx", "src/app/actions/profile.ts"]) assert.doesNotMatch(read(file), /\.eq\("publish_enabled"/, `${file} asks the preference switch`);
 });
 
 // ---------------------------------------------------------------

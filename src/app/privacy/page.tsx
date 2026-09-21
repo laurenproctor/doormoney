@@ -33,7 +33,7 @@ const SECTIONS: LegalSection[] = [
             <Term key="accounts" name="Accounts">Email address and sign-in details, a first and last name, and an account photo where one is added.</Term>,
             <Term key="organizers" name="Organizers">The profile: a name, an address on the site, and optionally a description, a photo, a website, a social handle and a city, region and country. The fundraiser: its category, purpose, audience, dates, locations, goal, sponsorship options and prices. For music, the list of shows, and optionally a photo per show and a self-reported attendance figure. Evidence of delivery, which may be a photograph, a link, a document or a note. Stripe collects identity and bank details directly for payouts; {SITE.name} stores only the Stripe account reference.</Term>,
             <Term key="sponsors" name="Sponsors">Name or business name, email address, the materials sent for a placement (a name, a logo, a credit line or artwork), what they bought or bid on, and the payment status. Card numbers go straight to Stripe and never touch {SITE.name}. A bidder saves a card with Stripe when bidding; {SITE.name} stores Stripe&apos;s reference to the customer and the card, not the card.</Term>,
-            <Term key="profiles" name="Public patron profiles">Optional, and off until the patron turns one on: a display name, a username, whether the profile is for a person or an organization, a description, a location, a website, interests, the categories supported and a photo.</Term>,
+            <Term key="profiles" name="Public patron profiles">Optional, and off until the patron turns one on: a display name, a username, whether the profile is for a person or an organization, a description, a location, a website, interests, the categories supported, a tag in the patron&apos;s own words, a photo, a header image and the page&apos;s color.</Term>,
             <Term key="fans" name="Fans who back through the widget">Display name, email address and the tier chosen.</Term>,
             <Term key="auto" name="Automatically">Server logs with IP address, browser type and the pages requested, kept briefly for security and debugging. {SITE.name} counts page views with Vercel Web Analytics, which sets no cookies and stores no IP addresses. No tracking pixels.</Term>,
           ]}
@@ -78,7 +78,7 @@ const SECTIONS: LegalSection[] = [
         </p>
         <p>
           A patron&apos;s public profile is off until the patron turns it on. Each sponsorship or backing on it is published one at a
-          time, by the patron. The profile photo is kept in private storage and shown through links that expire.
+          time, by the patron. The profile photo and the header image are kept in private storage and shown through links that expire.
         </p>
         <p>
           The record goes to the sponsor and the organizer. Its page is not listed anywhere and search engines are told not to

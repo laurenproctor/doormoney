@@ -132,7 +132,7 @@ test("unticking a category removes that one and only that one", async () => {
   assert.deepEqual(removed[0].filters, { profile_id: "patron-1", category_key: ["film"] });
 });
 
-test("a category outside the registry, or one that cannot publish, is refused before anything is written", async () => {
+test("a category outside the registry, or one the registry does not offer as a preference, is refused before anything is written", async () => {
   reset();
   registry = ["music"];
   const result = await saveProfileDetails({ ok: false }, formWith({ categories: ["music", "dance"] }));
@@ -169,4 +169,85 @@ test("a first profile is created private, and its categories are written after t
   const categories = ops.findIndex((o) => o.table === "patron_profile_categories" && o.verb === "insert");
   assert.ok(created >= 0 && categories > created, "the row comes first, because each choice hangs off it");
   assert.equal((ops[created].payload as Record<string, unknown>).published, false);
+});
+
+// ---------------------------------------------------------------
+// Hospitality, the Other tag, the header and the page color (migration 0050)
+// ---------------------------------------------------------------
+
+test("hospitality can be supported once the registry offers it, and the save asks the preference switch and not the publish one", async () => {
+  reset();
+  registry = ["film", "hospitality", "music", "sports", "theater"];
+  const result = await saveProfileDetails({ ok: false }, formWith({ categories: ["hospitality"] }));
+  assert.equal(result.ok, true);
+  assert.deepEqual(ops.find((o) => o.table === "patron_profile_categories")?.payload, [{ profile_id: "patron-1", category_key: "hospitality" }]);
+});
+
+test("Other is a tag in the patron's own words: stored as text, and never as a category", async () => {
+  reset();
+  const result = await saveProfileDetails({ ok: false }, formWith({ categories: ["music"], category_other: "on", custom_tag: "  Community   radio " }));
+  assert.equal(result.ok, true);
+  const row = ops.find((o) => o.table === "patron_profiles" && o.verb === "update")!.payload as Record<string, unknown>;
+  assert.equal(row.custom_tag, "Community radio", "trimmed, and the spaces inside it tidied");
+  assert.deepEqual(ops.find((o) => o.table === "patron_profile_categories")?.payload, [{ profile_id: "patron-1", category_key: "music" }], "only the ticked registry category is a category");
+  assert.equal(ops.some((o) => JSON.stringify(o.payload ?? "").includes('"category_key":"other"')), false, "the `other` fundraiser category is never written from this form");
+});
+
+test("unticking Other clears the tag, so a hidden field never keeps one on the public page", async () => {
+  reset();
+  const result = await saveProfileDetails({ ok: false }, formWith({ custom_tag: "Community radio" }));
+  assert.equal(result.ok, true);
+  const row = ops.find((o) => o.table === "patron_profiles" && o.verb === "update")!.payload as Record<string, unknown>;
+  assert.equal(row.custom_tag, null);
+});
+
+test("a tag that is empty, too long or a link saves nothing", async () => {
+  for (const custom_tag of ["   ", "x".repeat(41), "https://spam.example"]) {
+    reset();
+    const result = await saveProfileDetails({ ok: false }, formWith({ category_other: "on", custom_tag }));
+    assert.equal(result.ok, false, custom_tag);
+    assert.ok(result.errors?.custom_tag, custom_tag);
+    assert.deepEqual(ops, []);
+  }
+});
+
+test("the page color is one of the site's own lights, or it is refused: a typed color never reaches the row", async () => {
+  reset();
+  const chosen = await saveProfileDetails({ ok: false }, formWith({ theme: "teal" }));
+  assert.equal(chosen.ok, true);
+  assert.equal((ops.find((o) => o.table === "patron_profiles")!.payload as Record<string, unknown>).theme, "teal");
+
+  for (const theme of ["#ff00ff", "mono", "rgb(1,2,3)", "blue; background:url(x)"]) {
+    reset();
+    const result = await saveProfileDetails({ ok: false }, formWith({ theme }));
+    assert.equal(result.ok, false, theme);
+    assert.ok(result.errors?.theme, theme);
+    assert.deepEqual(ops, [], theme);
+  }
+
+  reset();
+  const unset = await saveProfileDetails({ ok: false }, formWith({}));
+  assert.equal(unset.ok, true);
+  assert.equal((ops.find((o) => o.table === "patron_profiles")!.payload as Record<string, unknown>).theme, null, "never chosen is stored as nothing, and the page is lit in the default");
+});
+
+test("a header may not move, a photo may, and neither may be something that is not an image", async () => {
+  const file = (name: string, type: string, size = 10) => new File([new Uint8Array(size)], name, { type });
+  const withFile = (key: string, value: File) => { const form = formWith({}); form.set(key, value); return form; };
+
+  reset();
+  const gifHeader = await saveProfileDetails({ ok: false }, withFile("header", file("h.gif", "image/gif")));
+  assert.equal(gifHeader.ok, false);
+  assert.match(gifHeader.errors?.header ?? "", /JPG, PNG or WebP/);
+  assert.deepEqual(ops, []);
+
+  reset();
+  const pdfPhoto = await saveProfileDetails({ ok: false }, withFile("photo", file("p.pdf", "application/pdf")));
+  assert.match(pdfPhoto.errors?.photo ?? "", /JPG, PNG, WebP or GIF/);
+  assert.deepEqual(ops, []);
+
+  reset();
+  const big = await saveProfileDetails({ ok: false }, withFile("header", file("h.jpg", "image/jpeg", 5 * 1024 * 1024 + 1)));
+  assert.match(big.errors?.header ?? "", /under 5MB/);
+  assert.deepEqual(ops, []);
 });

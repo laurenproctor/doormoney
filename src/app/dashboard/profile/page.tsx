@@ -32,11 +32,16 @@ export default async function ProfileSettingsPage() {
   await linkPatronRows(user.id, verified);
 
   const [profile, act, own] = await Promise.all([currentProfile(user.id), ownedAct(user.id), ownProfile(user.id)]);
-  const [activity, photo] = await Promise.all([eligibleActivity(user.id, verified), signedPhotoUrl(own?.photoPath ?? null)]);
+  const [activity, photo, header] = await Promise.all([
+    eligibleActivity(user.id, verified),
+    signedPhotoUrl(own?.photoPath ?? null),
+    signedPhotoUrl(own?.headerPath ?? null),
+  ]);
 
-  // The categories a patron may say they support come from the registry: the ones that can publish.
+  // The categories a patron may say they support come from the registry: the ones it offers as a
+  // preference (migration 0050), which is a separate switch from whether a category can publish.
   const sb = await supabaseServer();
-  const { data: registry } = await sb.from("fundraiser_categories").select("key,label").eq("publish_enabled", true).order("key");
+  const { data: registry } = await sb.from("fundraiser_categories").select("key,label").eq("preference_enabled", true).order("key");
   const categories = (registry ?? []) as { key: string; label: string }[];
 
   const username = profile?.username ?? null;
@@ -100,7 +105,7 @@ export default async function ProfileSettingsPage() {
         <Card>
           <CardHead eyebrow="The details">Who this patron is</CardHead>
           <div className="max-w-[720px]">
-            <ProfileDetailsForm profile={own} photo={photo} categories={categories} />
+            <ProfileDetailsForm profile={own} photo={photo} header={header} categories={categories} />
           </div>
         </Card>
 
