@@ -7,13 +7,14 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftInput, DRAFT_COLUMNS, categoryErrors, type FundraiserCategory, type FundraiserDraft } from "@/lib/fundraiser-drafts";
 import { detailValueErrors } from "@/lib/categories";
 import { slugify } from "@/lib/slug";
+import { kitFitsCategory, starterKit } from "@/lib/starter-kits";
 
 export type DraftState = { ok: boolean; error?: string; id?: string };
 
 export async function draftCategories(): Promise<FundraiserCategory[]> {
   await requireUser("/dashboard");
   const sb = await supabaseServer();
-  const { data, error } = await sb.from("fundraiser_categories").select("key,label,detail_keys,draft_enabled").eq("draft_enabled", true).order("key");
+  const { data, error } = await sb.from("fundraiser_categories").select("key,label,detail_keys,draft_enabled,publish_enabled").eq("draft_enabled", true).order("key");
   if (error) throw new Error("Category definitions could not be loaded.");
   return data as FundraiserCategory[];
 }
@@ -93,6 +94,12 @@ export async function saveDraftForm(_previous: DraftState, form: FormData): Prom
     starts_on: optional("starts_on"), ends_on: optional("ends_on"), kind: optional("kind"),
     show_count: value("show_count"), expected_attendance: value("expected_attendance"),
   });
-  if (result.ok && !value("id")) redirect(`/dashboard/runs/${result.id}`);
+  if (result.ok && !value("id")) {
+    // The starter kit is creation context and is not saved with the draft. It rides along in the
+    // address for the pages after the first save, and only a real kit of this category is carried.
+    const kit = starterKit(value("starter_kit"));
+    const carried = kit && kitFitsCategory(kit, value("category_key")) ? `?kit=${kit.key}` : "";
+    redirect(`/dashboard/runs/${result.id}${carried}`);
+  }
   return result;
 }

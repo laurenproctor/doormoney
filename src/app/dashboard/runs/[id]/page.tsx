@@ -18,18 +18,19 @@ import { loadTemplates } from "@/lib/opportunity-templates";
 import { formatDateRange } from "@/lib/dates";
 import { periodOf } from "@/lib/periods";
 import { runUrl } from "@/lib/urls";
+import { kitFitsCategory, starterKit, suggestedTemplates } from "@/lib/starter-kits";
 
 export const metadata: Metadata = { title: "The fundraiser" };
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 const STATUS_LABEL: Record<string, string> = { draft: "Draft, not public", open: "Open, taking bids and orders", live: "Live, the shows are on", closed: "Closed", cancelled: "Cancelled" };
 /** Only "live" needs the category: outside music there are no shows to be on. */
 const statusLabel = (status: string, music: boolean) =>
   (!music && status === "live" ? "Live, the work is under way" : STATUS_LABEL[status]) ?? status;
 
-export default async function RunPage({ params }: Props) {
-  const { id } = await params;
+export default async function RunPage({ params, searchParams }: Props) {
+  const [{ id }, { kit: kitParam }] = await Promise.all([params, searchParams]);
   const user = await requireUser(`/dashboard/runs/${id}`);
   const act = await ownedAct(user.id);
   if (!act) redirect("/dashboard/act/new");
@@ -64,6 +65,11 @@ export default async function RunPage({ params }: Props) {
   // The options this fundraiser can price, from the registry in the database, so a category added
   // there has an editor. Music narrows by act type; no other category does.
   const surfaces = templatesForFundraiser(await loadTemplates(sb, run.category_key ?? "music"), run.category_key ?? "music", act.type);
+  // The starter kit this draft began from, where the address still carries it. It is not stored
+  // with the fundraiser, and one from another category is ignored. It names options to look at and
+  // ticks none of them.
+  const kit = typeof kitParam === "string" ? starterKit(kitParam) : null;
+  const kitSuggestions = kit && kit.enabled && run.status === "draft" && kitFitsCategory(kit, run.category_key ?? "music") ? suggestedTemplates(kit, surfaces) : [];
   const boardHref = runUrl(act.slug, run.slug);
   const allLots = lots ?? [];
   // What this fundraiser still owes its sponsors. Read under the organizer's own session, so row
@@ -114,7 +120,13 @@ export default async function RunPage({ params }: Props) {
             ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold options stay as they are."
             : "No prices are suggested here yet, so your own number is the only number. Offer only what you can deliver. Sold options stay as they are."}
         </p>
-        <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={allLots as ExistingLot[]} boardHref={boardHref} />
+        {kit && kitSuggestions.length > 0 && (
+          <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
+            The starter kit you began with, {kit.label}, suggests looking at: {kitSuggestions.map((t) => t.name).join(", ")}.
+            Nothing is offered until you tick it and set its price.
+          </p>
+        )}
+        <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={allLots as ExistingLot[]} boardHref={boardHref} publishable={categoryPublishable} />
       </Card>
 
       <Card id="verification" className="mb-10 max-w-[860px]">

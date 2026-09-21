@@ -79,7 +79,7 @@ function fitLabel(types: ActType[]): string {
 }
 
 /** A fundraiser is the period being funded, so a per-run price is a price for the whole fundraiser. */
-const PER: Record<Period, string> = { run: "per fundraiser", month: "per month", season: "per season", production: "per production" };
+const PER: Record<Period, string> = { run: "per fundraiser", month: "per month", season: "per season", production: "per production", program: "per program" };
 
 const STEPS: [string, string][] = [
   [

@@ -61,12 +61,17 @@ function surfaceRows(sql: string): Row[] {
   return rows;
 }
 
-const sqlRows = [...surfaceRows(read("supabase/seed.sql")), ...surfaceRows(read("supabase/migrations/0040_category_sponsorship_options.sql"))];
+const sqlRows = [
+  ...surfaceRows(read("supabase/seed.sql")),
+  ...surfaceRows(read("supabase/migrations/0040_category_sponsorship_options.sql")),
+  ...surfaceRows(read("supabase/migrations/0047_hospitality_draft_category.sql")),
+];
 
 test("the parser found both sets of rows, not one of them", () => {
   assert.equal(sqlRows.length, CATALOG.length, "every option is written down once in SQL");
   assert.ok(sqlRows.some((r) => r.key === "kick_head"), "the music rows, from the seed");
   assert.ok(sqlRows.some((r) => r.key === "foyer_banner"), "the new rows, from migration 0040");
+  assert.equal(sqlRows.filter((r) => r.category_key === "hospitality").length, 6, "hospitality's six, from migration 0047");
   assert.equal(new Set(sqlRows.map((r) => r.key)).size, sqlRows.length, "no key is written twice");
 });
 

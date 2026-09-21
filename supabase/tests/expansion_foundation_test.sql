@@ -14,8 +14,8 @@ select ok((select roles @> array['organizer'] from profiles where id='e2000000-0
 
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"e2000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
-select lives_ok($$insert into runs(act_id,category_key,slug) select 'e2000000-0000-4000-8000-000000000003',key,'draft-'||key from fundraiser_categories$$,'all four categories save minimal drafts under the owner session');
-select is((select count(*) from runs where act_id='e2000000-0000-4000-8000-000000000003' and kind is null and show_count is null and starts_on is null and ends_on is null and title=''),4::bigint,'no fabricated music fields or dates');
+select lives_ok($$insert into runs(act_id,category_key,slug) select 'e2000000-0000-4000-8000-000000000003',key,'draft-'||key from fundraiser_categories$$,'every category in the registry saves a minimal draft under the owner session');
+select is((select count(*) from runs where act_id='e2000000-0000-4000-8000-000000000003' and kind is null and show_count is null and starts_on is null and ends_on is null and title=''),(select count(*) from fundraiser_categories),'no fabricated music fields or dates, in any of them');
 select lives_ok($$update runs set purpose='Equipment rental',sponsor_promise='Logo in the credits',audience_description='Festival audiences',goal_cents=125099,goal_currency='USD',activity_mode='hybrid',activity_locations='[{"city":"Accra","country_code":"GH"},{"city":"London","country_code":"GB"}]',timezone='Africa/Accra',delivery_due_at='2026-12-01T18:00:00+01:00',category_details='{"format":"Short film"}' where slug='draft-film'$$,'owner saves goals, promises, multi-city activity and a deadline');
 select lives_ok($$update runs set activity_mode='online',activity_locations='[]',timezone='Asia/Tokyo' where slug='draft-theater'$$,'online-only activity needs no invented physical location');
 select lives_ok($$update runs set category_key='film' where slug='draft-sports'$$,'an unattached private draft can change category');

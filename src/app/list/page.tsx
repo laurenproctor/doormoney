@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Page } from "@/components/Page";
 import { Section, SectionHead, Steps } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
@@ -9,10 +10,13 @@ import { WIDGET_TIERS } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { SITE } from "@/lib/site";
+import { currentUser } from "@/lib/auth";
+import { EXAMPLE_GROUPS, EXAMPLE_STATUS_LABEL, exampleHref, exampleStatus, newFundraiserPath } from "@/lib/organizer-examples";
+import { starterKit } from "@/lib/starter-kits";
 
 export const metadata: Metadata = {
   title: "Create a fundraiser",
-  description: "For organizers: say what the funding enables, describe the audience, choose sponsorship options and set the prices. Door Money earns 15% when a sponsorship sells, and nothing before that.",
+  description: "For organizers: turn a tour, a season, a film, a production or an event into sponsorships. Start with a sponsorship idea or an empty form, choose what to offer and set the prices. Door Money earns 15% when a sponsorship sells, and nothing before that.",
 };
 
 // The address stays /list: it is in sent email. The page is "Create a fundraiser", for any organizer.
@@ -43,33 +47,117 @@ const MONEY: [string, string][] = [
   ["What about your other income?", `Tickets, sales, fees and grants are yours and stay that way. ${SITE.name} only ever touches the sponsorship money it brings in.`],
 ];
 
+/**
+ * Whether the visitor has a session, which only decides where a link points. With no database
+ * connected the app still serves this page from memory (README, "Run it"), and then nobody is
+ * signed in. A failed read says the same: the link goes through sign-up, which is always safe.
+ */
+async function isSignedIn(): Promise<boolean> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return false;
+  try {
+    return (await currentUser()) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export default async function ListPage() {
-  const [sample, labels] = await Promise.all([getBoard("gutter-hymns"), getCategoryLabels()]);
+  const [sample, labels, signedIn] = await Promise.all([getBoard("gutter-hymns"), getCategoryLabels(), isSignedIn()]);
+  // Somebody new makes an account and a profile first. Somebody with both goes straight to the form.
+  const startHref = signedIn ? newFundraiserPath() : "/signup?next=%2Fdashboard%2Fact%2Fnew";
   return (
     <Page
       theme="amber"
       current="/list"
       eyebrow="For organizers"
-      title="Fund the work with"
-      accent="a clear promise."
+      title="Find sponsors for"
+      accent="your work."
       headline="md"
       strap="For organizers"
       intro={
         <>
           <p className="max-w-[55ch]">
-            Door Money helps sponsors put money behind the work you are already doing. You say what the funding
-            enables, who the audience is and what a sponsor receives. You choose what to offer, what it costs and who
-            appears beside your name.
+            A tour, a season, a film, a production, an event: work that gathers an audience can be sponsored. Door
+            Money turns that audience into sponsorships with a clear promise. You say what the funding enables, who the
+            audience is and what a sponsor receives. You choose what to offer, what it costs and who appears beside
+            your name.
           </p>
           <p className="caps mt-6 text-[14.5px] leading-[2] text-accent-ink">
             {SITE.name} earns {SITE.feePercent}% when something sells, and nothing before that.
           </p>
-          <div className="mt-[30px]">
-            <ButtonLink href="#list">Create a fundraiser</ButtonLink>
+          <div className="mt-[30px] flex flex-wrap gap-4">
+            <ButtonLink href="#ideas">Start with a sponsorship idea</ButtonLink>
+            <ButtonLink href="#list" variant="ghost">Create a fundraiser</ButtonLink>
           </div>
         </>
       }
     >
+      <Section id="ideas">
+        <SectionHead eyebrow="Start with a sponsorship idea">Choose a starter kit</SectionHead>
+        <p className="max-w-[62ch]">
+          A starter kit is one kind of fundraiser, written out as an example. Pick one and the new fundraiser form
+          opens with its examples filled in. Change any of them. Picking one offers nothing, sets no price and
+          publishes nothing: you decide what to offer, and your price is the price.
+        </p>
+        <div className="mt-9 grid gap-10">
+          {EXAMPLE_GROUPS.map((group) => {
+            const kits = group.examples.flatMap((example) => {
+              const kit = starterKit(example.kitKey);
+              return kit ? [{ example, status: exampleStatus(kit, labels) }] : [];
+            });
+            if (kits.length === 0) return null;
+            // A group is as open as its least open example, and says so once, beside its name.
+            const held = kits.find((k) => k.status !== "open")?.status;
+            return (
+              <div key={group.categoryKey}>
+                <h3 className="caps flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[14px] text-accent-ink">
+                  {group.heading}
+                  {held && held !== "open" && <span className="border border-line px-2 py-0.5 text-muted">{EXAMPLE_STATUS_LABEL[held]}</span>}
+                </h3>
+                {held === "coming_soon" && (
+                  <p className="mt-3 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
+                    {SITE.name} has not opened this category. These are examples of what it could hold. None of them
+                    can be created, published or paid for today.
+                  </p>
+                )}
+                {held === "draft_only" && (
+                  <p className="mt-3 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
+                    {SITE.name} has opened this category for private drafts only. A fundraiser started here cannot be
+                    published or paid for yet.
+                  </p>
+                )}
+                <div className="mt-4 grid gap-px bg-line sm:grid-cols-2">
+                  {kits.map(({ example, status }) => {
+                    const href = exampleHref(example.kitKey, status, signedIn);
+                    const body = (
+                      <>
+                        <span className="heading block text-[20px] leading-[1.2]">{example.title}</span>
+                        <span className="mt-2 block text-[15px] leading-[1.6] text-muted">{example.line}</span>
+                        <span className="caps mt-4 block text-[14px] text-accent-ink">
+                          {href ? <>Start from this idea &rarr;</> : "Example only"}
+                        </span>
+                      </>
+                    );
+                    return href
+                      ? <Link key={example.kitKey} href={href} className="lift block bg-ground p-6 text-ink no-underline">{body}</Link>
+                      : <div key={example.kitKey} className="bg-ground p-6">{body}</div>;
+                  })}
+                </div>
+                {held === "coming_soon" && (
+                  <div className="mt-5">
+                    <ButtonLink href="/contact" variant="ghost">Ask about this category</ButtonLink>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-8 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
+          Every example is a possibility, not an included benefit. An organizer offers only what they have the
+          authority to deliver.
+        </p>
+      </Section>
+
       <Section>
         <SectionHead eyebrow="Six steps">From a purpose to a published fundraiser</SectionHead>
         <Steps steps={STEPS} size="lg" ruleFirst={false} className="mt-[34px] max-w-[720px]" />
@@ -175,8 +263,9 @@ export default async function ListPage() {
           Claim a username, describe the fundraiser, price what you offer, publish. The username is your address, so
           the fundraiser goes up at its own address and on the fundraisers page.
         </p>
-        <div className="mt-[34px]">
-          <ButtonLink href="/signup?next=%2Fdashboard%2Fact%2Fnew" arrow>Create a fundraiser</ButtonLink>
+        <div className="mt-[34px] flex flex-wrap gap-4">
+          <ButtonLink href={startHref} arrow>Create a fundraiser</ButtonLink>
+          <ButtonLink href="#ideas" variant="ghost">Choose a starter kit</ButtonLink>
         </div>
       </Section>
     </Page>

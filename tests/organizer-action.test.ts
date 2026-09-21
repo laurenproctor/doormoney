@@ -29,3 +29,25 @@ test("a neutral organizer can save without a fake music type or city", async () 
   assert.equal(written.country_code, "GH");
   assert.equal("owner_id" in written, false, "profile edits must not try to write the protected ownership column");
 });
+
+test("a new organizer who came in on a starter kit goes on to the fundraiser form, on that kit", async () => {
+  const form = (template?: string) => {
+    const f = new FormData();
+    f.set("name", "Fenland Rovers");
+    f.set("slug", "fenland-rovers");
+    if (template !== undefined) f.set("template", template);
+    return f;
+  };
+  existing = null;
+  await assert.rejects(saveAct({ ok: false }, form("fund_season")), /^Error: redirect:\/dashboard\/runs\/new\?template=fund_season$/);
+  for (const column of Object.keys(written)) assert.doesNotMatch(column, /template|kit/, `${column}: the kit is carried, never stored on the profile`);
+  assert.doesNotMatch(JSON.stringify(written), /fund_season/);
+
+  // No kit, an unknown kit, or something that is not a key at all: the dashboard, as before.
+  for (const template of [undefined, "", "fund_everything", "//evil.example", "../admin"]) {
+    await assert.rejects(saveAct({ ok: false }, form(template)), /^Error: redirect:\/dashboard$/, String(template));
+  }
+  // An edit to an existing profile never redirects, so it carries nothing either.
+  existing = { id: "created", slug: "fenland-rovers" };
+  assert.equal((await saveAct({ ok: false }, form("fund_season"))).ok, true);
+});

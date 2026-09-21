@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 /** Category keys are supplied by the database registry, not a closed TypeScript enum. */
-export type FundraiserCategory = { key: string; label: string; detail_keys: string[]; draft_enabled: boolean };
+export type FundraiserCategory = {
+  key: string; label: string; detail_keys: string[]; draft_enabled: boolean;
+  /** Whether the category may leave draft status (migration 0041). Absent reads as no. */
+  publish_enabled?: boolean | null;
+};
 const optionalText = (max: number) => z.string().trim().max(max).nullish().transform((v) => v || null);
 const dateOnly = optionalText(10).refine((v) => {
   if (v === null) return true;

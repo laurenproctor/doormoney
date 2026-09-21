@@ -20,6 +20,7 @@
  * Pure, and importable from a client component: nothing here reads the database.
  */
 import { CATALOG, GROUPS, type ActType } from "@/lib/catalog";
+import type { SponsorshipKind } from "@/lib/sponsorship-kinds";
 
 // ---------------------------------------------------------------
 // Sale methods. How something is sold is never what it is.
@@ -57,6 +58,8 @@ export type OpportunityTemplate = {
   seenBy: string | null;
   /** Longer words, where src/lib/catalog.ts has written some. */
   blurb: string | null;
+  /** Cash, product, a service, a space, an event, a guest experience. Words from the catalog file; empty where it says none. */
+  kinds: readonly SponsorshipKind[];
   /** False once retired: no new opportunity may be made from it, and existing ones are untouched. */
   active: boolean;
 };
@@ -101,6 +104,7 @@ export function templateFromRow(row: TemplateRow): OpportunityTemplate {
     period: row.default_period,
     seenBy: words?.seenBy ?? row.seen_by,
     blurb: words?.blurb ?? null,
+    kinds: words?.kinds ?? [],
     active: row.active ?? true,
   };
 }
@@ -118,6 +122,7 @@ export function catalogTemplates(): OpportunityTemplate[] {
     period: s.period,
     seenBy: s.seenBy,
     blurb: s.blurb,
+    kinds: s.kinds ?? [],
     active: true,
   }));
 }

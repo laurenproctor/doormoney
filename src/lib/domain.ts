@@ -70,7 +70,13 @@ export type OpportunityView = {
 };
 
 /** A template row in an editor. A suggestion, which may be absent, and is never a price. */
-export type OpportunityTemplateView = { key: string; name: string; seenBy: string | null; suggestedPriceCents: number | null; period: string | null };
+export type OpportunityTemplateView = {
+  key: string; name: string; seenBy: string | null; suggestedPriceCents: number | null; period: string | null;
+  /** What kind of sponsorship this suits, already in words: "Cash sponsorship", "Venue or space sponsorship". Absent or empty draws nothing. */
+  kindLabels?: readonly string[];
+  /** One line under the kinds, where one of them is product or a service: Door Money moves the money and nothing else. */
+  kindNote?: string | null;
+};
 export type OpportunityDraft = { on: boolean; count: string; price: string; saleMethod: SaleMethod; buyNow: string };
 
 /** What the organizer committed to document. Only what they chose: src/lib/verification.ts. */

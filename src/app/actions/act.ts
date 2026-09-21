@@ -6,6 +6,8 @@ import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { RESERVED_SLUGS, SLUG_RE, slugify } from "@/lib/slug";
 import { actPath } from "@/lib/urls";
+import { newFundraiserPath } from "@/lib/organizer-examples";
+import { starterKit } from "@/lib/starter-kits";
 
 export type ActField = "name" | "slug" | "type" | "city" | "region" | "country_code" | "bio" | "instagram" | "website" | "photo";
 export type ActState = { ok: boolean; errors?: Partial<Record<ActField | "form", string>> };
@@ -126,7 +128,13 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   revalidatePath("/dashboard");
   revalidatePath(actPath(parsed.data.slug));
   if (previousSlug && previousSlug !== slug) revalidatePath(actPath(previousSlug));
-  if (!existing) redirect("/dashboard");
+  if (!existing) {
+    // A new organizer who came in on a starter kit goes on to the fundraiser form, on that kit.
+    // The key is looked up in the kit registry and is not saved with the profile.
+    const template = form.get("template");
+    const kit = typeof template === "string" ? starterKit(template) : null;
+    redirect(kit ? newFundraiserPath(kit.key) : "/dashboard");
+  }
   return { ok: true };
 }
 

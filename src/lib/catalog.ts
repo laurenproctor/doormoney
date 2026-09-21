@@ -1,10 +1,12 @@
 // What an organizer can offer, per category. Defaults only; the organizer's own price on a lot
-// always wins. Keep in sync with supabase/seed.sql and supabase/migrations/0040; the sync is held
-// by tests/catalog.test.ts rather than by whoever edits this next.
+// always wins. Keep in sync with supabase/seed.sql and supabase/migrations/0040 and 0047; the sync
+// is held by tests/catalog.test.ts rather than by whoever edits this next.
 //
 // This file is words, not the registry. The surfaces table decides which options a category has
 // (src/lib/opportunity-templates.ts reads it), and src/lib/opportunities.ts is the neutral model
 // over both. The music pages that describe music by name still read musicSurfaces() from here.
+
+import type { SponsorshipKind } from "@/lib/sponsorship-kinds";
 
 export type ActType = "touring_band" | "house_act" | "soloist";
 /** The sections a music fundraiser draws. The pages that describe music by name use this. */
@@ -13,8 +15,9 @@ export type SurfaceGroup =
   | MusicGroup
   | "field" | "venue"
   | "screen" | "screening"
-  | "stage" | "front_of_house";
-export type Period = "run" | "month" | "season" | "production";
+  | "stage" | "front_of_house"
+  | "guest_experience" | "space" | "event" | "community";
+export type Period = "run" | "month" | "season" | "production" | "program";
 
 export interface Surface {
   key: string;
@@ -29,6 +32,11 @@ export interface Surface {
   period: Period;
   seenBy: string;
   blurb: string;
+  /**
+   * What kind of sponsorship this suits: cash, product, a service, a space, an event, a guest
+   * experience (src/lib/sponsorship-kinds.ts). Left out where the name already says it.
+   */
+  kinds?: readonly SponsorshipKind[];
 }
 
 /**
@@ -44,6 +52,10 @@ export const GROUPS: Record<SurfaceGroup, { eyebrow: string; heading: string }> 
   screening: { eyebrow: "At screenings", heading: "The room on the night" },
   stage: { eyebrow: "On stage", heading: "What the house sees and hears" },
   front_of_house: { eyebrow: "Front of house", heading: "Where the audience waits and reads" },
+  guest_experience: { eyebrow: "Branded guest experience", heading: "What a guest meets in person" },
+  space: { eyebrow: "Venue or space", heading: "A part of the room with a name on it" },
+  event: { eyebrow: "Events", heading: "A dated program guests book for" },
+  community: { eyebrow: "Community", heading: "Meals the venue gives away" },
   online: { eyebrow: "Online and in print", heading: "When reach matters, measure it." },
 };
 
@@ -153,6 +165,29 @@ export const CATALOG: Surface[] = [
   { key: "production_posts", name: "Production posts", group: "online", category: "theater", appliesTo: null, defaultPriceCents: null, period: "production",
     seenBy: "the company's own followers and mailing list",
     blurb: "A named credit in the company's own announcements and mailing list, written by the company." },
+
+  // Hospitality. A draft-only category (migration 0047): these can be priced on a private draft and
+  // cannot be published or bought. No suggested price, for the same reason as above. Each one says
+  // what kind of sponsorship it suits, because here the sponsor's side may be money, product or a
+  // service, and Door Money only ever moves the money.
+  { key: "sponsored_martini_cart", name: "Sponsored martini cart", group: "guest_experience", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "season",
+    seenBy: "guests at the tables the cart visits", kinds: ["guest_experience", "product", "cash"],
+    blurb: "A tableside cart that carries the sponsor's name or product. A cash sponsorship pays for the cart and the staff who work it. A beverage brand may also supply what is poured, which the venue and the sponsor agree between them. The venue confirms what its license allows." },
+  { key: "sponsored_table_plaque", name: "Sponsored table plaque", group: "space", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "season",
+    seenBy: "guests seated at the table, and those who pass it", kinds: ["space", "cash"],
+    blurb: "A plaque at one table or booth with the sponsor's name on it. A cash sponsorship toward a cost the venue names. The venue approves the wording before anything is engraved." },
+  { key: "sponsored_restaurant_space", name: "Sponsored restaurant space", group: "space", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "season",
+    seenBy: "guests who use the space, and those who pass it", kinds: ["space", "cash"],
+    blurb: "A room, a patio or a counter that carries the sponsor's name on its signage. A cash sponsorship toward building or furnishing it, for as long as the venue and its landlord permit the sign." },
+  { key: "chef_residency", name: "Chef residency", group: "event", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "program",
+    seenBy: "guests who book during the residency", kinds: ["event", "cash", "service"],
+    blurb: "A guest chef in the kitchen for a set period, with the sponsor named on the residency menu and in the venue's announcements of it. A cash sponsorship pays the chef's fee and the ingredients. A sponsor may also provide a service, such as travel or lodging, agreed with the venue." },
+  { key: "dinner_series", name: "Dinner series", group: "event", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "program",
+    seenBy: "guests at each dinner in the series", kinds: ["event", "product", "cash"],
+    blurb: "A set of dinners with the sponsor named on each menu. A cash sponsorship pays for ingredients and staff. A producer or a winery may also supply what is served at a course, agreed with the venue." },
+  { key: "community_meal_program", name: "Community meal program", group: "community", category: "hospitality", appliesTo: null, defaultPriceCents: null, period: "program",
+    seenBy: "the people the program serves, and its local partners", kinds: ["cash", "product"],
+    blurb: "Meals the venue cooks and gives away, with the sponsor named in the venue's announcements of the program. A cash sponsorship pays for food and kitchen hours. A supplier may also give ingredients, agreed with the venue. Nobody who receives a meal is photographed or named for a sponsor." },
 ];
 
 export const WIDGET_TIERS = [
