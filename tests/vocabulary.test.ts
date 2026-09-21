@@ -45,6 +45,9 @@ const FILES = [
   "src/lib/category-words.ts",
   "src/lib/record-words.ts",
   "src/lib/starting-categories.ts",
+  "src/lib/starter-kits.ts",
+  "src/lib/organizer-examples.ts",
+  "src/lib/sponsorship-kinds.ts",
 ];
 
 /**

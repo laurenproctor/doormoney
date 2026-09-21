@@ -21,7 +21,11 @@ const ACT_TYPES = [
 
 const initial: ActState = { ok: false };
 
-export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; siteUrl: string; username?: string | null }) {
+export function ActForm({ act, siteUrl, username, starterKitKey }: {
+  act: OwnedAct | null; siteUrl: string; username?: string | null;
+  /** The starter kit a new organizer came in on, so the next page can open on it. */
+  starterKitKey?: string | null;
+}) {
   const [state, action, pending] = useActionState(saveAct, initial);
   const [name, setName] = useState(act?.name ?? "");
   const [slug, setSlug] = useState(act?.slug ?? username ?? "");
@@ -31,6 +35,7 @@ export function ActForm({ act, siteUrl, username }: { act: OwnedAct | null; site
 
   return (
     <form action={action} noValidate encType="multipart/form-data">
+      {starterKitKey && <input type="hidden" name="template" value={starterKitKey} />}
       <fieldset className="mb-[18px] flex flex-wrap gap-3.5">
         <legend className={labelClass}>Music profile type, optional</legend>
         <p className="mb-1 w-full max-w-none text-[14px] text-muted">

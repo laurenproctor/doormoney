@@ -89,3 +89,24 @@ test("category details arrive as their own fields and a closed list is enforced 
   assert.equal((await saveDraftForm({ ok: false }, form)).ok, true);
   assert.deepEqual(requests.at(-1)!.row.category_details, { sport: "Roller derby" }, "an unknown detail is absent, not empty");
 });
+
+test("a starter kit is carried in the address after the first save and is never written to the draft", async () => {
+  const form = (fields: Record<string, string>) => { const f = new FormData(); for (const [k, v] of Object.entries(fields)) f.set(k, v); return f; };
+  const kit = { category_key: "sports", title: "Upcoming season", purpose: "League fees and travel.", starter_kit: "fund_season", start_from: "idea" };
+
+  await assert.rejects(saveDraftForm({ ok: false }, form(kit)), new RegExp(`^Error: redirect:/dashboard/runs/${id}\\?kit=fund_season$`));
+  const row = requests.at(-1)!.row;
+  assert.equal(row.status, "draft", "a kit never publishes");
+  assert.equal(row.title, "Upcoming season");
+  for (const column of Object.keys(row)) assert.doesNotMatch(column, /kit|start_from|price|lot/, column);
+  assert.doesNotMatch(JSON.stringify(row), /fund_season/, "the kit's key is stored nowhere");
+  assert.deepEqual(requests.filter((r) => r.table !== "runs" && r.operation !== "read"), [], "and nothing but the draft is written: no lot, no purchase, no policy");
+
+  // Without a kit the address is what it always was.
+  await assert.rejects(saveDraftForm({ ok: false }, form({ category_key: "music", title: "Autumn tour" })), new RegExp(`^Error: redirect:/dashboard/runs/${id}$`));
+  // A kit from another category, or one that does not exist, is not carried.
+  await assert.rejects(saveDraftForm({ ok: false }, form({ ...kit, category_key: "film" })), new RegExp(`^Error: redirect:/dashboard/runs/${id}$`));
+  await assert.rejects(saveDraftForm({ ok: false }, form({ ...kit, starter_kit: "../admin" })), new RegExp(`^Error: redirect:/dashboard/runs/${id}$`));
+  // An edit never redirects, so it carries nothing.
+  assert.equal((await saveDraftForm({ ok: false }, form({ ...kit, id }))).ok, true);
+});

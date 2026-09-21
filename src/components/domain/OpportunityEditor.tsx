@@ -35,6 +35,8 @@ export function OpportunityEditor({
           {t.suggestedPriceCents !== null && <>Suggested price {formatMoney(t.suggestedPriceCents)}{t.period ? ` per ${t.period}` : ""}. </>}
           {t.seenBy && <>Seen by {t.seenBy}.</>}
         </span>
+        {t.kindLabels && t.kindLabels.length > 0 && <span className="mt-1 block text-[14px] text-accent-ink">{t.kindLabels.join(", ")}.</span>}
+        {t.kindNote && <span className="mt-1 block text-[14px] text-muted">{t.kindNote}</span>}
       </div>
       <label className="caps text-[14px]">
         Spots

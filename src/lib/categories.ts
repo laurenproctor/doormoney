@@ -1,6 +1,10 @@
 /**
  * What each category calls its organizer, its work and its details, in words.
  *
+ * Having words here opens nothing. Whether a category may save a draft, publish or be paid for is
+ * decided in the database (`fundraiser_categories`, `delivery_policies`). Hospitality has words and
+ * is draft-only.
+ *
  * The database registry decides which categories exist and which detail keys each one allows
  * (`fundraiser_categories`, migration 0038). This file only supplies the words, the way
  * src/lib/periods.ts holds the words for a stored kind and src/lib/verification.ts holds the words
@@ -107,6 +111,28 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
     details: {
       production: { key: "production", label: "Production", placeholder: "A Number" },
       venue: { key: "venue", label: "Venue or stage", help: "Leave this empty until the venue is settled.", placeholder: "Bushwick Starr" },
+    },
+  },
+  // A draft-only category (migration 0047). The organizer is a venue, because a restaurant is one
+  // kind of hospitality organizer and not the only one: a hotel bar, a caterer and a community
+  // kitchen raise money here too. Both details are free text and both can stay empty.
+  hospitality: {
+    organizer: "hospitality venue",
+    organizers: "hospitality venues",
+    titleLabel: "Program or experience name",
+    details: {
+      venue_kind: {
+        key: "venue_kind",
+        label: "Kind of venue",
+        help: "A restaurant, a bar, a hotel, a caterer, a community kitchen. Leave it empty if none fits.",
+        placeholder: "Restaurant",
+      },
+      format: {
+        key: "format",
+        label: "Program format",
+        help: "A dinner series, a chef residency, a sponsored experience, a community meal program.",
+        placeholder: "Dinner series",
+      },
     },
   },
 };

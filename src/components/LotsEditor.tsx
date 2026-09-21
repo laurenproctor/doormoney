@@ -7,6 +7,7 @@ import { OpportunityEditor } from "@/components/domain";
 import type { OpportunityDraft } from "@/lib/domain";
 import { templateSections, type OpportunityTemplate } from "@/lib/opportunities";
 import { formatMoney } from "@/lib/money";
+import { IN_KIND_NOTE, hasInKind, sponsorshipKindLabels } from "@/lib/sponsorship-kinds";
 
 export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string; buy_now_cents: number | null };
 
@@ -28,12 +29,18 @@ export function LotsEditor({
   surfaces,
   lots,
   boardHref,
+  publishable = true,
 }: {
   runId: string;
   runStatus: string;
   surfaces: OpportunityTemplate[];
   lots: ExistingLot[];
   boardHref: string;
+  /**
+   * False where the registry has not opened the category for publishing. The button is then not
+   * offered. This is a courtesy: publishRun and the database both refuse whatever is drawn here.
+   */
+  publishable?: boolean;
 }) {
   const [state, action, pending] = useActionState(saveLots, initial);
   const [rows, setRows] = useState<Record<string, RowState>>(() => {
@@ -77,7 +84,7 @@ export function LotsEditor({
                 return (
                   <OpportunityEditor
                     key={s.key}
-                    template={{ key: s.key, name: s.name, seenBy: s.seenBy, suggestedPriceCents: s.defaultPriceCents, period: s.period }}
+                    template={{ key: s.key, name: s.name, seenBy: s.seenBy, suggestedPriceCents: s.defaultPriceCents, period: s.period, kindLabels: sponsorshipKindLabels(s.kinds), kindNote: hasInKind(s.kinds) ? IN_KIND_NOTE : null }}
                     value={draft}
                     locked={locked}
                     onChange={(patch) => {
@@ -99,7 +106,11 @@ export function LotsEditor({
       </form>
 
       <div className="mt-10 border-t border-line pt-6">
-        {runStatus === "draft" ? (
+        {runStatus === "draft" && !publishable ? (
+          <p className="max-w-[56ch] text-[15px]">
+            This fundraiser is a private draft, and it stays one. Door Money has not opened this category for publishing or payments yet, so nobody else can see it and nothing on it can be bought. Your sponsorship options and prices are saved for when it opens.
+          </p>
+        ) : runStatus === "draft" ? (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
               The fundraiser is private until it is published. Publishing puts it at its own address and on the fundraisers page. Save the sponsorship options first.
