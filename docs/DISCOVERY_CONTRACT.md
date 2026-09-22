@@ -1,8 +1,11 @@
 # The discovery contract
 
-Built 2026-09-21 on `feat/richer-discovery-schema`, migration **0053**. This is the structured
-foundation sponsor discovery will read. **No filtering or sorting is implemented here**, and the
-`/fundraisers` page is unchanged.
+Built 2026-09-21 on `feat/richer-discovery-schema`, migration **0053**, applied to the hosted
+project the same day and therefore frozen. This is the structured foundation sponsor discovery will
+read. **No filtering or sorting is implemented here**, and the `/fundraisers` page is unchanged.
+
+Applying it changed nothing anybody can see. Every column it adds is empty or derived-empty on
+existing rows, nothing is required to publish, and no page reads the two views yet.
 
 The problem it exists to solve: the only structured fact a fundraiser carried was its category.
 Everything a sponsor would want to narrow by (what the money buys, who it reaches, where the
