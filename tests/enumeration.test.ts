@@ -177,5 +177,5 @@ test("no account and the wrong password are the same sentence", async () => {
   quiet.mock.restore();
 
   assert.deepEqual(missing, wrong, "a missing account and a wrong password can be told apart");
-  assert.match(missing.error ?? "", /do not match an account/);
+  assert.match(missing.error ?? "", /do not match/);
 });

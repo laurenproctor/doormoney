@@ -178,7 +178,7 @@ export function ProfileDetailsForm({
         instead, so the button and the last answer are wherever you are.
       */}
       <div className="sticky top-[57px] z-20 -mx-6 mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))] px-6 py-3.5">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the profile"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
         <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
           {state.ok ? (
             <>
@@ -402,7 +402,7 @@ export function PublishForm({ published, ready }: { published: boolean; ready: b
     <form action={action}>
       <input type="hidden" name="publish" value={published ? "no" : "yes"} />
       <Button type="submit" variant={published ? "ghost" : "solid"} disabled={pending || (!published && !ready)}>
-        {pending ? "One second" : published ? "Hide the profile" : "Publish the profile"}
+        {pending ? (published ? "Hiding…" : "Publishing…") : published ? "Hide profile" : "Publish profile"}
       </Button>
       <p role="status" aria-live="polite" className="mt-3 text-[14.5px] text-muted">
         {state.ok ? state.message : ""}
@@ -545,7 +545,7 @@ export function UsernameForm({
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending || !allowed}>
-          {pending ? "One second" : username ? "Change the username" : "Claim the username"}
+          {pending ? "Saving…" : username ? "Change username" : "Claim username"}
         </Button>
         <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
           {state.ok ? state.message : ""}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { NAV, SITE } from "@/lib/site";
 import { Logo } from "@/components/Logo";
 
-/** The top bar: wordmark, the site's pages in the middle, sign in and the way to sign up on the right. */
+/** The top bar: wordmark, the site's pages in the middle, sign in and the way to open an account on the right. */
 export function Nav({ current }: { current?: string }) {
   const links = NAV.filter((n) => n.href !== "/list");
   return (
@@ -43,7 +43,7 @@ export function Nav({ current }: { current?: string }) {
             href="/signup"
             className="caps border border-ink/40 px-5 py-2.5 text-[14px] text-ink no-underline transition-colors hover:border-ink max-md:px-3.5"
           >
-            Get started
+            Create an account
           </Link>
         </div>
       </div>

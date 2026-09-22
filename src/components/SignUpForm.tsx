@@ -31,13 +31,13 @@ const helpClass = "mt-2 text-[14px] leading-[1.5] text-muted";
 const fieldClass = "field w-full bg-ground px-3.5 py-3 text-[15px] text-ink";
 
 /**
- * Opens an account.
+ * Opens an account. Two questions: how to reach the person, and a password.
  *
- * One question that matters: how to reach the person. Nobody picks a side to get in, because
- * every account can create fundraisers and support them, and nothing here can be got wrong badly
- * enough to close either off. No fundraiser address is asked for; an organizer picks that on the
- * organizer page, which is the moment it means anything. Both names are optional and the account
- * page is where they are filled in properly.
+ * Nobody picks a side to get in, because every account can create fundraisers and support them.
+ * No fundraiser address is asked for; an organizer picks that on the organizer page, which is the
+ * moment it means anything. No name either: both are optional in the data model and on the server
+ * (SignUpInput sends an empty one through as no name at all), so they are asked for once, on the
+ * account page, rather than standing between somebody and an account.
  *
  * `intent` is carried through untouched. It only decides which action the dashboard leads with
  * afterwards, so a form that never received one still works the same way.
@@ -49,6 +49,8 @@ const fieldClass = "field w-full bg-ground px-3.5 py-3 text-[15px] text-ink";
 export function SignUpForm({ next, intent }: { next: string; intent?: Intent | null }) {
   const [state, action, pending] = useActionState(signUp, initial);
 
+  // The names stay in the shape the shared rules are written against, and stay empty: this form
+  // no longer asks for them, and the server reads an empty one as no name.
   const [values, setValues] = useState<SignUpValues>({
     first_name: "",
     last_name: "",
@@ -60,17 +62,11 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
   const [blocked, setBlocked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const firstNameRef = useRef<HTMLInputElement>(null);
-  const lastNameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const focusField = useCallback((f: SignUpField) => {
-    const el =
-      f === "first_name" ? firstNameRef.current
-      : f === "last_name" ? lastNameRef.current
-      : f === "email" ? emailRef.current
-      : passwordRef.current;
+    const el = f === "email" ? emailRef.current : f === "password" ? passwordRef.current : null;
     el?.focus();
   }, []);
 
@@ -145,10 +141,14 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
   if (state.ok && state.confirm) {
     return (
       <div className="pb-2.5 pt-[26px] text-center">
-        <Stamp size="lg" className="mx-auto mb-[18px]">CHECK<br />THE<br />INBOX</Stamp>
-        <p className="mx-auto max-w-none">A confirmation link is on its way to {state.email}.</p>
-        <p className="mx-auto mt-2 max-w-[40ch] text-[15px] text-muted">
-          One tap opens the account. Check the spam folder if it takes more than a minute.
+        <Stamp size="lg" className="mx-auto mb-[18px]">LINK<br />SENT</Stamp>
+        <h2 className="heading text-[clamp(24px,3.2vw,30px)] leading-[1.1]">Check your inbox</h2>
+        <p className="mx-auto mt-3 max-w-none">We sent a confirmation link to {state.email}.</p>
+        <p className="mx-auto mt-2 max-w-[40ch] text-[14.5px] leading-[1.6] text-muted">
+          The link expires after a short time. Check your spam folder if it does not arrive.
+        </p>
+        <p className="mt-6 border-t border-line pt-5 text-[14.5px] text-muted">
+          <Link href="/login" className="text-accent-ink underline underline-offset-4">Back to sign in</Link>
         </p>
       </div>
     );
@@ -205,60 +205,22 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
         )}
       </div>
 
-      <div className="grid gap-x-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor="signup-first-name" className={labelClass}>First name</label>
-          <input
-            ref={firstNameRef}
-            id="signup-first-name"
-            name="first_name"
-            type="text"
-            autoComplete="given-name"
-            value={values.first_name}
-            onChange={(e) => revalidate({ first_name: e.target.value })}
-            aria-invalid={errors.first_name ? true : undefined}
-            aria-describedby={describedBy("first_name", "signup-name-help")}
-            className={fieldClass}
-          />
-          {errors.first_name && <FieldError id={errorId("first_name")}>{errors.first_name}</FieldError>}
-        </div>
-        <div className="max-sm:mt-[18px]">
-          <label htmlFor="signup-last-name" className={labelClass}>Last name</label>
-          <input
-            ref={lastNameRef}
-            id="signup-last-name"
-            name="last_name"
-            type="text"
-            autoComplete="family-name"
-            value={values.last_name}
-            onChange={(e) => revalidate({ last_name: e.target.value })}
-            aria-invalid={errors.last_name ? true : undefined}
-            aria-describedby={describedBy("last_name", "signup-name-help")}
-            className={fieldClass}
-          />
-          {errors.last_name && <FieldError id={errorId("last_name")}>{errors.last_name}</FieldError>}
-        </div>
+      <div className="mb-[18px]">
+        <label htmlFor="signup-email" className={labelClass}>Email</label>
+        <input
+          ref={emailRef}
+          id="signup-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={values.email}
+          onChange={(e) => revalidate({ email: e.target.value })}
+          aria-invalid={errors.email ? true : undefined}
+          aria-describedby={describedBy("email")}
+          className={fieldClass}
+        />
+        {errors.email && <FieldError id={errorId("email")}>{errors.email}</FieldError>}
       </div>
-      <p id="signup-name-help" className={`${helpClass} mb-[18px]`}>
-        The person holding the account. An organizer or a business gets its own name later, and nothing here
-        appears publicly unless it is put on a page on purpose.
-      </p>
-
-      <label htmlFor="signup-email" className={labelClass}>Email</label>
-      <input
-        ref={emailRef}
-        id="signup-email"
-        name="email"
-        type="email"
-        autoComplete="email"
-        value={values.email}
-        onChange={(e) => revalidate({ email: e.target.value })}
-        aria-invalid={errors.email ? true : undefined}
-        aria-describedby={describedBy("email", "signup-email-help")}
-        className={fieldClass}
-      />
-      {errors.email && <FieldError id={errorId("email")}>{errors.email}</FieldError>}
-      <p id="signup-email-help" className={`${helpClass} mb-[18px]`}>Used for account notices, receipts and payout updates.</p>
 
       <label htmlFor="signup-password" className={labelClass}>Password</label>
       <div className="relative">
@@ -294,33 +256,22 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
       <p id="signup-password-help" className={`${helpClass} mb-[22px]`}>Use at least {PASSWORD_MIN} characters.</p>
 
       {/*
-        Ticked to start with, and clearable before the account is opened.
-
-        The owner asked for new accounts to arrive on the new-fundraisers email. A pre-ticked box
-        is the visible version of that: the person can see it and can clear it in the same breath
-        as creating the account, rather than finding out later. It is not silent, and the account
-        page can turn it off at any time afterwards.
+        Off to start with, and ticked by whoever wants it. Nothing is sent to an address that did
+        not ask, and the account page turns it on or off at any time afterwards. Every send carries
+        its own link to stop it, which is the unsubscribe path and is unchanged.
       */}
       <label className="mb-[22px] flex cursor-pointer items-start gap-3 text-[14.5px] leading-[1.6] text-muted">
-        <input
-          type="checkbox"
-          name="newsletter"
-          defaultChecked
-          className="mt-0.5 h-4 w-4 flex-none accent-[var(--accent)]"
-        />
-        <span>
-          Email me when organizers open new fundraisers. Never more than once a week, and every send has a link
-          to stop it.
-        </span>
+        <input type="checkbox" name="newsletter" className="mt-0.5 h-4 w-4 flex-none accent-[var(--accent)]" />
+        <span>Email me about new fundraisers.</span>
       </label>
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "One second" : "Create free account"}
+        {pending ? "Creating account…" : "Create account"}
       </Button>
 
       <p className="mt-4 text-[14px] leading-[1.6] text-muted">
         By creating an account, you agree to the{" "}
-        <Link href="/terms" className="text-accent-ink underline underline-offset-4">Terms and Conditions</Link> and{" "}
+        <Link href="/terms" className="text-accent-ink underline underline-offset-4">Terms</Link> and{" "}
         <Link href="/privacy" className="text-accent-ink underline underline-offset-4">Privacy Policy</Link>.
       </p>
 

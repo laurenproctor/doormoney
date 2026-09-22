@@ -160,7 +160,7 @@ export function TwoFactorSetup({
           </p>
           <div>
             <Button type="submit" disabled={confirming}>
-              {confirming ? "Checking" : enabled ? "Add this app" : "Turn on two-factor authentication"}
+              {confirming ? "Checking code…" : enabled ? "Add this app" : "Enable two-factor authentication"}
             </Button>
           </div>
         </form>
@@ -187,7 +187,7 @@ export function TwoFactorSetup({
         </p>
         <form action={start}>
           <Button type="submit" disabled={starting}>
-            {starting ? "One second" : "Enable two-factor authentication"}
+            {starting ? "Starting…" : "Enable two-factor authentication"}
           </Button>
         </form>
         <p role="status" aria-live="polite" className="mt-3 text-[14.5px] text-muted">
@@ -223,7 +223,7 @@ export function TwoFactorSetup({
       {canAddBackup && (
         <form action={start} className="mb-6">
           <Button type="submit" variant="ghost" disabled={starting}>
-            {starting ? "One second" : "Add a backup authenticator"}
+            {starting ? "Starting…" : "Add a backup authenticator"}
           </Button>
           <p className="mt-2 max-w-[46ch] text-[14px] leading-[1.5] text-muted">
             A second app, on another device or in a password manager. It is the difference between losing a phone
@@ -256,7 +256,7 @@ export function TwoFactorSetup({
               </Button>
             ))}
           <Button type="submit" variant="ghost" disabled={removing}>
-            {removing ? "Working" : "Turn off two-factor authentication"}
+            {removing ? "Checking code…" : "Turn off two-factor authentication"}
           </Button>
         </div>
       </form>
@@ -319,7 +319,7 @@ function RecoveryCodes({
       <form action={issue}>
         {has && <input type="hidden" name="replace" value="yes" />}
         <Button type="submit" variant="ghost" disabled={issuing}>
-          {issuing ? "One second" : has ? "Replace the recovery codes" : "Generate recovery codes"}
+          {issuing ? "Generating…" : has ? "Replace recovery codes" : "Generate recovery codes"}
         </Button>
         {has && (
           <p className="mt-2 max-w-[46ch] text-[14px] leading-[1.5] text-muted">
@@ -347,16 +347,15 @@ export function TotpChallengeForm({ next }: { next: string }) {
   return (
     <form action={verify} noValidate>
       <input type="hidden" name="next" value={next} />
-      <label htmlFor={`${uid}-code`} className="caps mb-2 block text-[14px] text-muted">
-        Six-digit code, or a recovery code
+      <label htmlFor={`${uid}-code`} className="caps mb-2 block text-[14px] text-ink">
+        Six-digit code or recovery code
       </label>
       <CodeField id={`${uid}-code`} describedBy={`${uid}-hint`} invalid={Boolean(state.error)} focus />
       <p id={`${uid}-hint`} className="mb-5 mt-2 max-w-[42ch] text-[14px] leading-[1.5] text-muted">
-        Open an authenticator app you set up and enter the code it is showing now. Each one lasts about half a
-        minute. If you kept recovery codes, an unused one works here too.
+        Each code lasts about half a minute. An unused recovery code works here too.
       </p>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Checking" : "Verify"}
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? "Checking code…" : "Verify code"}
       </Button>
       {state.error && (
         <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">

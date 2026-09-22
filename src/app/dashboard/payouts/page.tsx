@@ -32,19 +32,19 @@ export default async function PayoutsPage({ searchParams }: Props) {
       eyebrow={state === "on" ? "Payouts on" : "Not yet paid out"}
       title="Getting"
       accent="paid"
-      intro={<p>Door Money holds every payment and pays you every Friday while the shows happen. Stripe handles the bank details and the tax forms.</p>}
+      intro={<p>Door Money holds every payment and releases your share under each fundraiser&apos;s terms. Stripe handles the bank details and the tax forms.</p>}
     >
       <div className="grid gap-[30px] md:grid-cols-[1fr_1fr]">
         <Card>
           <CardHead eyebrow="Stripe">{state === "on" ? "Connected" : state === "partial" ? "Almost there" : "Not connected"}</CardHead>
           <p className="mb-6 max-w-none text-[15px] text-muted">
             {state === "on"
-              ? "Bank details are in and payouts are on. Door Money sends each Friday's slice automatically."
+              ? "Bank details are in and payouts are on. Each release is sent automatically."
               : state === "partial"
                 ? "The Stripe account exists but is missing something, usually a bank account or an ID check. Pick up where it left off."
                 : configured
                   ? "A few minutes with Stripe: a bank account, a name, and an ID check. You keep 85% of every sponsorship."
-                  : "Payout setup is unavailable right now. Fundraisers and prices can be set up meanwhile; contact Door Money if it stays that way."}
+                  : "Payout setup is unavailable right now. You can still set up fundraisers and prices. Tell Door Money if it stays that way."}
           </p>
           {state !== "on" && <PayoutButton configured={configured} label={state === "partial" ? "Finish Stripe setup" : "Set up payouts with Stripe"} />}
           {state === "on" && <PayoutButton configured={configured} label="Update bank details" ghost />}
@@ -53,10 +53,10 @@ export default async function PayoutsPage({ searchParams }: Props) {
           <h2 className="caps mb-3 text-[15px] text-accent-ink">How the money moves</h2>
           <Lines
             lines={[
-              "A patron pays when they take a spot. Door Money holds it.",
-              "Each Friday, a slice moves to you.",
-              `Door Money keeps ${SITE.feePercent}%. The act keeps the rest.`,
-              "If the fundraiser is cancelled, patrons get the remainder back.",
+              "A sponsor pays when they buy an option. Door Money holds it.",
+              "Music fundraisers release a slice every Friday across their dates. Every other category releases one deliverable at a time, as you document it.",
+              `Door Money keeps ${SITE.feePercent}%. You keep the rest.`,
+              "If the fundraiser is cancelled, sponsors get the remainder back.",
             ]}
           />
         </div>

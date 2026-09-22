@@ -16,8 +16,8 @@ import { formatDay } from "@/lib/profile";
 import { SITE } from "@/lib/site";
 
 /*
-  The account, and nothing that is anybody else's business: the address it signs in with, the
-  password, what protects it, and what Door Money sends.
+  Account settings: the address it signs in with, the password, what protects it, and what gets
+  sent.
 
   Who the account holder is, what they organize and what they support all moved to
   /dashboard/profile, which is one page for one identity. The name and photo forms went with them.
@@ -54,13 +54,12 @@ export default async function AccountPage() {
       nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
       actName={act?.name}
       identity={personName}
-      eyebrow="The account"
-      title="How this account"
-      accent="signs in"
+      eyebrow="Your account"
+      title="Account"
+      accent="settings"
       intro={
         <p>
-          The email address, the password, and what Door Money sends. Your name, your photo and your public pages
-          are on{" "}
+          Your name, photo and public pages are on{" "}
           <Link href="/dashboard/profile" className="text-accent-ink underline decoration-1 underline-offset-4">
             your profile
           </Link>
@@ -70,7 +69,7 @@ export default async function AccountPage() {
     >
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardHead eyebrow="Email">The address on the account</CardHead>
+          <CardHead eyebrow="Sign in">Email and username</CardHead>
           <Lines
             lines={[
               <>Email: <b>{user.email}</b></>,
@@ -79,8 +78,8 @@ export default async function AccountPage() {
             ]}
           />
           <p className="mt-5 text-[14.5px] text-muted">
-            The email address gets in from anywhere, and it is where account notices, receipts and payout updates
-            go. A username signs in too, once one is claimed. To change either, or to change your name, go to{" "}
+            Account notices, receipts and payout updates go to this address. A username signs in too, once one is
+            claimed. Change your username or your name on{" "}
             <Link href="/dashboard/profile" className="text-accent-ink underline decoration-1 underline-offset-4">
               your profile
             </Link>
@@ -93,72 +92,61 @@ export default async function AccountPage() {
         </Card>
 
         <Card>
-          <CardHead eyebrow="Password">Set a new one</CardHead>
+          <CardHead eyebrow="Security">Password</CardHead>
           <NewPasswordForm done="/dashboard" doneLabel="Back to the dashboard" />
-        </Card>
-
-        <Card>
-          <CardHead eyebrow="Security">What protects this account</CardHead>
           <Lines
+            className="mt-7"
             lines={[
-              <>A password, or a one-time link by email for anyone who never set one.</>,
               <>A forgotten password is reset from <Link href="/forgot" className="text-accent-ink underline underline-offset-4">the reset page</Link>, which says the same thing whether or not an account exists.</>,
               <>Door Money never stores a card number. Stripe holds every payment detail.</>,
             ]}
           />
           <p className="mt-5 text-[14.5px] text-muted">
-            Sign out from the bar at the top of any page here. If you think somebody else has been in this account,
-            change the password first and then tell{" "}
+            If you think somebody else has been in this account, change the password first, then tell{" "}
             <Link href="/contact" className="text-accent-ink underline decoration-1 underline-offset-4">
               {SITE.name}
             </Link>
             .
           </p>
-
-          <div className="mt-7 border-t border-line pt-6">
-            <h3 className="heading mb-4 text-[18px] leading-tight text-ink">Two-factor authentication</h3>
-            <TwoFactorSetup
-              factors={totp.map((factor) => ({ name: factor.name, addedOn: formatDay(new Date(factor.addedAt)) }))}
-              canAddBackup={totp.length > 0 && totp.length < MAX_TOTP_FACTORS}
-              recovery={recovery}
-            />
-            <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.6] text-muted">
-              Door Money never sends codes by text message. If the app is lost, resetting the password does not take
-              this step off the account, so{" "}
-              <Link href="/contact" className="text-accent-ink underline decoration-1 underline-offset-4">
-                tell {SITE.name}
-              </Link>{" "}
-              and it will be removed.
-            </p>
-          </div>
         </Card>
 
         <Card>
-          <CardHead eyebrow="Communications">What Door Money sends</CardHead>
+          <CardHead eyebrow="Security">Two-factor authentication</CardHead>
+          <TwoFactorSetup
+            factors={totp.map((factor) => ({ name: factor.name, addedOn: formatDay(new Date(factor.addedAt)) }))}
+            canAddBackup={totp.length > 0 && totp.length < MAX_TOTP_FACTORS}
+            recovery={recovery}
+          />
+          <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.6] text-muted">
+            Codes never arrive by text message. If the app is lost, resetting the password does not take this step
+            off the account, so{" "}
+            <Link href="/contact" className="text-accent-ink underline decoration-1 underline-offset-4">
+              tell {SITE.name}
+            </Link>{" "}
+            and it will be removed.
+          </p>
+        </Card>
+
+        <Card>
+          <CardHead eyebrow="Email">Email preferences</CardHead>
           <Lines
             lines={[
               <>Account notices: confirmations, sign-in links and password resets.</>,
-              <>Money: receipts, sponsorship and backing notices, payout updates and the record at the end.</>,
+              <>Money: receipts, sponsorship and backing notices, payout updates and the record.</>,
             ]}
           />
-          <p className="mt-5 text-[14.5px] text-muted">
-            Both follow your own money and your own account, so they keep coming while the account is open. The one
-            list you choose is below.
+          <p className="mb-6 mt-5 max-w-[46ch] text-[14.5px] leading-[1.6] text-muted">
+            Both keep coming while the account is open. The one list you choose is the newsletter.
           </p>
-
-          <div className="mt-7 border-t border-line pt-6">
-            <h3 className="heading mb-4 text-[18px] leading-tight text-ink">Door Money newsletter</h3>
-            <NewsletterPreferenceForm
-              subscribed={newsletter.subscribed}
-              email={email}
-              configured={newsletter.configured}
-              ownedByAnother={newsletter.ownedByAnother}
-            />
-            <p className="mt-5 text-[14.5px] text-muted">
-              Every send carries its own unsubscribe link, so the email can be stopped from the email itself as
-              well as from here.
-            </p>
-          </div>
+          <NewsletterPreferenceForm
+            subscribed={newsletter.subscribed}
+            email={email}
+            configured={newsletter.configured}
+            ownedByAnother={newsletter.ownedByAnother}
+          />
+          <p className="mt-5 text-[14.5px] text-muted">
+            Every send carries its own unsubscribe link, so it can be stopped from the email itself as well.
+          </p>
         </Card>
       </div>
     </DashboardShell>

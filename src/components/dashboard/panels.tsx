@@ -102,7 +102,7 @@ export function NextShowPanel({ show, runId, preparation }: { show: ShowRow | nu
         </p>
       )}
 
-      <h3 className="caps mb-3 mt-5 text-[14px] text-muted">Worth doing</h3>
+      <h3 className="caps mb-3 mt-5 text-[14px] text-muted">Needs doing</h3>
       {preparation.length === 0 ? (
         <p className="flex items-start gap-2 text-[14px] text-muted">
           <Checkmark size={16} aria-hidden="true" className="mt-0.5 flex-none" />
@@ -159,20 +159,20 @@ export function PayoutSummary({
 }) {
   return (
     <Card>
-      <CardHead eyebrow="Payouts">{payoutsEnabled ? "Money on its way" : "Getting paid"}</CardHead>
+      <CardHead eyebrow="Payouts">{payoutsEnabled ? "Scheduled and paid" : "Set up payouts"}</CardHead>
       {!payoutsEnabled && (
         <div className="mb-5">
           <p className="mb-4 text-[14.5px] leading-[1.6] text-muted">
             {hasStripeAccount
-              ? "Stripe still needs a few details from you before money can move. Anything you have earned waits until then."
-              : "Door Money holds every payment and pays you weekly through Stripe. Setup takes a few minutes."}
+              ? "Stripe still needs a few details before money can move. Anything you have earned waits until then."
+              : "Door Money holds every payment and pays out through Stripe. Setup takes a few minutes."}
           </p>
           <ButtonLink href="/dashboard/payouts">{hasStripeAccount ? "Finish Stripe setup" : "Set up payouts"}</ButtonLink>
         </div>
       )}
       {rows === 0 ? (
         <p className="text-[14.5px] leading-[1.6] text-muted">
-          Nothing is scheduled yet. Slices appear here once a sponsorship is paid for.
+          Nothing is scheduled yet. Releases appear here once a sponsorship is paid for.
         </p>
       ) : (
         <dl className="grid gap-px border border-line bg-line">

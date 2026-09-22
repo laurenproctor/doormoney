@@ -16,7 +16,7 @@ import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 export const metadata: Metadata = {
   title: "Find a sponsorship",
   description:
-    "Every open fundraiser on Door Money: what each one funds, who it reaches, and the sponsorship options still open. Narrow by category, place, funding purpose, audience, price and how it is sold.",
+    "Every open fundraiser on Door Money: what each one funds, who it reaches, and the sponsorship options still open. Filter by category, place, funding purpose, audience and price.",
   // One address for search engines too, now that the old one redirects here.
   alternates: { canonical: "/fundraisers" },
 };
@@ -75,9 +75,9 @@ export default async function FundraisersPage({ searchParams }: Props) {
       headline="md"
       intro={
         <p>
-          Every open fundraiser on Door Money: who is raising, what the funding is for, who it
-          reaches, and which sponsorship options are still open. Each sponsorship is either fixed
-          price or open to bids; the organizer decides which, and sets the price.
+          Every open fundraiser: what the funding is for, who it reaches, and which sponsorship
+          options are still open. Filter by category, place, purpose, audience and price to find one
+          that fits.
         </p>
       }
     >
@@ -114,9 +114,8 @@ export default async function FundraisersPage({ searchParams }: Props) {
 
             {query.sort === "relevant" && result.total > 1 && (
               <p className="mb-7 text-[14.5px] text-muted">
-                Most relevant puts the fundraisers with the most matching sponsorship options first,
-                then the ones that answered the most about what the funding enables, who it reaches
-                and what a sponsor receives. Nobody pays for a place in this list.
+                Most relevant puts the fundraisers with the most matching sponsorship options first.
+                Nobody pays for a place in this list.
               </p>
             )}
 
@@ -169,7 +168,7 @@ export default async function FundraisersPage({ searchParams }: Props) {
               <div className="caps text-[14.5px] text-accent-ink">For organizers</div>
               <div className="heading text-[clamp(24px,3vw,32px)] leading-[1.05]">Raise money for your own work</div>
               <p className="text-[15px] leading-[1.7] text-muted">
-                Organizers choose what they offer, set the prices and keep the final say. {AVAILABILITY_NOTE}
+                Organizers choose what they offer, set the prices and keep the final say.
               </p>
               <ButtonLink href="/list">Create a fundraiser</ButtonLink>
             </aside>
@@ -204,8 +203,7 @@ function Empty({ filtersActive, live }: { filtersActive: boolean; live: boolean 
             No open fundraiser matches all of those filters right now.
           </p>
           <p className="mt-3 text-[15px] leading-[1.7] text-muted">
-            Removing one of them will widen the list. Organizers add sponsorship options as they
-            prepare, so the answer can change from one week to the next.
+            Removing one of them will widen the list.
           </p>
           <ButtonLink href="/fundraisers" variant="ghost" className="mt-6">
             Clear all filters

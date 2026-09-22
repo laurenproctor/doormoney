@@ -92,22 +92,17 @@ export default async function ProfilePage() {
       nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
       actName={act?.name}
       identity={personName}
-      eyebrow="Your profile"
-      title="One profile,"
-      accent="three parts."
-      intro={
-        <p>
-          This is one account: who you are, what you create, and what you support. The three parts below save
-          separately, so nothing you write in one ever overwrites another.
-        </p>
-      }
+      eyebrow="Account"
+      title="Your"
+      accent="profile"
+      intro={<p>Each part below saves on its own.</p>}
     >
       <div className="grid gap-12">
         {/* ---------------------------------------------------------------- Identity */}
-        <Part id="identity" eyebrow="Identity" title="The person or organization behind the account">
+        <Part id="identity" eyebrow="Identity" title="About you">
           <p className="mb-7 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
-            Your name and photo here are private. They are how Door Money addresses you, and they never appear on a
-            public page: an organizer has its own name below, and a patron page has its own display name.
+            Your name here is private. It never appears on a public page: an organizer has its own name, and a
+            patron page has its own display name.
           </p>
 
           <div className="grid gap-6">
@@ -128,7 +123,7 @@ export default async function ProfilePage() {
             */}
 
             <Card>
-              <CardHead level={3} eyebrow="In public">What the world can see from this account</CardHead>
+              <CardHead level={3} eyebrow="In public">Your addresses</CardHead>
               <Details
                 rows={[
                   ["Signed in as", <span key="email">{user.email}</span>],
@@ -160,11 +155,10 @@ export default async function ProfilePage() {
               />
 
               <div className="mt-7 max-w-[520px]">
-                <Eyebrow className="mb-3">The address</Eyebrow>
+                <Eyebrow className="mb-3">Username</Eyebrow>
                 <p className="mb-5 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
-                  One word is the address of the patron page{act ? ", the address of the organizer page" : ""} and the
-                  username this account signs in with. It can move once every twelve months, and the word it leaves
-                  behind keeps pointing here rather than going back into circulation.
+                  One word is the address of your patron page{act ? " and your organizer page" : ""}, and the username
+                  you sign in with. It can move once every twelve months, and the old address keeps pointing here.
                 </p>
                 <UsernameForm
                   username={username}
@@ -176,9 +170,9 @@ export default async function ProfilePage() {
               </div>
 
               <p className="mt-7 border-t border-line pt-5 text-[14.5px] text-muted">
-                The password, the email address and what Door Money sends are on{" "}
+                Your email address, password and email preferences are in{" "}
                 <Link href="/dashboard/account" className="text-accent-ink underline decoration-1 underline-offset-4">
-                  the account page
+                  account settings
                 </Link>
                 . Nothing there is ever published.
               </p>
@@ -187,7 +181,7 @@ export default async function ProfilePage() {
         </Part>
 
         {/* ---------------------------------------------------------------- Creating */}
-        <Part id="creating" eyebrow="Creating" title="The organizer sponsors see">
+        <Part id="creating" eyebrow="Creating" title="What you create">
           <Card>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Status>{ORGANIZER_STATUS_LABEL[creating]}</Status>
@@ -203,14 +197,14 @@ export default async function ProfilePage() {
               <Details rows={organizerRows(act, host)} />
             ) : (
               <p className="max-w-[62ch] border-y border-line py-4 text-[15px] leading-[1.6] text-muted">
-                An organizer profile is a name, an address and as much or as little else as you want. It is separate
-                from your account name above, so a band, a team or a company keeps its own name.
+                Create an organizer profile to publish fundraisers. It carries its own name, so a band, a team or a
+                company is not filed under yours.
               </p>
             )}
 
             <div className="mt-7 flex flex-wrap items-center gap-4">
               <ButtonLink href={act ? "/dashboard/act" : "/dashboard/act/new"}>
-                {act ? "Edit the organizer profile" : "Create an organizer profile"}
+                {act ? "Edit organizer profile" : "Create organizer profile"}
               </ButtonLink>
               {act ? (
                 <Link href="/dashboard/runs/new" className="caps text-[14px] text-accent-ink underline underline-offset-4">
@@ -226,7 +220,7 @@ export default async function ProfilePage() {
         </Part>
 
         {/* ---------------------------------------------------------------- Supporting */}
-        <Part id="supporting" eyebrow="Supporting" title="The patron page, if you want one">
+        <Part id="supporting" eyebrow="Supporting" title="What you support">
           <div className="grid gap-6">
             <Card>
               <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -245,15 +239,15 @@ export default async function ProfilePage() {
                 <Details rows={patronRows(own, labels, interestsText(own.interests))} />
               ) : (
                 <p className="max-w-[62ch] border-y border-line py-4 text-[15px] leading-[1.6] text-muted">
-                  Nothing is filled in. The form at the foot of this page makes the page, and making it publishes
-                  nothing: a new page is private until you say otherwise.
+                  Nothing is filled in yet. The form at the foot of this page makes the page, and a new page stays
+                  private until you publish it.
                 </p>
               )}
 
               <div className="mt-7 flex flex-wrap items-center gap-4">
                 <PublishForm published={published} ready={Boolean(own && username)} />
                 <Link href="#patron-details" className="caps text-[14px] text-accent-ink underline underline-offset-4">
-                  {own ? "Edit the patron page" : "Create a patron page"}
+                  {own ? "Edit patron page" : "Create patron page"}
                 </Link>
               </div>
               {!own && (
@@ -267,18 +261,17 @@ export default async function ProfilePage() {
             <Card>
               <CardHead level={3} eyebrow="Public support">What appears on the page</CardHead>
               <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-                Each one is its own decision. Putting one on the page says nothing about the next, and no amount is
-                ever shown, here or there.
+                Choose what support activity appears publicly. Each one is its own decision, and no amount is ever
+                shown.
               </p>
               <ActivityList items={activity} />
             </Card>
 
             {/* Last on the page on purpose: the longest form here is the most optional thing on it. */}
             <Card id="patron-details">
-              <CardHead level={3} eyebrow="The details">Who this patron is</CardHead>
+              <CardHead level={3} eyebrow="The details">Your patron page</CardHead>
               <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-                All optional, and saved only when you save this form. None of it touches your account name or your
-                organizer profile.
+                This information appears on your public profile when you publish it. All of it is optional.
               </p>
               <div className="max-w-[720px]">
                 <ProfileDetailsForm

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { requestPasswordReset, type ResetState } from "@/app/actions/auth";
 import { Button, ButtonLink } from "@/components/Button";
-import { Eyebrow } from "@/components/Brand";
+import { Stamp } from "@/components/Brand";
 import { EMPTY_MESSAGE, ERROR_ID, FIELD_ID, HINT_ID, SERVICE_MESSAGE, describedBy, isBlankHandle } from "./validate";
 
 /**
@@ -40,9 +40,6 @@ async function submitReset(_prev: ForgotState, form: FormData): Promise<ForgotSt
  * That action reports the same thing whether or not an account matches, so this component must
  * never say anything that would distinguish the two. The confirmation below is written to be true
  * either way.
- *
- * The shared `ForgotForm` in src/components/PasswordForms.tsx is untouched, because /reset and the
- * account page take their own forms from that file.
  */
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(submitReset, initial);
@@ -74,18 +71,16 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div role="status" aria-live="polite">
-        <Eyebrow className="mb-6">Email sent</Eyebrow>
-        <h2 ref={doneRef} tabIndex={-1} className="heading text-[clamp(26px,3.4vw,34px)] leading-[1.1] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink">
+      <div role="status" aria-live="polite" className="text-center">
+        <Stamp size="lg" className="mx-auto mb-[18px]">LINK<br />SENT</Stamp>
+        <h2 ref={doneRef} tabIndex={-1} className="heading text-[clamp(24px,3.2vw,30px)] leading-[1.1] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink">
           Check your inbox
         </h2>
-        <p className="mt-5 text-[15px] leading-[1.6]">
-          If an account matches those details, we&rsquo;ve sent a password-reset link. It can be used once and
-          expires after one hour.
+        <p className="mt-3 text-[15px] leading-[1.6]">
+          If the account exists, we sent a reset link to its email address.
         </p>
-        <p className="mt-3 text-[14.5px] leading-[1.6] text-muted">
-          If it does not arrive within a few minutes, check your spam folder or try another email address or
-          username.
+        <p className="mx-auto mt-2 max-w-[40ch] text-[14.5px] leading-[1.6] text-muted">
+          The link works once and expires after an hour. Check your spam folder if it does not arrive.
         </p>
         <div className="mt-8 grid gap-3">
           <ButtonLink href="/login" className="w-full">Back to sign in</ButtonLink>
@@ -128,7 +123,7 @@ export function ForgotPasswordForm() {
       }}
     >
       <label htmlFor={FIELD_ID} className="caps mb-2 block text-[14px] text-ink">
-        Email address or username
+        Email or username
       </label>
       <input
         ref={inputRef}
@@ -165,7 +160,7 @@ export function ForgotPasswordForm() {
       </p>
 
       <Button type="submit" disabled={pending} className="mt-7 w-full">
-        {pending ? "Sending…" : "Send reset link"}
+        {pending ? "Sending link…" : "Send reset link"}
       </Button>
 
       <p className="mt-6 border-t border-line pt-5 text-[14.5px] leading-[1.6] text-muted">

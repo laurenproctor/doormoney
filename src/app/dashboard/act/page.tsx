@@ -34,15 +34,15 @@ export default async function EditActPage() {
       actName={act.name}
       identity={fullName(profile)}
       eyebrow="Creating"
-      title="The"
-      accent="organizer"
+      title="Organizer"
+      accent="profile"
       intro={
         <p>
-          The name, address and details sponsors and audiences see. This is part of{" "}
+          The name, address and details sponsors and audiences see. Part of{" "}
           <Link href="/dashboard/profile" className="text-accent-ink underline decoration-1 underline-offset-4">
             your profile
           </Link>
-          , and it is kept apart from your account name and from any patron page.
+          , and kept apart from your account name.
         </p>
       }
     >

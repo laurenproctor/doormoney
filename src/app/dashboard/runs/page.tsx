@@ -37,14 +37,14 @@ export default async function FundraisersPage() {
       nav={nav}
       actName={act.name}
       identity={fullName(profile)}
-      eyebrow="Everything you have run"
+      eyebrow="Creating"
       title="Your"
       accent="fundraisers"
     >
       {view.runs.length === 0 ? (
         <DashboardEmptyState
           heading="No fundraiser yet"
-          body="A fundraiser is one tour, residency or season, with the sponsorships you want to offer on it."
+          body="One named funding effort, with the sponsorship options you choose to offer on it."
           action={{ href: "/dashboard/runs/new", label: "Create a fundraiser" }}
         />
       ) : (

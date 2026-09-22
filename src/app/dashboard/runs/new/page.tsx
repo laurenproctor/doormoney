@@ -41,7 +41,7 @@ export default async function NewRunPage({ searchParams }: Props) {
         <>
           <p>Describe what the funding enables and who the sponsorship can reach. Unknown details can wait.</p>
           <p className="mt-3">
-            Start from a sponsorship idea or from an empty form. A starter kit is an example, not a rule: change any part of it.
+            A starter kit is an example, not a rule: change any part of it.
             Picking one saves nothing, offers nothing and sets no price.
           </p>
         </>

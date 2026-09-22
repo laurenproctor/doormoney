@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { Section, SectionHead } from "@/components/Brand";
 import { NewsletterForm } from "@/components/NewsletterForm";
 
-/** The pitch, in one place so every page says the same thing. */
+/** The pitch, in one place so every page says the same thing. Short on purpose: it is an ask, not a page. */
 export const NEWSLETTER = {
-  eyebrow: "New fundraisers by email",
-  title: "The next fundraiser, before the sponsorships go.",
-  body: `New organizers open fundraisers on Door Money as each category opens to sponsors, starting with music. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week, nothing else in it.`,
-  fine: "Every email has an unsubscribe link. Door Money never shares an address.",
+  eyebrow: "By email",
+  title: "Get new fundraisers by email.",
+  body: "One short email when a new fundraiser opens. Unsubscribe anytime.",
+  fine: "Door Money never shares an address.",
 } as const;
 
 /**
@@ -48,11 +48,8 @@ export function NewsletterStrip({ source }: { source: string }) {
   return (
     <div className="grid gap-6 border-b border-line pb-12 lg:grid-cols-[1fr_minmax(0,560px)] lg:items-center lg:gap-16">
       <div>
-        <p className="caps text-[14px] text-accent-ink">New fundraisers, by email</p>
-        <p className="mt-2 max-w-[48ch] text-[14.5px] leading-[1.7] text-muted">
-          One short email the week a new fundraiser opens: who the organizer is, what the funding is for, which
-          sponsorship options are open.
-        </p>
+        <p className="caps text-[14px] text-accent-ink">{NEWSLETTER.title}</p>
+        <p className="mt-2 max-w-[48ch] text-[14.5px] leading-[1.7] text-muted">{NEWSLETTER.body}</p>
       </div>
       {/* Never wider than the column it sits in above lg, so the field does not stretch when the strip stacks. */}
       <div className="max-w-[560px]">

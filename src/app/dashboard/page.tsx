@@ -82,7 +82,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     return (
       <DashboardShell {...shell}>
         <Card>
-          <CardHead eyebrow="Drafts and activity">Your fundraisers</CardHead>
+          <CardHead eyebrow="Fundraisers">Your fundraisers</CardHead>
           <p className="mb-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
             Start with what the funding enables and the audience a sponsor can reach.
           </p>
@@ -113,8 +113,8 @@ export default async function DashboardPage({ searchParams }: Props) {
         <Card>
           <p className="flex items-start gap-2.5 text-[15px] leading-[1.6] text-ink">
             <Warning size={18} aria-hidden="true" className="mt-0.5 flex-none text-accent-ink" />
-            Your fundraisers could not be loaded just now. Nothing is lost. Reload the page, and if it keeps happening
-            tell Door Money.
+            Your fundraisers could not be loaded just now. Nothing is lost. Reload the page, and tell Door Money if
+            it keeps happening.
           </p>
         </Card>
       </DashboardShell>
@@ -126,7 +126,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       <DashboardShell {...shell} intro={<p>Open a fundraiser and sponsors can start putting money behind the work.</p>}>
         <DashboardEmptyState
           heading="No fundraiser yet"
-          body="A fundraiser is one named funding effort, such as a tour, a season or a production, with the sponsorship options you choose to offer on it. Nothing goes public until you publish it."
+          body="One named funding effort, with the sponsorship options you choose to offer on it. Nothing is public until you publish it."
           action={{ href: "/dashboard/runs/new", label: "Create a fundraiser" }}
         />
       </DashboardShell>
@@ -164,7 +164,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card id="sponsorship-work">
-          <CardHead eyebrow="Sponsorship work">What needs you</CardHead>
+          <CardHead eyebrow="Sponsorship activity">What needs your attention</CardHead>
           <SponsorshipWorkTable rows={view.work} />
         </Card>
 
@@ -191,17 +191,14 @@ export default async function DashboardPage({ searchParams }: Props) {
 /**
  * The first screen of a new account, and of any account with no organizer profile yet.
  *
- * Two capabilities, side by side, neither of them a commitment: taking one does not close the
- * other, and skipping both is a way through. The intent the account arrived with decides which is
- * offered first and which is marked as the way it was heading, and decides nothing else.
- *
- * The words come from ROLES in src/lib/roles.ts, so the capabilities are described in one place.
+ * Two actions, side by side, neither of them a commitment: taking one does not close the other.
+ * The intent the account arrived with decides which is offered first and nothing else. The words
+ * come from ROLES in src/lib/roles.ts, so the capabilities are named in one place.
  */
 function StartHere({ roles, intent, firstName, identity }: { roles: string[]; intent: Intent | null; firstName: string | null; identity: string | null }) {
-  // The registry says which capability an intent leads with. "explore" names none on purpose:
-  // it asks for both, with neither marked.
-  const marked = ROLES.find((r) => r.intent === intent)?.key ?? null;
-  const leading = marked ?? "organizer";
+  // The registry says which capability an intent leads with. "explore" names none on purpose, and
+  // then the order is the registry's own.
+  const leading = ROLES.find((r) => r.intent === intent)?.key ?? "organizer";
   const cards = [...ROLES].sort((a, b) => (a.key === leading ? -1 : b.key === leading ? 1 : 0));
 
   return (
@@ -210,31 +207,25 @@ function StartHere({ roles, intent, firstName, identity }: { roles: string[]; in
       nav={dashboardNav({ hasAct: false, roles })}
       identity={identity}
       eyebrow={firstName ? `Welcome, ${firstName}` : "Welcome"}
-      title="One account,"
-      accent="both sides."
-      intro={
-        <p>
-          One Door Money account for creating fundraisers, supporting work, or doing both. Start on either side.
-          Nothing here is locked once you pick one.
-        </p>
-      }
+      title="Your"
+      accent="account"
+      intro={<p>Choose what you want to do first. You can do both from this account.</p>}
     >
       <div className="grid items-start gap-6 lg:grid-cols-2">
         {cards.map((card) => (
           <Card key={card.key}>
-            <CardHead eyebrow={card.key === marked ? "Where you were heading" : "On the same account"}>{card.label}</CardHead>
+            {/* The same two words the rail uses for these sections. */}
+            <CardHead eyebrow={card.key === "organizer" ? "Creating" : "Supporting"}>{card.label}</CardHead>
             <p className="mb-7 max-w-[46ch] text-[15px] leading-[1.6] text-muted">{card.blurb}</p>
             <ButtonLink href={card.start}>{card.label}</ButtonLink>
           </Card>
         ))}
       </div>
 
-      <p className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-[14.5px] text-muted">
-        <Link href="/how-sponsorship-works" className="text-accent-ink underline underline-offset-4">
-          Skip for now and see how sponsorship works
-        </Link>
-        <Link href="/patron" className="text-accent-ink underline underline-offset-4">
-          What this account has backed
+      {/* The quiet way past both, for somebody who would rather look first. */}
+      <p className="mt-7 text-[14.5px] text-muted">
+        <Link href="/fundraisers" className="text-accent-ink underline underline-offset-4">
+          Browse sponsorships
         </Link>
       </p>
     </DashboardShell>

@@ -32,13 +32,12 @@ export default async function NewActPage({ searchParams }: Props) {
       nav={dashboardNav({ hasAct: false, roles: profile?.roles ?? [] })}
       identity={fullName(profile)}
       eyebrow="Creating"
-      title="Name the"
-      accent="organizer"
+      title="Organizer"
+      accent="profile"
       intro={
         <p>
-          The name sponsors and audiences will know, which can be a band, a team, a company or your own. It is
-          separate from your account name, and creating it publishes nothing. Location and a photo are optional.
-          Next, describe what you are raising funds for.
+          The name sponsors and audiences will know: a band, a team, a company or your own. Creating it publishes
+          nothing. A fundraiser comes next.
         </p>
       }
     >

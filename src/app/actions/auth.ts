@@ -9,6 +9,7 @@ import { DEFAULT_ROLES } from "@/lib/roles";
 import { homeForIntent, parseIntent } from "@/lib/intent";
 import { mfaVerifyPath } from "@/lib/mfa";
 import { subscribeNewAccount } from "@/lib/newsletter";
+import { LOGIN_MESSAGES } from "@/lib/login";
 import { NAME_MAX, PASSWORD_MAX, PASSWORD_MIN, SIGNUP_MESSAGES } from "@/lib/signup";
 
 /*
@@ -82,9 +83,11 @@ export async function sendMagicLink(_prev: LoginState, form: FormData): Promise<
 // Password sign-in
 // ---------------------------------------------------------------
 
+// The wording comes from @/lib/login, which the sign-in page also runs, so the answer the page
+// gives at once and the one this makes are the same answer.
 const SignInInput = z.object({
-  handle: z.string().trim().min(1, "Enter an email address or username."),
-  password: z.string().min(1, "Enter the password."),
+  handle: z.string().trim().min(1, LOGIN_MESSAGES.handle_missing),
+  password: z.string().min(1, LOGIN_MESSAGES.password_missing),
   next: z.string().optional(),
 });
 
@@ -97,13 +100,13 @@ async function addressFor(handle: string) {
 /** Signs in with a username or email and a password. Redirects on success. */
 export async function signIn(_prev: PasswordState, form: FormData): Promise<PasswordState> {
   const parsed = SignInInput.safeParse({ handle: str(form, "handle"), password: str(form, "password"), next: str(form, "next") });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a username and password." };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? LOGIN_MESSAGES.handle_missing };
   const next = safeNext(parsed.data.next);
 
   const email = await addressFor(parsed.data.handle);
   // No account for that handle. Same words as a wrong password, so the form never
   // confirms which usernames exist and which do not.
-  if (!email) return { error: "That username and password do not match an account." };
+  if (!email) return { error: LOGIN_MESSAGES.mismatch };
 
   const sb = await supabaseServer();
   const { error } = await sb.auth.signInWithPassword({ email, password: parsed.data.password });
@@ -115,7 +118,7 @@ export async function signIn(_prev: PasswordState, form: FormData): Promise<Pass
       return { error: "Too many attempts on that account. Try again in a few minutes." };
     }
     console.error("password sign-in failed:", error.message);
-    return { error: "That username and password do not match an account." };
+    return { error: LOGIN_MESSAGES.mismatch };
   }
 
   /*
@@ -154,8 +157,8 @@ const SignUpInput = z.object({
   next: z.string().optional(),
   // Context, not permission: it decides which action the dashboard leads with and nothing else.
   intent: z.string().optional().transform(parseIntent),
-  // The new-fundraisers email. Ticked by default on the form and cleared by unticking it, so an
-  // absent value means the person took it off rather than that the form forgot to ask.
+  // The new-fundraisers email. The box on the form starts off, so an absent value means nobody
+  // asked for it. Every send carries its own link to stop it.
   newsletter: z.string().optional().transform((v) => v === "on"),
 });
 
@@ -235,8 +238,8 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
     return { ok: false, errors: { email: "There is already an account for that email address." } };
   }
 
-  // The new-fundraisers email, where the box was left ticked. After the account exists, so the
-  // row can be owned from the start, and never in a way that can fail the sign-up.
+  // The new-fundraisers email, where the box was ticked. After the account exists, so the row can
+  // be owned from the start, and never in a way that can fail the sign-up.
   if (parsed.data.newsletter && data.user) {
     await subscribeNewAccount({ userId: data.user.id, email, firstName: parsed.data.first_name || null });
   }
