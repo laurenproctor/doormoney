@@ -1,5 +1,5 @@
 import { tierPlace } from "@/lib/catalog";
-import { payoutProblem, recordReady, sendEmail } from "@/lib/email";
+import { alertsAddress, payoutProblem, recordReady, sendEmail } from "@/lib/email";
 import { lotName, notifyPayout } from "@/lib/purchases";
 import { slicePlan } from "@/lib/release";
 import { SITE } from "@/lib/site";
@@ -126,7 +126,7 @@ export async function runWeeklyPayouts(today = new Date()): Promise<PayoutSummar
   for (const { act, cents, slices } of paidByAct.values()) await notifyPayout(sb, act, cents, slices);
 
   // A transfer that failed is Door Money's problem to look at, not the act's to discover.
-  const staff = process.env.CONTACT_TO_EMAIL?.trim();
+  const staff = alertsAddress();
   if (summary.errors.length && staff) {
     const r = await sendEmail(payoutProblem({ to: staff, ranOn, failures: summary.errors, adminUrl: `${SITE.url}/admin` }));
     if (!r.sent) console.error("payout problem notice not sent", r.reason);
