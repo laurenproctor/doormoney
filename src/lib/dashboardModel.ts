@@ -323,17 +323,18 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
     sections.push({
       title: "Creating",
       items: [
-        { href: "/dashboard", label: "Overview" },
-        { href: "/dashboard/runs", label: "Fundraisers" },
+        { href: "/dashboard", label: "Home" },
+        { href: "/dashboard/runs", label: "Your sponsorships" },
         { href: "/dashboard/payouts", label: "Payouts" },
-        { href: "/dashboard/widget", label: "On your site" },
+        // Music's embeddable widget. Named for the thing rather than for where it goes.
+        { href: "/dashboard/widget", label: "Site widget" },
       ],
     });
   }
 
   // Always there. Somebody who raises money and backs the band down the street should not have to
   // change a setting to see it, and for anyone who has backed nothing it reads as an invitation.
-  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed" }] });
+  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed by you" }] });
 
   // One profile, one account. The profile comes first: it is the identity, and the account page
   // behind it is the email address, the password and what Door Money sends.
@@ -341,7 +342,7 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
     title: "Account",
     items: [
       { href: "/dashboard/profile", label: "Profile" },
-      { href: "/dashboard/account", label: "Account" },
+      { href: "/dashboard/account", label: "Settings" },
     ],
   });
   return sections;
