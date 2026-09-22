@@ -97,3 +97,24 @@ export function releaseSentenceFor(policy: OfferPolicy | null): string | null {
     ? "Door Money releases the organizer's share as each deliverable is documented, once the sponsor's materials are accepted."
     : "Door Money releases the organizer's share in weekly slices across the fundraiser's dates, once the sponsor's materials are accepted.");
 }
+
+/**
+ * The same three statements, out of a purchase snapshot instead of the live policy.
+ *
+ * What a sponsor was sold under, not what the category says today. The snapshot records the policy
+ * version and its words at the moment of purchase (migration 0045) and can never be edited, so a
+ * later version of the policy cannot rewrite what somebody already bought.
+ */
+export function policyStatementsFromSnapshot(snapshot: unknown): PolicyStatement[] {
+  const policy = (snapshot as { policy?: { release_rule?: string; materials_window_days?: number; terms?: unknown; category_key?: string; version?: number } } | null)?.policy;
+  if (!policy?.category_key) return [];
+  const terms = policy.terms && typeof policy.terms === "object" && !Array.isArray(policy.terms) ? (policy.terms as Record<string, string>) : {};
+  return policyStatements({
+    categoryKey: policy.category_key,
+    version: policy.version ?? 1,
+    status: "active",
+    releaseRule: policy.release_rule === "evidence" ? "evidence" : "calendar",
+    materialsWindowDays: policy.materials_window_days ?? 14,
+    terms,
+  });
+}

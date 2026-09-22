@@ -17,6 +17,7 @@ import { organizerNoun } from "@/lib/categories";
 import { checkoutTerms, recordWords, releaseSentence } from "@/lib/record-words";
 import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
 import type { Board } from "@/lib/sample";
+import { offerTermsFingerprint, offerTermsView, storedOfferTerms } from "@/lib/offer-terms";
 import { BoardLots, type LotView } from "./BoardLots";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
 
@@ -107,6 +108,10 @@ export function BoardView({
       minimumCents: minimumBidCents(l.priceCents, l.topBid?.amountCents ?? null),
       // The buy-it-now offer stands while the bidding is below it.
       buyNowCents: buyNowOpen({ status: l.status, buy_now_cents: l.buyNowCents ?? null }, l.topBid?.amountCents ?? null) ? (l.buyNowCents ?? null) : null,
+      offerTerms: offerTermsView(storedOfferTerms({ offer_terms: l.offerTerms }), { reach_estimate: l.reachEstimate ?? null, reach_basis: l.reachBasis ?? null }),
+      // Computed from the same document the card is about to draw, so the two cannot disagree. The
+      // checkout route works it out again from the lot itself and refuses a payment where they differ.
+      termsFingerprint: offerTermsFingerprint(storedOfferTerms({ offer_terms: l.offerTerms }), l.priceCents),
       closesAt: lotCloses,
     };
   });
@@ -206,7 +211,14 @@ export function BoardView({
               </p>
             </div>
           )}
-          <BoardLots lots={lots} closesAt={closesAt} closesLabel={closesLabel} heading={music ? `Back the ${period.noun}` : "Sponsorship options"} terms={checkoutTerms(recordWords(run.categoryKey, run.kind), act.name)} />
+          <BoardLots
+            lots={lots}
+            closesAt={closesAt}
+            closesLabel={closesLabel}
+            heading={music ? `Back the ${period.noun}` : "Sponsorship options"}
+            terms={checkoutTerms(recordWords(run.categoryKey, run.kind), act.name)}
+            deliveryTerms={run.deliveryTerms ?? []}
+          />
         </div>
 
         <PlacementVerification

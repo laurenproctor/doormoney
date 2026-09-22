@@ -27,6 +27,7 @@
  * (src/app/actions/lots.ts) and the database keeps its own copy of the shape (migration 0056).
  */
 import { z } from "zod";
+import { formatDay } from "@/lib/dates";
 import { EVIDENCE_KINDS } from "@/lib/delivery-policy";
 
 /**
@@ -733,4 +734,100 @@ export function draftFromForm(form: Fields, key: string): OfferTermsDraft {
 /** One template's offer terms, as the browser posted them. The server's only way in. */
 export function offerTermsFromForm(form: Fields, key: string): unknown {
   return termsFromDraft(draftFromForm(form, key));
+}
+
+// ---------------------------------------------------------------
+// The terms a sponsor actually read
+// ---------------------------------------------------------------
+
+/**
+ * A short fingerprint of what a sponsor was shown, so they cannot pay for something else.
+ *
+ * A lot's terms are only frozen once somebody has bid on it or paid for it (migration 0035, widened
+ * in 0056). Until then the organizer may still edit them, and a sponsor with the page open could
+ * press the button a minute after the offer changed underneath them.
+ *
+ * So the page carries this, the checkout posts it back, and the route computes it again from the
+ * lot it just read. They have to match. The browser's copy is never read as content and never
+ * reaches a column: it is one opaque string, and the only thing it can do is stop a purchase.
+ *
+ * Deliberately not a cryptographic hash. Nothing is being authenticated, both sides compute it
+ * from the same server-held row, and a pure function keeps this module importable from a client
+ * component the way the rest of it is.
+ */
+export function offerTermsFingerprint(terms: OfferTerms, priceCents: number): string {
+  const canonical = `${priceCents}:${stableJson(publicOfferTerms(terms))}`;
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193;
+  for (let i = 0; i < canonical.length; i += 1) {
+    const c = canonical.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 + c, 0x85ebca6b) >>> 0;
+  }
+  return `${h1.toString(36)}${h2.toString(36)}`;
+}
+
+/** JSON with the keys in a settled order, so two equal documents never fingerprint differently. */
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value ?? null);
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${stableJson(v)}`).join(",")}}`;
+}
+
+/**
+ * The offer terms out of a purchase snapshot, which is the only place a purchased sponsorship's
+ * terms may be read from. Never the live lot: what was bought is what was bought.
+ *
+ * Empty for every purchase made before migration 0056, and for every music purchase, which is not a
+ * gap to fill. The page that draws it says so in its own words instead.
+ */
+export function offerTermsOfSnapshot(snapshot: unknown): OfferTerms {
+  const opportunity = (snapshot as { opportunity?: { offer_terms?: unknown; exclusive?: boolean } } | null)?.opportunity;
+  if (!opportunity) return EMPTY_OFFER_TERMS;
+  return offerTermsOf({ offer_terms: opportunity.offer_terms, exclusive: opportunity.exclusive });
+}
+
+/**
+ * What one deliverable's evidence was promised to be, by its position on the purchase.
+ *
+ * `deliverables` rows are written from the snapshot in order (migration 0057), so position n is the
+ * nth promise in the document. Null where the offer named no method, which the pages draw as "the
+ * organizer has not said" rather than inventing one.
+ */
+export function promisedEvidence(terms: OfferTerms, position: number): { method: string | null; visibility: string } | null {
+  const promise = (terms.deliverables ?? [])[position - 1];
+  if (!promise) return null;
+  return { method: promise.evidence_method ?? null, visibility: promise.evidence_visibility ?? "private" };
+}
+
+/**
+ * The four or five things worth putting on a card, so an offer can be judged without opening it.
+ *
+ * Short, factual, and only what the organizer actually wrote: a missing one is absent rather than
+ * softened into "not specified". An offer nobody has written terms for returns nothing at all, and
+ * the card then reads exactly as it did before any of this existed.
+ *
+ * Not a summary of the offer. The whole document is a click away, and this only says which of it
+ * exists, so nothing here can promise more than the terms underneath do.
+ */
+export function offerHighlights(terms: OfferTermsView): string[] {
+  const t = publicOfferTerms(terms) as OfferTermsView;
+  const out: string[] = [];
+  const a = t.appearances;
+  if (a?.quantity !== null && a?.quantity !== undefined) {
+    out.push(a.quantity === 1 ? "1 appearance" : `${a.quantity.toLocaleString("en-US")} appearances`);
+  }
+  const w = t.delivery_window;
+  if (w?.starts_on && w.ends_on) out.push(`${formatDay(w.starts_on)} to ${formatDay(w.ends_on)}`);
+  else if (w?.deadline_on) out.push(`By ${formatDay(w.deadline_on)}`);
+  if (t.exclusivity?.exclusive) out.push("Exclusive");
+  const reach = terms.audience_reach;
+  if (reach) out.push(`About ${reach.estimate.toLocaleString("en-US")} people`);
+  const owed = t.deliverables?.length ?? 0;
+  if (owed) out.push(owed === 1 ? "1 deliverable" : `${owed} deliverables`);
+  if (t.production?.included) out.push("Production included");
+  return out.slice(0, 5);
 }
