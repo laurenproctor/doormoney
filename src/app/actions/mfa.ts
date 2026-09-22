@@ -37,7 +37,14 @@ import {
 
 export type EnrollState = {
   ok: boolean;
-  /** The QR image as Supabase returns it: an SVG document, turned into a data URL by the browser. */
+  /**
+   * The QR image, already a `data:image/svg+xml;base64,...` URL ready for an `img` src.
+   *
+   * Supabase hands back a raw SVG document. Percent-encoding it in the browser was fragile: an
+   * SVG carries `#` in its colours and `<`, `>` and quotes everywhere, and one un-encoded `#`
+   * truncates the URL at the fragment and the image never loads. Base64 has no such characters,
+   * and building it here means the browser receives something it can only render.
+   */
   qrCode?: string;
   /** The same secret the QR encodes, for a phone that cannot scan. Shown once, stored nowhere. */
   secret?: string;
@@ -128,7 +135,7 @@ export async function startTotpEnrollment(): Promise<EnrollState> {
     return { ok: false, error: "Two-factor authentication could not be set up just now. Try once more." };
   }
 
-  return { ok: true, qrCode: data.totp.qr_code, secret: data.totp.secret, name: friendlyName };
+  return { ok: true, qrCode: svgDataUrl(data.totp.qr_code), secret: data.totp.secret, name: friendlyName };
 }
 
 /**
@@ -352,4 +359,17 @@ export async function issueRecoveryCodes(_prev: RecoveryCodesState, form: FormDa
     console.error("mfa: recovery codes unsupported:", error instanceof Error ? error.message : "unknown");
     return { ok: false, error: "Recovery codes are not available on this project. The backup authenticator is the way back." };
   }
+}
+
+/**
+ * An SVG document as a data URL an `img` can load.
+ *
+ * Base64 rather than percent-encoding, because the encoding has to survive `#`, `<`, `>` and
+ * quotes without anybody remembering to escape them. Returns undefined for anything that is not
+ * an SVG, so a surprise from the Auth server shows the setup key alone rather than a broken
+ * image: the key is the accessible path anyway and always works.
+ */
+function svgDataUrl(svg: string | null | undefined): string | undefined {
+  if (!svg || !svg.trim().toLowerCase().startsWith("<svg")) return undefined;
+  return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
 }

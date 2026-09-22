@@ -8,6 +8,7 @@ import { emailForUsername, normalizeUsername } from "@/lib/username";
 import { DEFAULT_ROLES } from "@/lib/roles";
 import { homeForIntent, parseIntent } from "@/lib/intent";
 import { mfaVerifyPath } from "@/lib/mfa";
+import { subscribeNewAccount } from "@/lib/newsletter";
 import { NAME_MAX, PASSWORD_MAX, PASSWORD_MIN, SIGNUP_MESSAGES } from "@/lib/signup";
 
 /*
@@ -153,6 +154,9 @@ const SignUpInput = z.object({
   next: z.string().optional(),
   // Context, not permission: it decides which action the dashboard leads with and nothing else.
   intent: z.string().optional().transform(parseIntent),
+  // The new-fundraisers email. Ticked by default on the form and cleared by unticking it, so an
+  // absent value means the person took it off rather than that the form forgot to ask.
+  newsletter: z.string().optional().transform((v) => v === "on"),
 });
 
 /**
@@ -170,6 +174,7 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
     password: str(form, "password"),
     next: str(form, "next"),
     intent: str(form, "intent"),
+    newsletter: str(form, "newsletter"),
   });
   if (!parsed.success) {
     const fields = parsed.error.flatten().fieldErrors as Partial<Record<SignUpField, string[]>>;
@@ -228,6 +233,12 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
   // rather than saying so outright. Say so, because somebody trying to sign up needs to know.
   if (data.user && (data.user.identities?.length ?? 0) === 0) {
     return { ok: false, errors: { email: "There is already an account for that email address." } };
+  }
+
+  // The new-fundraisers email, where the box was left ticked. After the account exists, so the
+  // row can be owned from the start, and never in a way that can fail the sign-up.
+  if (parsed.data.newsletter && data.user) {
+    await subscribeNewAccount({ userId: data.user.id, email, firstName: parsed.data.first_name || null });
   }
 
   // A session here means confirmations are off and the account is already in.

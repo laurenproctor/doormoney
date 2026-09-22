@@ -36,6 +36,8 @@ export type NewsletterStanding = {
 };
 
 export const NEWSLETTER_SOURCE_ACCOUNT = "account";
+/** Where a row came from when the box on the sign-up form was left ticked. */
+export const NEWSLETTER_SOURCE_SIGNUP = "signup";
 
 /**
  * One address, in the one form the table stores.
@@ -87,5 +89,47 @@ export async function newsletterStanding({ userId, email }: { userId: string; em
     // A list that cannot be read is not worth a broken account page. The card says it cannot tell.
     console.error("newsletter standing failed:", error instanceof Error ? error.message : error);
     return { configured: false, subscribed: false, ownedByAnother: false };
+  }
+}
+
+/**
+ * Puts a brand-new account on the list, at the moment it is created.
+ *
+ * Called only when the box on the sign-up form was left ticked, and never on its own. The row is
+ * owned from the start, because the address is the one the account was opened with.
+ *
+ * No welcome email: the account is already receiving a confirmation, and two pieces of mail for
+ * one action is how a first impression goes wrong. Every later send carries the unsubscribe link,
+ * and the account page has the switch.
+ *
+ * Never throws and never fails the sign-up. An account that exists without a newsletter row is a
+ * fine outcome; an account that failed to open because a mailing list was busy is not.
+ */
+export async function subscribeNewAccount({
+  userId,
+  email,
+  firstName,
+}: {
+  userId: string;
+  email: string | null;
+  firstName: string | null;
+}): Promise<void> {
+  if (!newsletterConfigured() || !email) return;
+  try {
+    const db = supabaseAdmin();
+    const { error } = await db
+      .from("newsletter")
+      .insert({ email, first_name: firstName, profile_id: userId, source: NEWSLETTER_SOURCE_SIGNUP });
+    if (!error) return;
+    // The address was already on the list, from the footer or from an account that came before.
+    // Turn it back on and claim it only if nobody else holds it.
+    if (error.code === "23505") {
+      await db.from("newsletter").update({ unsubscribed_at: null }).eq("email", email).not("unsubscribed_at", "is", null);
+      await db.from("newsletter").update({ profile_id: userId }).eq("email", email).is("profile_id", null);
+      return;
+    }
+    console.error("newsletter: sign-up subscription failed:", error.code, error.message);
+  } catch (error) {
+    console.error("newsletter: sign-up subscription threw:", error instanceof Error ? error.message : "unknown");
   }
 }

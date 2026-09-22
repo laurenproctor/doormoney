@@ -117,9 +117,22 @@ test("an individual is asked nothing about a business, and saving twice changes 
   const result = await saveProfileDetails({ ok: false }, formWith({ categories: ["music"] }));
   assert.equal(result.ok, true);
   const row = ops.find((o) => o.table === "patron_profiles")?.payload as Record<string, unknown>;
-  assert.equal(row.profile_kind, null);
+  // The question came off the form, so the save does not touch the column at all. It used to
+  // write null here, which would have quietly cleared an answer given before the field was
+  // removed. Absent, not null: a field nobody is asked is a field nobody's save can erase.
+  assert.equal("profile_kind" in row, false, "a form that does not ask must not write");
   assert.deepEqual(row.links, []);
   assert.equal(ops.some((o) => o.table === "patron_profile_categories"), false, "an unchanged choice writes nothing");
+});
+
+test("a kind already stored survives a save from the form that no longer asks", async () => {
+  reset();
+  storedCategories = [];
+  const form = formWith({});
+  assert.equal(form.has("profile_kind"), false, "the field is gone from the form");
+  await saveProfileDetails({ ok: false }, form);
+  const row = ops.find((o) => o.table === "patron_profiles")?.payload as Record<string, unknown>;
+  assert.equal("profile_kind" in row, false);
 });
 
 test("unticking a category removes that one and only that one", async () => {

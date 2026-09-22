@@ -107,7 +107,7 @@ export function TwoFactorSetup({
 
   // Setting one up, first or backup. Shown whenever an enrollment is open, even on an account
   // that already has an app, because that is what adding the backup looks like.
-  if (enroll.ok && enroll.qrCode && enroll.secret && !confirmed.ok) {
+  if (enroll.ok && enroll.secret && !confirmed.ok) {
     return (
       <div>
         <p className="mb-2 text-[15px] leading-[1.6] text-ink">
@@ -120,16 +120,25 @@ export function TwoFactorSetup({
         </ol>
 
         <div className="mb-6 flex flex-wrap items-start gap-6">
-          {/* A data URL holding an SVG, which the image optimizer cannot take and should not:
-              sending the setup secret through a remote optimizer is the last thing this wants. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`data:image/svg+xml;utf8,${encodeURIComponent(enroll.qrCode)}`}
-            alt=""
-            width={168}
-            height={168}
-            className="edge bg-ink p-2"
-          />
+          {/*
+            A base64 data URL built on the server, which the image optimizer cannot take and should
+            not: sending the setup secret through a remote optimizer is the last thing this wants.
+            `ink` behind it because a QR code is black modules on nothing, and a camera needs light
+            under them; it is the palette's own near-white rather than a new color.
+
+            No square at all where the Auth server sent something that is not an SVG. The setup key
+            beside it is the same secret and is the path that always works.
+          */}
+          {enroll.qrCode && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={enroll.qrCode}
+              alt=""
+              width={180}
+              height={180}
+              className="edge block h-[180px] w-[180px] flex-none bg-ink p-2.5"
+            />
+          )}
           <div className="min-w-0">
             <p className={labelClass}>Setup key, if the square will not scan</p>
             <p className="edge max-w-[320px] break-all bg-ground px-3.5 py-3 text-[15px] tracking-[0.12em] text-ink">
