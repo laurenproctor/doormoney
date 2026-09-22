@@ -7,6 +7,7 @@ import { NewsletterCTA } from "@/components/Newsletter";
 import { themeFor } from "@/components/Theme";
 import { tierPlace } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
+import { signupPath } from "@/lib/intent";
 import type { MarkStatus } from "@/lib/marks";
 import { formatMoney } from "@/lib/money";
 import { periodOf } from "@/lib/periods";
@@ -363,8 +364,8 @@ export default async function RecordPage({ params }: Props) {
           amount is ever on it.
         </p>
         <div className="flex flex-wrap gap-3">
-          <ButtonLink href="/patron/signup" variant="ghost" arrow>
-            Open a patron account
+          <ButtonLink href={signupPath("patron", "/dashboard/profile")} variant="ghost" arrow>
+            Create an account
           </ButtonLink>
         </div>
       </Section>

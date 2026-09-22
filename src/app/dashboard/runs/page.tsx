@@ -5,13 +5,13 @@ import { ArrowRight } from "@/components/dashboard/icons";
 import { DashboardShell, Card } from "@/components/DashboardShell";
 import { DashboardEmptyState } from "@/components/dashboard/panels";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
-import { hasRole } from "@/lib/roles";
+import { fullName } from "@/lib/names";
 import { loadDashboard } from "@/lib/dashboard";
 import { dashboardNav, lifecycleLabel } from "@/lib/dashboardModel";
 import { formatDateRange } from "@/lib/dates";
 
 /*
-  Every fundraiser this musician has.
+  Every fundraiser this organizer has.
 
   The sidebar needed somewhere for "Fundraisers" to go: the editor lives at
   /dashboard/runs/<id> and creation at /dashboard/runs/new, but nothing listed them. This is the
@@ -23,7 +23,10 @@ export const metadata: Metadata = { title: "Fundraisers" };
 export default async function FundraisersPage() {
   const user = await requireUser("/dashboard/runs");
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
-  if (!act) redirect(hasRole(profile?.roles, "patron") && !hasRole(profile?.roles, "musician") ? "/patron" : "/dashboard/act/new");
+  // No organizer profile yet, and a fundraiser hangs off one. This used to ask which kind of
+  // account it was and send a patron to /patron instead; every account can do both now, and
+  // somebody who opened the fundraisers page came here to make one.
+  if (!act) redirect("/dashboard/act/new");
 
   const view = await loadDashboard(act);
   const nav = dashboardNav({ hasAct: true, roles: profile?.roles ?? [] });
@@ -33,6 +36,7 @@ export default async function FundraisersPage() {
       current="/dashboard/runs"
       nav={nav}
       actName={act.name}
+      identity={fullName(profile)}
       eyebrow="Everything you have run"
       title="Your"
       accent="fundraisers"

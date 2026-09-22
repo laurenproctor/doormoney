@@ -157,6 +157,16 @@ Sign-up and sign-in lost the nav and the footer at the same time. There is nothi
 
 Settled since, in decision 11: the public patron profile. `profiles.public_profile` was the placeholder for it and was never read; publication now lives on `patron_profiles.published`.
 
+**Amended (2026-09-21, migration 0051): the account stops asking.** One account carrying either job was right. Asking at the door which job it was, before anybody had seen the place, was not. The question sat at the top of the sign-up form as a required choice, and its answer decided the first screen afterwards: a person who ticked only the patron side landed on what they had backed, and everybody else landed in the middle of creating an organizer profile they had not come for. There was a second sign-up form at `/patron/signup` for the other door, which is two forms for one account.
+
+So nobody picks a side to get in. Sign-up asks for an email address and a password, with both names optional, and opens an account holding **both** capabilities. `profiles.roles` is unchanged in shape and in name: `organizer` is still the canonical word, `musician` is still read everywhere `organizer` is read and is never dropped from a row, `patron` is still the support side. What changed is that a role is a product capability and never an authorization boundary, so no page may read one to decide what an account may reach.
+
+- **Every account gets both, and the database holds that floor.** The sign-up trigger unions whatever the metadata carries with `organizer` and `patron`, so an account opened by a one-time email link gets them too. It used to arrive with an empty array. Existing rows were given whichever of the two they lacked, keeping `musician`, and `profiles_roles_present` refuses an empty array from here on.
+- **One landing for everybody.** `/dashboard` with no organizer profile is no longer a redirect. It offers the two capabilities side by side, with a way past both, so a new account is not pushed into creating a fundraiser and is not pushed away from the side with money on it. An account that already owns an act sees exactly what it saw before.
+- **Where somebody came from is context, not identity.** `?intent=creator`, `?intent=patron` or `?intent=explore` decides which action the dashboard leads with and nothing else. It is validated server side, dropped when it is not one of those three, and an explicit safe `next` beats it everywhere. `/patron/signup` is now a redirect to `/signup?intent=patron`, because the address is in sent email and on pages already printed.
+
+The cost is that the sign-up form no longer tells Door Money what a new account came for, so the intent in the address is the only signal and it is a weak one. That is the right trade: the old answer was a guess made before the visit, and the product reads what an account does instead.
+
 ---
 
 ## 11. The public patron profile

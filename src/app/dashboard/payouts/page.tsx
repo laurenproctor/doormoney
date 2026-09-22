@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { Lines } from "@/components/Brand";
 import { PayoutButton } from "@/components/PayoutButton";
-import { requireUser, ownedAct } from "@/lib/auth";
+import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
+import { fullName } from "@/lib/names";
+import { dashboardNav } from "@/lib/dashboardModel";
 import { syncStripeStatus } from "@/app/actions/payouts";
 import { SITE } from "@/lib/site";
 
@@ -15,7 +17,7 @@ export default async function PayoutsPage({ searchParams }: Props) {
   const user = await requireUser("/dashboard/payouts");
   const sp = await searchParams;
   if (sp.return === "1") await syncStripeStatus();
-  const act = await ownedAct(user.id);
+  const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   if (!act) redirect("/dashboard/act/new");
 
   const configured = Boolean(process.env.STRIPE_SECRET_KEY);
@@ -24,7 +26,9 @@ export default async function PayoutsPage({ searchParams }: Props) {
   return (
     <DashboardShell
       current="/dashboard/payouts"
+      nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      identity={fullName(profile)}
       eyebrow={state === "on" ? "Payouts on" : "Not yet paid out"}
       title="Getting"
       accent="paid"

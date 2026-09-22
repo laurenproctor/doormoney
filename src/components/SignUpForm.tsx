@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { signUp, type SignUpState } from "@/app/actions/auth";
 import { Button } from "@/components/Button";
 import { Stamp } from "@/components/Brand";
-import { ROLES } from "@/lib/roles";
+import type { Intent } from "@/lib/intent";
 import {
   PASSWORD_MIN,
   SIGNUP_FIELDS,
@@ -33,19 +33,23 @@ const fieldClass = "field w-full bg-ground px-3.5 py-3 text-[15px] text-ink";
 /**
  * Opens an account.
  *
- * Two questions and nothing else: what the person came here to do, and how to reach them. Both
- * answers can be both, and either can change later. No fundraiser address is asked for here; a
- * musician picks that when they list the act, which is the moment it means anything.
+ * One question that matters: how to reach the person. Nobody picks a side to get in, because
+ * every account can create fundraisers and support them, and nothing here can be got wrong badly
+ * enough to close either off. No fundraiser address is asked for; an organizer picks that on the
+ * organizer page, which is the moment it means anything. Both names are optional and the account
+ * page is where they are filled in properly.
+ *
+ * `intent` is carried through untouched. It only decides which action the dashboard leads with
+ * afterwards, so a form that never received one still works the same way.
  *
  * The fields are controlled rather than left to the DOM. React resets an uncontrolled form once
  * its action settles, which would empty every box behind a failed submission, and holding the
  * values is also what lets an error clear the instant it stops being true.
  */
-export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fixedRoles?: readonly string[]; submitLabel?: string }) {
+export function SignUpForm({ next, intent }: { next: string; intent?: Intent | null }) {
   const [state, action, pending] = useActionState(signUp, initial);
 
   const [values, setValues] = useState<SignUpValues>({
-    roles: fixedRoles ?? [],
     first_name: "",
     last_name: "",
     email: "",
@@ -56,7 +60,6 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
   const [blocked, setBlocked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const rolesRef = useRef<HTMLInputElement>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
   const lastNameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -64,8 +67,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
 
   const focusField = useCallback((f: SignUpField) => {
     const el =
-      f === "roles" ? rolesRef.current
-      : f === "first_name" ? firstNameRef.current
+      f === "first_name" ? firstNameRef.current
       : f === "last_name" ? lastNameRef.current
       : f === "email" ? emailRef.current
       : passwordRef.current;
@@ -121,15 +123,12 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
     });
   };
 
-  const toggleRole = (key: string, on: boolean) =>
-    revalidate({ roles: on ? [...values.roles, key] : values.roles.filter((r) => r !== key) });
-
   /**
    * Nothing is sent while the page can already see what is wrong. The action still runs the same
    * checks on the server; this only saves a round trip and keeps the answer next to the control.
    */
   const guard = (e: React.FormEvent<HTMLFormElement>) => {
-    const found = fixedRoles ? omitRoles(validateSignUp(values)) : validateSignUp(values);
+    const found = validateSignUp(values);
     if (Object.keys(found).length === 0) {
       setBlocked(false);
       setFormError(null);
@@ -176,10 +175,8 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
   return (
     <form action={action} onSubmit={guard} noValidate>
       <input type="hidden" name="next" value={next} />
-
-      {/* A patron arriving through their own door has already answered the question, so the page
-          does not ask it again. The role rides along as it would have from the checkboxes. */}
-      {fixedRoles?.map((r) => <input key={r} type="hidden" name="roles" value={r} />)}
+      {/* Carried, not trusted: the action parses it again and drops anything it does not know. */}
+      {intent && <input type="hidden" name="intent" value={intent} />}
 
       {/*
         One alert, at the top, for anything that is not attached to a single control: what the
@@ -208,54 +205,11 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
         )}
       </div>
 
-      {!fixedRoles && (
-      <fieldset className="mb-[22px]">
-        <legend className={labelClass}>How will you use Door Money?</legend>
-        <div className="grid gap-3">
-          {ROLES.map((r, i) => {
-            const on = values.roles.includes(r.key);
-            return (
-              <label
-                key={r.key}
-                className={`grid cursor-pointer grid-cols-[26px_1fr] items-start gap-3.5 p-3.5 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent-ink/70 ${
-                  on ? "border-2 border-accent bg-accent/15" : errors.roles ? "border-2 border-accent-ink" : "border border-line bg-ground"
-                }`}
-              >
-                <input
-                  ref={i === 0 ? rolesRef : undefined}
-                  type="checkbox"
-                  name="roles"
-                  value={r.key}
-                  checked={on}
-                  onChange={(e) => toggleRole(r.key, e.target.checked)}
-                  aria-invalid={errors.roles ? true : undefined}
-                  aria-describedby={describedBy("roles", "signup-roles-help")}
-                  className="peer sr-only"
-                />
-                <span
-                  aria-hidden="true"
-                  className={`mt-0.5 flex h-[26px] w-[26px] flex-none items-center justify-center border text-[16px] leading-none ${
-                    on ? "border-accent bg-accent text-on-accent" : "border-line text-transparent"
-                  }`}
-                >
-                  &#10003;
-                </span>
-                <span className="min-w-0">
-                  <b className="block text-[16px] font-medium">{r.label}</b>
-                  <span className="block text-[14.5px] leading-[1.5] text-muted">{r.blurb}</span>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        <p id="signup-roles-help" className={helpClass}>Choose one or both. You can change this later.</p>
-        {errors.roles && <FieldError id={errorId("roles")}>{errors.roles}</FieldError>}
-      </fieldset>
-      )}
-
       <div className="grid gap-x-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="signup-first-name" className={labelClass}>First name</label>
+          <label htmlFor="signup-first-name" className={labelClass}>
+            First name <span className="text-muted">(optional)</span>
+          </label>
           <input
             ref={firstNameRef}
             id="signup-first-name"
@@ -271,7 +225,9 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
           {errors.first_name && <FieldError id={errorId("first_name")}>{errors.first_name}</FieldError>}
         </div>
         <div className="max-sm:mt-[18px]">
-          <label htmlFor="signup-last-name" className={labelClass}>Last name</label>
+          <label htmlFor="signup-last-name" className={labelClass}>
+            Last name <span className="text-muted">(optional)</span>
+          </label>
           <input
             ref={lastNameRef}
             id="signup-last-name"
@@ -288,8 +244,9 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
         </div>
       </div>
       <p id="signup-name-help" className={`${helpClass} mb-[18px]`}>
-        The person holding the account. An organizer or a business gets its own name later, and nothing here
-        appears publicly unless it is put on a page on purpose.
+        The person holding the account. Skip them now and add them on the account page whenever you like. An
+        organizer or a business gets its own name later, and nothing here appears publicly unless it is put on a
+        page on purpose.
       </p>
 
       <label htmlFor="signup-email" className={labelClass}>Email</label>
@@ -342,7 +299,7 @@ export function SignUpForm({ next, fixedRoles, submitLabel }: { next: string; fi
       <p id="signup-password-help" className={`${helpClass} mb-[22px]`}>Use at least {PASSWORD_MIN} characters.</p>
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "One second" : (submitLabel ?? "Create free account")}
+        {pending ? "One second" : "Create free account"}
       </Button>
 
       <p className="mt-4 text-[14px] leading-[1.6] text-muted">
@@ -377,11 +334,4 @@ function FieldError({ id, children }: { id: string; children: ReactNode }) {
       <span>{children}</span>
     </p>
   );
-}
-
-/** The patron door answers the role question by existing, so its errors never mention roles. */
-function omitRoles(errors: SignUpErrors): SignUpErrors {
-  const { roles, ...rest } = errors;
-  void roles;
-  return rest;
 }

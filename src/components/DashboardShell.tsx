@@ -16,10 +16,20 @@ import { dashboardNav, type NavSection } from "@/lib/dashboardModel";
  * The props are the ones every dashboard page already passed, so the call sites did not have to
  * move. `nav` is the new one; a page that does not pass it gets the musician's sections, and a
  * page still passing the old flat `links` gets them in one unnamed group.
+ *
+ * The bar names the person, then the organizer beside them. It used to name only the organizer,
+ * which made the workspace read as the band's rather than as the account holder's, and left an
+ * account with no organizer profile with nothing up there at all. The person is the account; the
+ * organizer is context.
+ *
+ * `identity` is passed in rather than looked up here. This file also exports the field classes
+ * every dashboard form uses, so it is imported by client components: one import of src/lib/auth
+ * would pull the service-role client into the browser bundle, and the build says so.
  */
 export function DashboardShell({
   current,
   actName,
+  identity,
   eyebrow,
   title,
   accent,
@@ -30,6 +40,8 @@ export function DashboardShell({
 }: {
   current: string;
   actName?: string | null;
+  /** The account holder's own name, from the page that already read the profile. */
+  identity?: string | null;
   eyebrow: string;
   title: string;
   accent: string;
@@ -61,9 +73,11 @@ export function DashboardShell({
         >
           <Logo title="" className="h-[26px] w-auto" />
         </Link>
-        {actName && (
-          <span className="caps hidden truncate text-[14px] text-muted sm:inline" title={actName}>
-            {actName}
+        {(identity || actName) && (
+          <span className="caps hidden min-w-0 items-center gap-2 text-[14px] text-muted sm:flex" title={[identity, actName].filter(Boolean).join(", ")}>
+            {identity && <span className="truncate text-ink">{identity}</span>}
+            {identity && actName && <span aria-hidden="true" className="flex-none">&middot;</span>}
+            {actName && <span className="truncate">{actName}</span>}
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
@@ -114,11 +128,17 @@ export function Card({ children, className = "", id }: { children: ReactNode; cl
   );
 }
 
-export function CardHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
+/**
+ * A card's heading. `level` is for a page that groups its cards under headings of their own: the
+ * card then sits a level down, so a screen reader reads the sections and their cards in order
+ * rather than a flat row of equals.
+ */
+export function CardHead({ eyebrow, children, level = 2 }: { eyebrow: string; children: ReactNode; level?: 2 | 3 }) {
+  const Heading = level === 3 ? "h3" : "h2";
   return (
     <>
       <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
-      <h2 className="heading mb-4 text-[clamp(20px,2.6vw,26px)] leading-tight">{children}</h2>
+      <Heading className="heading mb-4 text-[clamp(20px,2.6vw,26px)] leading-tight">{children}</Heading>
     </>
   );
 }

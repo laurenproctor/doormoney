@@ -8,8 +8,13 @@ import { RESERVED_SLUGS, SLUG_RE, slugify } from "@/lib/slug";
 import { actPath } from "@/lib/urls";
 import { newFundraiserPath } from "@/lib/organizer-examples";
 import { starterKit } from "@/lib/starter-kits";
+// A "use server" file may only export async functions, so the words live in their own module.
+import { ENTITY_KINDS } from "@/lib/participation";
 
-export type ActField = "name" | "slug" | "type" | "city" | "region" | "country_code" | "bio" | "instagram" | "website" | "photo";
+export type ActField =
+  | "name" | "slug" | "type" | "entity_kind" | "city" | "region" | "country_code"
+  | "bio" | "audience_description" | "instagram" | "website" | "photo";
+
 export type ActState = { ok: boolean; errors?: Partial<Record<ActField | "form", string>> };
 
 const optionalUrl = z
@@ -31,10 +36,19 @@ const Input = z.object({
     .regex(SLUG_RE, "Letters, digits and hyphens only.")
     .refine((s) => !RESERVED_SLUGS.has(s), "That address is reserved. Pick another."),
   type: z.union([z.enum(["touring_band", "house_act", "soloist"]), z.literal("")]).transform((v) => v || null),
+  entity_kind: z.union([z.enum(ENTITY_KINDS), z.literal("")]).transform((v) => v || null),
   city: z.string().trim().max(60).transform((v) => v || null),
   region: z.string().trim().max(100).transform((v) => v || null),
   country_code: z.string().trim().toUpperCase().refine((v) => !v || /^[A-Z]{2}$/.test(v), "Use a two-letter country code.").transform((v) => v || null),
   bio: z.string().trim().max(600, "Keep the bio under 600 characters.").optional().transform((v) => v || null),
+  // The organizer's own audience, not a fundraiser's. runs.audience_description is what one
+  // sponsorship reaches; this is the room the organizer plays to, and neither fills the other in.
+  audience_description: z
+    .string()
+    .trim()
+    .max(600, "Keep the audience description under 600 characters.")
+    .optional()
+    .transform((v) => v || null),
   instagram: z
     .string()
     .trim()
@@ -59,10 +73,12 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
     name: str(form, "name"),
     slug: str(form, "slug") || slugify(str(form, "name")),
     type: str(form, "type"),
+    entity_kind: str(form, "entity_kind"),
     city: str(form, "city"),
     region: str(form, "region"),
     country_code: str(form, "country_code"),
     bio: str(form, "bio"),
+    audience_description: str(form, "audience_description"),
     instagram: str(form, "instagram"),
     website: str(form, "website"),
   });
@@ -126,6 +142,8 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   }
 
   revalidatePath("/dashboard");
+  // The unified profile reads the organizer's own details, so it changes when they do.
+  revalidatePath("/dashboard/profile");
   revalidatePath(actPath(parsed.data.slug));
   if (previousSlug && previousSlug !== slug) revalidatePath(actPath(previousSlug));
   if (!existing) {

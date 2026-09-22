@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
-import { hasRole } from "@/lib/roles";
+import { fullName } from "@/lib/names";
 import { dashboardNav } from "@/lib/dashboardModel";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
@@ -12,8 +12,8 @@ import { actPath, runPath } from "@/lib/urls";
 export const metadata: Metadata = { title: "On your site" };
 
 /*
-  The one line a musician pastes into their own site, and the two images for places that only take
-  a link.
+  The one line an organizer pastes into their own site, and the two images for places that only
+  take a link.
 
   This used to sit at the bottom of the overview, which meant it appeared and disappeared with the
   fundraiser under it and was the longest thing on a page meant to be scanned. Decision 14 took the
@@ -23,10 +23,9 @@ export const metadata: Metadata = { title: "On your site" };
 export default async function DashboardWidgetPage() {
   const user = await requireUser("/dashboard/widget");
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
-  if (!act) {
-    const roles = profile?.roles;
-    redirect(hasRole(roles, "patron") && !hasRole(roles, "musician") && !hasRole(roles, "organizer") ? "/patron" : "/dashboard/act/new");
-  }
+  // The widget embeds a fundraiser, which needs an organizer profile first. The old branch here
+  // sent a patron-only account to /patron; there is no such account any more.
+  if (!act) redirect("/dashboard/act/new");
 
   // A widget is for one exact fundraiser, so there is one line per open fundraiser and each names
   // its own. The widget sells music's backing tiers, so only music fundraisers have one. The button
@@ -52,6 +51,7 @@ export default async function DashboardWidgetPage() {
       current="/dashboard/widget"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      identity={fullName(profile)}
       eyebrow={act.city ?? "Organizer"}
       title="On your"
       accent="site"

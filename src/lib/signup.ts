@@ -11,12 +11,10 @@
  * than the server's zod email check, because a value this accepts and the server refuses comes
  * back as a server error the form shows, while the reverse would be a field nobody can submit.
  */
-import { isRole } from "@/lib/roles";
-
-export type SignUpField = "roles" | "first_name" | "last_name" | "email" | "password";
+export type SignUpField = "first_name" | "last_name" | "email" | "password";
 
 /** Reading order. A blocked submission puts focus on the first of these that failed. */
-export const SIGNUP_FIELDS: readonly SignUpField[] = ["roles", "first_name", "last_name", "email", "password"];
+export const SIGNUP_FIELDS: readonly SignUpField[] = ["first_name", "last_name", "email", "password"];
 
 /** One stable id per message, so aria-describedby names the message and nothing else. */
 export function errorId(field: SignUpField | "form"): string {
@@ -36,9 +34,11 @@ export const NAME_MAX = 60;
  * to be two sets of literals in two files, kept together by a test that read auth.ts as text and
  * matched its zod calls with a regular expression. Sharing the strings is what that test wanted;
  * this is it, so the test is gone.
+ *
+ * The two "missing" messages belong to the account page rather than to sign-up: a name is
+ * optional when the account is opened and required once somebody fills it in there.
  */
 export const SIGNUP_MESSAGES = {
-  roles: "Pick at least one, or both.",
   first_name_missing: "Enter a first name.",
   first_name_long: `Keep the first name under ${NAME_MAX} characters.`,
   last_name_missing: "Enter a last name.",
@@ -49,7 +49,6 @@ export const SIGNUP_MESSAGES = {
 } as const;
 
 export type SignUpValues = {
-  roles: readonly string[];
   first_name: string;
   last_name: string;
   email: string;
@@ -66,19 +65,21 @@ export type SignUpErrors = Partial<Record<SignUpField, string>>;
  */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** The message for one field, or undefined when that field is fine. */
+/**
+ * The message for one field, or undefined when that field is fine.
+ *
+ * Both names are optional here and nowhere else: opening an account asks for what it needs to
+ * reach somebody and nothing more, and the account page is where a name is filled in and
+ * required. A name that is given still has to fit.
+ */
 export function validateField(field: SignUpField, values: SignUpValues): string | undefined {
   switch (field) {
-    case "roles":
-      return values.roles.some((r) => isRole(r)) ? undefined : SIGNUP_MESSAGES.roles;
     case "first_name": {
       const v = values.first_name.trim();
-      if (v.length < 1) return SIGNUP_MESSAGES.first_name_missing;
       return v.length > NAME_MAX ? SIGNUP_MESSAGES.first_name_long : undefined;
     }
     case "last_name": {
       const v = values.last_name.trim();
-      if (v.length < 1) return SIGNUP_MESSAGES.last_name_missing;
       return v.length > NAME_MAX ? SIGNUP_MESSAGES.last_name_long : undefined;
     }
     case "email":

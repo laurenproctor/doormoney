@@ -3,7 +3,7 @@ import Link from "next/link";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { requireAdmin } from "@/lib/admin";
 import { openFlags } from "@/lib/flags";
-import { ClearFlag } from "./FlagActions";
+import { ClearFlag, RemoveAccountTotp } from "./FlagActions";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/money";
 import { formatDateRange } from "@/lib/dates";
@@ -79,8 +79,19 @@ export default async function AdminPage() {
     .reduce((n, p) => n + p.amount_cents, 0);
 
   return (
-    <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Read only" title="Admin" accent="">
+    <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Staff" title="Admin" accent="">
       <div className="grid gap-[30px]">
+        <Card>
+          <CardHead eyebrow="Account support">Somebody locked out of two-factor</CardHead>
+          <p className="mb-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
+            An account with an authenticator app cannot get past the code screen without it, and there is no way
+            for Door Money to read the code. This removes the app from one account so its password works on its
+            own again. It does not touch the password, and it is the only thing here that changes somebody
+            else&apos;s account.
+          </p>
+          <RemoveAccountTotp />
+        </Card>
+
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <Stat n={String(actRows.length)} label="acts" />
           <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="fundraisers up" />

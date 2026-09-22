@@ -27,7 +27,6 @@ import {
 } from "@/lib/signup";
 
 const good: SignUpValues = {
-  roles: ["musician"],
   first_name: "Rosie",
   last_name: "Bell",
   email: "rosie@example.com",
@@ -41,34 +40,18 @@ test("a filled form raises nothing", () => {
   assert.equal(firstInvalid({}), null);
 });
 
-test("an empty form names every field, in reading order", () => {
-  const errors = validateSignUp({ roles: [], first_name: "", last_name: "", email: "", password: "" });
-  assert.deepEqual(Object.keys(errors).sort(), [...SIGNUP_FIELDS].sort());
-  assert.equal(firstInvalid(errors), "roles");
+test("an empty form asks for the two things an account cannot be opened without", () => {
+  const errors = validateSignUp({ first_name: "", last_name: "", email: "", password: "" });
+  assert.deepEqual(Object.keys(errors).sort(), ["email", "password"]);
+  assert.equal(firstInvalid(errors), "email");
 });
 
-test("either role on its own satisfies the question, and so does both", () => {
-  for (const roles of [["musician"], ["patron"], ["musician", "patron"]]) {
-    assert.equal(validateField("roles", with_({ roles })), undefined, roles.join("+"));
-  }
-});
-
-test("nothing chosen is refused, and a word that is not a role does not count as one", () => {
-  assert.equal(validateField("roles", with_({ roles: [] })), "Pick at least one, or both.");
-  assert.equal(validateField("roles", with_({ roles: ["admin"] })), "Pick at least one, or both.");
-});
-
-test("the role error goes the moment a role is picked", () => {
-  const before = validateSignUp(with_({ roles: [] }));
-  assert.equal(before.roles, "Pick at least one, or both.");
-  const after = validateSignUp(with_({ roles: ["patron"] }));
-  assert.equal(after.roles, undefined);
-});
-
-test("a name has to be there, and whitespace is not being there", () => {
-  assert.equal(validateField("first_name", with_({ first_name: "" })), "Enter a first name.");
-  assert.equal(validateField("first_name", with_({ first_name: "   " })), "Enter a first name.");
-  assert.equal(validateField("last_name", with_({ last_name: "  " })), "Enter a last name.");
+test("a name is optional here, and whitespace is not a name either way", () => {
+  // Opening an account asks for what it needs to reach somebody and nothing more. The account
+  // page is where a name is filled in and where it is required.
+  assert.equal(validateField("first_name", with_({ first_name: "" })), undefined);
+  assert.equal(validateField("first_name", with_({ first_name: "   " })), undefined);
+  assert.equal(validateField("last_name", with_({ last_name: "  " })), undefined);
   assert.equal(validateField("first_name", with_({ first_name: "  Rosie  " })), undefined);
 });
 
@@ -98,8 +81,8 @@ test("a password is measured before it is trimmed, because spaces count in one",
 
 test("focus goes to the first thing wrong, not the last", () => {
   assert.equal(firstInvalid(validateSignUp(with_({ email: "", password: "" }))), "email");
-  assert.equal(firstInvalid(validateSignUp(with_({ last_name: "", email: "" }))), "last_name");
-  assert.equal(firstInvalid(validateSignUp(with_({ roles: [], password: "" }))), "roles");
+  assert.equal(firstInvalid(validateSignUp(with_({ first_name: "x".repeat(NAME_MAX + 1), email: "" }))), "first_name");
+  assert.equal(firstInvalid(validateSignUp(with_({ last_name: "x".repeat(NAME_MAX + 1), password: "" }))), "last_name");
 });
 
 test("every message has an id of its own, and the form-level one has its own too", () => {
