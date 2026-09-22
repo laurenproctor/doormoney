@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardShell, Card } from "@/components/DashboardShell";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
-import { draftCategories } from "@/app/actions/drafts";
+import { draftCategories, draftDiscoveryRegistry } from "@/app/actions/drafts";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { dashboardNav } from "@/lib/dashboardModel";
@@ -23,7 +23,7 @@ export default async function NewRunPage({ searchParams }: Props) {
   // No organizer profile yet: make one first, and come back to the same starter kit afterwards.
   if (!act) redirect(asked ? `/dashboard/act/new?template=${asked}` : "/dashboard/act/new");
 
-  const categories = await draftCategories();
+  const [categories, discovery] = await Promise.all([draftCategories(), draftDiscoveryRegistry()]);
   // /dashboard/runs/new?template=fund_tour. The registry decides whether the kit may be used.
   const link = starterKitFromLink(template, categories);
   const recommendations = await loadKitRecommendations(await supabaseServer(), categories, act.type);
@@ -52,6 +52,7 @@ export default async function NewRunPage({ searchParams }: Props) {
           draft={null}
           categories={categories}
           musicOrganizer={act.type !== null}
+          discovery={discovery}
           starterKits={{
             initialKitKey: link.status === "ready" ? link.kit.key : null,
             linkError: link.status === "refused" ? link.error : null,

@@ -16,6 +16,16 @@
 
 export type Category = { key: string; label?: string | null };
 
+/**
+ * The structured discovery facts, already in words (src/lib/discovery.ts, migration 0053).
+ *
+ * Optional everywhere they appear. They supplement the prose a fundraiser already carries and
+ * never replace it, and an organizer who chose none has none: a component draws nothing rather
+ * than a placeholder, the same rule as every other unknown here.
+ */
+export type { DiscoveryTagView, DiscoveryFacetView } from "@/lib/discovery";
+import type { DiscoveryFacetView, DiscoveryTagView } from "@/lib/discovery";
+
 /** A place, from what somebody said and nothing else. Every part is optional and none is invented. */
 export type LocationView = { city?: string | null; region?: string | null; countryCode?: string | null };
 
@@ -49,6 +59,12 @@ export type FundraiserView = {
   sponsorPromise: string | null;
   activityMode?: "in_person" | "online" | "hybrid" | null;
   locations: LocationView[];
+  /** The countries the activity happens in. Empty is a fact about online work, not a gap. */
+  countryCodes?: string[];
+  /** What the funding pays for and who it reaches, grouped by facet. Empty draws nothing. */
+  discovery?: DiscoveryFacetView[];
+  /** When the fundraiser raises. Not when the activity happens, and not when an offer closes. */
+  fundraisingWindow?: { startsOn: string | null; endsOn: string | null } | null;
   href: string;
 };
 
@@ -67,6 +83,13 @@ export type OpportunityView = {
   buyNowCents?: number | null;
   /** The sponsor's public name, where they have one. Never an amount they paid in private. */
   soldTo?: string | null;
+  /** Who this placement reaches, from its template. A fact about the placement, not a claim. */
+  audience?: DiscoveryTagView[];
+  /**
+   * How many people the organizer expects, and why they believe it. Never one without the other:
+   * an estimate with no basis is a claim, and the product contract does not allow one.
+   */
+  reach?: { estimate: number; basis: string } | null;
 };
 
 /** A template row in an editor. A suggestion, which may be absent, and is never a price. */
@@ -77,7 +100,13 @@ export type OpportunityTemplateView = {
   /** One line under the kinds, where one of them is product or a service: Door Money moves the money and nothing else. */
   kindNote?: string | null;
 };
-export type OpportunityDraft = { on: boolean; count: string; price: string; saleMethod: SaleMethod; buyNow: string };
+export type OpportunityDraft = {
+  on: boolean; count: string; price: string; saleMethod: SaleMethod; buyNow: string;
+  /** How many people the organizer expects this to reach. Empty means they have not said. */
+  reach: string;
+  /** Why they believe that number. Required by the database whenever a number is given. */
+  reachBasis: string;
+};
 
 /** What the organizer committed to document. Only what they chose: src/lib/verification.ts. */
 export type CommitmentView = { key: string; label: string; detail?: string };

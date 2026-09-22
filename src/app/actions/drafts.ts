@@ -6,6 +6,8 @@ import { requireUser, ownedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftInput, DRAFT_COLUMNS, categoryErrors, type FundraiserCategory, type FundraiserDraft } from "@/lib/fundraiser-drafts";
 import { detailValueErrors } from "@/lib/categories";
+import { discoveryTagErrors, type DiscoveryRegistry } from "@/lib/discovery";
+import { getDiscoveryRegistry } from "@/lib/discovery-registry";
 import { slugify } from "@/lib/slug";
 import { kitFitsCategory, starterKit } from "@/lib/starter-kits";
 
@@ -32,6 +34,18 @@ export async function categoryStatus(key: string): Promise<{ label: string; publ
   return { label: data?.label ?? "Fundraiser", publishEnabled: data?.publish_enabled === true };
 }
 
+/**
+ * The discovery facets and tags the draft form draws, from the registry (migration 0053).
+ *
+ * Behind an account, like the category list beside it: discovery data is only collected here. An
+ * empty registry draws no discovery questions, which is what a database that cannot answer should
+ * produce rather than questions whose answers would be refused.
+ */
+export async function draftDiscoveryRegistry(): Promise<DiscoveryRegistry> {
+  await requireUser("/dashboard");
+  return getDiscoveryRegistry(await supabaseServer());
+}
+
 export async function loadFundraiserDraft(id: string): Promise<FundraiserDraft | null> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
@@ -49,10 +63,17 @@ export async function saveFundraiserDraft(input: unknown): Promise<DraftState> {
   if (!act) return { ok: false, error: "Create your organizer profile first." };
   const parsed = FundraiserDraftInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(" ") };
-  const categories = await draftCategories();
+  const sbForRegistry = await supabaseServer();
+  const [categories, registry] = await Promise.all([draftCategories(), getDiscoveryRegistry(sbForRegistry)]);
+  // A tag already on the row is not held to the registry's `active` flag: retiring a tag takes it
+  // off the list for new choices and changes nothing already chosen (migration 0053).
+  const previous = parsed.data.id
+    ? ((await sbForRegistry.from("runs").select("discovery_tags").eq("id", parsed.data.id).eq("act_id", act.id).maybeSingle()).data?.discovery_tags as string[] | undefined) ?? []
+    : [];
   const issues = [
     ...categoryErrors(parsed.data, categories),
     ...detailValueErrors(parsed.data.category_key, parsed.data.category_details, categories.find((c) => c.key === parsed.data.category_key)?.detail_keys ?? []),
+    ...discoveryTagErrors(parsed.data.discovery_tags, registry, parsed.data.category_key, "fundraiser", previous),
   ];
   if (issues.length) return { ok: false, error: issues.join(" ") };
   const sb = await supabaseServer();
@@ -88,6 +109,9 @@ export async function saveDraftForm(_previous: DraftState, form: FormData): Prom
     description: value("description"), audience_description: value("audience_description"), sponsor_promise: value("sponsor_promise"),
     goal_cents: value("goal_amount") === "" ? null : /^\d+(?:\.\d{1,2})?$/.test(value("goal_amount")) ? Number(value("goal_amount").split(".")[0]) * 100 + Number((value("goal_amount").split(".")[1] || "").padEnd(2, "0")) : "invalid", goal_currency: optional("goal_currency"),
     activity_mode: optional("activity_mode"), activity_locations, category_details,
+    // One checkbox per tag, all under the same name. The registry decides which exist; the save
+    // and then the database decide whether these may be chosen here.
+    discovery_tags: form.getAll("discovery_tag").filter((v): v is string => typeof v === "string" && v.trim() !== ""),
     bidding_closes_at: value("bidding_closes_utc") ? `${value("bidding_closes_utc")}Z` : null,
     timezone: optional("timezone"), delivery_due_at: optional("delivery_due_at"),
     fundraising_starts_on: optional("fundraising_starts_on"), fundraising_ends_on: optional("fundraising_ends_on"),
