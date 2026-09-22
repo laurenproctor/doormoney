@@ -1,21 +1,32 @@
 /*
-  One account, either job, or both. The part with no database in it: what the sign-up form is
-  allowed to send, where an account lands once it is in, and the bar across the dashboard that has
-  to reach both jobs from one account without changing a setting.
+  One account, either job, or both. The part with no database in it: what a roles array is allowed
+  to hold, where an account lands once it is in, and the bar across the dashboard that has to reach
+  both jobs from one account without changing a setting.
+
+  The sign-up form no longer sends roles at all: every account is opened with both capabilities
+  (DEFAULT_ROLES here, migration 0051 in the database), so RolesInput below is the guard on what
+  may reach the column rather than on what a form may post.
 
   tests/dashboard-links.test.ts was merged in here in the testing-suite audit: it tested the same
   module from a second file.
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ROLES, RolesInput, dashboardLinks, hasRole, homeFor, isRole } from "@/lib/roles";
+import { DEFAULT_ROLES, ROLES, RolesInput, dashboardLinks, hasRole, homeFor, isRole } from "@/lib/roles";
 import { NAV } from "@/lib/site";
 
-test("there are two roles and they are the two sides of the room", () => {
+test("there are two capabilities and they are named as the actions they are", () => {
+  // The labels used to be the sign-up question ("I want to raise funds"). Nobody is asked now, so
+  // they are what the dashboard offers instead: one account, two things it can do.
   assert.deepEqual(ROLES.map((r) => r.key), ["organizer", "patron"]);
-  assert.deepEqual(ROLES.map((r) => r.label), ["I want to raise funds", "I want to sponsor or back fundraisers"]);
+  assert.deepEqual(ROLES.map((r) => r.label), ["Create a fundraiser", "Find something to support"]);
   assert.equal(isRole("musician"), true);
   assert.equal(isRole("admin"), false);
+});
+
+test("every new account is opened with both, and never with none", () => {
+  assert.deepEqual([...DEFAULT_ROLES], ["organizer", "patron"]);
+  assert.ok(DEFAULT_ROLES.length > 0, "an account with no capabilities is not a state the product has");
 });
 
 test("either role on its own is fine", () => {
@@ -43,8 +54,12 @@ test("a musician lands on the dashboard", () => {
   assert.equal(homeFor({ roles: ["musician"], hasAct: true }), "/dashboard");
 });
 
-test("a patron lands on what they have backed", () => {
-  assert.equal(homeFor({ roles: ["patron"], hasAct: false }), "/patron");
+test("everybody lands on the same dashboard, whatever they came here to do", () => {
+  // It used to send a patron to /patron and everyone else to /dashboard, which decided what
+  // somebody was before they had done anything. The dashboard offers both sides instead.
+  assert.equal(homeFor({ roles: ["patron"], hasAct: false }), "/dashboard");
+  assert.equal(homeFor({ roles: ["organizer"], hasAct: false }), "/dashboard");
+  assert.equal(homeFor(), "/dashboard");
 });
 
 test("owning an act beats what was ticked at sign-up", () => {
