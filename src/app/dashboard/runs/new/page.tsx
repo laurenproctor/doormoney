@@ -40,7 +40,10 @@ export default async function NewRunPage({ searchParams }: Props) {
       intro={
         <>
           <p>Describe what the funding enables and who the sponsorship can reach. Unknown details can wait.</p>
-          <p className="mt-3">Start from a sponsorship idea or from an empty form. A starter kit fills in examples you can change.</p>
+          <p className="mt-3">
+            A starter kit is an example, not a rule: change any part of it.
+            Picking one saves nothing, offers nothing and sets no price.
+          </p>
         </>
       }
     >
