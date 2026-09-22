@@ -20,7 +20,7 @@ export const ROLES = [
     key: "organizer",
     /** The capability, named as the action it is. */
     label: "Create a fundraiser",
-    blurb: "Say what the funding enables and what a sponsor receives, choose what to offer, and set your own prices.",
+    blurb: "Say what the funding enables and what a sponsor receives. You set the prices.",
     /** The first step for an account that has not used this capability yet. */
     start: "/dashboard/act/new",
     /** The intent that leads with this capability. */
@@ -28,8 +28,8 @@ export const ROLES = [
   },
   {
     key: "patron",
-    label: "Find something to support",
-    blurb: "Sponsor a placement or back the work, and keep every sponsorship, backing and record in one place.",
+    label: "Support a fundraiser",
+    blurb: "Sponsor a placement or back the work. Every record stays in one place.",
     start: "/fundraisers",
     intent: "patron",
   },

@@ -122,7 +122,7 @@ export function ActForm({ act, siteUrl, username, starterKitKey }: {
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : act ? "Save the details" : "Create organizer profile"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving…" : act ? "Save changes" : "Create profile"}</Button>
         {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
         {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>

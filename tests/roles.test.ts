@@ -19,7 +19,7 @@ test("there are two capabilities and they are named as the actions they are", ()
   // The labels used to be the sign-up question ("I want to raise funds"). Nobody is asked now, so
   // they are what the dashboard offers instead: one account, two things it can do.
   assert.deepEqual(ROLES.map((r) => r.key), ["organizer", "patron"]);
-  assert.deepEqual(ROLES.map((r) => r.label), ["Create a fundraiser", "Find something to support"]);
+  assert.deepEqual(ROLES.map((r) => r.label), ["Create a fundraiser", "Support a fundraiser"]);
   assert.equal(isRole("musician"), true);
   assert.equal(isRole("admin"), false);
 });
