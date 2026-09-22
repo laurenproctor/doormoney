@@ -5,34 +5,31 @@ import { Eyebrow } from "@/components/Brand";
 import { Theme } from "@/components/Theme";
 
 /**
- * The shell for signing up and signing in. No nav, no footer, nothing to click but the way in.
+ * The shell behind every account door: sign up, sign in, the password flows and the two-factor
+ * code. No nav, no footer, nothing to click but the way in.
  *
- * Two columns on a wide screen: what an account is worth on the left, the form on the right.
- * On a phone the form comes first, because somebody who came here to sign in should not have to
- * scroll past the sales pitch to do it. The wordmark is the only way back out to the site.
+ * One column, centered, and short. It used to run two columns, with what an account is worth
+ * beside the form. Somebody opening or reaching their own account was reading the product on the
+ * way past, so what is left is a heading, one line of context, and the panel. The wordmark is the
+ * only way back out to the site.
  */
 export function AuthShell({
   eyebrow,
   title,
   accent,
   intro,
-  aside,
+  support,
   children,
-  panelClass = "bg-panel",
 }: {
   eyebrow: string;
   title: string;
-  accent: string;
+  /** The italic word that finishes the heading. Optional, for a heading that is one phrase. */
+  accent?: string;
   intro: ReactNode;
-  /** The left column: what this account does for the person opening it. */
-  aside: ReactNode;
-  /** The right column: the form itself. */
+  /** At most one short line under the intro. Anything longer belongs on a page somebody chose. */
+  support?: string;
+  /** The form itself. */
   children: ReactNode;
-  /**
-   * The panel behind the form. Defaults to the translucent block every page uses. Sign-up passes
-   * an opaque one, because a beam crossing behind a form changes what its labels are sitting on.
-   */
-  panelClass?: string;
 }) {
   return (
     <Theme name="blue">
@@ -44,62 +41,37 @@ export function AuthShell({
       </a>
       <main id="main" className="pool flex-1">
         <div className="mx-auto w-full max-w-[1120px] px-7 pb-[72px] pt-8">
-          <Link href="/" aria-label="Door Money, home" className="inline-block text-ink no-underline">
+          <Link
+            href="/"
+            aria-label="Door Money, home"
+            className="inline-flex min-h-[44px] items-center text-ink no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
+          >
             <Logo title="" className="h-[36px] w-auto" />
           </Link>
 
           {/*
-            Three blocks, one grid. Below lg they stack in the order they are written: the heading
-            names the page, the form is next because that is what the visitor came for, and the
-            reasons sit under it. From lg the form moves to its own column and spans both rows, so
-            the heading and the reasons read down the left.
-
-            The second column waits for lg rather than md because 460px of it is fixed. At 768 that
-            left 173px for the heading, less than a display H1's longest word, so the fixed track
-            pushed the page sideways. It only showed on the pages with a long heading, which is why
-            sign in looked fine while sign up did not.
-
-            The rows are auto then 1fr so that the form, which spans both and is usually the taller
-            column, pushes its extra height below the reasons instead of between them and the
-            heading. Without it a long form held the two left blocks apart: 143px of nothing on
-            sign up against 40px on sign in, from the same markup.
+            One column at every width, so the phone layout and the desktop layout are the same
+            layout. The measure is the form's: a heading wider than the panel under it reads as two
+            things rather than one.
           */}
-          <div className="hero-in mt-12 grid items-start gap-x-[64px] gap-y-10 md:mt-16 lg:grid-cols-[1fr_460px] lg:grid-rows-[auto_1fr] lg:gap-y-8">
-            <div className="lg:col-start-1 lg:row-start-1">
-              <Eyebrow className="mb-7">{eyebrow}</Eyebrow>
-              <h1 className="display max-w-[12ch] text-[clamp(40px,6.4vw,84px)] leading-[0.98]">
-                {title} {accent && <em className="text-accent-ink">{accent}</em>}
-              </h1>
-              <div className="mt-7 max-w-[46ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{intro}</div>
-            </div>
+          <div className="hero-in mx-auto mt-10 w-full max-w-[520px] md:mt-14">
+            <Eyebrow className="mb-6">{eyebrow}</Eyebrow>
+            <h1 className="display text-[clamp(32px,5.4vw,52px)] leading-[1.02]">
+              {title} {accent && <em className="text-accent-ink">{accent}</em>}
+            </h1>
+            <div className="mt-5 text-[clamp(15px,1.8vw,17px)] leading-[1.55]">{intro}</div>
+            {support && <p className="mt-2.5 text-[14.5px] leading-[1.6] text-muted">{support}</p>}
 
-            <div id="form" className={`glow p-7 max-md:p-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 ${panelClass}`}>
+            {/* Opaque, not translucent: a beam crossing behind a form changes what its labels sit on. */}
+            <div
+              id="form"
+              className="edge glow mt-8 bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))] p-7 max-md:p-6"
+            >
               {children}
             </div>
-
-            <div className="lg:col-start-1 lg:row-start-2">{aside}</div>
           </div>
         </div>
       </main>
     </Theme>
-  );
-}
-
-/** The left column's list: one benefit a line, an accent tick in front of each. */
-export function AuthPoints({ heading, points }: { heading: string; points: string[] }) {
-  return (
-    <>
-      <h2 className="caps mb-4 text-[14px] text-accent-ink">{heading}</h2>
-      <ul className="grid max-w-[46ch] gap-3.5">
-        {points.map((p) => (
-          <li key={p} className="grid grid-cols-[22px_1fr] items-start gap-3.5 text-[15px] leading-[1.5]">
-            <span aria-hidden="true" className="mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center border border-accent/70 text-[13px] leading-none text-accent-ink">
-              &#10003;
-            </span>
-            <span>{p}</span>
-          </li>
-        ))}
-      </ul>
-    </>
   );
 }

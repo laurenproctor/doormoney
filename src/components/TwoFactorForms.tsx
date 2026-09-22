@@ -347,16 +347,15 @@ export function TotpChallengeForm({ next }: { next: string }) {
   return (
     <form action={verify} noValidate>
       <input type="hidden" name="next" value={next} />
-      <label htmlFor={`${uid}-code`} className="caps mb-2 block text-[14px] text-muted">
-        Six-digit code, or a recovery code
+      <label htmlFor={`${uid}-code`} className="caps mb-2 block text-[14px] text-ink">
+        Six-digit code or recovery code
       </label>
       <CodeField id={`${uid}-code`} describedBy={`${uid}-hint`} invalid={Boolean(state.error)} focus />
       <p id={`${uid}-hint`} className="mb-5 mt-2 max-w-[42ch] text-[14px] leading-[1.5] text-muted">
-        Open an authenticator app you set up and enter the code it is showing now. Each one lasts about half a
-        minute. If you kept recovery codes, an unused one works here too.
+        Each code lasts about half a minute. An unused recovery code works here too.
       </p>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Checking" : "Verify"}
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? "Checking code…" : "Verify code"}
       </Button>
       {state.error && (
         <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">

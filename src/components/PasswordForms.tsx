@@ -1,43 +1,20 @@
 "use client";
 import Link from "next/link";
 import { useActionState } from "react";
-import { requestPasswordReset, updatePassword, type ResetState } from "@/app/actions/auth";
+import { updatePassword, type ResetState } from "@/app/actions/auth";
 import { Button } from "@/components/Button";
 import { Stamp } from "@/components/Brand";
 
 const initial: ResetState = { ok: false };
 
-const fieldClass = "field mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px]";
-const labelClass = "caps mb-2 block text-[14px] text-muted";
+const fieldClass = "field mb-[18px] w-full bg-ground px-3.5 py-3 text-[15px] text-ink";
+const labelClass = "caps mb-2 block text-[14px] text-ink";
 
-/** Asks for the reset link. Says the same thing either way, so it cannot be used to find accounts. */
-export function ForgotForm() {
-  const [state, action, pending] = useActionState(requestPasswordReset, initial);
-
-  if (state.ok) {
-    return (
-      <div className="pb-2.5 pt-[26px] text-center">
-        <Stamp size="lg" className="mx-auto mb-[18px]">LINK<br />SENT</Stamp>
-        <p className="mx-auto max-w-none">If that account exists, a reset link is on its way to the email on it.</p>
-        <p className="mx-auto mt-2 max-w-[40ch] text-[15px] text-muted">
-          It works once and expires in an hour. Check the spam folder if it takes more than a minute.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <form action={action} noValidate>
-      <label htmlFor="forgot-handle" className={labelClass}>Username or email</label>
-      <input id="forgot-handle" name="handle" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} required className={fieldClass} />
-      <Button type="submit" disabled={pending}>{pending ? "One second" : "Send the reset link"}</Button>
-      {state.error && <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">{state.error}</p>}
-      <p className="mt-6 border-t border-line pt-5 text-[14.5px] text-muted">
-        Remembered it? <Link href="/login" className="text-accent-ink underline underline-offset-4">Sign in</Link>.
-      </p>
-    </form>
-  );
-}
+/*
+  Asking for the reset link is /forgot's own form, in src/app/forgot/ForgotPasswordForm.tsx. There
+  used to be a second copy of it here, which nothing rendered; it is gone rather than left to drift
+  away from the one people actually see.
+*/
 
 /**
  * Sets a new password. The reset link signs the visitor in on the way here, so this
@@ -62,10 +39,23 @@ export function NewPasswordForm({ done = "/dashboard", doneLabel = "Go to the da
     <form action={action} noValidate>
       <label htmlFor="new-password" className={labelClass}>New password</label>
       <input id="new-password" name="password" type="password" autoComplete="new-password" required minLength={10} className={fieldClass} />
-      <label htmlFor="new-password-confirm" className={labelClass}>Again, to be sure</label>
+      <label htmlFor="new-password-confirm" className={labelClass}>Confirm password</label>
       <input id="new-password-confirm" name="confirm" type="password" autoComplete="new-password" required minLength={10} className={fieldClass} />
-      <Button type="submit" disabled={pending}>{pending ? "One second" : "Save the password"}</Button>
-      {state.error && <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">{state.error}</p>}
+      <p className="mb-[22px] text-[14px] leading-[1.5] text-muted">Use at least 10 characters.</p>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Saving password…" : "Save password"}
+      </Button>
+      {state.error && (
+        <p role="alert" className="mt-3 flex items-start gap-2 text-[14.5px] leading-[1.5] text-ink">
+          <span
+            aria-hidden="true"
+            className="mt-px flex h-[18px] w-[18px] flex-none items-center justify-center border border-accent-ink text-[12px] font-bold leading-none text-accent-ink"
+          >
+            !
+          </span>
+          <span>{state.error}</span>
+        </p>
+      )}
     </form>
   );
 }

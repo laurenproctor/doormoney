@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell, AuthPoints } from "@/components/AuthShell";
+import { AuthShell } from "@/components/AuthShell";
 import { TotpChallengeForm } from "@/components/TwoFactorForms";
 import { signOut } from "@/app/actions/auth";
 import { safeNext } from "@/lib/auth";
@@ -39,22 +39,10 @@ export default async function VerifyPage({ searchParams }: Props) {
 
   return (
     <AuthShell
-      eyebrow="One more step"
-      title="Two-factor"
-      accent="authentication"
-      panelClass="bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))]"
-      intro={<p>Your password was right. Enter the six-digit code from your authenticator app to finish signing in.</p>}
-      aside={
-        <AuthPoints
-          heading="Why this is here"
-          points={[
-            "You turned this on for this account, so a password on its own no longer opens it.",
-            "The code changes about every thirty seconds. Enter the one showing now.",
-            "A backup authenticator's code works here too, and so does an unused recovery code.",
-            "Nothing that needs an account opens until the code is entered.",
-          ]}
-        />
-      }
+      eyebrow="Two-factor authentication"
+      title="Enter your"
+      accent="code"
+      intro={<p>Your password was correct. Enter the six-digit code from your authenticator app.</p>}
     >
       <TotpChallengeForm next={next} />
       <div className="mt-6 grid gap-2 border-t border-line pt-5 text-[14.5px] text-muted">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AuthShell, AuthPoints } from "@/components/AuthShell";
+import { AuthShell } from "@/components/AuthShell";
 import { LoginForm } from "@/components/LoginForm";
 import { safeNext } from "@/lib/auth";
 import { homeForIntent, parseIntent } from "@/lib/intent";
@@ -21,21 +21,10 @@ export default async function LoginPage({ searchParams }: Props) {
 
   return (
     <AuthShell
-      eyebrow="One account, both sides"
+      eyebrow="Welcome back"
       title="Sign"
       accent="in"
-      intro={<p>One Door Money account for creating fundraisers, supporting work, or doing both. Sign in with the email address on the account, or with a username where one was claimed.</p>}
-      aside={
-        <AuthPoints
-          heading="What is waiting inside"
-          points={[
-            "Any fundraisers you run: sponsorship options, prices, what has sold, and the sponsor materials waiting on your answer.",
-            "Every sponsorship and backing, with the record behind it.",
-            "Bids in progress, and the ones that won.",
-            "Payouts: what has been sent, and what is still to come.",
-          ]}
-        />
-      }
+      intro={<p>Use your Door Money account.</p>}
     >
       <LoginForm next={next} linkError={linkError} />
     </AuthShell>
