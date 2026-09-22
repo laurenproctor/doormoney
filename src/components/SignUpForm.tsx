@@ -207,9 +207,7 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
 
       <div className="grid gap-x-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="signup-first-name" className={labelClass}>
-            First name <span className="text-muted">(optional)</span>
-          </label>
+          <label htmlFor="signup-first-name" className={labelClass}>First name</label>
           <input
             ref={firstNameRef}
             id="signup-first-name"
@@ -225,9 +223,7 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
           {errors.first_name && <FieldError id={errorId("first_name")}>{errors.first_name}</FieldError>}
         </div>
         <div className="max-sm:mt-[18px]">
-          <label htmlFor="signup-last-name" className={labelClass}>
-            Last name <span className="text-muted">(optional)</span>
-          </label>
+          <label htmlFor="signup-last-name" className={labelClass}>Last name</label>
           <input
             ref={lastNameRef}
             id="signup-last-name"
@@ -244,9 +240,8 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
         </div>
       </div>
       <p id="signup-name-help" className={`${helpClass} mb-[18px]`}>
-        The person holding the account. Skip them now and add them on the account page whenever you like. An
-        organizer or a business gets its own name later, and nothing here appears publicly unless it is put on a
-        page on purpose.
+        The person holding the account. An organizer or a business gets its own name later, and nothing here
+        appears publicly unless it is put on a page on purpose.
       </p>
 
       <label htmlFor="signup-email" className={labelClass}>Email</label>
@@ -297,6 +292,27 @@ export function SignUpForm({ next, intent }: { next: string; intent?: Intent | n
       </div>
       {errors.password && <FieldError id={errorId("password")}>{errors.password}</FieldError>}
       <p id="signup-password-help" className={`${helpClass} mb-[22px]`}>Use at least {PASSWORD_MIN} characters.</p>
+
+      {/*
+        Ticked to start with, and clearable before the account is opened.
+
+        The owner asked for new accounts to arrive on the new-fundraisers email. A pre-ticked box
+        is the visible version of that: the person can see it and can clear it in the same breath
+        as creating the account, rather than finding out later. It is not silent, and the account
+        page can turn it off at any time afterwards.
+      */}
+      <label className="mb-[22px] flex cursor-pointer items-start gap-3 text-[14.5px] leading-[1.6] text-muted">
+        <input
+          type="checkbox"
+          name="newsletter"
+          defaultChecked
+          className="mt-0.5 h-4 w-4 flex-none accent-[var(--accent)]"
+        />
+        <span>
+          Email me when organizers open new fundraisers. Never more than once a week, and every send has a link
+          to stop it.
+        </span>
+      </label>
 
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "One second" : "Create free account"}

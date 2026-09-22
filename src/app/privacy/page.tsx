@@ -29,7 +29,7 @@ const SECTIONS: LegalSection[] = [
         <p>Only what the marketplace needs to run. By where it comes from:</p>
         <Bullets
           items={[
-            <Term key="newsletter" name="The new-fundraisers email">Email address, a first name where one is given, and the page it was entered on.</Term>,
+            <Term key="newsletter" name="The new-fundraisers email">Email address, a first name where one is given, the page it was entered on, and the account it belongs to where one holds the same address.</Term>,
             <Term key="accounts" name="Accounts">Email address and sign-in details, a first and last name, and an account photo where one is added.</Term>,
             <Term key="organizers" name="Organizers">The profile: a name, an address on the site, and optionally a description, a photo, a website, a social handle and a city, region and country. The fundraiser: its category, purpose, audience, dates, locations, goal, sponsorship options and prices. For music, the list of shows, and optionally a photo per show and a self-reported attendance figure. Evidence of delivery, which may be a photograph, a link, a document or a note. Stripe collects identity and bank details directly for payouts; {SITE.name} stores only the Stripe account reference.</Term>,
             <Term key="sponsors" name="Sponsors">Name or business name, email address, the materials sent for a placement (a name, a logo, a credit line or artwork), what they bought or bid on, and the payment status. Card numbers go straight to Stripe and never touch {SITE.name}. A bidder saves a card with Stripe when bidding; {SITE.name} stores Stripe&apos;s reference to the customer and the card, not the card.</Term>,
@@ -56,8 +56,11 @@ const SECTIONS: LegalSection[] = [
           ]}
         />
         <p>
-          {SITE.name} does not sell personal information and does not use it for advertising. It sends marketing email only to
-          people who asked for the new-fundraisers email, and only about fundraisers on {SITE.name}. Every such email has an unsubscribe link.
+          {SITE.name} does not sell personal information and does not use it for advertising. The only marketing email it sends
+          is the new-fundraisers email, and only about fundraisers on {SITE.name}. The box for it is ticked on the sign-up form
+          and can be cleared there before the account is opened; an account that leaves it ticked is subscribed when the account
+          is created. It can be turned off at any time afterwards, on the account page or through the unsubscribe link that every
+          such email carries.
         </p>
       </>
     ),

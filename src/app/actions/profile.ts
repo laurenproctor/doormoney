@@ -146,9 +146,19 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
     headerPath = path;
   }
 
+  /*
+    A field the form no longer shows must not be a field the save erases.
+
+    "This profile is for" came off the form, so `profile_kind` arrives empty every time, and
+    writing that empty value would quietly clear an answer somebody gave before it was removed.
+    `form.has` tells an absent field from a cleared one, so the column is written only when the
+    form actually carried it and is left exactly as it stands otherwise.
+  */
+  const kind = form.has("profile_kind") ? { profile_kind: parsed.data.profile_kind } : {};
+
   const row = {
     display_name: parsed.data.display_name,
-    profile_kind: parsed.data.profile_kind,
+    ...kind,
     bio: parsed.data.bio,
     location: parsed.data.location,
     website: parsed.data.website,

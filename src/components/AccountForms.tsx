@@ -57,6 +57,15 @@ export function AccountNameForm({ firstName, lastName }: { firstName: string | n
   );
 }
 
+/**
+ * The private account photo.
+ *
+ * Nothing renders this today. It came off /dashboard/profile when two photo uploaders on one page
+ * turned out to be one too many: people set this one and wondered why their public page stayed
+ * empty, so the patron profile photo, which is the one that shows, is the only one asked for now.
+ * The component, its actions and `profiles.photo_path` are all left intact, because nothing was
+ * deleted and somewhere may want an account photo again.
+ */
 export function AccountPhotoForm({ photo }: { photo: string | null }) {
   const [state, action, pending] = useActionState(saveAccountPhoto, initialPhoto);
   const [removed, removeAction, removing] = useActionState(removeAccountPhoto, initialPhoto);

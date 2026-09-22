@@ -4,11 +4,10 @@ import { Fragment, type ReactNode } from "react";
 import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { Eyebrow } from "@/components/Brand";
-import { AccountNameForm, AccountPhotoForm } from "@/components/AccountForms";
+import { AccountNameForm } from "@/components/AccountForms";
 import { ActivityList, ProfileDetailsForm, PublishForm, UsernameForm } from "@/components/ProfileForms";
 import { currentProfile, ownedAct, requireUser, type OwnedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
-import { accountPhotoUrl } from "@/lib/accountPhotoUrl";
 import { fullName } from "@/lib/names";
 import { dashboardNav } from "@/lib/dashboardModel";
 import { getCategoryLabels } from "@/lib/category-registry";
@@ -57,11 +56,10 @@ export default async function ProfilePage() {
   // good. Only rows with no owner are taken (migration 0021); nothing financial is rewritten.
   await linkPatronRows(user.id, verified);
 
-  const [profile, act, own, accountPhoto, labels] = await Promise.all([
+  const [profile, act, own, labels] = await Promise.all([
     currentProfile(user.id),
     ownedAct(user.id),
     ownProfile(user.id),
-    accountPhotoUrl(user.id),
     getCategoryLabels(),
   ]);
   const [activity, photo, header, publicFundraisers] = await Promise.all([
@@ -112,18 +110,24 @@ export default async function ProfilePage() {
             public page: an organizer has its own name below, and a patron page has its own display name.
           </p>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6">
             <Card>
               <CardHead level={3} eyebrow="Account name">Your name</CardHead>
               <AccountNameForm firstName={profile?.first_name ?? null} lastName={profile?.last_name ?? null} />
             </Card>
 
-            <Card>
-              <CardHead level={3} eyebrow="Account photo">Private to you</CardHead>
-              <AccountPhotoForm photo={accountPhoto} />
-            </Card>
+            {/*
+              There is one photo on this page, and it is the one that shows.
 
-            <Card className="lg:col-span-2">
+              A private account photo used to sit here as well, which meant two photo uploaders on
+              one page and no way to tell from looking which of them the world would see. People
+              uploaded to the first and wondered why their public page stayed blank. The patron
+              photo below is the one that appears anywhere, so it is the only one asked for.
+              `profiles.photo_path` and the actions behind it are untouched: nothing already
+              uploaded was deleted, it is simply not edited here any more.
+            */}
+
+            <Card>
               <CardHead level={3} eyebrow="In public">What the world can see from this account</CardHead>
               <Details
                 rows={[
@@ -277,7 +281,14 @@ export default async function ProfilePage() {
                 organizer profile.
               </p>
               <div className="max-w-[720px]">
-                <ProfileDetailsForm profile={own} photo={photo} header={header} categories={categories} />
+                <ProfileDetailsForm
+                  profile={own}
+                  photo={photo}
+                  header={header}
+                  categories={categories}
+                  publicPath={username ? `/patron/${username}` : null}
+                  published={published}
+                />
               </div>
             </Card>
           </div>

@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { changeUsername, saveProfileDetails, setActivityShown, setProfileVisibility, type ProfileState, type UsernameState } from "@/app/actions/profile";
 import { Button } from "@/components/Button";
@@ -13,7 +13,6 @@ import {
   INTEREST_MAX,
   LOCATION_MAX,
   NAME_MAX,
-  PATRON_KINDS,
   PROFILE_THEMES,
   SUPPORT_LABEL,
   formatMonth,
@@ -46,6 +45,70 @@ const chipClass =
 
 const initial: ProfileState = { ok: false };
 const initialUsername: UsernameState = { ok: false };
+
+/**
+ * The location field, with suggestions from a geocoder.
+ *
+ * A plain text input with a native `datalist` behind it, so the keyboard, the screen reader and
+ * the browser's own autofill all behave as they already did, and a place the geocoder has never
+ * heard of is still a perfectly good answer. Nothing is required and nothing is validated against
+ * the list.
+ *
+ * The lookup is debounced and goes to our own /api/places, which asks Nominatim on the server:
+ * a half-typed location never leaves this site from the browser. A slow or failed lookup shows no
+ * suggestions and says nothing, because the field works without them.
+ */
+function LocationField({ id, defaultValue, ...props }: { id: string; defaultValue: string } & Record<string, unknown>) {
+  const [value, setValue] = useState(defaultValue);
+  const [places, setPlaces] = useState<string[]>([]);
+  const listId = `${id}-places`;
+  // The query the suggestions belong to, so a slow answer cannot overwrite a newer one.
+  const latest = useRef("");
+
+  useEffect(() => {
+    const query = value.trim();
+    latest.current = query;
+    // Everything, including clearing the list, waits for the debounce: a setState in the body of
+    // an effect renders twice for one keystroke, and react-hooks/set-state-in-effect says so.
+    const timer = setTimeout(async () => {
+      if (query.length < 3) {
+        setPlaces([]);
+        return;
+      }
+      try {
+        const response = await fetch(`/api/places?q=${encodeURIComponent(query)}`);
+        if (!response.ok) return;
+        const data = (await response.json()) as { places?: string[] };
+        if (latest.current === query) setPlaces(data.places ?? []);
+      } catch {
+        // No suggestions is a fine outcome. The field is free text.
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  return (
+    <>
+      <input
+        {...props}
+        id={id}
+        name="location"
+        type="text"
+        list={listId}
+        autoComplete="off"
+        maxLength={LOCATION_MAX}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className={inputClass}
+      />
+      <datalist id={listId}>
+        {places.map((place) => (
+          <option key={place} value={place} />
+        ))}
+      </datalist>
+    </>
+  );
+}
 
 /** A labelled field with its hint and its error tied to the input by id. Shared with AccountForms. */
 export function Field({
@@ -84,6 +147,8 @@ export function ProfileDetailsForm({
   photo,
   header,
   categories,
+  publicPath,
+  published,
 }: {
   profile: OwnProfile | null;
   photo: string | null;
@@ -91,6 +156,10 @@ export function ProfileDetailsForm({
   header: string | null;
   /** The categories the registry offers, already named. Not hardcoded here, so a fifth needs no change. */
   categories: { key: string; label: string }[];
+  /** Where the public page lives, once there is a username. Null before one is claimed. */
+  publicPath: string | null;
+  /** Whether that page answers to anybody yet. */
+  published: boolean;
 }) {
   const [state, action, pending] = useActionState(saveProfileDetails, initial);
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -100,23 +169,47 @@ export function ProfileDetailsForm({
 
   return (
     <form action={action} noValidate encType="multipart/form-data">
+      {/*
+        The save control follows the reader down the form.
+
+        This form is the longest thing on the page and the button used to sit at the very bottom,
+        which meant scrolling past every optional field to save one edit near the top, and no way
+        to tell from up there whether the last save worked. It sticks under the workspace header
+        instead, so the button and the last answer are wherever you are.
+      */}
+      <div className="sticky top-[57px] z-20 -mx-6 mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))] px-6 py-3.5">
+        <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the profile"}</Button>
+        <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
+          {state.ok ? (
+            <>
+              {state.message}{" "}
+              {publicPath && published ? (
+                <a href={publicPath} target="_blank" rel="noreferrer" className="text-accent-ink underline underline-offset-4">
+                  View your profile
+                </a>
+              ) : publicPath ? (
+                "Publish it above and anybody with the address can read it."
+              ) : (
+                "Claim a username above to give it an address."
+              )}
+            </>
+          ) : (
+            ""
+          )}
+        </span>
+      </div>
+
       <Field id={`${uid}-name`} label="Display name" hint={`The name on the page. Up to ${NAME_MAX} characters.`} error={err.display_name}>
         {(props) => <input {...props} name="display_name" type="text" autoComplete="name" maxLength={NAME_MAX} defaultValue={profile?.displayName ?? ""} className={inputClass} />}
       </Field>
 
-      <Field id={`${uid}-kind`} label="This profile is for" hint="Optional. Leave it unset and the page says nothing about it." error={err.profile_kind}>
-        {(props) => (
-          <select {...props} name="profile_kind" defaultValue={profile?.kind ?? ""} className={inputClass}>
-            <option value="">Not stated</option>
-            {PATRON_KINDS.map((k) => (
-              <option key={k.key} value={k.key}>
-                {k.label}
-              </option>
-            ))}
-          </select>
-        )}
-      </Field>
-
+      {/*
+        "This profile is for" (patron_profiles.profile_kind) used to sit here, asking a person
+        whether they were a person. It was optional, almost nobody answered it, and an unanswered
+        question is one more thing between somebody and a saved profile. The column and whatever is
+        already in it are untouched, and the public page still shows a kind that was set before
+        this: removing the question is not the same as discarding the answer.
+      */}
       <Field
         id={`${uid}-bio`}
         label="Short bio or description"
@@ -138,7 +231,7 @@ export function ProfileDetailsForm({
 
       <div className="grid gap-x-5 md:grid-cols-2">
         <Field id={`${uid}-location`} label="Location" hint="Optional. A city, a region, a country, or Online. Never a street address." error={err.location}>
-          {(props) => <input {...props} name="location" type="text" maxLength={LOCATION_MAX} defaultValue={profile?.location ?? ""} className={inputClass} />}
+          {(props) => <LocationField {...props} defaultValue={profile?.location ?? ""} />}
         </Field>
         <Field id={`${uid}-website`} label="Website or social link" hint="Optional. A full address starting with https://." error={err.website}>
           {(props) => <input {...props} name="website" type="url" maxLength={200} defaultValue={profile?.website ?? ""} placeholder="https://" className={inputClass} />}
@@ -288,12 +381,6 @@ export function ProfileDetailsForm({
         </p>
       </fieldset>
 
-      <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the profile"}</Button>
-        <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
-          {state.ok ? state.message : ""}
-        </span>
-      </div>
       {err.form && (
         <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">
           {err.form}
