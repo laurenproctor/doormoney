@@ -216,12 +216,171 @@ since 0001 and a template is public by design.
 | `src/components/domain/OpportunityEditor.tsx` | The reach estimate and its basis |
 | `src/app/actions/drafts.ts`, `src/app/actions/lots.ts` | Reading and saving both |
 
+## The discovery page
+
+Built 2026-09-22 on `feat/sponsor-discovery-filtering`, migration **0054**, applied to the hosted
+project the same day and therefore frozen. `/fundraisers` is now a sponsor discovery surface: a
+filter rail, a result count, removable filter chips, three sort orders and paginated cards.
+`/auctions` and `/fundraiser` still redirect to it.
+
+Applying 0054 changed nothing anybody can see. It replaces two read-only views with the same two
+views plus a few columns, every one of which `anon` could already read on its own table, and the
+page that uses them is not on `main` yet.
+
+### The query, and what it reads
+
+`findFundraisers` in `src/lib/discovery-query.ts` is **two reads, whatever the number of
+fundraisers**, and it replaced `listOpenBoards` for this page. That loader asked for every
+organizer and then a whole board for each: the fundraiser, its options, its public bids, its
+buyers and its backers. A page of cards was being paid for with payment-adjacent history nobody
+looks at, and the cost grew with the number of organizers.
+
+1. `public_fundraiser_discovery`, narrowed on every fundraiser-level filter in the database and
+   capped at `CANDIDATE_CAP` (200) rows.
+2. `public_opportunity_discovery`, for those fundraisers' ids, in one `in (...)`.
+
+A third small read, `discoveryCountries`, fills the country question with the codes that published
+fundraisers actually record, so the page never offers a country nobody is in.
+
+**Public fields the page reads.** From `public_fundraiser_discovery`: `id`, `slug`,
+`organizer_slug`, `organizer_name`, `title`, `category_key`, `status`, `activity_mode`,
+`activity_locations`, `activity_country_codes`, `discovery_tags`, `purpose`,
+`audience_description`, `sponsor_promise`, `fundraising_starts_on`, `fundraising_ends_on`,
+`bidding_closes_at`, `created_at`. From `public_opportunity_discovery`: `id`, `run_id`, `name`,
+`price_cents`, `mode`, `buy_now_cents`, `effective_closes_at`.
+
+Migration 0054 added `organizer_name`, the three prose fields and `bidding_closes_at` to the
+fundraiser view and `effective_closes_at` to the opportunity view. **It widened nothing**: every
+one of those columns was already granted to `anon` on its own table. It put columns a visitor could
+already read in one place so discovery is two queries rather than five.
+
+The prose fields are **shown and never filtered on**. Discovery narrows on the structured tags and
+nothing else; reading a filter out of a description would claim a fact the organizer never stated.
+
+### Query parameters
+
+Shareable GET parameters, repeated rather than comma-joined, because that is what an HTML checkbox
+produces and the page is a plain GET form. Refreshing or sharing a filtered address reproduces the
+same page.
+
+| Parameter | Repeats | Value | Filters on |
+| --- | --- | --- | --- |
+| `category` | yes | a `fundraiser_categories` key | `runs.category_key` |
+| `mode` | yes | `online`, `in_person`, `hybrid` | `runs.activity_mode` |
+| `country` | yes | a two-letter uppercase code | `runs.activity_country_codes` |
+| `place` | no | free text | city, region or country in `runs.activity_locations` |
+| `purpose` | yes | a `discovery_tags` key | `runs.discovery_tags`, funding-purpose facet |
+| `audience` | yes | a `discovery_tags` key | `runs.discovery_tags`, audience facet |
+| `min`, `max` | no | whole US dollars | see **Price range** below |
+| `sale` | yes | `fixed`, `bidding` | `lots.mode` (`bidding` is the stored `auction`) |
+| `closing` | no | `soon` | see **Closing soon** below |
+| `sort` | no | `relevant`, `newest`, `closing` | not a filter |
+| `page` | no | 1-based | not a filter |
+
+Within a group the values are alternatives; between groups they all have to hold. Music and Film
+means either; Music and `travel` means both. Changing a filter returns to page one; paging keeps
+every filter and the sort.
+
+A malformed value is dropped rather than refused, so an address that has outlived a retired tag
+still shows results. **A filter is never silently widened**: a discovery tag is checked for shape
+only, not for registry membership, because the tag registry can come back empty and dropping the
+tag would quietly return more than the sponsor asked for while the page still said it was
+filtering. A key nothing carries narrows to nothing, which is the safe direction to be wrong in.
+
+### Discovery grain
+
+The page lists fundraisers; price, sale method and closing soon are facts about a sponsorship
+option. **A fundraiser is included when at least one currently available option matches all of the
+offer-level filters together.** A $200 fixed-price option and a $9,000 bidding one do not make a
+fundraiser a match for "bidding under $500". Only options with `status = 'open'` on an `open` or
+`live` fundraiser are available at all, which is what the view already restricts; sold, pending,
+unsold, cancelled and every draft's options are outside it.
+
+### Price range
+
+`min` and `max` are whole US dollars and are compared against **the organizer's own number, never a
+template's suggested price**.
+
+- A fixed-price option is matched on its price.
+- A bidding option is matched on its reserve, which is where the bidding starts and therefore what
+  a sponsor is deciding whether they can afford.
+- Where a bidding option also carries a take-it-now price, **either** number falling inside the
+  range is a match, because both are real numbers somebody could pay.
+
+The card's price line is built from the matching options only, so a filtered card shows the range a
+sponsor actually asked about.
+
+### Closing soon
+
+An available option closing within **seven calendar days**, and not already past.
+
+The effective close is computed in the database as `effective_closes_at`, and it is
+`lot_close_time`'s rule from migration 0035: the option's own `closes_at`, falling back to the
+fundraiser's `bidding_closes_at` **for a bidding option only**. A fixed-price option is not on the
+bidding clock and nothing in the product closes it on that date, so borrowing the number would put
+a deadline on a page the organizer never set; it carries its own `closes_at` or none.
+
+The fundraiser's activity end date is never used. It says when the work happens, not when an option
+stops being available. A fundraiser is labelled closing soon only when at least one available
+option is, and the card shows the actual closing time with its zone named.
+
+### Most relevant
+
+Deterministic, published, and checkable. Four comparisons in a fixed order:
+
+1. how many available options match what the sponsor asked for
+2. how completely the fundraiser answered the structured questions
+3. how many available options it has at all
+4. newest first, then by id so two identical rows never swap places
+
+Completeness is a count out of six: a stated funding purpose, a stated audience, a stated sponsor
+promise, an activity mode, at least one discovery tag, and at least one location or country. It is
+not a quality score and nothing is ranked down for being small; it rewards a fundraiser a sponsor
+can judge, which is the product's own test. None of it is required to publish, so a fundraiser with
+none of it still appears, it simply sorts below one that answered.
+
+**There is no personalization, no history, no model and nothing an organizer can buy.** A sponsor
+who wants one plain answer instead can sort by newest (`created_at` descending) or by closing soon
+(earliest matching close first, with fundraisers on no clock after those on one). The page says in
+one line what most relevant does, above the results.
+
+### The bound
+
+Relevance and closing soon both depend on a fundraiser's matching options, so the ranking cannot be
+done by the database before the options are read. The query narrows on every fundraiser-level
+filter first, takes at most `CANDIDATE_CAP` (200), reads their options in one further query, and
+ranks what it has. Exact while a filtered set fits inside the cap; past it the page says so rather
+than quietly cutting the list, and the ranking would have to move into SQL. `PAGE_SIZE` is 12.
+
+### Known gaps
+
+1. **City and region matching is not indexed.** `country` is a derived array column with a GIN
+   index behind it; `place` is a case-insensitive substring over `activity_locations`, applied in
+   TypeScript over the candidate set. A derived `activity_places` column, set by the same trigger
+   as the country codes, is the symmetric fix when the volume justifies it.
+2. **Price is filtered in TypeScript, not SQL.** The rule is an OR across `price_cents` and
+   `buy_now_cents`, which is expressible in PostgREST but not readably, and the exact rule is worth
+   more in one place than the push-down is. It runs over the capped candidate set.
+3. **Every fundraiser-level filter is enforced twice**, once in the database and once in
+   `fundraiserMatches`. That is deliberate: the fallback has no query to be filtered by, and a
+   filter living in exactly one place stops applying the moment anything else calls the read model.
+4. **Close times are shown in Eastern, labelled "ET".** That is the site-wide convention
+   (`src/lib/dates.ts`) and it names its zone rather than implying the reader's own, but it is not
+   yet city-agnostic. Changing it is a site-wide decision, not a discovery one.
+5. **Most published fundraisers carry no discovery data yet.** Nothing in 0053 is required to
+   publish, so the structured filters match only fundraisers whose organizers filled them in. The
+   country question disappears entirely while no published fundraiser records an activity location,
+   which is the case today.
+6. **The no-database sample records none of the structured fields**, so with no Supabase connected
+   the category, price, sale-method and closing filters work and the rest correctly match nothing.
+   The page says so. A sample card is never evidence that anything persisted.
+
 ## Follow-up work for the sponsor discovery branch
 
-1. **The filtering UI.** `/fundraisers` is untouched. The views exist for it; nothing reads them yet.
+1. ~~**The filtering UI.**~~ Built on `feat/sponsor-discovery-filtering`; see "The discovery page".
 2. **Indexes for the queries that get written.** `runs.discovery_tags` and
-   `runs.activity_country_codes` have GIN indexes. The views are unindexed views over indexed
-   tables; whether that holds depends on the queries, which do not exist yet.
+   `runs.activity_country_codes` have GIN indexes, and the category and country filters use them.
+   City and region matching has no index behind it; see "Known gaps".
 3. **Whether the reach estimate belongs in the purchased-offer snapshot.** Today it does not:
    `purchased_offer_of` (0045) is untouched and does not read it, so the estimate is discovery
    metadata and not a term of sale. It follows that `freeze_lot_terms` does not freeze it, and an
