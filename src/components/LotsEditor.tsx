@@ -5,7 +5,8 @@ import { cancelRun, publishRun, unpublishRun } from "@/app/actions/run";
 import { Button } from "@/components/Button";
 import { OpportunityEditor } from "@/components/domain";
 import { OfferTermsEditor } from "@/components/OfferTermsEditor";
-import { offerTermsOf } from "@/lib/offer-terms";
+import type { PolicyStatement } from "@/lib/offer-policy";
+import { EMPTY_OFFER_TERMS_DRAFT, draftFromTerms, offerTermsOf, type OfferTermsDraft } from "@/lib/offer-terms";
 import type { OpportunityDraft } from "@/lib/domain";
 import { templateSections, type OpportunityTemplate } from "@/lib/opportunities";
 import { formatMoney } from "@/lib/money";
@@ -39,12 +40,18 @@ export function LotsEditor({
   lots,
   boardHref,
   publishable = true,
+  policy = [],
+  materialsWindowDays = null,
 }: {
   runId: string;
   runStatus: string;
   surfaces: OpportunityTemplate[];
   lots: ExistingLot[];
   boardHref: string;
+  /** What this category's delivery policy decides about cancelling, refunds and late materials. */
+  policy?: readonly PolicyStatement[];
+  /** The policy's own materials window, shown where an offer names no other. */
+  materialsWindowDays?: number | null;
   /**
    * False where the registry has not opened the category for publishing. The button is then not
    * offered. This is a courtesy: publishRun and the database both refuse whatever is drawn here.
@@ -69,9 +76,21 @@ export function LotsEditor({
   });
   const set = (key: string, patch: Partial<RowState>) => setRows((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
   const lockedKeys = new Set(lots.filter((l) => l.status !== "open").map((l) => l.surface_key));
-  // The offer contract as it stands, from the first spot on each option: every spot on one option
+
+  // The offer contract for each option, held here so the details section can show a live preview and
+  // say what is still missing, and so a save that comes back with a problem gives back every box
+  // with what was typed in it. Read from the first spot on each option: every spot on one option
   // shares its terms, the same way they share a price. Empty where nobody has written any.
-  const termsFor = (key: string) => offerTermsOf(lots.find((l) => l.surface_key === key) ?? null);
+  const [terms, setTerms] = useState<Record<string, OfferTermsDraft>>(() => {
+    const t: Record<string, OfferTermsDraft> = {};
+    for (const s of surfaces) {
+      const mine = lots.find((l) => l.surface_key === s.key);
+      t[s.key] = mine ? draftFromTerms(offerTermsOf(mine)) : { ...EMPTY_OFFER_TERMS_DRAFT };
+    }
+    return t;
+  });
+  const setTermsFor = (key: string, patch: Partial<OfferTermsDraft>) =>
+    setTerms((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -82,6 +101,10 @@ export function LotsEditor({
   // Sections come from the templates themselves, so a category this build has no words for still
   // draws one, under its own name.
   const groups = templateSections(surfaces);
+
+  // saveLots refuses one option at a time and names it, so the sentence can sit beside the option
+  // it is about rather than only at the bottom of the form.
+  const errorFor = (name: string) => (state.error?.startsWith(`${name}: `) ? state.error.slice(name.length + 2) : null);
 
   return (
     <>
@@ -112,7 +135,20 @@ export function LotsEditor({
                     {/* The rest of the offer: what the sponsor receives, when, and how it is documented.
                         Hidden rather than unmounted while the option is off, so nothing typed is lost. */}
                     <div className="px-4 pb-4">
-                      <OfferTermsEditor templateKey={s.key} templateName={s.name} terms={termsFor(s.key)} hidden={!r.on} locked={locked} />
+                      <OfferTermsEditor
+                        templateKey={s.key}
+                        templateName={s.name}
+                        draft={terms[s.key] ?? EMPTY_OFFER_TERMS_DRAFT}
+                        onChange={(patch) => setTermsFor(s.key, patch)}
+                        reach={r.reach}
+                        reachBasis={r.reachBasis}
+                        onReachChange={(patch) => set(s.key, patch)}
+                        policy={policy}
+                        materialsWindowDays={materialsWindowDays}
+                        hidden={!r.on}
+                        locked={locked}
+                        error={errorFor(s.name)}
+                      />
                     </div>
                   </div>
                 );

@@ -12,6 +12,7 @@ import { ShareFundraiser } from "@/components/dashboard/ShareFundraiser";
 import { SponsorshipWorkTable } from "@/components/dashboard/SponsorshipWorkTable";
 import { loadDashboard, withToday } from "@/lib/dashboard";
 import { loadRunDelivery } from "@/lib/delivery-dashboard";
+import { loadOfferPolicy, policyStatements } from "@/lib/offer-policy";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { dashboardNav, isShareable, previewTarget } from "@/lib/dashboardModel";
@@ -72,6 +73,10 @@ export default async function RunPage({ params, searchParams }: Props) {
   // The options this fundraiser can price, from the registry in the database, so a category added
   // there has an editor. Music narrows by act type; no other category does.
   const surfaces = templatesForFundraiser(await loadTemplates(sb, run.category_key ?? "music"), run.category_key ?? "music", act.type);
+  // What this category's delivery policy decides about cancelling, refunds and materials that never
+  // arrive. Stated in the offer editor, never chosen there: those terms belong to the policy the
+  // purchase is recorded under, not to one organizer's offer.
+  const offerPolicy = await loadOfferPolicy(sb, run.category_key ?? "music");
   // The starter kit this draft began from, where the address still carries it. It is not stored
   // with the fundraiser, and one from another category is ignored. It names options to look at and
   // ticks none of them.
@@ -177,7 +182,16 @@ export default async function RunPage({ params, searchParams }: Props) {
             audience and what a sponsor receives, and that statement is the whole offer for now.
           </p>
         )}
-        <LotsEditor runId={run.id} runStatus={run.status} surfaces={surfaces} lots={allLots as ExistingLot[]} boardHref={boardHref} publishable={categoryPublishable} />
+        <LotsEditor
+          runId={run.id}
+          runStatus={run.status}
+          surfaces={surfaces}
+          lots={allLots as ExistingLot[]}
+          boardHref={boardHref}
+          publishable={categoryPublishable}
+          policy={policyStatements(offerPolicy)}
+          materialsWindowDays={offerPolicy?.materialsWindowDays ?? null}
+        />
       </Card>
 
       <Card id="verification" className="mb-10 max-w-[860px]">

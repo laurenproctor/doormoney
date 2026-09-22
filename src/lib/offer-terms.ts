@@ -43,6 +43,23 @@ export const OFFER_TERMS_VERSION = 1;
 // The closed choices
 // ---------------------------------------------------------------
 
+/**
+ * What the sponsor hands over.
+ *
+ * Six kinds that cover a printed panel, a screen credit, a spoken line, a product on a table, a post
+ * and a menu, because what a sponsor supplies is decided by the placement and not by the category.
+ * `none` is an offer that needs nothing from them, which is most spoken mentions.
+ */
+export const SPONSOR_MATERIAL_TYPES = [
+  { key: "artwork", label: "Artwork or a logo file" },
+  { key: "wording", label: "Wording, as it should read or be said" },
+  { key: "product", label: "A product or physical item" },
+  { key: "digital", label: "A link, handle or digital file" },
+  { key: "other", label: "Something else, described below" },
+  { key: "none", label: "Nothing" },
+] as const;
+export type SponsorMaterialType = (typeof SPONSOR_MATERIAL_TYPES)[number]["key"];
+
 /** Who pays for making the placement exist: printing it, building it, producing it. */
 export const PRODUCTION_PAYERS = [
   { key: "organizer", label: "The organizer pays" },
@@ -88,6 +105,30 @@ export type RefundRule = (typeof REFUND_RULES)[number]["key"];
  */
 export const DISPLAY_ONLY_NOTE = "Door Money's policy for this category decides what happens to the money. This note explains the organizer's side of it and changes nothing.";
 
+/**
+ * What happens when the sponsor's materials never arrive.
+ *
+ * Stated, never chosen. This is what the code does today and all it does: the money stays held,
+ * visibly, and no Friday moves it (docs/DELIVERY_POLICY_MATRIX.md, and decision 16, which is the
+ * owner's and is open). An organizer who could pick "we keep it" or "they get it back" would be
+ * promising an answer nobody has settled, so the editor shows the sentence and offers no choice.
+ */
+export const LATE_MATERIALS_CONSEQUENCE = "If the sponsor never sends what this offer needs, Door Money keeps holding the money and writes to both sides. Nothing is released and nothing is refunded automatically.";
+
+/**
+ * Who may see the documentation of one deliverable.
+ *
+ * Both are what the delivery side already does (migration 0045). Evidence is private by default,
+ * item by item; publishing one is the organizer's own separate act afterwards, and the database
+ * refuses it outright for an item showing a minor or anything from a youth team. So the second
+ * choice is an intention, worded as one, and never a guarantee that anything will be published.
+ */
+export const EVIDENCE_VISIBILITIES = [
+  { key: "private", label: "Private to the sponsor" },
+  { key: "may_publish", label: "Private, and the organizer may publish it" },
+] as const;
+export type EvidenceVisibilityChoice = (typeof EVIDENCE_VISIBILITIES)[number]["key"];
+
 // ---------------------------------------------------------------
 // The sections
 // ---------------------------------------------------------------
@@ -96,6 +137,18 @@ const text = (max: number) => z.string().trim().max(max).nullish().transform((v)
 const count = (max: number) => z.preprocess(
   (v) => (v === "" || v === undefined ? null : typeof v === "string" && /^\d+$/.test(v) ? Number(v) : v),
   z.number().int().min(1).max(max).nullable(),
+);
+/** Whole dollars in, integer cents out. Money is cents everywhere here (CLAUDE.md). */
+const centsFromDollars = z.preprocess(
+  (v) => {
+    if (v === "" || v === null || v === undefined) return null;
+    if (typeof v !== "string") return v;
+    const cleaned = v.replace(/[^0-9.]/g, "");
+    if (!cleaned) return null;
+    const dollars = Number(cleaned);
+    return Number.isFinite(dollars) ? Math.round(dollars * 100) : cleaned;
+  },
+  z.number().int().min(0).max(10_000_000).nullable(),
 );
 const dateOnly = text(10).refine(
   (v) => v === null || (/^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v),
@@ -108,7 +161,9 @@ const zone = text(100).refine((v) => {
 }, "Choose a valid time zone.");
 
 const SponsorMaterials = z.object({
-  /** What the sponsor has to hand over: artwork, a credit line as it should read, a product, a name. */
+  /** Which of the six kinds it is, where the organizer has said. Absent is not "none". */
+  type: z.enum(SPONSOR_MATERIAL_TYPES.map((m) => m.key) as [SponsorMaterialType, ...SponsorMaterialType[]]).nullish().transform((v) => v ?? null),
+  /** What it is, in the organizer's words: the exact file, the exact wording, the exact item. */
   description: text(600),
   /** Counted from the moment the sponsor pays, which is the only clock both sides can see. */
   due_days_after_purchase: count(365),
@@ -153,8 +208,18 @@ const DeliveryWindow = z.object({
 const Audience = z.object({ description: text(1000) }).strict();
 
 const Production = z.object({
+  /** True where making the placement costs the sponsor nothing beyond the price of the sponsorship. */
+  included: z.boolean().default(false),
+  /**
+   * What producing it costs, in integer cents, where the organizer has put a number on it.
+   *
+   * Door Money never charges it and never moves it: the sponsorship price is the only money that
+   * passes through here. A cost the sponsor pays is settled between the two of them, the same way
+   * anything supplied in kind is, and the editor and the summary both say so.
+   */
+  cost_cents: centsFromDollars,
   who_pays: z.enum(PRODUCTION_PAYERS.map((p) => p.key) as [ProductionPayer, ...ProductionPayer[]]).nullish().transform((v) => v ?? null),
-  /** What the cost covers and anything shared about it. Door Money moves the sponsorship price and nothing else. */
+  /** What the cost covers and anything shared about it. */
   description: text(600),
 }).strict();
 
@@ -176,6 +241,9 @@ const Approval = z.object({
 /** How many deliverables one offer may carry. A limit the form, the parser and the database share. */
 export const DELIVERABLE_LIMIT = 12;
 
+/** How large one stored offer may be. The same number as the column's own check (migration 0056). */
+export const OFFER_TERMS_MAX_BYTES = 32768;
+
 const Deliverable = z.object({
   /** What is owed. The one field a deliverable cannot be without. */
   title: z.string().trim().min(1).max(200),
@@ -188,6 +256,8 @@ const Deliverable = z.object({
    * delivery side can accept. Absent means the organizer has not chosen one yet.
    */
   evidence_method: z.enum(EVIDENCE_KINDS).nullish().transform((v) => v ?? null),
+  /** Who the documentation is for. Private unless the organizer says they may publish it later. */
+  evidence_visibility: z.enum(EVIDENCE_VISIBILITIES.map((v) => v.key) as [EvidenceVisibilityChoice, ...EvidenceVisibilityChoice[]]).nullish().transform((v) => v ?? null),
 }).strict();
 
 const Cancellation = z.object({
@@ -280,6 +350,77 @@ export function offerTermsView(terms: OfferTerms, lot: { reach_estimate?: number
   return { ...terms, audience_reach: { estimate: lot.reach_estimate, basis: lot.reach_basis } };
 }
 
+/**
+ * The sections a sponsor may be shown, and nothing else.
+ *
+ * The twin of `public.sponsor_facing_offer_terms` (migration 0056), named one at a time for the same
+ * reason: publishing something new is a deliberate act, in both places, and a section added to the
+ * shape and not to these two lists reaches nobody. Every reader who is not the organizer goes
+ * through here, which is also what makes the organizer's own preview honest: it is the sponsor's
+ * view of the document, not a second rendering of the form.
+ */
+export const PUBLIC_OFFER_SECTIONS = [
+  "sponsor_materials", "placement", "appearances", "delivery_window", "audience",
+  "production", "exclusivity", "approval", "deliverables", "cancellation", "refund",
+] as const;
+
+export function publicOfferTerms(terms: OfferTerms): OfferTerms {
+  const out: Record<string, unknown> = {};
+  for (const section of PUBLIC_OFFER_SECTIONS) {
+    const value = terms[section];
+    if (value !== undefined && value !== null) out[section] = value;
+  }
+  return Object.keys(out).length ? ({ version: terms.version ?? OFFER_TERMS_VERSION, ...out } as OfferTerms) : EMPTY_OFFER_TERMS;
+}
+
+// ---------------------------------------------------------------
+// What the product contract asks for before a purchase
+// ---------------------------------------------------------------
+
+export type OfferRequirement = { key: string; label: string; met: boolean };
+
+/**
+ * What docs/PRODUCT_CONTRACT.md, "Offer requirements for Phases 3 and 4", asks an offer to state
+ * before somebody can buy it, checked against what the organizer has written.
+ *
+ * Advisory, and deliberately so. It is shown in the editor so an organizer can see what is still
+ * missing, and it refuses nothing: a fundraiser published before any of this existed has none of it,
+ * and the compatibility contract says those offers are not made to invent terms they never had.
+ * Blocking a save would also stop a music organizer changing a price on a sponsorship that is live
+ * and paid for, which is the behavior every rule here says to preserve.
+ *
+ * Cancellation and refunds are not on the list: the category's delivery policy supplies them, so
+ * they are never an organizer's to leave out.
+ */
+export function offerTermsRequirements(
+  terms: OfferTerms,
+  lot: { reach_estimate?: number | null; reach_basis?: string | null } = {},
+): OfferRequirement[] {
+  const t = terms;
+  const has = (v: unknown) => v !== null && v !== undefined && v !== "";
+  const deliverables = t.deliverables ?? [];
+  return [
+    { key: "placement", label: "Where it appears, and in what form", met: has(t.placement?.description) && has(t.placement?.format) },
+    { key: "appearances", label: "How many appearances, or the schedule", met: has(t.appearances?.quantity) || has(t.appearances?.schedule) },
+    { key: "delivery_window", label: "When it is delivered by", met: has(t.delivery_window?.ends_on) || has(t.delivery_window?.deadline_on) },
+    { key: "audience", label: "Who it reaches", met: has(t.audience?.description) },
+    // A number with no basis is a claim. The lot columns already refuse the pair any other way, so
+    // this only has to notice the number that was given without one.
+    { key: "reach_basis", label: "Where any reach estimate comes from", met: !has(lot.reach_estimate) || has(lot.reach_basis) },
+    { key: "production", label: "Who pays to produce it", met: t.production?.included === true || has(t.production?.who_pays) },
+    { key: "exclusivity", label: "What exclusivity covers, where it is exclusive", met: !t.exclusivity?.exclusive || has(t.exclusivity?.scope) },
+    { key: "sponsor_materials", label: "What the sponsor provides", met: has(t.sponsor_materials?.type) || has(t.sponsor_materials?.description) },
+    { key: "approval", label: "Who accepts what the sponsor sends", met: t.sponsor_materials?.type === "none" || has(t.approval?.rule) },
+    { key: "deliverables", label: "At least one deliverable", met: deliverables.length > 0 },
+    { key: "evidence", label: "How each deliverable is documented", met: deliverables.length > 0 && deliverables.every((d) => has(d.evidence_method)) },
+  ];
+}
+
+/** The ones still missing. Empty means the offer states everything the contract asks for. */
+export function missingOfferRequirements(terms: OfferTerms, lot?: { reach_estimate?: number | null; reach_basis?: string | null }): OfferRequirement[] {
+  return offerTermsRequirements(terms, lot).filter((r) => !r.met);
+}
+
 // ---------------------------------------------------------------
 // Writing
 // ---------------------------------------------------------------
@@ -329,6 +470,11 @@ export function parseOfferTerms(value: unknown): OfferTermsResult {
     return { ok: false, error: issue?.message ?? "Check the offer terms and try once more." };
   }
   const terms = prune(parsed.data);
+  // The same cap the column carries (migration 0056), asked here so the organizer hears it in words
+  // rather than meeting a constraint. Twice the longest offer the editor can produce.
+  if (JSON.stringify(terms).length > OFFER_TERMS_MAX_BYTES) {
+    return { ok: false, error: "These offer terms are longer than one offer can hold. Shorten the descriptions, or offer fewer deliverables." };
+  }
   const problem = offerTermsProblem(terms);
   return problem ? { ok: false, error: problem } : { ok: true, terms };
 }
@@ -353,6 +499,16 @@ export function offerTermsProblem(terms: OfferTerms): string | null {
   const exclusivity = terms.exclusivity;
   if (exclusivity && !exclusivity.exclusive && (exclusivity.scope || exclusivity.description)) {
     return "Say what the exclusivity covers only where the sponsorship is exclusive.";
+  }
+  const production = terms.production;
+  if (production?.included && production.who_pays === "sponsor") {
+    return "Production cannot be included in the price and paid for by the sponsor at the same time.";
+  }
+  if (production?.cost_cents !== null && production?.cost_cents !== undefined && !production.included && !production.who_pays) {
+    return "Say who pays the production cost, or leave the amount out.";
+  }
+  if (terms.sponsor_materials?.type === "none" && terms.sponsor_materials.description) {
+    return "This offer says the sponsor sends nothing, so leave the description of what they send blank.";
   }
   for (const deliverable of terms.deliverables ?? []) {
     if (deliverable.due_on && window?.deadline_on && deliverable.due_on > window.deadline_on) {
@@ -383,6 +539,33 @@ export function sameOfferTerms(a: OfferTerms | null | undefined, b: OfferTerms |
 // ---------------------------------------------------------------
 
 /**
+ * One option's offer terms as a form holds them: strings and checkboxes, nothing parsed.
+ *
+ * The editor keeps this in React state so the live preview and the readiness list can be built from
+ * what is on the screen rather than from what was last saved. The server never sees it. What the
+ * server sees is the same fields posted by name, read back into this same shape by `draftFromForm`,
+ * so there is one builder of the stored document and two ways into it. That is what stops the
+ * browser's idea of the terms and the server's idea of them drifting apart.
+ */
+export type OfferDeliverableDraft = {
+  title: string; quantity: string; dueOn: string; description: string;
+  evidenceMethod: string; evidenceVisibility: string;
+};
+
+export type OfferTermsDraft = {
+  materialType: string; materials: string; materialsDays: string;
+  placement: string; format: string; appearance: string;
+  quantity: string; unit: string; schedule: string;
+  windowStart: string; windowEnd: string; timezone: string; deadline: string;
+  audience: string;
+  productionIncluded: boolean; productionCost: string; productionPayer: string; productionNote: string;
+  exclusive: boolean; exclusiveScope: string; exclusiveNote: string;
+  approvalRule: string; approvalDays: string; approvalNote: string;
+  deliverables: OfferDeliverableDraft[];
+  cancellationNote: string; refundNote: string;
+};
+
+/**
  * The field names one template's offer terms are posted under.
  *
  * Suffixed with the template key, the way `on_`, `price_` and `reach_` already are, so one form
@@ -391,72 +574,163 @@ export function sameOfferTerms(a: OfferTerms | null | undefined, b: OfferTerms |
  * a term: the form is not what decides which options exist (migration 0044).
  */
 export const OFFER_TERMS_FIELDS = {
-  materials: "materials", materialsDays: "materialsdays",
+  materialType: "materialtype", materials: "materials", materialsDays: "materialsdays",
   placement: "placement", format: "format", appearance: "appearance",
   quantity: "appearances", unit: "unit", schedule: "schedule",
   windowStart: "windowstart", windowEnd: "windowend", timezone: "zone", deadline: "deadline",
   audience: "audience",
+  productionIncluded: "productionincluded", productionCost: "productioncost",
   productionPayer: "production", productionNote: "productionnote",
   exclusive: "exclusive", exclusiveScope: "exclusivescope", exclusiveNote: "exclusivenote",
   approvalRule: "approval", approvalDays: "approvaldays", approvalNote: "approvalnote",
   cancellationNote: "cancelnote", refundNote: "refundnote",
 } as const;
 
-/** One deliverable's four fields plus its evidence method, numbered from 1. */
-export function deliverableField(part: "title" | "qty" | "due" | "note" | "evidence", index: number, key: string): string {
+/** One deliverable's fields, numbered from 1. */
+export type DeliverablePart = "title" | "qty" | "due" | "note" | "evidence" | "visibility";
+export function deliverableField(part: DeliverablePart, index: number, key: string): string {
   return `deliv${index + 1}${part}_${key}`;
 }
 
-/** How many deliverable rows the builder draws. The parser reads up to DELIVERABLE_LIMIT. */
-export const DELIVERABLE_ROWS = 3;
+/** How many deliverable rows the builder starts with. The parser reads up to DELIVERABLE_LIMIT. */
+export const DELIVERABLE_ROWS = 2;
+
+export const EMPTY_DELIVERABLE_DRAFT: OfferDeliverableDraft = {
+  title: "", quantity: "", dueOn: "", description: "", evidenceMethod: "", evidenceVisibility: "",
+};
+
+export const EMPTY_OFFER_TERMS_DRAFT: OfferTermsDraft = {
+  materialType: "", materials: "", materialsDays: "",
+  placement: "", format: "", appearance: "",
+  quantity: "", unit: "", schedule: "",
+  windowStart: "", windowEnd: "", timezone: "", deadline: "",
+  audience: "",
+  productionIncluded: false, productionCost: "", productionPayer: "", productionNote: "",
+  exclusive: false, exclusiveScope: "", exclusiveNote: "",
+  approvalRule: "", approvalDays: "", approvalNote: "",
+  deliverables: [],
+  cancellationNote: "", refundNote: "",
+};
+
+const str = (v: unknown): string => (v === null || v === undefined ? "" : String(v));
+/** Dollars, as a box should show them: whole where they are whole, two places where they are not. */
+const dollarsFromCents = (cents: number | null | undefined): string =>
+  cents === null || cents === undefined ? "" : (cents / 100).toFixed(cents % 100 ? 2 : 0);
+
+/** A stored document, opened back up into the form that wrote it. */
+export function draftFromTerms(terms: OfferTerms): OfferTermsDraft {
+  const t = terms;
+  return {
+    materialType: str(t.sponsor_materials?.type),
+    materials: str(t.sponsor_materials?.description),
+    materialsDays: str(t.sponsor_materials?.due_days_after_purchase),
+    placement: str(t.placement?.description),
+    format: str(t.placement?.format),
+    appearance: str(t.placement?.appearance),
+    quantity: str(t.appearances?.quantity),
+    unit: str(t.appearances?.unit),
+    schedule: str(t.appearances?.schedule),
+    windowStart: str(t.delivery_window?.starts_on),
+    windowEnd: str(t.delivery_window?.ends_on),
+    timezone: str(t.delivery_window?.timezone),
+    deadline: str(t.delivery_window?.deadline_on),
+    audience: str(t.audience?.description),
+    productionIncluded: t.production?.included === true,
+    productionCost: dollarsFromCents(t.production?.cost_cents),
+    productionPayer: str(t.production?.who_pays),
+    productionNote: str(t.production?.description),
+    exclusive: t.exclusivity?.exclusive === true,
+    exclusiveScope: str(t.exclusivity?.scope),
+    exclusiveNote: str(t.exclusivity?.description),
+    approvalRule: str(t.approval?.rule),
+    approvalDays: str(t.approval?.deadline_days_after_materials),
+    approvalNote: str(t.approval?.description),
+    deliverables: (t.deliverables ?? []).map((d) => ({
+      title: str(d.title), quantity: str(d.quantity), dueOn: str(d.due_on), description: str(d.description),
+      evidenceMethod: str(d.evidence_method), evidenceVisibility: str(d.evidence_visibility),
+    })),
+    cancellationNote: str(t.cancellation?.note),
+    refundNote: str(t.refund?.note),
+  };
+}
+
+/**
+ * The draft as the document it describes, ready for `parseOfferTerms`.
+ *
+ * Shape only. Nothing here trims, defaults or invents a value: zod and `prune` decide what is valid
+ * and what was left blank, so a field the organizer never filled in stays absent rather than
+ * becoming an empty promise.
+ */
+export function termsFromDraft(draft: OfferTermsDraft): unknown {
+  const d = draft;
+  const blank = (v: string) => (v.trim() ? v : undefined);
+  return {
+    sponsor_materials: { type: blank(d.materialType), description: d.materials, due_days_after_purchase: d.materialsDays },
+    placement: { description: d.placement, format: d.format, appearance: d.appearance },
+    appearances: { quantity: d.quantity, unit: d.unit, schedule: d.schedule },
+    delivery_window: { starts_on: d.windowStart, ends_on: d.windowEnd, timezone: d.timezone, deadline_on: d.deadline },
+    audience: { description: d.audience },
+    production: {
+      included: d.productionIncluded, cost_cents: d.productionCost,
+      who_pays: blank(d.productionPayer), description: d.productionNote,
+    },
+    exclusivity: { exclusive: d.exclusive, scope: d.exclusiveScope, description: d.exclusiveNote },
+    approval: { rule: blank(d.approvalRule), deadline_days_after_materials: d.approvalDays, description: d.approvalNote },
+    // A line with nothing owed on it is a line nobody filled in. Its other fields go with it: a due
+    // date with nothing due is not a deliverable.
+    deliverables: d.deliverables
+      .filter((x) => x.title.trim())
+      .slice(0, DELIVERABLE_LIMIT)
+      .map((x) => ({
+        title: x.title, quantity: x.quantity, due_on: x.dueOn, description: x.description,
+        evidence_method: blank(x.evidenceMethod), evidence_visibility: blank(x.evidenceVisibility),
+      })),
+    // The rule is not the organizer's to choose, so it is not read from the form. A note is words
+    // beside a policy the note cannot change, and an offer with no note has no section at all.
+    cancellation: d.cancellationNote.trim() ? { rule: "policy", note: d.cancellationNote } : undefined,
+    refund: d.refundNote.trim() ? { rule: "policy", note: d.refundNote } : undefined,
+  };
+}
 
 type Fields = { get(name: string): FormDataEntryValue | null };
 
-/**
- * One template's offer terms, as the browser posted them.
- *
- * Shape only: this hands `parseOfferTerms` a plain object and lets zod and `prune` decide what is
- * valid and what was left blank. Nothing here trims, defaults or invents a value, so a field the
- * organizer never filled in stays absent rather than becoming an empty promise.
- */
-export function offerTermsFromForm(form: Fields, key: string): unknown {
+/** One template's fields, as the browser posted them, back in the shape the editor holds. */
+export function draftFromForm(form: Fields, key: string): OfferTermsDraft {
   const raw = (name: string) => {
     const value = form.get(`${name}_${key}`);
-    return typeof value === "string" ? value : undefined;
+    return typeof value === "string" ? value : "";
   };
   const f = OFFER_TERMS_FIELDS;
 
-  const deliverables: unknown[] = [];
+  const deliverables: OfferDeliverableDraft[] = [];
   for (let i = 0; i < DELIVERABLE_LIMIT; i += 1) {
-    const value = form.get(deliverableField("title", i, key));
-    const title = typeof value === "string" ? value.trim() : "";
-    // A row with no title is a row nobody filled in. Its other fields go with it: a due date with
-    // nothing due is not a deliverable.
-    if (!title) continue;
-    const part = (p: "qty" | "due" | "note" | "evidence") => {
+    const part = (p: DeliverablePart) => {
       const v = form.get(deliverableField(p, i, key));
-      return typeof v === "string" ? v : undefined;
+      return typeof v === "string" ? v : "";
     };
-    deliverables.push({ title, quantity: part("qty"), due_on: part("due"), description: part("note"), evidence_method: part("evidence") || undefined });
+    deliverables.push({
+      title: part("title"), quantity: part("qty"), dueOn: part("due"), description: part("note"),
+      evidenceMethod: part("evidence"), evidenceVisibility: part("visibility"),
+    });
   }
 
-  const exclusive = form.get(`${f.exclusive}_${key}`) === "1";
-  const cancellationNote = raw(f.cancellationNote)?.trim();
-  const refundNote = raw(f.refundNote)?.trim();
-
   return {
-    sponsor_materials: { description: raw(f.materials), due_days_after_purchase: raw(f.materialsDays) },
-    placement: { description: raw(f.placement), format: raw(f.format), appearance: raw(f.appearance) },
-    appearances: { quantity: raw(f.quantity), unit: raw(f.unit), schedule: raw(f.schedule) },
-    delivery_window: { starts_on: raw(f.windowStart), ends_on: raw(f.windowEnd), timezone: raw(f.timezone), deadline_on: raw(f.deadline) },
-    audience: { description: raw(f.audience) },
-    production: { who_pays: raw(f.productionPayer) || undefined, description: raw(f.productionNote) },
-    exclusivity: { exclusive, scope: raw(f.exclusiveScope), description: raw(f.exclusiveNote) },
-    approval: { rule: raw(f.approvalRule) || undefined, deadline_days_after_materials: raw(f.approvalDays), description: raw(f.approvalNote) },
+    materialType: raw(f.materialType), materials: raw(f.materials), materialsDays: raw(f.materialsDays),
+    placement: raw(f.placement), format: raw(f.format), appearance: raw(f.appearance),
+    quantity: raw(f.quantity), unit: raw(f.unit), schedule: raw(f.schedule),
+    windowStart: raw(f.windowStart), windowEnd: raw(f.windowEnd), timezone: raw(f.timezone), deadline: raw(f.deadline),
+    audience: raw(f.audience),
+    productionIncluded: form.get(`${f.productionIncluded}_${key}`) === "1",
+    productionCost: raw(f.productionCost), productionPayer: raw(f.productionPayer), productionNote: raw(f.productionNote),
+    exclusive: form.get(`${f.exclusive}_${key}`) === "1",
+    exclusiveScope: raw(f.exclusiveScope), exclusiveNote: raw(f.exclusiveNote),
+    approvalRule: raw(f.approvalRule), approvalDays: raw(f.approvalDays), approvalNote: raw(f.approvalNote),
     deliverables,
-    // The rule is not the organizer's to choose, so it is not read from the form. A note is words
-    // beside a policy the note cannot change, and an offer with no note has no section at all.
-    cancellation: cancellationNote ? { rule: "policy", note: cancellationNote } : undefined,
-    refund: refundNote ? { rule: "policy", note: refundNote } : undefined,
+    cancellationNote: raw(f.cancellationNote), refundNote: raw(f.refundNote),
   };
+}
+
+/** One template's offer terms, as the browser posted them. The server's only way in. */
+export function offerTermsFromForm(form: Fields, key: string): unknown {
+  return termsFromDraft(draftFromForm(form, key));
 }

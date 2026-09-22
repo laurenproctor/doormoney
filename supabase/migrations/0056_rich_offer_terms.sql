@@ -52,13 +52,15 @@ alter table public.lots
 comment on column public.lots.offer_terms is
   'The offer contract: placement, appearances, delivery window, audience, production, exclusivity, sponsor materials, approval, deliverables, evidence method and the cancellation and refund notes. Sponsor-facing only. Empty means the organizer has not written terms, never an error. Shape in src/lib/offer-terms.ts. Added in 0056.';
 
--- Keep it a document and not a database. A stored offer is capped so one row cannot be used as
--- storage, and the reserved names below are the workflow state that lives in its own tables:
+-- Keep it a document and not a database. A stored offer is capped at 32kB, which is roughly twice
+-- the longest offer the editor can produce (every section full and all twelve deliverables), so a
+-- real offer is never refused and a row cannot be used as storage. The reserved names below are the
+-- workflow state that lives in its own tables:
 -- purchases.mark_status, deliverables, evidence, payout_schedule, and anything with money or a
 -- Stripe id on it. A sponsor reads this whole document, so nothing private may be written into it.
 alter table public.lots
   add constraint lots_offer_terms_is_sponsor_facing check (
-    length(offer_terms::text) <= 16384
+    length(offer_terms::text) <= 32768
     and not (offer_terms ?| array[
       'internal','notes_internal','evidence','delivery_state','deliverable_state','mark_status',
       'payout','payouts','purchase','purchases','patron','sponsor_id','stripe','fee_cents','amount_cents'])
