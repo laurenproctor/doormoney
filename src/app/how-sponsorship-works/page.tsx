@@ -59,7 +59,7 @@ const TERMS: [string, string][] = [
   ["Placement", "Where the sponsor appears. It may be physical, digital, printed, or part of a production."],
   ["Deliverable", "A specific promised appearance or action, with a due date or a delivery window."],
   ["Materials", "What the sponsor sends so the placement can happen: a name, a credit line, artwork, product information."],
-  ["Evidence", "The organizer's documentation that a deliverable happened. It is not a Door Money certification."],
+  ["Evidence", "The organizer's documentation that a deliverable happened. It is not a certification by Door Money."],
   ["Record", "The sponsor's summary of the purchased offer, the delivery, the evidence and the payment outcomes."],
 ];
 
@@ -106,10 +106,6 @@ export default async function HowSponsorshipWorksPage() {
             Organizers fund work with a clear purpose. Sponsors receive the visibility described in the offer, in the
             places the work already reaches.
           </p>
-          <p className="mt-5 max-w-[55ch]">
-            Organizers choose what they offer, set their own prices, and approve every sponsor&apos;s materials before
-            anything appears.
-          </p>
           <div className="mt-9 flex flex-wrap gap-4">
             <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
             <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
@@ -118,35 +114,36 @@ export default async function HowSponsorshipWorksPage() {
       }
     >
       <Section>
-        <SectionHead eyebrow="A clear exchange">Support the work. Get something specific back.</SectionHead>
+        <SectionHead eyebrow="The exchange">Support the work. Get something specific back.</SectionHead>
         <p className="max-w-[62ch]">
-          A Door Money sponsorship is a direct exchange between an organizer and a sponsor. The sponsor funds a named
-          piece of work. The organizer features the sponsor in an agreed place and documents that it happened.
+          A sponsor funds a named piece of work. The organizer features the sponsor in an agreed place and documents
+          that it happened.
         </p>
         <p className="mt-4 max-w-[62ch] text-muted">
+          A sponsorship is not a donation, an investment or a share of the work, and it buys no say in it.
+        </p>
+      </Section>
+
+      <Section>
+        <SectionHead eyebrow="For organizers">The organizer makes the final call</SectionHead>
+        <p className="max-w-[62ch]">
           Every fundraiser answers three questions before anyone pays: what the funding enables, who the audience is,
-          and what the sponsor receives. A sponsorship is not a donation, an investment or a share of the work, and it
-          buys no say in it.
+          and what the sponsor receives.
         </p>
+        <ul className="edge glow mt-[30px] max-w-[600px] bg-panel px-7 py-[26px] text-[15px] leading-[2.1]">
+          {CONTROL.map((line) => (
+            <li key={line}>
+              <span aria-hidden="true" className="text-accent-ink">&#9642;</span> {line}
+            </li>
+          ))}
+        </ul>
       </Section>
 
       <Section>
-        <SectionHead eyebrow="Five steps">From a fundraiser to a delivered sponsorship</SectionHead>
-        <Steps className="mt-9" steps={STEPS} size="lg" ruleFirst={false} />
-        <p className="mt-7 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
-          Release terms are not the same in every category. Each fundraiser states its own delivery and release
-          terms, and a sponsor sees them before paying.
-        </p>
-      </Section>
-
-      <StartingCategories labels={labels} heading="Where Door Money starts" />
-
-      <Section>
-        <SectionHead eyebrow="Where sponsorship appears">Visibility in the places the work already reaches</SectionHead>
+        <SectionHead eyebrow="For sponsors">Visibility in the places the work already reaches</SectionHead>
         <p className="max-w-[62ch]">
           A useful sponsorship does not have to interrupt the work. It can sit where an organizer and an audience
-          already meet. These are kinds of placement, not a list of what every fundraiser offers: an organizer chooses
-          the options, and a fundraiser lists only those.
+          already meet. These are kinds of placement, not a list of what every fundraiser offers.
         </p>
         <ul className="mt-9 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {PLACEMENTS.map(([name, body]) => (
@@ -157,12 +154,36 @@ export default async function HowSponsorshipWorksPage() {
           ))}
         </ul>
         <p className="mt-7 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
-          Door Money suggests prices only where it has a sales history to suggest from. Today that is music, and the
-          music options are on their own page. Everywhere, the organizer&apos;s own price is the price.
+          A price is the organizer&apos;s own. Suggested prices exist only where there is a sales history to suggest
+          from, which today is music.
         </p>
         <div className="mt-6">
           <ButtonLink href="/how-sponsorship-works/music" variant="ghost" arrow>Music options and suggested prices</ButtonLink>
         </div>
+      </Section>
+
+      <Section>
+        <SectionHead eyebrow="What a sponsor can count on">Support that can be pointed at</SectionHead>
+        <p className="max-w-[62ch]">
+          Every fundraiser names the ways its organizer will document delivery, before anyone pays, and lists only
+          those. The sponsor&apos;s record keeps the purchased offer, what was delivered and the evidence supplied.
+        </p>
+        <p className="caps mt-9 text-[14px] text-accent-ink">What Door Money does not promise</p>
+        <ul className="mt-3 grid max-w-[62ch] gap-1.5 text-[15px] leading-[1.7] text-muted">
+          {NOT_PROMISED.map((line) => (
+            <li key={line}>
+              <span aria-hidden="true" className="text-accent-ink">&#9642;</span> {line}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section>
+        <SectionHead eyebrow="Five steps">From a fundraiser to a delivered sponsorship</SectionHead>
+        <Steps className="mt-9" steps={STEPS} size="lg" ruleFirst={false} />
+        <p className="mt-7 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
+          Each fundraiser states its own delivery and release terms, and a sponsor sees them before paying.
+        </p>
       </Section>
 
       <Section>
@@ -177,45 +198,15 @@ export default async function HowSponsorshipWorksPage() {
         </dl>
       </Section>
 
-      <Section>
-        <SectionHead eyebrow="Organizers stay in control">The organizer makes the final call</SectionHead>
-        <p className="max-w-[62ch]">
-          Organizers choose which sponsorships to offer, set their prices, and decide which sponsors fit the work. A
-          sponsorship supports the work. It buys no say in it.
-        </p>
-        <ul className="edge glow mt-[30px] max-w-[600px] bg-panel px-7 py-[26px] text-[15px] leading-[2.1]">
-          {CONTROL.map((line) => (
-            <li key={line}>
-              <span aria-hidden="true" className="text-accent-ink">&#9642;</span> {line}
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section>
-        <SectionHead eyebrow="What a sponsor can count on">Support that can be pointed at</SectionHead>
-        <p className="max-w-[62ch]">
-          A sponsor should know what the money made possible and where the sponsorship appeared. Every fundraiser
-          names the ways its organizer will document delivery, before anyone pays, and lists only those. The
-          sponsor&apos;s record keeps the purchased offer, what was delivered and the evidence the organizer supplied.
-        </p>
-        <p className="caps mt-9 text-[14px] text-accent-ink">What Door Money does not promise</p>
-        <ul className="mt-3 grid max-w-[62ch] gap-1.5 text-[15px] leading-[1.7] text-muted">
-          {NOT_PROMISED.map((line) => (
-            <li key={line}>
-              <span aria-hidden="true" className="text-accent-ink">&#9642;</span> {line}
-            </li>
-          ))}
-        </ul>
-      </Section>
+      <StartingCategories labels={labels} heading="Where Door Money starts" />
 
       <NewsletterCTA source="how-sponsorship-works" />
 
       <Section className="pb-24">
-        <SectionHead eyebrow="Get started">{SITE.tagline}</SectionHead>
+        <SectionHead eyebrow="Two ways in">{SITE.tagline}</SectionHead>
         <p className="max-w-[62ch]">
-          Sponsors find work with an audience that fits. Organizers open a fundraiser that gives sponsors a clear
-          reason to put money behind the work.
+          Sponsors find work with an audience that fits. Organizers give sponsors a clear reason to put money behind
+          the work.
         </p>
         <div className="mt-[30px] flex flex-wrap gap-5">
           <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>

@@ -4,29 +4,34 @@ import { Logo } from "@/components/Logo";
 import { NewsletterStrip } from "@/components/Newsletter";
 import { ButtonLink } from "@/components/Button";
 
-/** The two ways in, repeated at the foot of every page. */
+/*
+  The foot of every page: the two ways in, the email ask, the links, the fine print.
+
+  It is navigation with one call to action, not a second marketing page. The two ways in used to
+  carry a paragraph each and the block below the wordmark restated the product; both were the
+  homepage again, at the bottom of every page, including the pages that had just said it.
+*/
 const WAYS = [
-  { href: "/fundraisers", label: "Find a sponsorship", blurb: "Pick a fundraiser, read what the sponsorship includes, and put money behind the work." },
-  { href: "/list", label: "Create a fundraiser", blurb: "Say what the funding enables, who the audience is and what sponsors receive." },
+  { href: "/fundraisers", label: "Find a sponsorship" },
+  { href: "/list", label: "Create a fundraiser" },
 ] as const;
 
 export function Footer({ note }: { note?: string }) {
   return (
     <footer className="border-t border-line pb-12 pt-16">
       <div className="mx-auto max-w-[1120px] px-7">
-        {/* The two calls to action, side by side. */}
-        <div className="grid gap-px bg-line md:grid-cols-2">
-          {WAYS.map((w) => (
-            <div key={w.href} className="flex flex-wrap items-center justify-between gap-6 bg-ground py-7 pr-7 md:pr-10">
-              <div className="min-w-[220px] flex-1">
-                <div className="heading text-[22px] leading-tight">{w.label}</div>
-                <p className="mt-1.5 max-w-none text-[14.5px] leading-[1.6] text-muted">{w.blurb}</p>
-              </div>
-              <ButtonLink href={w.href} variant="ghost" arrow>
+        {/* The two ways in, on one line. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 pb-12">
+          <p className="heading max-w-[20ch] text-[clamp(22px,2.8vw,30px)] leading-[1.15]">
+            Find a sponsorship, or create a fundraiser.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {WAYS.map((w) => (
+              <ButtonLink key={w.href} href={w.href} variant="ghost" arrow>
                 {w.label}
               </ButtonLink>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <div className="border-t border-line pt-10">
@@ -37,11 +42,7 @@ export function Footer({ note }: { note?: string }) {
           <div>
             <Logo className="h-[64px] w-auto text-ink max-lg:max-w-full max-md:h-[52px]" />
             <p className="mt-5 max-w-[40ch] text-[15px] leading-[1.7]">{SITE.tagline}</p>
-            <p className="mt-3 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">
-              Door Money connects sponsors with relevant audiences. Organizers fund their work by offering specified
-              visibility, and each fundraiser states what sponsors receive and how delivery will be documented.
-              {note ? ` ${note}` : ""}
-            </p>
+            {note && <p className="mt-3 max-w-[44ch] text-[14.5px] leading-[1.7] text-muted">{note}</p>}
           </div>
           <div>
             <div className="caps mb-4 text-[14px] text-accent-ink">Door Money</div>
@@ -55,7 +56,7 @@ export function Footer({ note }: { note?: string }) {
                 Sign in
               </Link>
               <Link href="/signup" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
-                Sign up
+                Create an account
               </Link>
             </nav>
           </div>
