@@ -31,7 +31,7 @@ const EXPECTED = ["AudienceSummary", "CategoryBadge", "DeliveryCommitment", "Evi
 
 /** Every component, for one fixture. The whole of what a page in this category could draw. */
 function everything(f: DomainFixture): ReactElement[] {
-  const draft = { on: true, count: "1", price: "", saleMethod: "fixed" as const, buyNow: "" };
+  const draft = { on: true, count: "1", price: "", saleMethod: "fixed" as const, buyNow: "", reach: "", reachBasis: "" };
   return [
     createElement(Domain.OrganizerProfileHeader, { organizer: f.organizer, categories: [f.category] }),
     createElement(Domain.FundraiserHeader, { fundraiser: f.fundraiser, organizerName: f.organizer.name }),
@@ -132,7 +132,7 @@ test("a card shows the organizer's price and takes no payment of its own", () =>
 });
 
 test("an editor row suggests a price only where there is one, and keeps the field names the save action reads", () => {
-  const draft = { on: true, count: "2", price: "450", saleMethod: "auction" as const, buyNow: "900" };
+  const draft = { on: true, count: "2", price: "450", saleMethod: "auction" as const, buyNow: "900", reach: "", reachBasis: "" };
   const music = html(createElement(Domain.OpportunityEditor, { template: DOMAIN_FIXTURES.music.templates[0], value: draft, onChange: () => {} }));
   assert.match(music, /Suggested price \$500 per run/);
   for (const name of ["on_merch_runner", "count_merch_runner", "price_merch_runner", "mode_merch_runner", "buynow_merch_runner"]) assert.ok(music.includes(`name="${name}"`), name);

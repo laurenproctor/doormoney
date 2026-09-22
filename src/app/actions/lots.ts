@@ -12,7 +12,13 @@ const MIN_CENTS = 1_000; // $10
 const MAX_CENTS = 10_000_000; // $100,000
 const MAX_SPOTS = 6;
 
-type Row = { key: string; on: boolean; count: number; priceCents: number; mode: "fixed" | "auction"; buyNowCents: number | null };
+type Row = {
+  key: string; on: boolean; count: number; priceCents: number; mode: "fixed" | "auction"; buyNowCents: number | null;
+  /** The organizer's estimate of who this reaches, and why. Discovery metadata, not a term of sale. */
+  reachEstimate: number | null; reachBasis: string | null;
+};
+
+const MAX_REACH = 1_000_000_000;
 
 /**
  * Reads the form against the templates this fundraiser may use, and no others. A field naming an
@@ -24,7 +30,7 @@ function parseRows(form: FormData, templates: readonly OpportunityTemplate[]): {
   for (const s of templates) {
     const on = form.get(`on_${s.key}`) === "1";
     if (!on) {
-      rows.push({ key: s.key, on: false, count: 0, priceCents: 0, mode: "fixed", buyNowCents: null });
+      rows.push({ key: s.key, on: false, count: 0, priceCents: 0, mode: "fixed", buyNowCents: null, reachEstimate: null, reachBasis: null });
       continue;
     }
     const dollars = String(form.get(`price_${s.key}`) ?? "").replace(/[^0-9.]/g, "");
@@ -44,7 +50,24 @@ function parseRows(form: FormData, templates: readonly OpportunityTemplate[]): {
     }
 
     const count = Math.min(MAX_SPOTS, Math.max(1, Number(form.get(`count_${s.key}`) ?? 1) || 1));
-    rows.push({ key: s.key, on: true, count, priceCents, mode, buyNowCents });
+
+    // An expected reach is optional. A number without its basis is not: the product contract says
+    // an estimate states what it rests on, and migration 0053 refuses the pair any other way.
+    // A basis with no number is kept, so somebody part way through typing loses nothing.
+    const reachRaw = String(form.get(`reach_${s.key}`) ?? "").replace(/[^0-9]/g, "");
+    const reachBasis = String(form.get(`reachbasis_${s.key}`) ?? "").trim() || null;
+    let reachEstimate: number | null = null;
+    if (reachRaw) {
+      reachEstimate = Number(reachRaw);
+      if (!Number.isFinite(reachEstimate) || reachEstimate > MAX_REACH) {
+        return { rows, error: `${s.name}: that is more people than the estimate can hold.` };
+      }
+      if (!reachBasis || reachBasis.length < 3) {
+        return { rows, error: `${s.name}: say where the expected reach comes from, or leave the number out.` };
+      }
+    }
+
+    rows.push({ key: s.key, on: true, count, priceCents, mode, buyNowCents, reachEstimate, reachBasis });
   }
   return { rows };
 }
@@ -63,7 +86,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   const { data: run } = await sb.from("runs").select("id,slug,status,category_key").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
 
-  const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", runId).order("created_at");
+  const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis").eq("run_id", runId).order("created_at");
   const current = existing ?? [];
 
   // The category is the fundraiser's, read from the row the session owns, never from the form.
@@ -80,8 +103,9 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   const { rows, error } = parseRows(form, templates);
   if (error) return { ok: false, error };
 
-  const inserts: { run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: "open"; buy_now_cents: number | null }[] = [];
-  const updates: { id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null }[] = [];
+  type Discovery = { reach_estimate: number | null; reach_basis: string | null };
+  const inserts: ({ run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: "open"; buy_now_cents: number | null } & Discovery)[] = [];
+  const updates: ({ id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null } & Discovery)[] = [];
   const deletes: string[] = [];
 
   for (const r of rows) {
@@ -100,10 +124,10 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     let n = locked.length;
     for (const l of keepOpen) {
       n += 1;
-      updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents });
+      updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis });
     }
     for (; n < total; n += 1) {
-      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents });
+      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis });
     }
   }
 
@@ -113,7 +137,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
   for (const u of updates) {
-    const { error: e } = await sb.from("lots").update({ label: u.label, price_cents: u.price_cents, mode: u.mode, buy_now_cents: u.buy_now_cents }).eq("id", u.id).eq("status", "open");
+    const { error: e } = await sb.from("lots").update({ label: u.label, price_cents: u.price_cents, mode: u.mode, buy_now_cents: u.buy_now_cents, reach_estimate: u.reach_estimate, reach_basis: u.reach_basis }).eq("id", u.id).eq("status", "open");
     // Migration 0035 freezes a spot's terms the moment somebody bids on it.
     if (e?.message.includes("lot_terms_frozen")) return { ok: false, error: `${u.label ?? "A spot"} already has a bid on it, so its price, its mode and its take-it-now number stay as they are.` };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };

@@ -13,7 +13,7 @@ import { fullName } from "@/lib/names";
 import { dashboardNav } from "@/lib/dashboardModel";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
-import { categoryStatus, draftCategories, loadFundraiserDraft } from "@/app/actions/drafts";
+import { categoryStatus, draftCategories, draftDiscoveryRegistry, loadFundraiserDraft } from "@/app/actions/drafts";
 import { runComplete } from "@/lib/readiness";
 import { templatesForFundraiser } from "@/lib/opportunities";
 import { loadTemplates } from "@/lib/opportunity-templates";
@@ -58,12 +58,12 @@ export default async function RunPage({ params, searchParams }: Props) {
     const draft = await loadFundraiserDraft(id);
     if (!draft) notFound();
     return <DashboardShell current="/dashboard" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} identity={identity} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
-      <Card className="max-w-[760px]"><FundraiserDraftForm draft={draft} categories={await draftCategories()} musicOrganizer={act.type !== null} /></Card>
+      <Card className="max-w-[760px]"><FundraiserDraftForm draft={draft} categories={await draftCategories()} musicOrganizer={act.type !== null} discovery={await draftDiscoveryRegistry()} /></Card>
     </DashboardShell>;
   }
 
   const { label: categoryLabel, publishEnabled: categoryPublishable } = await categoryStatus(run.category_key ?? "music");
-  const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents").eq("run_id", id).order("created_at");
+  const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis").eq("run_id", id).order("created_at");
   const { data: shows } = await sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", id).order("played_on");
   // The options this fundraiser can price, from the registry in the database, so a category added
   // there has an editor. Music narrows by act type; no other category does.
@@ -173,7 +173,7 @@ export default async function RunPage({ params, searchParams }: Props) {
       <Card id="run-details" className="max-w-[760px]">
         <CardHead eyebrow="The fundraiser">Dates and details</CardHead>
         {run.status === "draft"
-          ? <FundraiserDraftForm draft={await loadFundraiserDraft(id)} categories={await draftCategories()} musicOrganizer={act.type !== null} />
+          ? <FundraiserDraftForm draft={await loadFundraiserDraft(id)} categories={await draftCategories()} musicOrganizer={act.type !== null} discovery={await draftDiscoveryRegistry()} />
           : music
             ? <RunForm run={run as RunInput} actType={act.type} />
             : <p className="max-w-[60ch] text-[15px] text-muted">

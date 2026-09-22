@@ -50,6 +50,7 @@ const DRAFT = {
   goal_cents: null, goal_currency: null, activity_mode: "online", activity_locations: [], timezone: null,
   fundraising_starts_on: null, fundraising_ends_on: null, starts_on: null, ends_on: null, delivery_due_at: null, bidding_closes_at: null,
   kind: null, show_count: null, expected_attendance: null, category_details: { production_stage: "post_production" },
+  discovery_tags: [],
 } as FundraiserDraft;
 
 const fresh = (over: { musicOrganizer?: boolean; kitKey?: string | null; categories?: KitCategory[] } = {}) =>

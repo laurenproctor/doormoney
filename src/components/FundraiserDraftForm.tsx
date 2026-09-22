@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useReducer } from "react";
+import { useActionState, useReducer, useState } from "react";
 import { saveDraftForm } from "@/app/actions/drafts";
 import type { FundraiserDraft } from "@/lib/fundraiser-drafts";
 import { categoryFormNote, detailFields, titleLabel, type DetailField } from "@/lib/categories";
@@ -9,6 +9,8 @@ import { initialKitDraft, kitDraftReducer, type KitDraftAction, type KitDraftSta
 import { Button } from "@/components/Button";
 import { inputClass, labelClass } from "@/components/DashboardShell";
 import { StarterKitPicker } from "@/components/StarterKitPicker";
+import { DiscoveryTagFields } from "@/components/DiscoveryTagFields";
+import { EMPTY_REGISTRY, type DiscoveryRegistry } from "@/lib/discovery";
 import type { KitRecommendation } from "@/lib/starter-kit-recommendations";
 
 /**
@@ -28,8 +30,10 @@ const EXAMPLE_HINT = "An example from the starter kit. Change it to fit your own
 const hintClass = "mt-2 block text-[14px] normal-case tracking-normal text-muted";
 const choiceClass = "caps edge min-w-[200px] flex-1 cursor-pointer bg-panel p-3 text-center text-[14.5px] has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:checked]:border-accent";
 
-export function FundraiserDraftForm({ draft, categories, musicOrganizer, starterKits }: {
+export function FundraiserDraftForm({ draft, categories, musicOrganizer, starterKits, discovery = EMPTY_REGISTRY }: {
   draft: FundraiserDraft | null; categories: KitCategory[]; musicOrganizer: boolean; starterKits?: StarterKitContext;
+  /** The discovery facets and tags to offer. Empty draws no discovery questions. */
+  discovery?: DiscoveryRegistry;
 }) {
   const [state, action, pending] = useActionState(saveDraftForm, { ok: false });
   const [form, dispatch] = useReducer(
@@ -45,6 +49,15 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer, starter
   /** True while a field still holds the kit's own example, which is when the hint under it is true. */
   const isExample = (name: KitTextField) => Boolean(kit?.prefill[name]) && fields[name] === kit?.prefill[name];
   const set = (name: KitTextField | "activity_mode" | "kind") => (value: string) => dispatch({ type: "field", name, value });
+
+  /**
+   * Discovery tags are the organizer's own answer and are never part of a starter kit: a kit fills
+   * in examples, and a tag is a fact about this fundraiser. Kept in plain state beside the reducer
+   * for that reason. Switching category needs no cleanup here, because only a box that is drawn can
+   * be submitted and DiscoveryTagFields draws only what the new category may use.
+   */
+  const [tags, setTags] = useState<string[]>(() => draft?.discovery_tags ?? []);
+  const toggleTag = (key: string, on: boolean) => setTags((current) => (on ? [...current, key] : current.filter((k) => k !== key)));
 
   return <form action={action}>
     {draft && <input type="hidden" name="id" value={draft.id} />}
@@ -91,6 +104,7 @@ export function FundraiserDraftForm({ draft, categories, musicOrganizer, starter
     <Controlled label="What can sponsors count on receiving?" name="sponsor_promise" value={fields.sponsor_promise} onChange={set("sponsor_promise")}
       hint={isExample("sponsor_promise") ? "An example from the starter kit. Promise only what you will deliver, in your own words." : undefined} />
     <Controlled label="Who will the sponsorship reach?" name="audience_description" value={fields.audience_description} onChange={set("audience_description")} hint={isExample("audience_description") ? EXAMPLE_HINT : undefined} />
+    <DiscoveryTagFields registry={discovery} categoryKey={category} selected={tags} onToggle={toggleTag} />
     <Field label="Funding goal (USD, optional)" name="goal_amount" value={draft?.goal_cents == null ? "" : (draft.goal_cents / 100).toFixed(2)} />
     <input type="hidden" name="goal_currency" value="USD" />
     <label className={labelClass}>Where will the activity take place?

@@ -9,9 +9,9 @@ import { templateSections, type OpportunityTemplate } from "@/lib/opportunities"
 import { formatMoney } from "@/lib/money";
 import { IN_KIND_NOTE, hasInKind, sponsorshipKindLabels } from "@/lib/sponsorship-kinds";
 
-export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string; buy_now_cents: number | null };
+export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string; buy_now_cents: number | null; reach_estimate: number | null; reach_basis: string | null };
 
-type RowState = { on: boolean; count: string; price: string; mode: "fixed" | "auction"; buyNow: string };
+type RowState = { on: boolean; count: string; price: string; mode: "fixed" | "auction"; buyNow: string; reach: string; reachBasis: string };
 
 const initial: LotsState = { ok: false };
 const dollars = (cents: number) => (cents / 100).toFixed(cents % 100 ? 2 : 0);
@@ -48,8 +48,13 @@ export function LotsEditor({
     for (const s of surfaces) {
       const mine = lots.filter((l) => l.surface_key === s.key);
       r[s.key] = mine.length
-        ? { on: true, count: String(mine.length), price: dollars(mine[0].price_cents), mode: mine[0].mode, buyNow: mine[0].buy_now_cents ? dollars(mine[0].buy_now_cents) : "" }
-        : { on: false, count: "1", price: s.defaultPriceCents === null ? "" : dollars(s.defaultPriceCents), mode: "fixed", buyNow: "" };
+        ? {
+            on: true, count: String(mine.length), price: dollars(mine[0].price_cents), mode: mine[0].mode,
+            buyNow: mine[0].buy_now_cents ? dollars(mine[0].buy_now_cents) : "",
+            reach: mine[0].reach_estimate === null ? "" : String(mine[0].reach_estimate),
+            reachBasis: mine[0].reach_basis ?? "",
+          }
+        : { on: false, count: "1", price: s.defaultPriceCents === null ? "" : dollars(s.defaultPriceCents), mode: "fixed", buyNow: "", reach: "", reachBasis: "" };
     }
     return r;
   });
@@ -80,7 +85,7 @@ export function LotsEditor({
                 const locked = lockedKeys.has(s.key);
                 // The row is the domain component: it knows a template and a draft, and nothing about
                 // music, the catalog or saving. This file stays the adapter between them.
-                const draft: OpportunityDraft = { on: r.on, count: r.count, price: r.price, saleMethod: r.mode, buyNow: r.buyNow };
+                const draft: OpportunityDraft = { on: r.on, count: r.count, price: r.price, saleMethod: r.mode, buyNow: r.buyNow, reach: r.reach, reachBasis: r.reachBasis };
                 return (
                   <OpportunityEditor
                     key={s.key}

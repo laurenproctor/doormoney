@@ -46,6 +46,13 @@ export const FundraiserDraftInput = z.object({
   show_count: wholeNumber(400),
   expected_attendance: wholeNumber(10_000_000),
   category_details: z.record(z.string().max(40), z.string().trim().max(1000)).default({}),
+  /**
+   * Structured discovery keys, from the registry in the database (migration 0053). Shape only
+   * here: which keys exist, which facet each belongs to and which categories may use one are the
+   * registry's answer, so they are checked in discoveryTagErrors and again by the database. A
+   * closed list of keys here would be the second place a category has to be added.
+   */
+  discovery_tags: z.array(z.string().trim().min(1, "A discovery tag cannot be blank.").max(40)).max(20).default([]),
 }).strict().superRefine((value, ctx) => {
   for (const [start, end] of [["starts_on", "ends_on"], ["fundraising_starts_on", "fundraising_ends_on"]] as const) {
     if (value[start] && value[end] && value[end] < value[start]) ctx.addIssue({ code: "custom", path: [end], message: "The end cannot precede the start." });
@@ -53,10 +60,15 @@ export const FundraiserDraftInput = z.object({
   if (value.bidding_closes_at && value.ends_on && new Date(value.bidding_closes_at).toISOString().slice(0, 10) > value.ends_on) ctx.addIssue({ code: "custom", path: ["bidding_closes_at"], message: "Bidding has to close by the last activity date." });
   if (value.goal_cents !== null && !value.goal_currency) ctx.addIssue({ code: "custom", path: ["goal_currency"], message: "Choose a currency for the goal." });
   if (value.category_key !== "music" && (value.kind !== null || value.show_count !== null)) ctx.addIssue({ code: "custom", path: ["kind"], message: "Music details belong only to music fundraisers." });
+  if (new Set(value.discovery_tags).size !== value.discovery_tags.length) ctx.addIssue({ code: "custom", path: ["discovery_tags"], message: "Each discovery tag may be chosen once." });
 });
 
-export type FundraiserDraft = z.output<typeof FundraiserDraftInput> & { id: string; slug: string; status: string };
-export const DRAFT_COLUMNS = "id,slug,status,category_key,title,purpose,description,audience_description,sponsor_promise,goal_cents,goal_currency,activity_mode,activity_locations,timezone,fundraising_starts_on,fundraising_ends_on,starts_on,ends_on,delivery_due_at,bidding_closes_at,kind,show_count,expected_attendance,category_details";
+export type FundraiserDraft = z.output<typeof FundraiserDraftInput> & {
+  id: string; slug: string; status: string;
+  /** Derived from activity_locations by the database. Read-only: it is in no write grant. */
+  activity_country_codes?: string[] | null;
+};
+export const DRAFT_COLUMNS = "id,slug,status,category_key,title,purpose,description,audience_description,sponsor_promise,goal_cents,goal_currency,activity_mode,activity_locations,activity_country_codes,timezone,fundraising_starts_on,fundraising_ends_on,starts_on,ends_on,delivery_due_at,bidding_closes_at,kind,show_count,expected_attendance,category_details,discovery_tags";
 
 export function categoryErrors(input: z.output<typeof FundraiserDraftInput>, categories: FundraiserCategory[]): string[] {
   const category = categories.find((c) => c.key === input.category_key && c.draft_enabled);
