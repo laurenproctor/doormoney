@@ -3,9 +3,8 @@ import { Add, ArrowRight, Checkmark, Launch, Location, Time, Warning } from "@/c
 import { Card, CardHead } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { formatMoney } from "@/lib/money";
-import { formatDateRange } from "@/lib/dates";
-import { LIFECYCLE_STEPS, LIFECYCLE_LABELS, lifecycleIndex, lifecycleLabel, type PayoutTotals, type PrepItem, type ShowRow } from "@/lib/dashboardModel";
-import type { DashboardMetrics, DashboardRun } from "@/lib/dashboard";
+import { LIFECYCLE_STEPS, LIFECYCLE_LABELS, lifecycleIndex, type PayoutTotals, type PrepItem, type ShowRow } from "@/lib/dashboardModel";
+import type { DashboardMetrics } from "@/lib/dashboard";
 
 /* ------------------------------------------------------------------ lifecycle */
 
@@ -218,23 +217,12 @@ export function DashboardEmptyState({ heading, body, action }: { heading: string
 
 /* ------------------------------------------------------------------ header */
 
-export function FundraiserSummary({ run, children }: { run: DashboardRun; children?: React.ReactNode }) {
-  return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-line pb-6">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="heading text-[clamp(20px,2.8vw,28px)] leading-tight text-ink">{run.title}</h2>
-          <span className="caps border border-line px-2 py-1 text-[14px] text-muted">{lifecycleLabel(run.status)}</span>
-        </div>
-        <p className="mt-2 text-[14px] text-muted">{formatDateRange(run.startsOn, run.endsOn)}</p>
-        <div className="mt-4">
-          <LifecycleStrip status={run.status} />
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">{children}</div>
-    </div>
-  );
-}
+/*
+  FundraiserSummary used to sit here: the run title, its status chip, the dates and the lifecycle
+  strip, as one header for the old per-fundraiser dashboard. /dashboard/runs/<id> already puts the
+  title, the status and the dates in the shell's own header, so all that was left to move was the
+  strip, which that page now draws directly. Nothing rendered this.
+*/
 
 export function PreviewLink({ href, label }: { href: string; label: string }) {
   return (
