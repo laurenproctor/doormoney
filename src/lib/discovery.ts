@@ -146,6 +146,32 @@ export function discoveryTagErrors(
   return [...new Set(out)];
 }
 
+/**
+ * The choices to draw when a sponsor may have picked several categories, or none.
+ *
+ * A tag scoped to one category is offered while that category is among the chosen ones, and also
+ * when nothing is chosen at all: with no category narrowing the list, every category's fundraisers
+ * are in play, so every category's tags are worth offering. Unscoped tags are always offered.
+ */
+export function discoveryChoicesForCategories(
+  registry: DiscoveryRegistry,
+  scope: DiscoveryScope,
+  categoryKeys: readonly string[],
+): DiscoveryChoice[] {
+  const wanted = (tag: DiscoveryTag) =>
+    tag.categoryKeys === null || categoryKeys.length === 0 || tag.categoryKeys.some((k) => categoryKeys.includes(k));
+  return registry.facets
+    .filter((facet) => scopeAllows(facet, scope))
+    .sort((a, b) => a.sort - b.sort || a.key.localeCompare(b.key))
+    .map((facet) => ({
+      facet,
+      tags: registry.tags
+        .filter((tag) => tag.facetKey === facet.key && tag.active && wanted(tag))
+        .sort((a, b) => a.sort - b.sort || a.key.localeCompare(b.key)),
+    }))
+    .filter((choice) => choice.tags.length > 0);
+}
+
 // ---------------------------------------------------------------
 // Reading stored tags back
 // ---------------------------------------------------------------

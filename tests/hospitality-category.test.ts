@@ -49,13 +49,17 @@ test("migration 0047 adds the category for drafts, with publishing written out a
 test("no other migration opens it: the files that name hospitality are 0047, the privacy fix found with it, and the one that gave it its public name", () => {
   const dir = path.join(ROOT, "supabase/migrations");
   const naming = readdirSync(dir).filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))).sort();
-  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql", "0050_patron_profile_customization.sql", "0053_discovery_contract.sql"]);
+  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql", "0050_patron_profile_customization.sql", "0053_discovery_contract.sql", "0054_discovery_read_model.sql"]);
   // 0053 names it to scope one discovery tag to hospitality, which opens nothing, and to assert in
   // the migration itself that it left publishing and the delivery policy exactly as it found them.
-  const discovery = sql("supabase/migrations/0053_discovery_contract.sql");
-  assert.doesNotMatch(discovery, /publish_enabled\s*=\s*true/i);
-  assert.doesNotMatch(discovery, /insert into (?:public\.)?(?:delivery_policies|fundraiser_categories)/i);
-  assert.match(discovery, /must not enable publishing for a draft-only category/, "and it stops if a draft-only category can publish");
+  // 0054 only widens the two discovery views with columns anon could already read, and names
+  // hospitality solely in the same guard. Both files are held to it.
+  for (const file of ["0053_discovery_contract.sql", "0054_discovery_read_model.sql"]) {
+    const discovery = sql(`supabase/migrations/${file}`);
+    assert.doesNotMatch(discovery, /publish_enabled\s*=\s*true/i, file);
+    assert.doesNotMatch(discovery, /insert into (?:public\.)?(?:delivery_policies|fundraiser_categories)/i, file);
+    assert.match(discovery, /must not enable publishing for a draft-only category/, `${file} stops if a draft-only category can publish`);
+  }
   // 0050 lets a patron say they support it, on a switch of its own. It opens nothing: no publishing, no policy, no template.
   const preference = sql("supabase/migrations/0050_patron_profile_customization.sql");
   assert.match(preference, /set preference_enabled = true where publish_enabled or key = 'hospitality'/);

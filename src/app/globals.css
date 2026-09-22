@@ -410,3 +410,9 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
   border-color: var(--accent-ink);
   border-width: 2px;
 }
+
+/*
+  The discovery filters: a panel that collapses on a phone and a rail that is always open from
+  1024px up. Driven by a nameless checkbox and `peer`, so it needs no JavaScript and submits
+  nothing: an input with no `name` is not part of the form data it sits beside.
+*/
