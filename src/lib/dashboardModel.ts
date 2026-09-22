@@ -302,11 +302,16 @@ export type NavItem = { href: string; label: string };
 export type NavSection = { title: string; items: NavItem[] };
 
 /**
- * The sidebar, from what the account does rather than what it said at sign-up.
+ * The sidebar: the two ways of taking part, and the one account behind both.
+ *
+ * **Creating** and **Supporting** are the participation modes, not two accounts and not two
+ * identities. There used to be an "Organizer profile" in one and a "Patron profile" in the other,
+ * which read as two profiles for two people. There is one Profile now, at /dashboard/profile, and
+ * it holds all three parts: who the account holder is, what they organize, and what they support.
+ * /dashboard/act still edits the organizer's own record and is reached from there.
  *
  * "On your site" is here because decision 14 took the widget out of the public nav and left the
- * dashboard as the only way to it. /dashboard/profile is the patron's page, not the musician's:
- * the musician's is /dashboard/act, and their public one is /<slug>.
+ * dashboard as the only way to it.
  */
 export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readonly string[] }): NavSection[] {
   // "organizer" is the role Expansion Phase 2 writes; "musician" is the one accounts made before it
@@ -316,34 +321,49 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 
   if (organizer) {
     sections.push({
-      title: "Fundraising",
+      title: "Creating",
       items: [
         { href: "/dashboard", label: "Overview" },
         { href: "/dashboard/runs", label: "Fundraisers" },
-        { href: "/dashboard/act", label: "Organizer profile" },
         { href: "/dashboard/payouts", label: "Payouts" },
         { href: "/dashboard/widget", label: "On your site" },
       ],
     });
   }
 
-  // Always there. A musician who backs the band down the street should not have to change a
-  // setting to see it, and for anyone who has backed nothing it reads as an invitation.
+  // Always there. Somebody who raises money and backs the band down the street should not have to
+  // change a setting to see it, and for anyone who has backed nothing it reads as an invitation.
+  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed" }] });
+
+  // One profile, one account. The profile comes first: it is the identity, and the account page
+  // behind it is the email address, the password and what Door Money sends.
   sections.push({
-    title: "Backing",
+    title: "Account",
     items: [
-      { href: "/patron", label: "Backed" },
-      { href: "/dashboard/profile", label: "Patron profile" },
+      { href: "/dashboard/profile", label: "Profile" },
+      { href: "/dashboard/account", label: "Account" },
     ],
   });
-
-  sections.push({ title: "Account", items: [{ href: "/dashboard/account", label: "Account" }] });
   return sections;
 }
+
+/**
+ * Pages that belong to a nav item without living under its address.
+ *
+ * The organizer's own record is edited at /dashboard/act, which is older than the one Profile it
+ * is now part of. The address stays (sent links, saveAct's redirect), and the sidebar says where
+ * the reader is rather than going blank.
+ */
+const NAV_HOME: Record<string, string> = {
+  "/dashboard/act": "/dashboard/profile",
+  "/dashboard/act/new": "/dashboard/profile",
+};
 
 /** The section a path belongs to, so one nav item is marked current on child routes too. */
 export function currentNavHref(pathname: string, sections: NavSection[]): string | null {
   const all = sections.flatMap((s) => s.items.map((i) => i.href));
+  const adopted = NAV_HOME[pathname];
+  if (adopted && all.includes(adopted)) return adopted;
   const exact = all.find((href) => href === pathname);
   if (exact) return exact;
   // /dashboard/runs/<id> lights Fundraisers; /dashboard on its own must not light everything.

@@ -20,6 +20,7 @@
  *
  * Pure, and importable from a client component: nothing here reads the database.
  */
+import { signupPath } from "@/lib/intent";
 import { SEEDED_CATEGORY_KEYS } from "@/lib/starting-categories";
 import { starterKit, type StarterKit } from "@/lib/starter-kits";
 
@@ -133,9 +134,12 @@ export function newFundraiserPath(kitKey?: string | null): string {
  * Where an example's link goes. Somebody signed in goes straight to the form. Anybody else creates
  * an account first and lands on the same form, with the same kit, afterwards. A category that is
  * coming soon has no link into the form at all.
+ *
+ * The intent rides along so the account lands ready to organize. It is context and not
+ * permission: the account it opens can support fundraisers too, and always could.
  */
 export function exampleHref(kitKey: string, status: ExampleStatus, signedIn: boolean): string | null {
   if (status === "coming_soon") return null;
   const path = newFundraiserPath(kitKey);
-  return signedIn ? path : `/signup?next=${encodeURIComponent(path)}`;
+  return signedIn ? path : signupPath("creator", path);
 }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
+import { mfaPending, mfaVerifyPath } from "@/lib/mfa";
 
 /** The signed-in auth user, or null. Server only. */
 export async function currentUser() {
@@ -8,10 +9,23 @@ export async function currentUser() {
   return data.user ?? null;
 }
 
-/** Redirects to the sign-in page when nobody is signed in. `next` is where to land after the link. */
+/**
+ * The account behind the request, or a redirect to the way in.
+ *
+ * Two gates, not one. A visitor with no session goes to sign in. A visitor whose account has a
+ * two-factor app and whose session has not passed its code goes to the code screen: a password
+ * alone is half a sign-in, and this is where that is enforced for every page and every action
+ * that asks who is signed in. `next` survives both, so the visitor lands where they meant to.
+ *
+ * src/proxy.ts does the same before the page runs, for the paths it matches. This is the one that
+ * covers the rest, and it is the one a server action meets.
+ */
 export async function requireUser(next = "/dashboard") {
-  const user = await currentUser();
+  const sb = await supabaseServer();
+  const { data } = await sb.auth.getUser();
+  const user = data.user ?? null;
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
+  if (await mfaPending(sb, user)) redirect(mfaVerifyPath(next));
   return user;
 }
 
@@ -61,6 +75,10 @@ export type OwnedAct = {
   photo_url: string | null;
   instagram: string | null;
   website: string | null;
+  /** What the organizer is: a person, a team, a company. Never a category (migration 0043). */
+  entity_kind: string | null;
+  /** The audience or community the organizer reaches, in their own words. Not a fundraiser's. */
+  audience_description: string | null;
   stripe_account_id: string | null;
   stripe_payouts_enabled: boolean;
   founding: boolean;
@@ -76,7 +94,7 @@ export async function ownedAct(userId: string): Promise<OwnedAct | null> {
   const sb = supabaseAdmin();
   const { data } = await sb
     .from("acts")
-    .select("id,slug,name,type,city,region,country_code,bio,photo_url,instagram,website,stripe_account_id,stripe_payouts_enabled,founding")
+    .select("id,slug,name,type,city,region,country_code,bio,photo_url,instagram,website,entity_kind,audience_description,stripe_account_id,stripe_payouts_enabled,founding")
     .eq("owner_id", userId)
     .order("created_at")
     .limit(1)

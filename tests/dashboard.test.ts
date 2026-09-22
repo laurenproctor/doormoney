@@ -302,9 +302,11 @@ test("a show with no venue or city is worth fixing before anyone turns up", () =
 /* ------------------------------------------------------------------ navigation */
 
 test("an organizer gets the fundraising pages, and the widget among them", () => {
+  // /dashboard/act left the rail when the profile became one page: the organizer's own record is
+  // part of /dashboard/profile now and is reached from there.
   const nav = dashboardNav({ hasAct: true, roles: ["organizer"] });
   const hrefs = nav.flatMap((s) => s.items.map((i) => i.href));
-  assert.deepEqual(hrefs, ["/dashboard", "/dashboard/runs", "/dashboard/act", "/dashboard/payouts", "/dashboard/widget", "/patron", "/dashboard/profile", "/dashboard/account"]);
+  assert.deepEqual(hrefs, ["/dashboard", "/dashboard/runs", "/dashboard/payouts", "/dashboard/widget", "/patron", "/dashboard/profile", "/dashboard/account"]);
 });
 
 test("an account made before the organizer role still gets them", () => {
@@ -331,23 +333,28 @@ test("somebody who only backs musicians gets no fundraising pages", () => {
 
 test("owning an act is enough, whatever the roles say", () => {
   const hrefs = dashboardNav({ hasAct: true, roles: [] }).flatMap((s) => s.items.map((i) => i.href));
-  assert.ok(hrefs.includes("/dashboard/act"));
+  assert.ok(hrefs.includes("/dashboard/runs"), "an account that owns an act lost the fundraising section");
 });
 
-test("the organizer's own page is /dashboard/act, and /dashboard/profile is the patron's", () => {
-  // Two labels the old flat bar never distinguished. "Organizer" rather than "Musician" because
-  // the rail is a shared surface and an act need not be a music act since Expansion Phase 2.
+test("there is one profile, not an organizer's and a patron's", () => {
+  // The rail used to carry "Organizer profile" in one section and "Patron profile" in another,
+  // which read as two accounts for two people. One account, one identity: /dashboard/profile holds
+  // all of it, and the two participation modes are what the sections are named for.
   const nav = dashboardNav({ hasAct: true, roles: ["musician"] });
-  const labelOf = (href: string) => nav.flatMap((s) => s.items).find((i) => i.href === href)?.label;
-  assert.equal(labelOf("/dashboard/act"), "Organizer profile");
-  assert.equal(labelOf("/dashboard/profile"), "Patron profile");
+  const items = nav.flatMap((s) => s.items);
+  const profiles = items.filter((i) => /profile/i.test(i.label));
+  assert.deepEqual(profiles, [{ href: "/dashboard/profile", label: "Profile" }]);
+  assert.ok(!items.some((i) => i.href === "/dashboard/act"), "the organizer record is reached from the profile now");
+  assert.deepEqual(nav.map((s) => s.title), ["Creating", "Supporting", "Account"]);
 });
 
 test("a child route lights its section, and overview does not light everything", () => {
   const nav = dashboardNav({ hasAct: true, roles: ["musician"] });
   assert.equal(currentNavHref("/dashboard", nav), "/dashboard");
   assert.equal(currentNavHref("/dashboard/runs/abc", nav), "/dashboard/runs");
-  assert.equal(currentNavHref("/dashboard/act", nav), "/dashboard/act");
+  // /dashboard/act is still the organizer editor and still has its address; it belongs to Profile.
+  assert.equal(currentNavHref("/dashboard/act", nav), "/dashboard/profile");
+  assert.equal(currentNavHref("/dashboard/act/new", nav), "/dashboard/profile");
   assert.equal(currentNavHref("/nowhere", nav), null);
 });
 

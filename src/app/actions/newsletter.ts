@@ -1,7 +1,8 @@
 "use server";
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { sendEmail, newsletterWelcome } from "@/lib/email";
+import { payingProfileId } from "@/lib/patrons";
 import { SITE } from "@/lib/site";
 
 export type NewsletterState = { ok: boolean; error?: string };
@@ -36,15 +37,38 @@ export async function subscribeNewsletter(_prev: NewsletterState, form: FormData
   const email = parsed.data.email.toLowerCase();
   const db = supabaseAdmin();
 
+  /*
+    Whose row this is, where the answer is obvious.
+
+    This form is open to anyone and an address with no account is a complete subscriber, so a null
+    owner stays perfectly valid. But somebody signed in, typing their own verified address into the
+    footer, should not end up with a row their account page has to adopt later. The rule is
+    checkout's rule, from the same helper: the address on the form never decides this, the session
+    does, and a mismatch attributes nothing.
+  */
+  const profileId = await subscriberProfileId(email);
+
   // Plain insert. The unique index is on lower(email), which an upsert's conflict target cannot name,
   // so a duplicate surfaces as 23505 and means "already on it". Someone who had opted out and comes
   // back is flipped back on, quietly.
-  const { data, error } = await db.from("newsletter").insert({ email, first_name: parsed.data.first_name, source: parsed.data.source ?? null }).select("unsubscribe_token").single();
+  const { data, error } = await db
+    .from("newsletter")
+    .insert({ email, first_name: parsed.data.first_name, source: parsed.data.source ?? null, profile_id: profileId })
+    .select("unsubscribe_token")
+    .single();
   if (error?.code === "23505") {
     // Already on the list. Flip a lapsed address back on, and take the name either way: an address
     // collected before the form asked for one has been nameless until now.
     await db.from("newsletter").update({ unsubscribed_at: null }).eq("email", email).not("unsubscribed_at", "is", null);
     await db.from("newsletter").update({ first_name: parsed.data.first_name }).eq("email", email).is("first_name", null);
+    if (profileId) {
+      // Only an unowned row, and only for the account's own verified address: this can adopt a row
+      // that predates the account, and can never take one off somebody else. An error here means
+      // the account already has a subscription under another address, which is not this form's
+      // problem: the address in hand is on the list either way.
+      const { error: claimError } = await db.from("newsletter").update({ profile_id: profileId }).eq("email", email).is("profile_id", null);
+      if (claimError) console.warn("newsletter: row not claimed for this account:", claimError.code);
+    }
     return { ok: true };
   }
   if (error || !data) {
@@ -57,4 +81,21 @@ export async function subscribeNewsletter(_prev: NewsletterState, form: FormData
   const result = await sendEmail(newsletterWelcome({ to: email, firstName: parsed.data.first_name, unsubscribeUrl }));
   if (!result.sent) console.warn(`newsletter welcome not sent to ${email}: ${result.reason}`);
   return { ok: true };
+}
+
+/**
+ * The account this address belongs to, or null.
+ *
+ * Null for a visitor with no session, for a typed address that is not the session's own, and for
+ * a session whose address has never been confirmed. Never throws: the subscription matters more
+ * than the attribution, and an unowned row is a valid subscriber.
+ */
+async function subscriberProfileId(email: string): Promise<string | null> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+  try {
+    const { data } = await (await supabaseServer()).auth.getUser();
+    return payingProfileId(data.user, email);
+  } catch {
+    return null;
+  }
 }

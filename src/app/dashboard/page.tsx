@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { Warning } from "@/components/dashboard/icons";
@@ -16,7 +15,9 @@ import {
   PreviewLink,
 } from "@/components/dashboard/panels";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
-import { hasRole } from "@/lib/roles";
+import { fullName } from "@/lib/names";
+import { ROLES } from "@/lib/roles";
+import { parseIntent, type Intent } from "@/lib/intent";
 import { loadDashboard, withToday } from "@/lib/dashboard";
 import { dashboardNav, isShareable, previewTarget } from "@/lib/dashboardModel";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -29,12 +30,25 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 export default async function DashboardPage({ searchParams }: Props) {
   const user = await requireUser("/dashboard");
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
+  const sp = await searchParams;
 
-  // No act yet. Somebody here to back musicians belongs on their own page, not in the middle of
-  // listing a band they never came to list. Anyone else is here to organize, so carry on to step one.
+  /*
+    No organizer profile yet, which is where every account starts.
+
+    This used to redirect: to /patron for somebody who had ticked only that at sign-up, and into
+    creating an organizer profile for everybody else. Nobody ticks anything now, so the first
+    screen would have been step one of a fundraiser for a person who came here to sponsor one.
+    Both capabilities are offered instead, and the account keeps both whichever is taken first.
+  */
   if (!act) {
-    const roles = profile?.roles;
-    redirect(hasRole(roles, "patron") && !hasRole(roles, "musician") && !hasRole(roles, "organizer") ? "/patron" : "/dashboard/act/new");
+    return (
+      <StartHere
+        roles={profile?.roles ?? []}
+        intent={parseIntent(sp.intent)}
+        firstName={profile?.first_name ?? null}
+        identity={fullName(profile)}
+      />
+    );
   }
 
   const nav = dashboardNav({ hasAct: true, roles: profile?.roles ?? [] });
@@ -42,6 +56,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     current: "/dashboard",
     nav,
     actName: act.name,
+    identity: fullName(profile),
     eyebrow: act.city ?? "Organizer",
     title: "Your",
     accent: "fundraising",
@@ -89,7 +104,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     );
   }
 
-  const sp = await searchParams;
   const wanted = typeof sp.fundraiser === "string" ? sp.fundraiser : undefined;
   const view = withToday(await loadDashboard(act, wanted), new Date());
 
@@ -168,6 +182,59 @@ export default async function DashboardPage({ searchParams }: Props) {
       <p className="mt-7">
         <Link href={`/dashboard/runs/${run.id}`} className="caps text-[14px] text-accent-ink underline underline-offset-4">
           Edit this fundraiser
+        </Link>
+      </p>
+    </DashboardShell>
+  );
+}
+
+/**
+ * The first screen of a new account, and of any account with no organizer profile yet.
+ *
+ * Two capabilities, side by side, neither of them a commitment: taking one does not close the
+ * other, and skipping both is a way through. The intent the account arrived with decides which is
+ * offered first and which is marked as the way it was heading, and decides nothing else.
+ *
+ * The words come from ROLES in src/lib/roles.ts, so the capabilities are described in one place.
+ */
+function StartHere({ roles, intent, firstName, identity }: { roles: string[]; intent: Intent | null; firstName: string | null; identity: string | null }) {
+  // The registry says which capability an intent leads with. "explore" names none on purpose:
+  // it asks for both, with neither marked.
+  const marked = ROLES.find((r) => r.intent === intent)?.key ?? null;
+  const leading = marked ?? "organizer";
+  const cards = [...ROLES].sort((a, b) => (a.key === leading ? -1 : b.key === leading ? 1 : 0));
+
+  return (
+    <DashboardShell
+      current="/dashboard"
+      nav={dashboardNav({ hasAct: false, roles })}
+      identity={identity}
+      eyebrow={firstName ? `Welcome, ${firstName}` : "Welcome"}
+      title="One account,"
+      accent="both sides."
+      intro={
+        <p>
+          One Door Money account for creating fundraisers, supporting work, or doing both. Start on either side.
+          Nothing here is locked once you pick one.
+        </p>
+      }
+    >
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        {cards.map((card) => (
+          <Card key={card.key}>
+            <CardHead eyebrow={card.key === marked ? "Where you were heading" : "On the same account"}>{card.label}</CardHead>
+            <p className="mb-7 max-w-[46ch] text-[15px] leading-[1.6] text-muted">{card.blurb}</p>
+            <ButtonLink href={card.start}>{card.label}</ButtonLink>
+          </Card>
+        ))}
+      </div>
+
+      <p className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-[14.5px] text-muted">
+        <Link href="/how-sponsorship-works" className="text-accent-ink underline underline-offset-4">
+          Skip for now and see how sponsorship works
+        </Link>
+        <Link href="/patron" className="text-accent-ink underline underline-offset-4">
+          What this account has backed
         </Link>
       </p>
     </DashboardShell>

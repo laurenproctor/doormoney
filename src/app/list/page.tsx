@@ -11,6 +11,7 @@ import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { SITE } from "@/lib/site";
 import { currentUser } from "@/lib/auth";
+import { signupPath } from "@/lib/intent";
 import { EXAMPLE_GROUPS, EXAMPLE_STATUS_LABEL, exampleHref, exampleStatus, newFundraiserPath, WHO_ORGANIZES } from "@/lib/organizer-examples";
 import { starterKit } from "@/lib/starter-kits";
 
@@ -54,8 +55,9 @@ async function isSignedIn(): Promise<boolean> {
 
 export default async function ListPage() {
   const [sample, labels, signedIn] = await Promise.all([getBoard("gutter-hymns"), getCategoryLabels(), isSignedIn()]);
-  // Somebody new makes an account and a profile first. Somebody with both goes straight to the form.
-  const startHref = signedIn ? newFundraiserPath() : "/signup?next=%2Fdashboard%2Fact%2Fnew";
+  // Somebody new makes an account and a profile first, and the account they make can do both
+  // jobs: the intent only says which one this page sent them for.
+  const startHref = signedIn ? newFundraiserPath() : signupPath("creator", "/dashboard/act/new");
   return (
     <Page
       theme="amber"

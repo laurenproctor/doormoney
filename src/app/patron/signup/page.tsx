@@ -1,60 +1,26 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { AuthPoints, AuthShell } from "@/components/AuthShell";
-import { SignUpForm } from "@/components/SignUpForm";
+import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/auth";
-import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
+import { signupPath } from "@/lib/intent";
 
 /*
-  The patron's door.
+  The patron door, kept open and pointed at the one sign-up form.
 
-  The same account, the same auth, the same server action as /signup. What changes is the question
-  it does not ask: a patron who came here to support work has already said so by walking through
-  this door, so the roles are settled and no organizer address is wanted. They land on the profile
-  page, which is optional and private, rather than in the middle of creating a fundraiser they never
-  had. It names no category: a patron may support any of them.
+  There was a second form here, asking a person to settle at the start that they were a patron and
+  nothing else. That was never true to the market: the bassoonist who backs the band down the
+  street is one person, and the account has always been able to do both. So the address stays,
+  because it is in sent email and on pages already printed, and it now carries what it always
+  meant as an intent rather than as a role. Nothing about the account is decided here.
+
+  A destination is carried through where one was given, and only where safeNext says it is a path
+  inside the site.
 */
-
-export const metadata: Metadata = { title: "Open a patron account" };
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export default async function PatronSignUpPage({ searchParams }: Props) {
   const sp = await searchParams;
-  const next = safeNext(typeof sp.next === "string" ? sp.next : null, "/dashboard/profile");
-
-  return (
-    <AuthShell
-      eyebrow="Patrons"
-      title="Support the"
-      accent="work"
-      intro={
-        <p>
-          An account for anyone who puts money behind work they care about: a local business, a brand, or one
-          person. The starting categories are {STARTING_CATEGORIES_LIST}, and the set is growing.
-        </p>
-      }
-      aside={
-        <AuthPoints
-          heading="What a patron account is for"
-          points={[
-            "Every sponsorship and backing in one place, with the record behind it.",
-            "Bids in progress, and how each one ended.",
-            "An optional public page, private until it is published, with no amounts on it ever.",
-            "Door Money holds the money and releases it to the organizer under the fundraiser's terms.",
-            "Opening an account costs nothing and commits to nothing.",
-          ]}
-        />
-      }
-    >
-      <SignUpForm next={next} fixedRoles={["patron"]} submitLabel="Open the account" />
-      <p className="mt-5 border-t border-line pt-5 text-[14.5px] text-muted">
-        Organizers start from{" "}
-        <Link href="/list" className="text-accent-ink underline underline-offset-4">
-          Create a fundraiser
-        </Link>
-        . One account can do both.
-      </p>
-    </AuthShell>
-  );
+  const asked = typeof sp.next === "string" ? sp.next : null;
+  // "" rather than a fallback: nothing is added to the address unless it was asked for and safe.
+  const next = safeNext(asked, "");
+  redirect(signupPath("patron", next || null));
 }

@@ -104,14 +104,20 @@ test("an idea in one of Door Money's categories opens the new fundraiser form on
 
 test("a visitor with no account signs up first and lands on the same kit", () => {
   const href = exampleHref("fund_season", "open", false)!;
-  assert.equal(href, "/signup?next=%2Fdashboard%2Fruns%2Fnew%3Ftemplate%3Dfund_season");
+  // The intent says which side of the market sent them, so the dashboard can lead with the right
+  // action afterwards. It is context, never permission: the account it opens can do both.
+  assert.equal(href, "/signup?intent=creator&next=%2Fdashboard%2Fruns%2Fnew%3Ftemplate%3Dfund_season");
   const next = new URL(href, "https://doormoney.test").searchParams.get("next")!;
   assert.equal(next, "/dashboard/runs/new?template=fund_season");
   assert.ok(safeNext(next), "and sign-up will accept it as a path inside the site");
   assert.match(read("src/lib/auth.ts"), /!next\.startsWith\("\/"\) \|\| next\.startsWith\("\/\/"\) \|\| next\.startsWith\("\/\\\\"\)/, "the rule restated above is still the rule");
-  // The callback after an emailed confirmation keeps the query string.
+  // The callback after an emailed confirmation keeps the query string. `destination` is `next`
+  // itself, or the two-factor screen carrying `next`, so the kit survives either way.
   assert.match(read("src/app/actions/auth.ts"), /auth\/callback\?next=\$\{encodeURIComponent\(next\)\}/);
-  assert.match(read("src/app/auth/callback/route.ts"), /new URL\(failed \? dead : next, url\.origin\)/);
+  const callback = read("src/app/auth/callback/route.ts");
+  assert.match(callback, /let destination = next;/);
+  assert.match(callback, /destination = mfaVerifyPath\(next\)/, "and the code screen is handed the same destination");
+  assert.match(callback, /new URL\(failed \? dead : destination, url\.origin\)/);
 });
 
 test("the kit survives the organizer-profile step a new organizer has to take first", () => {
@@ -196,7 +202,7 @@ test("/list is still /list, still titled for every organizer, and leads with the
 
 test("the way in goes through the new fundraiser flow, for somebody new and for somebody signed in", () => {
   const list = code("src/app/list/page.tsx");
-  assert.match(list, /const startHref = signedIn \? newFundraiserPath\(\) : "\/signup\?next=%2Fdashboard%2Fact%2Fnew"/);
+  assert.match(list, /const startHref = signedIn \? newFundraiserPath\(\) : signupPath\("creator", "\/dashboard\/act\/new"\)/);
   assert.match(list, /<ButtonLink href=\{startHref\} arrow>Create a fundraiser<\/ButtonLink>/);
 });
 

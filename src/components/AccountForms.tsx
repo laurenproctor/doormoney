@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useId } from "react";
+import { useActionState, useId, useState } from "react";
 import {
   removeAccountPhoto,
   saveAccountName,
@@ -7,6 +7,11 @@ import {
   type AccountNameState,
   type AccountPhotoState,
 } from "@/app/actions/account";
+import {
+  subscribeAccountNewsletter,
+  unsubscribeAccountNewsletter,
+  type CommunicationsState,
+} from "@/app/actions/communications";
 import { Button } from "@/components/Button";
 import { inputClass } from "@/components/DashboardShell";
 import { Field } from "@/components/ProfileForms";
@@ -23,6 +28,7 @@ import { NAME_MAX } from "@/lib/signup";
 
 const initialName: AccountNameState = { ok: false };
 const initialPhoto: AccountPhotoState = { ok: false };
+const initialCommunications: CommunicationsState = { ok: false };
 
 export function AccountNameForm({ firstName, lastName }: { firstName: string | null; lastName: string | null }) {
   const [state, action, pending] = useActionState(saveAccountName, initialName);
@@ -95,5 +101,101 @@ export function AccountPhotoForm({ photo }: { photo: string | null }) {
         </form>
       )}
     </>
+  );
+}
+
+/**
+ * The one list Door Money runs, switched from the account that gets it.
+ *
+ * One button, and the state said in words above it: "Subscribed" or "Not subscribed", so nothing
+ * here depends on noticing a color. The address is the one on the account and is never typed
+ * again. The result goes into a live region, so the confirmation is announced rather than only
+ * seen, and the switch flips at once rather than waiting for a reload.
+ *
+ * There is one topic today and the control says so. A second one does not belong beside this as a
+ * second button with its own action: migration 0052 says where topics go when there are any.
+ */
+export function NewsletterPreferenceForm({
+  subscribed: initialSubscribed,
+  email,
+  configured,
+  ownedByAnother,
+}: {
+  subscribed: boolean;
+  /** Shown, never asked for: the address the email would go to. */
+  email: string | null;
+  /** False when the list cannot be reached at all, so the card says so instead of guessing. */
+  configured: boolean;
+  /** The address is on the list under another account, so this one must not move it. */
+  ownedByAnother: boolean;
+}) {
+  const [subState, subscribe, subscribing] = useActionState(subscribeAccountNewsletter, initialCommunications);
+  const [unsubState, unsubscribe, unsubscribing] = useActionState(unsubscribeAccountNewsletter, initialCommunications);
+  const [subscribed, setSubscribed] = useState(initialSubscribed);
+  const [result, setResult] = useState<CommunicationsState | null>(null);
+
+  /*
+    The server has the last word, and its answer arrives as a new state object rather than as a
+    prop change. Adopting it while rendering is React's own way of reacting to that: an effect
+    would render once with the old switch and then again with the real one. Two actions means two
+    of these, and whichever answered last is the one shown.
+  */
+  const [seenSub, setSeenSub] = useState(subState);
+  if (subState !== seenSub) {
+    setSeenSub(subState);
+    setResult(subState);
+    if (subState.ok && subState.subscribed !== undefined) setSubscribed(subState.subscribed);
+  }
+  const [seenUnsub, setSeenUnsub] = useState(unsubState);
+  if (unsubState !== seenUnsub) {
+    setSeenUnsub(unsubState);
+    setResult(unsubState);
+    if (unsubState.ok && unsubState.subscribed !== undefined) setSubscribed(unsubState.subscribed);
+  }
+
+  if (!configured) {
+    return (
+      <p className="text-[14.5px] text-muted">
+        The list cannot be reached just now, so this cannot say whether the account is on it. The unsubscribe link
+        at the foot of any of these emails still works.
+      </p>
+    );
+  }
+
+  const pending = subscribing || unsubscribing;
+
+  return (
+    <div>
+      <p className="mb-2 text-[15px] leading-[1.6] text-ink">
+        <b className="caps text-[14px] text-accent-ink">{subscribed ? "Subscribed" : "Not subscribed"}</b>
+      </p>
+      <p className="mb-5 max-w-[46ch] text-[14.5px] leading-[1.6] text-muted">
+        One short email the week organizers open fundraisers: who they are, what the funding is for, and which
+        sponsorship options are open. Never more than once a week.
+        {email ? ` It goes to ${email}.` : ""}
+      </p>
+
+      {ownedByAnother ? (
+        <p className="text-[14.5px] text-muted">
+          That address is on the list under another account, so this page will not move it. Tell Door Money and it
+          will be sorted out.
+        </p>
+      ) : (
+        <form action={subscribed ? unsubscribe : subscribe}>
+          <Button type="submit" variant={subscribed ? "ghost" : "solid"} disabled={pending}>
+            {pending ? "Saving" : subscribed ? "Unsubscribe" : "Subscribe"}
+          </Button>
+        </form>
+      )}
+
+      <p role="status" aria-live="polite" className="mt-3 text-[14.5px] text-muted">
+        {result?.ok ? result.message : ""}
+      </p>
+      {result?.error && (
+        <p role="alert" className="mt-3 text-[14.5px] text-accent-ink">
+          {result.error}
+        </p>
+      )}
+    </div>
   );
 }

@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { DashboardShell, Card } from "@/components/DashboardShell";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { draftCategories } from "@/app/actions/drafts";
-import { requireUser, ownedAct } from "@/lib/auth";
+import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
+import { fullName } from "@/lib/names";
+import { dashboardNav } from "@/lib/dashboardModel";
 import { supabaseServer } from "@/lib/supabase/server";
 import { loadKitRecommendations } from "@/lib/starter-kit-recommendations";
 import { starterKitFromLink } from "@/lib/starter-kits";
@@ -17,7 +19,7 @@ export default async function NewRunPage({ searchParams }: Props) {
   // Only a well-formed key goes back into an address, so signing in returns to the same kit.
   const asked = typeof template === "string" && /^[a-z][a-z0-9_]{1,39}$/.test(template) ? template : null;
   const user = await requireUser(asked ? `/dashboard/runs/new?template=${asked}` : "/dashboard/runs/new");
-  const act = await ownedAct(user.id);
+  const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   // No organizer profile yet: make one first, and come back to the same starter kit afterwards.
   if (!act) redirect(asked ? `/dashboard/act/new?template=${asked}` : "/dashboard/act/new");
 
@@ -29,7 +31,9 @@ export default async function NewRunPage({ searchParams }: Props) {
   return (
     <DashboardShell
       current="/dashboard"
+      nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      identity={fullName(profile)}
       eyebrow="Step two of three"
       title="Describe the"
       accent="fundraiser"

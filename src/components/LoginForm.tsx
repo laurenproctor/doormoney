@@ -13,8 +13,9 @@ const labelClass = "caps mb-2 block text-[14px] text-muted";
 
 /**
  * Two ways in on one card: a password, or a one-time link by email. The password is the first
- * offer; the link stays for anyone who never set one. Musicians sign in with the board address
- * or the email on the account, patrons with the email, and the field takes either.
+ * offer; the link stays for anyone who never set one. The handle field takes the email address on
+ * the account or the username where one was claimed, so nobody has to remember which kind of
+ * account they opened. An account made through the link gets the same capabilities as any other.
  */
 export function LoginForm({ next, linkError }: { next: string; linkError?: boolean }) {
   const [mode, setMode] = useState<"password" | "link">("password");

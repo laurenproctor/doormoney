@@ -54,7 +54,8 @@ export default async function PatronPage() {
     <DashboardShell
       current="/patron"
       nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? ["patron"] })}
-      actName={act?.name ?? name}
+      actName={act?.name}
+      identity={fullName(profile)}
       eyebrow="Backed by this account"
       title={name}
       accent=""

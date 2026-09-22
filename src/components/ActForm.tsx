@@ -4,6 +4,7 @@ import { saveAct, type ActState } from "@/app/actions/act";
 import { Button } from "@/components/Button";
 import { inputClass, labelClass } from "@/components/DashboardShell";
 import { slugify, slugWhileTyping } from "@/lib/slug";
+import { ENTITY_KINDS, ENTITY_KIND_LABELS } from "@/lib/participation";
 import type { OwnedAct } from "@/lib/auth";
 
 /*
@@ -53,8 +54,19 @@ export function ActForm({ act, siteUrl, username, starterKitKey }: {
       </fieldset>
       {err.type && <p className="-mt-3 mb-3 text-[14.5px] text-accent-ink">{err.type}</p>}
 
-      <Field label="Organizer name" error={err.name}>
+      <Field label="Organizer name" error={err.name} hint="The name sponsors and audiences know. It is kept apart from the account holder's own name, and changing one never changes the other.">
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
+      </Field>
+
+      <Field label="What kind of organizer" error={err.entity_kind} hint="Optional. What the organizer is, not what the fundraiser is for. A fundraiser's category is chosen on the fundraiser.">
+        <select name="entity_kind" defaultValue={act?.entity_kind ?? ""} className={inputClass}>
+          <option value="">Not stated</option>
+          {ENTITY_KINDS.map((kind) => (
+            <option key={kind} value={kind}>
+              {ENTITY_KIND_LABELS[kind]}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <Field label="Address and username" error={err.slug} hint={`${siteUrl}/${shownSlug || "your-name"}. This is also your sign-in username.`}>
@@ -91,6 +103,14 @@ export function ActForm({ act, siteUrl, username, starterKitKey }: {
 
       <Field label="Bio" error={err.bio} hint="Two or three sentences introducing your work.">
         <textarea name="bio" rows={4} defaultValue={act?.bio ?? ""} className={inputClass} />
+      </Field>
+
+      <Field
+        label="Audience"
+        error={err.audience_description}
+        hint="Optional. Who your work reaches, in your own words: a room, a season, a mailing list, a neighborhood. Each fundraiser says who that sponsorship reaches; this is the wider audience behind them."
+      >
+        <textarea name="audience_description" rows={3} defaultValue={act?.audience_description ?? ""} className={inputClass} />
       </Field>
 
       <Field label="Photo" error={err.photo} hint="JPG, PNG or WebP, under 5MB.">

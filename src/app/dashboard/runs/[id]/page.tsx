@@ -8,7 +8,9 @@ import { ShowsPanel, type ShowRow } from "@/components/ShowsPanel";
 import { VerificationEditor } from "@/components/VerificationEditor";
 import { DeliveryPanel } from "@/components/DeliveryPanel";
 import { loadRunDelivery } from "@/lib/delivery-dashboard";
-import { requireUser, ownedAct } from "@/lib/auth";
+import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
+import { fullName } from "@/lib/names";
+import { dashboardNav } from "@/lib/dashboardModel";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { categoryStatus, draftCategories, loadFundraiserDraft } from "@/app/actions/drafts";
@@ -32,8 +34,9 @@ const statusLabel = (status: string, music: boolean) =>
 export default async function RunPage({ params, searchParams }: Props) {
   const [{ id }, { kit: kitParam }] = await Promise.all([params, searchParams]);
   const user = await requireUser(`/dashboard/runs/${id}`);
-  const act = await ownedAct(user.id);
+  const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   if (!act) redirect("/dashboard/act/new");
+  const identity = fullName(profile);
 
   const sb = await supabaseServer();
   const { data: run } = await sb
@@ -54,7 +57,7 @@ export default async function RunPage({ params, searchParams }: Props) {
   if (run.status === "draft" && unready) {
     const draft = await loadFundraiserDraft(id);
     if (!draft) notFound();
-    return <DashboardShell current="/dashboard" actName={act.name} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
+    return <DashboardShell current="/dashboard" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} identity={identity} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
       <Card className="max-w-[760px]"><FundraiserDraftForm draft={draft} categories={await draftCategories()} musicOrganizer={act.type !== null} /></Card>
     </DashboardShell>;
   }
@@ -83,7 +86,9 @@ export default async function RunPage({ params, searchParams }: Props) {
   return (
     <DashboardShell
       current="/dashboard"
+      nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      identity={identity}
       eyebrow={statusLabel(run.status, music)}
       title={run.title}
       accent=""

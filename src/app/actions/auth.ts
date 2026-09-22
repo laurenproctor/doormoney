@@ -5,7 +5,9 @@ import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 import { safeNext } from "@/lib/auth";
 import { emailForUsername, normalizeUsername } from "@/lib/username";
-import { RolesInput, homeFor } from "@/lib/roles";
+import { DEFAULT_ROLES } from "@/lib/roles";
+import { homeForIntent, parseIntent } from "@/lib/intent";
+import { mfaVerifyPath } from "@/lib/mfa";
 import { NAME_MAX, PASSWORD_MAX, PASSWORD_MIN, SIGNUP_MESSAGES } from "@/lib/signup";
 
 /*
@@ -18,7 +20,7 @@ import { NAME_MAX, PASSWORD_MAX, PASSWORD_MIN, SIGNUP_MESSAGES } from "@/lib/sig
 
 export type LoginState = { ok: boolean; email?: string; error?: string };
 export type PasswordState = { error?: string };
-export type SignUpField = "roles" | "first_name" | "last_name" | "email" | "password" | "form";
+export type SignUpField = "first_name" | "last_name" | "email" | "password" | "form";
 export type SignUpState = { ok: boolean; email?: string; confirm?: boolean; errors?: Partial<Record<SignUpField, string>> };
 export type ResetState = { ok: boolean; error?: string };
 
@@ -42,15 +44,24 @@ const Password = z
 const LinkInput = z.object({
   email: z.string().trim().email("Enter a valid email address."),
   next: z.string().optional(),
+  // Anything this does not recognise is dropped rather than refused: a stale link should still
+  // send somebody their way in.
+  intent: z.string().optional().transform(parseIntent),
 });
 
-/** Sends a one-time sign-in link. Creates the account on first use. */
+/**
+ * Sends a one-time sign-in link. Creates the account on first use, and an account created this
+ * way is opened with the same capabilities as one created with a password: the trigger in
+ * migration 0051 gives it both, because nothing here asks a new account to pick a side.
+ */
 export async function sendMagicLink(_prev: LoginState, form: FormData): Promise<LoginState> {
-  const parsed = LinkInput.safeParse({ email: form.get("email"), next: form.get("next") });
+  const parsed = LinkInput.safeParse({ email: form.get("email"), next: form.get("next"), intent: form.get("intent") });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Enter a valid email address." };
 
   const email = parsed.data.email.toLowerCase();
-  const next = safeNext(parsed.data.next);
+  // An explicit destination wins. Without one the intent decides which action the dashboard
+  // leads with, and with neither everybody lands on the same unified dashboard.
+  const next = safeNext(parsed.data.next, homeForIntent(parsed.data.intent));
   const sb = await supabaseServer();
   const { error } = await sb.auth.signInWithOtp({
     email,
@@ -105,8 +116,19 @@ export async function signIn(_prev: PasswordState, form: FormData): Promise<Pass
     console.error("password sign-in failed:", error.message);
     return { error: "That username and password do not match an account." };
   }
+
+  /*
+    The password was right. Whether that is the whole sign-in depends on the account: one with a
+    verified authenticator factor is at aal1 until a code is entered, so it goes to the code screen
+    carrying its destination rather than to the destination itself. listFactors returns only
+    verified factors, so a half-finished enrollment stops nobody.
+  */
+  const { data: factors, error: factorError } = await sb.auth.mfa.listFactors();
+  if (factorError) console.error("sign-in: factors unreadable:", factorError.message);
+  const guarded = (factors?.totp.length ?? 0) > 0 || Boolean(factorError);
+
   // Outside the branch above: redirect throws, and must not be caught.
-  redirect(next);
+  redirect(guarded ? mfaVerifyPath(next) : next);
 }
 
 // ---------------------------------------------------------------
@@ -114,32 +136,40 @@ export async function signIn(_prev: PasswordState, form: FormData): Promise<Pass
 // ---------------------------------------------------------------
 
 const SignUpInput = z.object({
-  // No board address here. A musician picks that on the act page, where it means something,
-  // and a patron never needs one at all. See docs/DECISIONS.md, decisions 8 and 10.
-  roles: RolesInput,
-  // Whoever holds an account is a person. A band's name is on the act, a business's name is on
-  // the patron row, and both of those are what a board or a receipt shows.
-  first_name: z.string().trim().min(1, SIGNUP_MESSAGES.first_name_missing).max(NAME_MAX, SIGNUP_MESSAGES.first_name_long),
-  last_name: z.string().trim().min(1, SIGNUP_MESSAGES.last_name_missing).max(NAME_MAX, SIGNUP_MESSAGES.last_name_long),
+  // No board address here. An organizer picks that on the organizer page, where it means
+  // something, and somebody here to support work never needs one at all. See docs/DECISIONS.md,
+  // decisions 8 and 10.
+  //
+  // No roles either. Nobody declares a side to get in: every account is opened able to create
+  // fundraisers and to support them, and DEFAULT_ROLES below is what that means.
+  //
+  // Whoever holds an account is a person, and both names are optional here. A band's name is on
+  // the act, a business's name is on the patron row, and both of those are what a fundraiser page
+  // or a receipt shows. A name that is given still has to fit.
+  first_name: z.string().trim().max(NAME_MAX, SIGNUP_MESSAGES.first_name_long),
+  last_name: z.string().trim().max(NAME_MAX, SIGNUP_MESSAGES.last_name_long),
   email: z.string().trim().email(SIGNUP_MESSAGES.email),
   password: Password,
   next: z.string().optional(),
+  // Context, not permission: it decides which action the dashboard leads with and nothing else.
+  intent: z.string().optional().transform(parseIntent),
 });
 
 /**
- * Opens the account. Two questions: what the person came here to do, and how to reach them.
- * Both answers ride along in the auth user's metadata, so the profile row is written with its
- * roles and its name in one go. A patron who has already paid for something under this address
- * picks that history up at the same moment (claim_patron_rows, migration 0021).
+ * Opens the account. One question: how to reach the person. Everything else can wait.
+ *
+ * The capabilities ride along in the auth user's metadata, so the profile row is written with
+ * both of them and any name in one go. Somebody who has already paid for something under this
+ * address picks that history up at the same moment (claim_patron_rows, migration 0021).
  */
 export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUpState> {
   const parsed = SignUpInput.safeParse({
-    roles: form.getAll("roles").filter((v) => typeof v === "string"),
     first_name: str(form, "first_name"),
     last_name: str(form, "last_name"),
     email: str(form, "email"),
     password: str(form, "password"),
     next: str(form, "next"),
+    intent: str(form, "intent"),
   });
   if (!parsed.success) {
     const fields = parsed.error.flatten().fieldErrors as Partial<Record<SignUpField, string[]>>;
@@ -152,23 +182,23 @@ export async function signUp(_prev: SignUpState, form: FormData): Promise<SignUp
   /*
     Where a new account lands, when nothing sent it here with a destination of its own.
 
-    A patron who never ticked "musician" has no act and no board pages, so the musician dashboard
-    is the wrong first screen for them; homeFor already decides this on sign-in, and decides it the
-    same way here. hasAct is false because the account is seconds old. An explicit next still wins,
-    which is what keeps /patron/signup landing on the profile page.
+    One landing for everybody: the dashboard, which offers both capabilities and pushes nobody
+    into creating a fundraiser they did not come for. The intent rides along in the address so
+    that page can lead with the action the visitor came for, and it changes nothing else.
 
-    This only shows once email confirmation is off. While it is on, sign-up ends on "check the
-    inbox" and the destination rides on the confirmation link instead.
+    An explicit next still wins, which is what keeps a starter-kit link landing on its form.
+    The destination rides on the confirmation link while email confirmation is on, and is used
+    directly when it is off.
   */
-  const next = safeNext(parsed.data.next, homeFor({ roles: parsed.data.roles, hasAct: false }));
+  const next = safeNext(parsed.data.next, homeForIntent(parsed.data.intent));
   const sb = await supabaseServer();
   const { data, error } = await sb.auth.signUp({
     email,
     password: parsed.data.password,
     options: {
-      // The profile trigger reads these: roles, both names, and any patron rows already paid
-      // for under this address.
-      data: { first_name: parsed.data.first_name, last_name: parsed.data.last_name, roles: parsed.data.roles },
+      // The profile trigger reads these: the capabilities, both names, and any patron rows
+      // already paid for under this address. An empty name is stored as no name at all.
+      data: { first_name: parsed.data.first_name, last_name: parsed.data.last_name, roles: DEFAULT_ROLES },
       emailRedirectTo: `${SITE.url}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
