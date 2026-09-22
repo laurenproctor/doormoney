@@ -218,9 +218,14 @@ since 0001 and a template is public by design.
 
 ## The discovery page
 
-Built 2026-09-22 on `feat/sponsor-discovery-filtering`, migration **0054**. `/fundraisers` is now a
-sponsor discovery surface: a filter rail, a result count, removable filter chips, three sort orders
-and paginated cards. `/auctions` and `/fundraiser` still redirect to it.
+Built 2026-09-22 on `feat/sponsor-discovery-filtering`, migration **0054**, applied to the hosted
+project the same day and therefore frozen. `/fundraisers` is now a sponsor discovery surface: a
+filter rail, a result count, removable filter chips, three sort orders and paginated cards.
+`/auctions` and `/fundraiser` still redirect to it.
+
+Applying 0054 changed nothing anybody can see. It replaces two read-only views with the same two
+views plus a few columns, every one of which `anon` could already read on its own table, and the
+page that uses them is not on `main` yet.
 
 ### The query, and what it reads
 
