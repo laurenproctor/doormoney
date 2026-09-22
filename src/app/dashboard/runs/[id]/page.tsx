@@ -7,10 +7,14 @@ import { LotsEditor, type ExistingLot } from "@/components/LotsEditor";
 import { ShowsPanel, type ShowRow } from "@/components/ShowsPanel";
 import { VerificationEditor } from "@/components/VerificationEditor";
 import { DeliveryPanel } from "@/components/DeliveryPanel";
+import { LifecycleStrip, MetricRow, NextShowPanel, PreviewLink } from "@/components/dashboard/panels";
+import { ShareFundraiser } from "@/components/dashboard/ShareFundraiser";
+import { SponsorshipWorkTable } from "@/components/dashboard/SponsorshipWorkTable";
+import { loadDashboard, withToday } from "@/lib/dashboard";
 import { loadRunDelivery } from "@/lib/delivery-dashboard";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { fullName } from "@/lib/names";
-import { dashboardNav } from "@/lib/dashboardModel";
+import { dashboardNav, isShareable, previewTarget } from "@/lib/dashboardModel";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { categoryStatus, draftCategories, draftDiscoveryRegistry, loadFundraiserDraft } from "@/app/actions/drafts";
@@ -83,6 +87,21 @@ export default async function RunPage({ params, searchParams }: Props) {
   const methods: string[] = run.verification_methods ?? [];
   const settled = run.status === "closed" || run.status === "cancelled";
 
+  /*
+    How this fundraiser is going, as opposed to how it is set up.
+
+    These panels used to live on /dashboard, which was a per-fundraiser cockpit before it became a
+    home. They belong to one fundraiser, so they belong here. A draft skips the read entirely: it
+    can hold no sponsorship until it is published, so there would be nothing to count.
+
+    The metrics are music's shape (shows played, days left against an end date), so they are drawn
+    on the same terms the old dashboard drew them: a music fundraiser with a format and both dates.
+  */
+  const view = run.status === "draft" ? null : withToday(await loadDashboard(act, run.id), new Date());
+  const work = view?.work ?? [];
+  const showMetrics = Boolean(view?.metrics && music && act.type && run.kind && run.starts_on && run.ends_on);
+  const target = previewTarget({ id: run.id, slug: run.slug, status: run.status }, act.slug);
+
   return (
     <DashboardShell
       current="/dashboard"
@@ -102,6 +121,26 @@ export default async function RunPage({ params, searchParams }: Props) {
         </p>
       }
     >
+      {/* The way to look at it, which a closed fundraiser had no link to at all. */}
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <PreviewLink href={target.path} label={target.label} />
+        {isShareable(run.status) && <ShareFundraiser url={boardHref} />}
+      </div>
+
+      {run.status !== "cancelled" && (
+        <Card className="mb-10">
+          <CardHead eyebrow="How it is going">
+            {view?.metrics && view.metrics.sponsorshipsSold > 0 ? "Sponsorships sold" : "Nothing sold yet"}
+          </CardHead>
+          <LifecycleStrip status={run.status} />
+          {showMetrics && view?.metrics && (
+            <div className="mt-6">
+              <MetricRow metrics={view.metrics} />
+            </div>
+          )}
+        </Card>
+      )}
+
       {!settled && (
         <Card className="mb-10 max-w-[860px]">
           <CardHead eyebrow="Where this stands">{run.status === "draft" ? "Before it goes up" : "The fundraiser is up"}</CardHead>
@@ -162,7 +201,28 @@ export default async function RunPage({ params, searchParams }: Props) {
         </Card>
       )}
 
-      {music && <Card className="mb-10">
+      {/*
+        Every sponsorship on this fundraiser, and the one thing worth doing to each.
+
+        Shown when the delivery panel above is not, which is exactly when the fundraiser is on the
+        calendar rule rather than the evidence rule. Music is that case, and this is the only place
+        a music organizer can accept or decline what a sponsor sent: `deliverables` carries no rows
+        for a calendar fundraiser, so DeliveryPanel never draws for one.
+      */}
+      {delivery.length === 0 && work.length > 0 && (
+        <Card id="sponsorship-work" className="mb-10">
+          <CardHead eyebrow="Sponsorships">What needs your attention</CardHead>
+          <SponsorshipWorkTable rows={work} categoryKey={run.category_key ?? "music"} />
+        </Card>
+      )}
+
+      {music && view && (
+        <div className="mb-10 max-w-[520px]">
+          <NextShowPanel show={view.nextShow} runId={run.id} preparation={view.preparation} />
+        </div>
+      )}
+
+      {music && <Card id="shows" className="mb-10">
         <CardHead eyebrow="The shows">Every date on the {periodOf(run.kind).noun}</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           Enter the dates once. As they happen, one tap marks a show played. A photo and a headcount are optional and go on the record patrons get at the end.
