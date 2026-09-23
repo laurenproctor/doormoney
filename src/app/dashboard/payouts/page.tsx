@@ -28,6 +28,7 @@ export default async function PayoutsPage({ searchParams }: Props) {
       current="/dashboard/payouts"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      actSlug={act.slug}
       identity={fullName(profile)}
       eyebrow={state === "on" ? "Payouts on" : "Not yet paid out"}
       title="Getting"

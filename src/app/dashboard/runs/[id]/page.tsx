@@ -90,7 +90,7 @@ export default async function RunPage({ params, searchParams }: Props) {
     const stage: JourneyStage | null = isJourneyStage(stageAsked) ? stageAsked : stageAsked ? null : resumeStage(draft, { optionCount, hasTemplates: offerable.length > 0 });
     if (stage) {
       const heading = STAGE_HEADING[stage];
-      const shell = { current: "/dashboard", nav: dashboardNav({ hasAct: true, roles: profile?.roles ?? [] }), actName: act.name, identity, eyebrow: `Private draft \u00b7 ${draft.title || "New fundraiser"}`, title: heading.title, accent: heading.accent, intro: <p>{heading.intro}</p> };
+      const shell = { current: "/dashboard/runs", nav: dashboardNav({ hasAct: true, roles: profile?.roles ?? [] }), actName: act.name, actSlug: act.slug, identity, eyebrow: `Private draft \u00b7 ${draft.title || "New fundraiser"}`, title: heading.title, accent: heading.accent, intro: <p>{heading.intro}</p> };
       if (isFormStage(stage)) {
         return <DashboardShell {...shell}>
           <FundraiserStages current={stage} className="mb-7 max-w-[760px]" />
@@ -182,9 +182,10 @@ export default async function RunPage({ params, searchParams }: Props) {
 
   return (
     <DashboardShell
-      current="/dashboard"
+      current="/dashboard/runs"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      actSlug={act.slug}
       identity={identity}
       eyebrow={statusLabel(run.status, music)}
       title={run.title}
