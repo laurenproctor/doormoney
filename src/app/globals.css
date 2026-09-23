@@ -111,9 +111,12 @@
 
   `--accent-ink` does change, and has to. The design system's rule is that it is the tint of the
   accent that clears 4.5:1 on its ground, and on a near-white ground that is a darker tint, not a
-  lighter one. Each was computed against its own ground rather than picked: blue 5.09, lime 4.66,
-  magenta 4.51, amber 4.51, teal 4.56, violet 5.20, red 4.57, mono 16.93. Ink clears about 17:1
-  everywhere and muted 5.7 to 6.3. Change a ground and the tint above it has to be computed again.
+  lighter one. Each is computed against its own ground rather than picked, and each is aimed past
+  4.5:1 rather than at it: 6.1:1 on every theme. The headroom is there because accent-ink also has
+  to read inside a hero, where it sits on a wash of the accent rather than on the bare ground and
+  gives up about a fifth of its contrast; on that wash the tightest is 5.0:1. Muted is aimed at
+  7:1, the AAA bar for body text, and holds 5.2:1 on the same wash. Ink clears 17.7:1 everywhere.
+  Change a ground and every value above it has to be computed again.
 
   `--on-accent` is untouched in both rooms: it is text on an accent fill, and the fill is the same.
 */
@@ -123,7 +126,7 @@
   --line: rgba(20, 19, 26, 0.14);
   /* 0.47, not the 0.42 the dark room uses. A control boundary wants 3:1 against the fill behind
      it, and near-black over near-white is a shallower step than cream over the dark ground: at
-     0.38 it measured 2.42:1 on every theme. At 0.47 the tightest is 3.12:1. */
+     0.42 it measures 2.71:1 on these grounds. At 0.47 the tightest is 3.15:1. */
   --field-line: rgba(20, 19, 26, 0.47);
   --panel: rgba(255, 255, 255, 0.66);
   /* On paper the light lands as white, and the shadow under a block is a hint rather than a hole. */
@@ -137,35 +140,35 @@
 /* Each theme, in the light room. Two selectors apiece: the wrapper <Theme> paints, and <html>
    itself, which ThemeSync mirrors the theme onto for the fixed furniture outside the page. */
 :root[data-mode="light"][data-theme="blue"],
-[data-mode="light"] [data-theme="blue"] { --ground: #f4f5fb; --muted: #555f7a; --accent-ink: #3352ff; }
+[data-mode="light"] [data-theme="blue"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #2344fe; }
 
 :root[data-mode="light"][data-theme="lime"],
-[data-mode="light"] [data-theme="lime"] { --ground: #f7f9f0; --muted: #5a6142; --accent-ink: #5c7a00; }
+[data-mode="light"] [data-theme="lime"] { --ground: #fcfdf8; --muted: #525b33; --accent-ink: #4f6900; }
 
 :root[data-mode="light"][data-theme="magenta"],
-[data-mode="light"] [data-theme="magenta"] { --ground: #fdf4f8; --muted: #7a5567; --accent-ink: #de006a; }
+[data-mode="light"] [data-theme="magenta"] { --ground: #fffafc; --muted: #7c4660; --accent-ink: #bd005a; }
 
 :root[data-mode="light"][data-theme="amber"],
-[data-mode="light"] [data-theme="amber"] { --ground: #fbf7ef; --muted: #6f6047; --accent-ink: #9e6600; }
+[data-mode="light"] [data-theme="amber"] { --ground: #fefbf5; --muted: #645438; --accent-ink: #855600; }
 
 :root[data-mode="light"][data-theme="teal"],
-[data-mode="light"] [data-theme="teal"] { --ground: #f0f8f6; --muted: #45635c; --accent-ink: #0d7f6c; }
+[data-mode="light"] [data-theme="teal"] { --ground: #f8fdfc; --muted: #3c5d58; --accent-ink: #0e6c5c; }
 
 :root[data-mode="light"][data-theme="violet"],
-[data-mode="light"] [data-theme="violet"] { --ground: #f7f4fd; --muted: #615574; --accent-ink: #7833ff; }
+[data-mode="light"] [data-theme="violet"] { --ground: #fdfbff; --muted: #604c88; --accent-ink: #6d23ff; }
 
 :root[data-mode="light"][data-theme="red"],
-[data-mode="light"] [data-theme="red"] { --ground: #fdf4f3; --muted: #7a5450; --accent-ink: #e01000; }
+[data-mode="light"] [data-theme="red"] { --ground: #fffaf9; --muted: #7a4a45; --accent-ink: #bf1200; }
 
 /* Mono is the one theme whose light is the ink itself, so in this room it turns over: the cream
    that was the accent becomes the ground, and the near-black that was the ground becomes the light. */
 :root[data-mode="light"][data-theme="mono"],
 [data-mode="light"] [data-theme="mono"] {
-  --ground: #f6f5f2; --muted: #5d5a54; --accent: #14131a; --accent-ink: #14131a; --on-accent: #f6f5f2;
+  --ground: #fbfaf8; --muted: #585651; --accent: #14131a; --accent-ink: #14131a; --on-accent: #fbfaf8;
 }
 
 /* With no theme chosen the room is still blue, as it is in the dark. */
-:root[data-mode="light"] { --ground: #f4f5fb; --muted: #555f7a; --accent-ink: #3352ff; }
+:root[data-mode="light"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #2344fe; }
 
 /*
   The rig, with the house lights up.
@@ -484,6 +487,51 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
   .hero-art > .flutes { inset: 0 -50% 45% 20%; }
   .hero-art > .fade { height: 120px; }
   .hero-art > img { inset: 0; width: 100%; object-position: 65% center; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+}
+
+/*
+  The hero, with the house lights up.
+
+  Every move the dark room makes here is a move toward black: the photograph prints at half
+  brightness so cream type reads over it, the bloom is screened on top, and the corners fall away
+  into shadow. On paper each one turns into its opposite. The print becomes a dark rectangle in a
+  light room, the screen blend stops painting anything at all (screen over near-white is
+  near-white), and the vignette leaves a grey stain in the corners.
+
+  The photograph is also the one thing the words cannot sit on. Small text in this room is either
+  muted or accent-ink, both of them dark tints, and no combination of brightness, contrast and
+  opacity lifts a photograph far enough for a dark tint to clear 4.5:1 on its shadows without
+  erasing the picture. So the photograph moves out from under the words rather than being washed
+  out until it is safe: it keeps the right of the hero, where nothing is set, and the words keep
+  the ground their tints were computed against. What crosses the whole room is the bloom, held to
+  a wash.
+*/
+[data-mode="light"] .hero-art::after {
+  background: radial-gradient(ellipse 92% 85% at 46% 44%, transparent 52%, color-mix(in srgb, var(--ground) 82%, transparent) 100%);
+}
+/* A wash rather than a beam. 14% is the strength every accent-ink and muted value was measured
+   against, and normal rather than screen because screen over near-white paints nothing. */
+[data-mode="light"] .hero-art > .bloom,
+[data-mode="light"] .hero-art.has-photo > .bloom { opacity: 0.14; mix-blend-mode: normal; }
+/* The print goes pale, so ink clears 4.5:1 even on its darkest corner (4.9:1 measured). */
+[data-mode="light"] .hero-art.has-photo > img { filter: grayscale(1) brightness(1.42) contrast(0.62); opacity: 0.55; }
+[data-mode="light"] .hero-art > .tint { background: color-mix(in srgb, var(--accent) 26%, var(--ground)); }
+[data-mode="light"] .hero-art > .flutes::before {
+  background: repeating-linear-gradient(90deg, rgba(20, 19, 26, 0.05) 0 1px, rgba(255, 255, 255, 0.4) 1px 2px, transparent 2px 7px);
+}
+/* Above the phone layout the words have a column of their own, and the print clears it. */
+@media (min-width: 861px) {
+  [data-mode="light"] .hero-art > img {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0 50%, #000 78%, #000 100%), radial-gradient(ellipse 60% 78% at 60% 48%, #000 28%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(90deg, transparent 0 50%, #000 78%, #000 100%), radial-gradient(ellipse 60% 78% at 60% 48%, #000 28%, transparent 100%);
+    mask-composite: intersect;
+  }
+}
+/* On a phone the words run the full width, so there is no column to clear into and the print stays
+   out of the light room's hero. The wash and the rig carry it. */
+@media (max-width: 860px) {
+  [data-mode="light"] .hero-art > img { display: none; }
 }
 
 /* A quiet stage light behind a section or card: the accent, very dim, pooled at the top. */
