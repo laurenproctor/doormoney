@@ -310,8 +310,13 @@ export type NavSection = { title: string; items: NavItem[] };
  * it holds all three parts: who the account holder is, what they organize, and what they support.
  * /dashboard/act still edits the organizer's own record and is reached from there.
  *
- * "On your site" is here because decision 14 took the widget out of the public nav and left the
- * dashboard as the only way to it.
+ * The labels are the Desk register's: Today, Fundraisers, Money, Backed by you. Short, sentence
+ * case, and named for the destination rather than for the reader ("Home" told nobody what was on
+ * it). The addresses under them did not move.
+ *
+ * The widget is not a destination here. It is one organizer's embed snippet for one fundraiser,
+ * so it belongs beside that fundraiser, under Share, rather than in the list of places to go.
+ * /dashboard/widget is still a route, because sent links point at it.
  */
 export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readonly string[] }): NavSection[] {
   // "organizer" is the role Expansion Phase 2 writes; "musician" is the one accounts made before it
@@ -323,11 +328,9 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
     sections.push({
       title: "Creating",
       items: [
-        { href: "/dashboard", label: "Home" },
-        { href: "/dashboard/runs", label: "Your sponsorships" },
-        { href: "/dashboard/payouts", label: "Payouts" },
-        // Music's embeddable widget. Named for the thing rather than for where it goes.
-        { href: "/dashboard/widget", label: "Site widget" },
+        { href: "/dashboard", label: "Today" },
+        { href: "/dashboard/runs", label: "Fundraisers" },
+        { href: "/dashboard/payouts", label: "Money" },
       ],
     });
   }
