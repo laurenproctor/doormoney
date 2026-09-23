@@ -22,3 +22,16 @@ export function fullName(profile: NameParts | null | undefined): string | null {
   const whole = [profile?.first_name, profile?.last_name].map((n) => n?.trim()).filter(Boolean).join(" ");
   return whole || null;
 }
+
+/**
+ * A name split for the H1, where the last word is the one lit in the page's colour.
+ *
+ * The Bodoni headline is two halves on every page of the site ("Gutter" and an italic "Hymns"), so
+ * a name arriving as one string has to be cut somewhere. The last word is the cut: it is the part
+ * a reader hears the emphasis on, and a one-word name keeps the whole of itself and lights nothing.
+ */
+export function headlineParts(name: string): { title: string; accent: string } {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return { title: words.join(" "), accent: "" };
+  return { title: words.slice(0, -1).join(" "), accent: words[words.length - 1] };
+}

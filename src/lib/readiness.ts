@@ -223,3 +223,20 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
     },
   ];
 }
+
+/**
+ * How far a draft has come, as a step out of the steps that hold it back.
+ *
+ * Payout setup and the last row are left out of the count on purpose: Stripe never blocks a
+ * publish, and "Ready to publish" is the consequence of the four above it rather than a fifth
+ * thing to do. `next` is the first one still open, which is the one sentence a draft can be
+ * summed up in.
+ */
+export function draftProgress(rows: ReadinessRow[]): { done: number; total: number; next: ReadinessRow | null } {
+  const steps = rows.filter((r) => !r.optional && r.key !== "publish");
+  return {
+    done: steps.filter((r) => r.done).length,
+    total: steps.length,
+    next: steps.find((r) => !r.done) ?? null,
+  };
+}

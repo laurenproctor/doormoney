@@ -21,6 +21,8 @@ import {
   lifecycleLabel,
   logoState,
   netCents,
+  openBids,
+  organizerShareCents,
   paymentLabel,
   playedCount,
   preparationItems,
@@ -28,6 +30,7 @@ import {
   raisedCents,
   selectableRuns,
   upcomingShow,
+  waitingCount,
   workAction,
   workCounts,
   type ShowRow,
@@ -161,6 +164,28 @@ test("a fundraiser with every date behind it has no next show", () => {
 
 test("played is counted, not assumed from the date", () => {
   assert.equal(playedCount([show("a", "2026-09-12", { played: true }), show("b", "2026-09-20")]), 1);
+});
+
+test("the organizer's share is what is left after the fee, and never less than nothing", () => {
+  assert.equal(organizerShareCents(155_000, 15), 131_750);
+  assert.equal(organizerShareCents(0, 15), 0);
+  // A percentage over 100 would be a fee bigger than the sale. The share stops at zero.
+  assert.equal(organizerShareCents(1_000, 150), 0);
+});
+
+/* ------------------------------------------------------------------ bids */
+
+test("money held on a card is the top live bid on each option still open, counted once", () => {
+  const bids = [
+    { lot_id: "a", amount_cents: 20_000, passed_at: null },
+    { lot_id: "a", amount_cents: 35_000, passed_at: null },
+    // Passed over at close, so nobody's card is holding it.
+    { lot_id: "a", amount_cents: 40_000, passed_at: "2026-10-01T00:00:00Z" },
+    // On an option that already sold: that money is a purchase, and raised counts it.
+    { lot_id: "sold", amount_cents: 90_000, passed_at: null },
+  ];
+  assert.deepEqual(openBids(bids, ["a"]), { cents: 35_000, options: 1 });
+  assert.deepEqual(openBids([], ["a"]), { cents: 0, options: 0 });
 });
 
 /* ------------------------------------------------------------------ sponsorship work */
@@ -297,6 +322,32 @@ test("a show with no venue or city is worth fixing before anyone turns up", () =
   const shows = [show("a", "2026-09-12", { venue: "  " }), show("b", "2026-09-20", { city: null })];
   const items = preparationItems({ work: [], shows, runId: "r1", promisedAttendance: false, promisedShowPhotos: false });
   assert.deepEqual(items.map((i) => [i.key, i.count, i.href]), [["place", 2, "/dashboard/runs/r1#shows"]]);
+  // The line carries the first date it is about, so a row can lead with it rather than invent one.
+  assert.equal(items[0].date, "2026-09-12");
+});
+
+test("a line about materials has no date, because none of it happens on one", () => {
+  const items = preparationItems({
+    work: [work("1", { logo: "review" })],
+    shows: [],
+    runId: "r1",
+    promisedAttendance: false,
+    promisedShowPhotos: false,
+  });
+  assert.equal(items[0].date, null);
+});
+
+test("what is waiting is the whole of it, added up across the lines", () => {
+  const shows = [show("a", "2026-09-12", { venue: null }), show("b", "2026-09-20", { city: null })];
+  const items = preparationItems({
+    work: [work("1", { logo: "review" })],
+    shows,
+    runId: "r1",
+    promisedAttendance: false,
+    promisedShowPhotos: false,
+  });
+  assert.equal(waitingCount(items), 3);
+  assert.equal(waitingCount([]), 0);
 });
 
 /* ------------------------------------------------------------------ navigation */

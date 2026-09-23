@@ -40,6 +40,7 @@ export function DashboardShell({
   eyebrow,
   title,
   accent,
+  titleAside,
   intro,
   action,
   note,
@@ -59,6 +60,8 @@ export function DashboardShell({
   eyebrow: ReactNode;
   title: string;
   accent: string;
+  /** What sits beside the H1: a state, said in a badge, and nothing longer. */
+  titleAside?: ReactNode;
   intro?: ReactNode;
   /** The page's one primary action, at the right of the top bar. */
   action?: ReactNode;
@@ -127,9 +130,12 @@ export function DashboardShell({
             <div className="relative mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 lg:px-7">
               <div className="mb-6 flex flex-col gap-2.5">
                 {eyebrow && <p className="text-[14px] text-muted">{eyebrow}</p>}
-                <h1 className="display">
-                  {title} {accent && <em className="text-accent-ink">{accent}</em>}
-                </h1>
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">
+                  <h1 className="display">
+                    {title} {accent && <em className="text-accent-ink">{accent}</em>}
+                  </h1>
+                  {titleAside}
+                </div>
                 {intro && <div className="max-w-[62ch] text-[15px] leading-[1.6] text-muted">{intro}</div>}
               </div>
               {children}

@@ -37,3 +37,17 @@ export function closeStamp(iso: string) {
   return `${stampDay.format(new Date(iso))}, ${clockOf(iso)}`;
 }
 
+
+/** "Fri, Oct 3" for one date-only string. The weekday, because the next date is a day somebody has to be somewhere. */
+export function formatWeekdayDay(on: string) {
+  return new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${on}T00:00:00Z`));
+}
+
+/** One date-only string split for a date block: the day, and the month above or under it. */
+export function dayAndMonth(on: string): { day: string; month: string } {
+  const at = new Date(`${on}T00:00:00Z`);
+  return {
+    day: new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone: "UTC" }).format(at),
+    month: new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(at),
+  };
+}

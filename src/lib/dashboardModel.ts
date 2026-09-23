@@ -6,10 +6,11 @@
  * and hands its rows through here.
  *
  * Every number below is integer cents, and every one of them is derived from something recorded.
- * There is no goal column, so there is no percent to goal. There is no ledger, so nothing here is
- * an available balance. A price on an unsold lot is an asking price, not money, and never counts.
+ * A goal is drawn only where the organizer set one. There is no ledger, so nothing here is an
+ * available balance. A price on an unsold lot is an asking price, not money, and never counts.
  */
 import { categoryWords } from "@/lib/category-words";
+import { feeCents } from "@/lib/money";
 import { runPath } from "@/lib/urls";
 
 /* ---------------------------------------------------------------------------------------------
@@ -74,6 +75,18 @@ export function netCents(row: SettledRow): number {
  */
 export function raisedCents(rows: SettledRow[]): number {
   return rows.reduce((total, row) => total + netCents(row), 0);
+}
+
+/**
+ * What reaches the organizer, after Door Money's fee.
+ *
+ * The fee is the one in src/lib/money.ts, at the percentage src/lib/site.ts states, so a page can
+ * say "coming to you" without doing arithmetic of its own. Gross in, gross less the fee out, never
+ * below zero. This is not a balance and not a promise of a date: what has actually moved is the
+ * payout schedule, which is grouped below.
+ */
+export function organizerShareCents(grossCents: number, percent: number): number {
+  return Math.max(0, grossCents - feeCents(grossCents, percent));
 }
 
 export type PayoutRow = { amount_cents: number; status: string };
@@ -149,6 +162,33 @@ export function playedCount(shows: ShowRow[]): number {
 }
 
 /* ---------------------------------------------------------------------------------------------
+   Bids
+   --------------------------------------------------------------------------------------------- */
+
+export type BidRow = { lot_id: string; amount_cents: number; passed_at: string | null };
+/** What is on the table but not yet money: the top live bid on each option still open. */
+export type OpenBids = { cents: number; options: number };
+
+/**
+ * Money held on a card until an option closes.
+ *
+ * One bid per option, the highest of them, and only on options that are still open: a bid that was
+ * passed over is not held, and a bid on an option that already sold became the purchase, which the
+ * raised total counts. Counting either again would tell an organizer the same money twice.
+ */
+export function openBids(bids: BidRow[], openLotIds: readonly string[]): OpenBids {
+  const open = new Set(openLotIds);
+  const tops = new Map<string, number>();
+  for (const bid of bids) {
+    if (bid.passed_at || !open.has(bid.lot_id)) continue;
+    tops.set(bid.lot_id, Math.max(tops.get(bid.lot_id) ?? 0, bid.amount_cents));
+  }
+  let cents = 0;
+  for (const top of tops.values()) cents += top;
+  return { cents, options: tops.size };
+}
+
+/* ---------------------------------------------------------------------------------------------
    Sponsorship work
    --------------------------------------------------------------------------------------------- */
 
@@ -204,6 +244,10 @@ export type WorkRow = {
   markNote: string | null;
   markText: string | null;
   markUrl: string | null;
+  /** When the sponsor sent it, from purchases.mark_submitted_at. Absent on a row nobody has sent. */
+  submittedAt?: string | null;
+  /** Where the offer says the sponsor appears, in the organizer's own words. Absent when unsaid. */
+  placement?: string | null;
 };
 
 /**
@@ -243,11 +287,28 @@ export function workCounts(rows: WorkRow[]): Record<WorkFilter, number> {
    What is worth doing before the next show
    --------------------------------------------------------------------------------------------- */
 
-export type PrepItem = { key: string; label: string; href: string; count: number };
+export type PrepItem = {
+  key: string;
+  label: string;
+  href: string;
+  count: number;
+  /** The earliest date the line is about, where it is about dates at all. Never invented. */
+  date: string | null;
+};
+
+/** The first date a set of shows falls on, so a line about dates can show the one it starts with. */
+function earliest(shows: ShowRow[]): string | null {
+  return shows.map((s) => s.played_on).sort()[0] ?? null;
+}
 
 /** "1 logo" and "2 logos", so a count of one does not read like a typo. */
 export function plural(count: number, one: string, many: string): string {
   return count === 1 ? one : many;
+}
+
+/** Everything waiting, added up across the lines, so a sentence can say how much there is. */
+export function waitingCount(items: PrepItem[]): number {
+  return items.reduce((total, item) => total + item.count, 0);
 }
 
 /**
@@ -273,22 +334,22 @@ export function preparationItems(input: {
   const items: PrepItem[] = [];
 
   const toReview = work.filter((w) => w.logo === "review").length;
-  if (toReview) items.push({ key: "review", label: `${plural(toReview, "logo", "logos")} waiting for your review`, href: "#sponsorship-work", count: toReview });
+  if (toReview) items.push({ key: "review", label: `${plural(toReview, "logo", "logos")} waiting for your review`, href: "#sponsorship-work", count: toReview, date: null });
 
   const noLogo = work.filter((w) => w.logo === "waiting" && isSettled(w.paymentStatus)).length;
-  if (noLogo) items.push({ key: "no-logo", label: `paid ${plural(noLogo, "sponsorship", "sponsorships")} with no logo yet`, href: "#sponsorship-work", count: noLogo });
+  if (noLogo) items.push({ key: "no-logo", label: `paid ${plural(noLogo, "sponsorship", "sponsorships")} with no logo yet`, href: "#sponsorship-work", count: noLogo, date: null });
 
-  const missingPlace = shows.filter((s) => !s.venue?.trim() || !s.city?.trim()).length;
-  if (missingPlace) items.push({ key: "place", label: `${plural(missingPlace, "show", "shows")} missing a venue or city`, href: `${runHref}#shows`, count: missingPlace });
+  const missingPlace = shows.filter((s) => !s.venue?.trim() || !s.city?.trim());
+  if (missingPlace.length) items.push({ key: "place", label: `${plural(missingPlace.length, "show", "shows")} missing a venue or city`, href: `${runHref}#shows`, count: missingPlace.length, date: earliest(missingPlace) });
 
   if (promisedAttendance) {
-    const missing = shows.filter((s) => s.played && s.attendance === null).length;
-    if (missing) items.push({ key: "attendance", label: `played ${plural(missing, "show", "shows")} with no attendance recorded`, href: `${runHref}#shows`, count: missing });
+    const missing = shows.filter((s) => s.played && s.attendance === null);
+    if (missing.length) items.push({ key: "attendance", label: `played ${plural(missing.length, "show", "shows")} with no attendance recorded`, href: `${runHref}#shows`, count: missing.length, date: earliest(missing) });
   }
 
   if (promisedShowPhotos) {
-    const missing = shows.filter((s) => s.played && !s.photo_url).length;
-    if (missing) items.push({ key: "photo", label: `played ${plural(missing, "show", "shows")} with no photo yet`, href: `${runHref}#shows`, count: missing });
+    const missing = shows.filter((s) => s.played && !s.photo_url);
+    if (missing.length) items.push({ key: "photo", label: `played ${plural(missing.length, "show", "shows")} with no photo yet`, href: `${runHref}#shows`, count: missing.length, date: earliest(missing) });
   }
 
   return items;
@@ -361,6 +422,8 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 const NAV_HOME: Record<string, string> = {
   "/dashboard/act": "/dashboard/profile",
   "/dashboard/act/new": "/dashboard/profile",
+  // The patron page's own workspace. It is one part of Profile, not a fourth thing in the sidebar.
+  "/dashboard/profile/patron": "/dashboard/profile",
 };
 
 /** The section a path belongs to, so one nav item is marked current on child routes too. */
