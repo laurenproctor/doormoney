@@ -220,7 +220,8 @@ since 0001 and a template is public by design.
 
 Built 2026-09-22 on `feat/sponsor-discovery-filtering`, migration **0054**, applied to the hosted
 project the same day and therefore frozen. `/fundraisers` is now a sponsor discovery surface: a
-filter rail, a result count, removable filter chips, three sort orders and paginated cards.
+toolbar, a result count, removable filter chips, three sort orders and paginated cards, drawn as
+tiles or rows (see **Tiles and rows**). Redesigned 2026-09-23 on `feat/discovery-tiles-rows`.
 `/auctions` and `/fundraiser` still redirect to it.
 
 Applying 0054 changed nothing anybody can see. It replaces two read-only views with the same two
@@ -273,6 +274,35 @@ names the option the organizer actually offers and, where they wrote it, where t
 The prose fields are **shown and never filtered on**, with one narrow, literal exception below (the
 name search). Discovery narrows on the structured tags and nothing else; reading a filter out of a
 description would claim a fact the organizer never stated.
+
+### The page's word
+
+The page says "project" where the rest of the site says "fundraiser": the heading, the count, the
+empty states. It is a display word for this one surface, where a sponsor is looking at the work
+rather than at the mechanics of funding it. Nothing else changes: the address is `/fundraisers`,
+the tables are `runs` and `lots`, every other page and the nav say fundraiser, and
+`tests/category-neutral-copy.test.ts` and `tests/roles.test.ts` hold the nav to that word.
+
+### The toolbar
+
+One plain GET form: the name search, then Category, Location (activity mode, place, country),
+Budget and More filters (funding purpose, audience, sale method, closing soon), and Apply. Each
+question is a native `<details>`, so it opens and closes from the keyboard with no script and keeps
+its draft selections when closed; on a wide screen a small client enhancement makes the row behave
+as menus (one open at a time, Escape closes and returns focus, a click elsewhere closes). Nothing is
+submitted on a keystroke. Clearing lives with the chips, one link beside what it clears.
+
+### Tiles and rows
+
+The results are one list, fetched once and ranked once. Tiles are what everybody lands on; rows are
+the same results in another shape, and neither is a separate query, ranker or copy of the markup.
+The choice is the reader's own: one attribute on `<html>` (`data-discovery-view="rows"`), kept in
+the browser under `doormoney:discovery-view`, read back before paint by an inline script in the
+root layout (`src/lib/discovery-view.ts`, the pattern `src/lib/mode.ts` and `src/lib/rail.ts` set),
+and drawn by the `discovery-rows` custom variant in `globals.css`. It is never in the address, so
+switching changes nothing about the search, the filters, the sort, the page or the scroll position,
+and asks the server for nothing. A stored value that is not `tiles` or `rows`, or storage that
+cannot be read, means tiles. With no script the switch is not offered and the tiles stand.
 
 ### Query parameters
 
@@ -427,6 +457,14 @@ done by the database before the options are read. The query narrows on every fun
 filter first, takes at most `CANDIDATE_CAP` (200), reads their options in one further query, and
 ranks what it has. Exact while a filtered set fits inside the cap; past it the page says so rather
 than quietly cutting the list, and the ranking would have to move into SQL. `PAGE_SIZE` is 12.
+
+### The count
+
+"N projects accepting sponsors" is said only when every counted project has at least one option
+open to buy. When any has none, the count is the count ("N projects"); with filters on it is
+"N projects match". Nothing is dropped from the count to earn the phrase, and a project with
+nothing open to buy is still listed, reads "No sponsorship options open right now" and offers
+"See the project" rather than "View sponsorships".
 
 ### Known gaps
 
