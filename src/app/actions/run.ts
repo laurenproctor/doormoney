@@ -9,6 +9,8 @@ import { workRefundQueue } from "@/lib/outbox";
 import { stripeConfigured } from "@/lib/stripe";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { publishBlockers } from "@/lib/readiness";
+import { incompleteOffers } from "@/lib/offer-readiness";
+import { loadTemplates } from "@/lib/opportunity-templates";
 import { categoryStatus } from "@/app/actions/drafts";
 import { slugify } from "@/lib/slug";
 import { actPath, runPath } from "@/lib/urls";
@@ -161,14 +163,19 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
   if (!run) return { ok: false, error: "That run is not on this account." };
   if (run.status !== "draft") return { ok: false, error: "That run is already published." };
 
-  const { data: lots } = await sb.from("lots").select("id,mode").eq("run_id", runId);
+  // Every open option's offer terms, read here and not trusted from any form: an option a sponsor
+  // cannot read in full is not published, whatever the page drew (src/lib/offer-readiness.ts). The
+  // database asks the same question again in migration 0060, for every role.
+  const { data: lots } = await sb.from("lots").select("id,mode,surface_key,status,reach_estimate,reach_basis,offer_terms,exclusive,terms_grandfathered").eq("run_id", runId);
   const all = lots ?? [];
+  const templates = await loadTemplates(sb, run.category_key ?? "music");
   const blockers = publishBlockers({
     act,
     run: { ...run, methods: run.verification_methods ?? [], other: run.verification_other ?? null },
     lotCount: all.length,
     auctionCount: all.filter((l) => l.mode === "auction").length,
     categoryPublishable: (await categoryStatus(run.category_key ?? "music")).publishEnabled,
+    incompleteOffers: incompleteOffers(all, templates),
   });
   if (blockers.length) return { ok: false, error: blockers.join(" ") };
 

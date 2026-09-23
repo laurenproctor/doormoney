@@ -7,11 +7,14 @@ select plan(9);
 insert into acts (id,owner_id,name,slug,type) values ('e7000000-0000-4000-8000-00000000000a',null,'Second Stage','second-stage-policy',null);
 insert into runs (id,act_id,title,slug,status,category_key,purpose,audience_description,sponsor_promise) values
  ('e7000000-0000-4000-8000-000000000010','e7000000-0000-4000-8000-00000000000a','Winter production','winter-policy','open','theater','Rights.','Ninety seats.','A program credit.');
-insert into lots (id,run_id,surface_key,price_cents,mode,status) values
- ('e7000000-0000-4000-8000-0000000000a1','e7000000-0000-4000-8000-000000000010','playbill_credit',50000,'fixed','open'),
- ('e7000000-0000-4000-8000-0000000000a2','e7000000-0000-4000-8000-000000000010','foyer_banner',60000,'fixed','open'),
- ('e7000000-0000-4000-8000-0000000000a3','e7000000-0000-4000-8000-000000000010','curtain_speech',20000,'fixed','open'),
- ('e7000000-0000-4000-8000-0000000000a4','e7000000-0000-4000-8000-000000000010','production_posts',10000,'fixed','open');
+-- These spots carry no offer terms, as every spot did before migration 0060, and their fundraiser is
+-- already public, so they are marked grandfathered the way 0060 marks the real ones (0061 refuses the
+-- shape otherwise). The test is about what it was about, not about offer terms.
+insert into lots (id,run_id,surface_key,price_cents,mode,status, terms_grandfathered) values
+ ('e7000000-0000-4000-8000-0000000000a1','e7000000-0000-4000-8000-000000000010','playbill_credit',50000,'fixed','open', true),
+ ('e7000000-0000-4000-8000-0000000000a2','e7000000-0000-4000-8000-000000000010','foyer_banner',60000,'fixed','open', true),
+ ('e7000000-0000-4000-8000-0000000000a3','e7000000-0000-4000-8000-000000000010','curtain_speech',20000,'fixed','open', true),
+ ('e7000000-0000-4000-8000-0000000000a4','e7000000-0000-4000-8000-000000000010','production_posts',10000,'fixed','open', true);
 create function pg_temp.version_for(p_lot uuid) returns int language sql as $$
   select s.policy_version from purchase_snapshots s join purchases p on p.id = s.purchase_id where p.lot_id = p_lot;
 $$;

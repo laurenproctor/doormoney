@@ -86,7 +86,7 @@ test("a theater fundraiser saves a theater option at the organizer's price", asy
   reset("theater");
   const result = await saveLots({ ok: false }, formWith({ on_foyer_banner: "1", price_foyer_banner: "750", mode_foyer_banner: "fixed" }));
   assert.equal(result.ok, true);
-  assert.deepEqual(inserted(), [{ run_id: "run-1", surface_key: "foyer_banner", label: null, price_cents: 75000, mode: "fixed", status: "open", buy_now_cents: null, reach_estimate: null, reach_basis: null }]);
+  assert.deepEqual(inserted(), [{ run_id: "run-1", surface_key: "foyer_banner", label: null, price_cents: 75000, mode: "fixed", buy_now_cents: null, reach_estimate: null, reach_basis: null }]);
   assert.equal(templateFilter, "theater", "the templates were read for the fundraiser's own category");
 });
 
@@ -117,8 +117,8 @@ test("a music fundraiser is still narrowed by its act type, and takes nothing fr
   }));
   assert.equal(result.ok, true);
   assert.deepEqual(inserted(), [
-    { run_id: "run-1", surface_key: "case_lid", label: "Case lid spot 1", price_cents: 8000, mode: "auction", status: "open", buy_now_cents: 20000, reach_estimate: null, reach_basis: null },
-    { run_id: "run-1", surface_key: "case_lid", label: "Case lid spot 2", price_cents: 8000, mode: "auction", status: "open", buy_now_cents: 20000, reach_estimate: null, reach_basis: null },
+    { run_id: "run-1", surface_key: "case_lid", label: "Case lid spot 1", price_cents: 8000, mode: "auction", buy_now_cents: 20000, reach_estimate: null, reach_basis: null },
+    { run_id: "run-1", surface_key: "case_lid", label: "Case lid spot 2", price_cents: 8000, mode: "auction", buy_now_cents: 20000, reach_estimate: null, reach_basis: null },
   ]);
   assert.notEqual(inserted()[0].price_cents, 6000, "the organizer's price, not the suggested one");
 });

@@ -20,6 +20,9 @@ export type Stage = (typeof STAGES)[number];
 /** The stages the draft form draws. */
 export type FormStage = "project" | "funding";
 
+/** The stages the guided journey draws itself. Review is still the workspace. */
+export type JourneyStage = FormStage | "sponsorships";
+
 export const STAGE_LABEL: Record<Stage, string> = {
   project: "Project",
   funding: "Funding",
@@ -33,6 +36,10 @@ export function isStage(value: unknown): value is Stage {
 
 export function isFormStage(value: unknown): value is FormStage {
   return value === "project" || value === "funding";
+}
+
+export function isJourneyStage(value: unknown): value is JourneyStage {
+  return isFormStage(value) || value === "sponsorships";
 }
 
 /** `?stage=funding`, read and refused rather than echoed. A repeated parameter takes the first. */
@@ -95,15 +102,22 @@ export function stageMissing(draft: StageDraft, stage: FormStage): string[] {
   );
 }
 
-/** The first form stage with something still to say, or null when both have been answered. */
-export function resumeStage(draft: StageDraft): FormStage | null {
+/**
+ * The first stage with something still to say, or null when the journey's own stages are done.
+ *
+ * The sponsorships stage is owed while a category that has sponsorship option templates has no
+ * option saved. A category with no templates (Other today) has nothing to price, so it is not sent
+ * there again: what it can say about proposed visibility it said on the funding stage.
+ */
+export function resumeStage(draft: StageDraft, options: { optionCount: number; hasTemplates: boolean } = { optionCount: 1, hasTemplates: false }): JourneyStage | null {
   if (stageMissing(draft, "project").length > 0) return "project";
   if (stageMissing(draft, "funding").length > 0) return "funding";
+  if (options.hasTemplates && options.optionCount === 0) return "sponsorships";
   return null;
 }
 
 /** The headline and the line under it, per stage. Second person: the dashboard talks to one person. */
-export const STAGE_HEADING: Record<FormStage, { title: string; accent: string; intro: string; continueLabel: string }> = {
+export const STAGE_HEADING: Record<JourneyStage, { title: string; accent: string; intro: string; continueLabel: string }> = {
   project: {
     title: "What do you want to",
     accent: "make happen?",
@@ -115,6 +129,12 @@ export const STAGE_HEADING: Record<FormStage, { title: string; accent: string; i
     accent: "make possible?",
     intro: "Say what the money enables. A goal is optional, and it is not the total of the sponsorship options: those come next.",
     continueLabel: "Continue to sponsorships",
+  },
+  sponsorships: {
+    title: "What can a sponsor",
+    accent: "count on?",
+    intro: "Build one sponsorship option at a time: where the sponsor appears, what it costs, what they send, and what you deliver. A partial option can be saved; anything missing is named, never filled in for you.",
+    continueLabel: "Continue to review",
   },
 };
 

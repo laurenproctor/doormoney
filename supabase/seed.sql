@@ -43,16 +43,20 @@ insert into runs (id, act_id, slug, kind, title, starts_on, ends_on, show_count,
  -- src/lib/sample.ts and the sample update at the end of migration 0020.
  array['selected_show_photos', 'venue_date_record', 'social_post_links', 'end_of_run_record']);
 
-insert into lots (id, run_id, surface_key, label, price_cents, mode, status) values
-('a1000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'kick_head',    null,               120000, 'auction', 'sold'),
-('a1000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'strap',        null,                45000, 'auction', 'open'),
-('a1000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'case_sticker', 'Case spot 1',       35000, 'auction', 'open'),
-('a1000000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', 'case_sticker', 'Case spot 2',       35000, 'auction', 'open'),
-('a1000000-0000-0000-0000-000000000005', '22222222-2222-2222-2222-222222222222', 'case_sticker', 'Case spot 3',       35000, 'fixed',   'sold'),
-('a1000000-0000-0000-0000-000000000006', '22222222-2222-2222-2222-222222222222', 'merch_runner', null,                50000, 'auction', 'open'),
-('a1000000-0000-0000-0000-000000000007', '22222222-2222-2222-2222-222222222222', 'picks',        null,                15000, 'auction', 'open'),
-('a1000000-0000-0000-0000-000000000008', '22222222-2222-2222-2222-222222222222', 'posts_email',  null,                40000, 'auction', 'open'),
-('a1000000-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222222', 'rig_rundown',  null,                40000, 'auction', 'open');
+-- Both sample fundraisers are open with spots that carry no offer terms, the way every fundraiser
+-- published before migration 0060 does. They are marked grandfathered here for the reason 0060
+-- marks the real ones: the rule arrived after they went on sale. 0061 refuses a spot with empty
+-- terms on a public fundraiser otherwise, and the seed runs after every migration.
+insert into lots (id, run_id, surface_key, label, price_cents, mode, status, terms_grandfathered) values
+('a1000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'kick_head',    null,               120000, 'auction', 'sold', true),
+('a1000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'strap',        null,                45000, 'auction', 'open', true),
+('a1000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'case_sticker', 'Case spot 1',       35000, 'auction', 'open', true),
+('a1000000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', 'case_sticker', 'Case spot 2',       35000, 'auction', 'open', true),
+('a1000000-0000-0000-0000-000000000005', '22222222-2222-2222-2222-222222222222', 'case_sticker', 'Case spot 3',       35000, 'fixed',   'sold', true),
+('a1000000-0000-0000-0000-000000000006', '22222222-2222-2222-2222-222222222222', 'merch_runner', null,                50000, 'auction', 'open', true),
+('a1000000-0000-0000-0000-000000000007', '22222222-2222-2222-2222-222222222222', 'picks',        null,                15000, 'auction', 'open', true),
+('a1000000-0000-0000-0000-000000000008', '22222222-2222-2222-2222-222222222222', 'posts_email',  null,                40000, 'auction', 'open', true),
+('a1000000-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222222', 'rig_rundown',  null,                40000, 'auction', 'open', true);
 
 -- ---------------------------------------------------------------
 -- Rosie: soloist, fall season, small surfaces
@@ -67,14 +71,14 @@ insert into runs (id, act_id, slug, kind, title, starts_on, ends_on, show_count,
  array['venue_date_record', 'attendance_estimates', 'end_of_run_record', 'other'],
  'Rosie photographs the marked case lid and music stand at selected dates, with the room and the date beside each image.');
 
-insert into lots (id, run_id, surface_key, label, price_cents, mode, status) values
-('b1000000-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 1',  6000, 'auction', 'sold'),
-('b1000000-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 2',  4000, 'auction', 'open'),
-('b1000000-0000-0000-0000-000000000003', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 3',  3000, 'fixed',   'open'),
-('b1000000-0000-0000-0000-000000000004', '44444444-4444-4444-4444-444444444444', 'music_stand',    null,               9000, 'auction', 'open'),
-('b1000000-0000-0000-0000-000000000005', '44444444-4444-4444-4444-444444444444', 'posts_email',    'Season thank-you post', 5000, 'auction', 'open'),
-('b1000000-0000-0000-0000-000000000006', '44444444-4444-4444-4444-444444444444', 'practice_video', null,               7000, 'fixed',   'open'),
-('b1000000-0000-0000-0000-000000000007', '44444444-4444-4444-4444-444444444444', 'program_credit', null,               4000, 'fixed',   'open');
+insert into lots (id, run_id, surface_key, label, price_cents, mode, status, terms_grandfathered) values
+('b1000000-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 1',  6000, 'auction', 'sold', true),
+('b1000000-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 2',  4000, 'auction', 'open', true),
+('b1000000-0000-0000-0000-000000000003', '44444444-4444-4444-4444-444444444444', 'case_lid',       'Case lid spot 3',  3000, 'fixed',   'open', true),
+('b1000000-0000-0000-0000-000000000004', '44444444-4444-4444-4444-444444444444', 'music_stand',    null,               9000, 'auction', 'open', true),
+('b1000000-0000-0000-0000-000000000005', '44444444-4444-4444-4444-444444444444', 'posts_email',    'Season thank-you post', 5000, 'auction', 'open', true),
+('b1000000-0000-0000-0000-000000000006', '44444444-4444-4444-4444-444444444444', 'practice_video', null,               7000, 'fixed',   'open', true),
+('b1000000-0000-0000-0000-000000000007', '44444444-4444-4444-4444-444444444444', 'program_credit', null,               4000, 'fixed',   'open', true);
 
 -- ---------------------------------------------------------------
 -- Sample patrons and bids (invented names, as on the mockups)

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
 import { isEmptyOfferTerms, isExclusive, offerTermsFromForm, parseOfferTerms, sameOfferTerms, storedOfferTerms, type OfferTerms } from "@/lib/offer-terms";
+import { publicLotProblem } from "@/lib/offer-readiness";
 import { templatesForFundraiser, type OpportunityTemplate } from "@/lib/opportunities";
 import { loadTemplates } from "@/lib/opportunity-templates";
 import { actPath, runPath } from "@/lib/urls";
@@ -96,7 +97,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   const { data: run } = await sb.from("runs").select("id,slug,status,category_key").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
 
-  const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis,offer_terms,exclusive").eq("run_id", runId).order("created_at");
+  const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis,offer_terms,exclusive,terms_grandfathered").eq("run_id", runId).order("created_at");
   const current = existing ?? [];
 
   // The category is the fundraiser's, read from the row the session owns, never from the form.
@@ -108,10 +109,46 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   const offered = templatesForFundraiser(registry, categoryKey, act.type);
   const offeredKeys = new Set(offered.map((t) => t.key));
   const inUse = registry.filter((t) => !offeredKeys.has(t.key) && current.some((l) => l.surface_key === t.key));
-  const templates = [...offered, ...inUse];
+  const everything = [...offered, ...inUse];
+
+  // One option at a time, where the form asks for it (`only`). The sponsorships stage builds one
+  // option and posts only its fields, so reading the whole form as the whole fundraiser would take
+  // every other option as switched off and delete its open spots. A scoped save touches one
+  // template's spots and no other row. The key still has to be one this fundraiser may offer.
+  const only = form.get("only");
+  const templates = typeof only === "string" && only ? everything.filter((t) => t.key === only) : everything;
+  if (typeof only === "string" && only && templates.length === 0) return { ok: false, error: "That option is not one this fundraiser can offer." };
 
   const { rows, error } = parseRows(form, templates);
   if (error) return { ok: false, error };
+
+  /**
+   * On a public fundraiser every spot written has to carry complete offer terms, unless it is
+   * grandfathered (0060) or carries the document of a sold or bid-on sibling (0061). The database
+   * refuses the write either way; this asks first, so the answer names what is missing. A private
+   * draft is not asked: a partial option saves there exactly as before.
+   */
+  const isPublic = run.status === "open" || run.status === "live";
+  if (isPublic) {
+    for (const r of rows) {
+      if (!r.on) continue;
+      const s = templates.find((t) => t.key === r.key)!;
+      const mine = current.filter((l) => l.surface_key === r.key);
+      const frozen = mine.find((l) => l.status !== "open");
+      const terms = frozen ? storedOfferTerms(frozen) : r.terms;
+      const open = mine.filter((l) => l.status === "open");
+      const willWrite = [
+        ...open.map((l) => ({ id: l.id, terms_grandfathered: l.terms_grandfathered === true })),
+        ...Array.from({ length: Math.max(0, r.count - mine.length) }, () => ({ id: null, terms_grandfathered: false })),
+      ];
+      for (const w of willWrite) {
+        const problem = publicLotProblem({ surface_key: r.key, id: w.id, terms, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, terms_grandfathered: w.terms_grandfathered }, current);
+        if (problem) {
+          return { ok: false, error: `${s.name}: this fundraiser is public, so its offer terms have to be complete before they are saved. Still missing: ${problem.map((m) => m.charAt(0).toLowerCase() + m.slice(1)).join("; ")}. Take the fundraiser down to save a partial option.` };
+        }
+      }
+    }
+  }
 
   type Discovery = { reach_estimate: number | null; reach_basis: string | null };
   /**
@@ -124,7 +161,13 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
    * price and never for a document that did not move.
    */
   type Terms = { offer_terms?: OfferTerms; exclusive?: boolean };
-  const inserts: ({ run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: "open"; buy_now_cents: number | null } & Discovery & Terms)[] = [];
+  /**
+   * A new spot is inserted without its status. The column defaults to `open`, and migration 0022's
+   * column-level grant does not include it, so naming it, as this did until 2026-09-23, made
+   * Postgres refuse every new spot an organizer added from the dashboard with "permission denied
+   * for table lots". Its lifecycle is the auction and payment code's to write, as the service role.
+   */
+  const inserts: ({ run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null } & Discovery & Terms)[] = [];
   const updates: ({ id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null } & Discovery & Terms)[] = [];
   const deletes: string[] = [];
 
@@ -180,7 +223,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
       updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsChange(l, terms) });
     }
     for (; n < total; n += 1) {
-      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsNew(terms) });
+      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsNew(terms) });
     }
   }
 
@@ -197,6 +240,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     // offer contract among them: a sponsor who bid on an offer bid on the one they read.
     if (e?.message.includes("lot_terms_frozen")) return { ok: false, error: `${u.label ?? "A spot"} already has a bid on it, so its price, its mode, its take-it-now number and the terms of its offer stay as they are.` };
     if (e?.message.includes("lots_offer_terms_is_sponsor_facing")) return { ok: false, error: `${u.label ?? "A spot"}: those offer terms are too long, or hold something that belongs on the delivery record rather than in the offer.` };
+    if (e?.message.includes("needs complete offer terms")) return { ok: false, error: `${u.label ?? "A spot"}: this fundraiser is public, so an option on it keeps complete offer terms. Take the fundraiser down to save a partial one.` };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
   if (inserts.length) {
@@ -205,6 +249,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     if (e?.message.includes("opportunity_category_mismatch")) return { ok: false, error: "One of those options belongs to a different category than this fundraiser, so nothing new was added." };
     if (e?.message.includes("sponsorship_option_retired")) return { ok: false, error: "One of those options is no longer offered for new sponsorships. The spots you already have on it are unchanged." };
     if (e?.message.includes("lots_offer_terms_is_sponsor_facing")) return { ok: false, error: "Those offer terms are too long, or hold something that belongs on the delivery record rather than in the offer." };
+    if (e?.message.includes("needs complete offer terms")) return { ok: false, error: "This fundraiser is public, so a new option on it needs complete offer terms before it is saved. Take the fundraiser down to save a partial one." };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
 
