@@ -47,19 +47,28 @@ export type FundraiserSummary = {
 };
 
 /**
- * The line under a fundraiser's name: "Fall run. 18 shows, Oct 3 to Nov 2."
+ * What a fundraiser covers, without its name: "18 shows, Oct 3 to Nov 2".
  *
  * Music counts shows, because a music fundraiser is built out of them. No other category has a
  * count, so the line carries whatever it does have and stops, rather than printing a zero or
- * inventing a unit. A fundraiser with no dates yet is just its name.
+ * inventing a unit. Null when the fundraiser has neither a count nor dates yet.
  */
-export function fundraiserLine(run: FundraiserSummary): string {
+export function periodLine(run: FundraiserSummary): string | null {
   const period = periodOf(run.kind);
   const count = run.categoryKey === "music" && run.showCount !== null
     ? `${run.showCount} ${run.showCount === 1 ? period.unit : period.units}`
     : null;
   const dates = run.startsOn && run.endsOn ? formatDateRange(run.startsOn, run.endsOn) : null;
-  const rest = [count, dates].filter(Boolean).join(", ");
+  return [count, dates].filter(Boolean).join(", ") || null;
+}
+
+/**
+ * The line under a fundraiser's name: "Fall run. 18 shows, Oct 3 to Nov 2."
+ *
+ * A fundraiser with no dates yet is just its name.
+ */
+export function fundraiserLine(run: FundraiserSummary): string {
+  const rest = periodLine(run);
   return rest ? `${run.title}. ${rest}.` : `${run.title}.`;
 }
 

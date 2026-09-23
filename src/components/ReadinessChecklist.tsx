@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
-import { readiness, type ReadinessInput } from "@/lib/readiness";
+import { draftProgress, readiness, type ReadinessInput } from "@/lib/readiness";
 
 /**
  * Where a draft stands, in six lines. The same rules publishRun uses, so a full checklist and a
@@ -9,7 +9,8 @@ import { readiness, type ReadinessInput } from "@/lib/readiness";
  */
 export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInput; previewHref: string }) {
   const rows = readiness(input);
-  const left = rows.filter((r) => !r.done && !r.optional && r.key !== "publish").length;
+  const { done, total } = draftProgress(rows);
+  const left = total - done;
   const draft = input.run.status === "draft";
 
   return (

@@ -21,13 +21,15 @@ export function TaskRow({
   className?: string;
 }) {
   return (
-    <div className={`flex items-center gap-3.5 border-t border-line py-3 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-x-3.5 gap-y-2.5 border-t border-line py-3 ${className}`}>
       {lead && <div className="flex-none">{lead}</div>}
-      <div className="flex min-w-0 grow flex-col gap-0.5">
+      {/* The row's own text never squeezes below 15rem: on a phone the controls drop to their own
+          line instead, because a sentence set one word per line is not a row anybody can scan. */}
+      <div className="flex min-w-[15rem] grow basis-0 flex-col gap-0.5">
         <span className="text-[14.5px] font-medium text-ink">{title}</span>
         {detail && <span className="text-[14px] text-muted">{detail}</span>}
       </div>
-      {actions && <div className="flex flex-none gap-1.5">{actions}</div>}
+      {actions && <div className="flex flex-none gap-1.5 max-sm:ml-auto">{actions}</div>}
     </div>
   );
 }
