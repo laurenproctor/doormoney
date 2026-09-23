@@ -280,8 +280,9 @@ description would claim a fact the organizer never stated.
 The page says "project" where the rest of the site says "fundraiser": the heading, the count, the
 empty states. It is a display word for this one surface, where a sponsor is looking at the work
 rather than at the mechanics of funding it. Nothing else changes: the address is `/fundraisers`,
-the tables are `runs` and `lots`, every other page and the nav say fundraiser, and
-`tests/category-neutral-copy.test.ts` and `tests/roles.test.ts` hold the nav to that word.
+the tables are `runs` and `lots`, and every other page says fundraiser. The nav's label for the
+page is "Browse projects" (`NAV` in `src/lib/site.ts`, held by `tests/category-neutral-copy.test.ts`
+and `tests/roles.test.ts`): the same display word, on the link to the same address.
 
 ### The toolbar
 
