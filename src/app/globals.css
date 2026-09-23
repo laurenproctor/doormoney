@@ -8,6 +8,13 @@
 @custom-variant rail-collapsed (&:where([data-rail="collapsed"] *));
 
 /*
+  The discovery results in rows rather than tiles. The same attribute pattern (src/lib/discovery-view.ts):
+  set on <html> by an inline script before the list is painted, so the one list of results can say
+  what it looks like in rows without a second copy of itself. Nothing outside the results uses it.
+*/
+@custom-variant discovery-rows (&:where([data-discovery-view="rows"] *));
+
+/*
   Door Money tokens.
 
   Every page is a dark room with one color of light in it. The room (ground, ink, muted, line, panel)
@@ -590,7 +597,9 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
 }
 
 /*
-  The discovery filters: a panel that collapses on a phone and a rail that is always open from
-  1024px up. Driven by a nameless checkbox and `peer`, so it needs no JavaScript and submits
-  nothing: an input with no `name` is not part of the form data it sits beside.
+  The discovery toolbar's disclosures are native <details>, so they open and close from the keyboard
+  with no script. The summary is drawn as a control, so the browser's own marker is dropped here;
+  everything else about them is utility classes on the elements themselves.
 */
+.discovery-summary { list-style: none; }
+.discovery-summary::-webkit-details-marker { display: none; }

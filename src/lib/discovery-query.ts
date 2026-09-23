@@ -166,6 +166,12 @@ export type DiscoveryResult = {
   pageCount: number;
   /** True when more matched than one request ranks. The page says so rather than quietly cutting. */
   capped: boolean;
+  /**
+   * True when every fundraiser counted in `total` has at least one option open to buy, so the
+   * count may say they are accepting sponsors. False when any has none, and false when there are
+   * none at all. Nothing is dropped from the count to make this true.
+   */
+  everyResultHasOffers: boolean;
   status: DiscoveryStatus;
   /** Which read failed when `status` is unavailable. An offer failure is not zero options; it is unknown. */
   failedRead: "fundraisers" | "offers" | null;
@@ -203,7 +209,7 @@ type Read =
 export async function findFundraisers(query: DiscoveryQuery, now: Date = new Date()): Promise<DiscoveryResult> {
   const source: Read = configured() ? await read(query) : { ...SAMPLE_DISCOVERY, status: "sample" };
   if (source.status === "unavailable") {
-    return { cards: [], total: 0, page: 1, pageCount: 1, capped: false, status: "unavailable", failedRead: source.failedRead, live: true };
+    return { cards: [], total: 0, page: 1, pageCount: 1, capped: false, everyResultHasOffers: false, status: "unavailable", failedRead: source.failedRead, live: true };
   }
   const { rows, offers, status } = source;
   const byRun = new Map<string, DiscoveryOffer[]>();
@@ -300,6 +306,7 @@ export async function findFundraisers(query: DiscoveryQuery, now: Date = new Dat
     page,
     pageCount,
     capped: rows.length >= CANDIDATE_CAP,
+    everyResultHasOffers: total > 0 && ranked.every((r) => r.availableOffers > 0),
     status,
     failedRead: null,
     live: status === "live",
