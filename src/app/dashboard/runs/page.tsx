@@ -60,7 +60,8 @@ export default async function FundraisersPage() {
                     <span className="min-w-0">
                       <span className="block text-[15.5px] font-medium text-ink">{run.title}</span>
                       <span className="mt-1 block text-[14px] text-muted">
-                        {formatDateRange(run.startsOn, run.endsOn)} · {run.showCount} {run.kind === "season" ? "gigs" : "shows"}
+                        {formatDateRange(run.startsOn, run.endsOn)}
+                        {run.showCount !== null && ` · ${run.showCount} ${run.kind === "season" ? "gigs" : "shows"}`}
                       </span>
                     </span>
                     <span className="flex items-center gap-3">
