@@ -11,6 +11,10 @@ import { Overflow } from "@/components/dashboard/icons";
  *
  * A row can be a link. The link covers the row rather than wrapping it, so a control in the last
  * column is still a control and not something nested inside an anchor.
+ *
+ * A row can also carry `search`: the words the top bar's filter matches it against. It is a plain
+ * attribute and nothing here reads it, because the filter runs in the browser over the rows the
+ * page already drew (src/components/dashboard/WorkspaceSearch.tsx).
  */
 export type DeskColumn = {
   key: string;
@@ -28,6 +32,12 @@ export type DeskRow = {
   label?: string;
   /** The last column: the rest of what this row can do. */
   menu?: ReactNode;
+  /**
+   * What the top bar's search matches this row against. The row's own words, in one string,
+   * because a cell is a ReactNode and nobody can read text out of one. Absent means the row is
+   * not searchable and the filter leaves it alone; `label` is used where there is one.
+   */
+  search?: string;
 };
 
 export function Table({
@@ -51,6 +61,7 @@ export function Table({
       {rows.map((row) => (
         <div
           key={row.key}
+          data-search={row.search ?? row.label}
           className="relative grid min-h-[44px] items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-b-0"
           style={{ gridTemplateColumns: template }}
         >

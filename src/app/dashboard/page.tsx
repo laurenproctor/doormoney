@@ -9,7 +9,7 @@ import { themeFor } from "@/components/Theme";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { categoryWords } from "@/lib/category-words";
 import { loadDashboard, withToday } from "@/lib/dashboard";
-import { loadHomeSponsorships, type HomeSponsorship } from "@/lib/dashboard-home";
+import { jumpTo, loadHomeSponsorships, type HomeSponsorship } from "@/lib/dashboard-home";
 import {
   dashboardNav,
   lifecycleLabel,
@@ -149,6 +149,7 @@ export default async function DashboardPage() {
           Create fundraiser
         </ButtonLink>
       }
+      search={sponsorships.rows.map((run) => jumpTo(run))}
     >
       {(view.failed || sponsorships.failed) && (
         <Card className="mb-5">
@@ -202,6 +203,7 @@ export default async function DashboardPage() {
       {/* Two columns while there is money to talk about. A draft has none, so the work takes the width. */}
       <div className={`mb-5 grid items-start gap-3.5 ${metrics ? "lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]" : ""}`}>
         <Card
+          searchable
           title="Needs you"
           subtitle={waiting > 0 ? "Ordered by what is due first" : draftStep?.label ? "Before this draft can be published" : undefined}
           right={waiting > 0 ? <Badge kind="attention">{waiting}</Badge> : undefined}
@@ -230,6 +232,7 @@ export default async function DashboardPage() {
               lead={<MaterialsThumb row={row} word={words.materials} />}
               title={`${words.materials === "logo" ? "Approve" : "Accept"} the ${words.materials} for ${row.option}`}
               detail={materialsDetail(row)}
+              search={`${row.sponsor} ${row.option}`}
               actions={<TaskDecision purchaseId={row.id} categoryKey={categoryKey} what={row.option} />}
             />
           ))}
@@ -240,6 +243,7 @@ export default async function DashboardPage() {
               lead={item.date ? <TaskDate {...dayAndMonth(item.date)} /> : undefined}
               title={sentenceCase(item.label)}
               detail={item.date ? `The first is ${formatWeekdayDay(item.date)}` : undefined}
+              search={item.label}
               actions={
                 <ButtonLink href={item.href} register="desk" variant="outline" size="sm">
                   {DATED_ACTION[item.key] ?? "Open the dates"}
@@ -291,6 +295,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card
+        searchable
         title="Fundraisers"
         right={
           <Link href="/dashboard/runs" className="text-accent-ink underline decoration-1 underline-offset-4">
@@ -413,6 +418,7 @@ function fundraiserRow(run: HomeSponsorship): DeskRow {
     key: run.id,
     href: `/dashboard/runs/${run.id}`,
     label: run.title,
+    search: [run.title, run.period, lifecycleLabel(run.status)].filter(Boolean).join(" "),
     cells: [
       <>
         <span className="font-medium">{run.title}</span>

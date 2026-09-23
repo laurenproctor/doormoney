@@ -289,7 +289,7 @@ export function ProfileDetailsForm({
             "Changes save on their own, a moment after you stop."
           )}
         </span>
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save now"}</Button>
+        <Button type="submit" register="desk" variant="solid" disabled={pending}>{pending ? "Saving…" : "Save now"}</Button>
       </div>
 
       {intro && <p className="mb-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">{intro}</p>}
@@ -498,7 +498,7 @@ export function PublishForm({ published, ready }: { published: boolean; ready: b
   return (
     <form action={action}>
       <input type="hidden" name="publish" value={published ? "no" : "yes"} />
-      <Button type="submit" variant={published ? "ghost" : "solid"} disabled={pending || (!published && !ready)}>
+      <Button type="submit" register="desk" variant={published ? "outline" : "solid"} disabled={pending || (!published && !ready)}>
         {pending ? (published ? "Unpublishing…" : "Publishing…") : published ? "Unpublish profile" : "Publish profile"}
       </Button>
       <p role="status" aria-live="polite" className="mt-3 text-[14.5px] text-muted">
@@ -641,7 +641,7 @@ export function UsernameForm({
       )}
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending || !allowed}>
+        <Button type="submit" register="desk" variant="solid" disabled={pending || !allowed}>
           {pending ? "Saving…" : username ? "Change username" : "Claim username"}
         </Button>
         <span role="status" aria-live="polite" className="text-[14.5px] text-muted">

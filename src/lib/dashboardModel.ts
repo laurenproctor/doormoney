@@ -413,6 +413,20 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 }
 
 /**
+ * Door Money staff's own rail.
+ *
+ * Its own list, because /admin is not a page about one organizer and the organizer's rail is a
+ * list of an organizer's things: staff opening it used to be offered Today, Fundraisers and Money
+ * about an account that may own none of them. Two destinations, both real.
+ */
+export function adminNav(): NavSection[] {
+  return [
+    { title: "Staff", items: [{ href: "/admin", label: "Overview" }] },
+    { title: "Account", items: [{ href: "/dashboard/account", label: "Settings" }] },
+  ];
+}
+
+/**
  * Pages that belong to a nav item without living under its address.
  *
  * The organizer's own record is edited at /dashboard/act, which is older than the one Profile it

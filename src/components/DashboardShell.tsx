@@ -5,6 +5,7 @@ import { Card as DeskCard } from "@/components/desk/Card";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Theme, type ThemeName } from "@/components/Theme";
 import { WorkspaceMenu, WorkspaceRail } from "@/components/dashboard/WorkspaceNav";
+import { WorkspaceSearch, type SearchJump } from "@/components/dashboard/WorkspaceSearch";
 import { currentNavHref, dashboardNav, type NavSection } from "@/lib/dashboardModel";
 import { actPath } from "@/lib/urls";
 
@@ -17,9 +18,9 @@ import { actPath } from "@/lib/urls";
  * the block of CSS at the top of globals.css is scoped to.
  *
  * Three pieces: the rail down the left (wordmark, destinations, the account block at its foot),
- * a top bar (where the reader is, the room switch, the organizer's public page, and the page's
- * one primary action), and the page beside them. No marketing nav and no public footer, because
- * somebody signed in is working rather than being sold to.
+ * a top bar (where the reader is, the search, the room switch, the organizer's public page, and
+ * the page's one primary action), and the page beside them. No marketing nav and no public
+ * footer, because somebody signed in is working rather than being sold to.
  *
  * The props are the ones every dashboard page already passed, so no call site had to move. `theme`
  * is the new one and defaults to blue: a page hands down `themeFor(act.slug)` for an organizer,
@@ -46,6 +47,7 @@ export function DashboardShell({
   note,
   nav,
   links,
+  search,
   children,
 }: {
   current: string;
@@ -70,6 +72,14 @@ export function DashboardShell({
   nav?: NavSection[];
   /** The flat list the shell used to take. Kept so older call sites keep working. */
   links?: readonly { href: string; label: string }[];
+  /**
+   * The fundraisers the top bar's search can jump to, from rows the page had already read.
+   *
+   * Passing this, even empty, is how a page says it has something to search: its own rows, the
+   * list, or both. A page that passes nothing gets no box, because a search box that cannot
+   * find anything is worse than none (docs/DESK_REGISTER.md, PR 5).
+   */
+  search?: readonly SearchJump[];
   children: ReactNode;
 }) {
   const sections: NavSection[] =
@@ -110,6 +120,7 @@ export function DashboardShell({
               </ol>
             </nav>
             <div className="ml-auto flex flex-none items-center gap-2">
+              {search && <WorkspaceSearch jumps={search} />}
               <ModeToggle className="mr-1" />
               {actSlug && (
                 <Link

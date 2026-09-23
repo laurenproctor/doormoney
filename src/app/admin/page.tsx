@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
+import { adminNav } from "@/lib/dashboardModel";
 import { requireAdmin } from "@/lib/admin";
 import { openFlags } from "@/lib/flags";
 import { ClearFlag, RemoveAccountTotp } from "./FlagActions";
@@ -79,7 +80,7 @@ export default async function AdminPage() {
     .reduce((n, p) => n + p.amount_cents, 0);
 
   return (
-    <DashboardShell current="/admin" actName="Door Money staff" eyebrow="Staff" title="Admin" accent="">
+    <DashboardShell current="/admin" nav={adminNav()} actName="Door Money staff" theme="mono" eyebrow="Staff" title="Admin" accent="">
       <div className="grid gap-[30px]">
         <Card>
           <CardHead eyebrow="Account support">Somebody locked out of two-factor</CardHead>
@@ -169,7 +170,7 @@ export default async function AdminPage() {
                     <b className="block text-[15px]">
                       {f.patronName} holds {f.what} on {f.actName}&apos;s {f.runTitle.toLowerCase()}
                     </b>
-                    <span className="caps text-[14px] text-muted">
+                    <span className="text-[14px] text-muted">
                       {when.format(new Date(f.flaggedAt))} · {formatMoney(f.amountCents)} paid · {formatMoney(f.pausedCents)} held
                     </span>
                     {f.note && <p className="mt-2 max-w-none whitespace-pre-wrap text-[15px]">{f.note}</p>}
@@ -264,7 +265,7 @@ export default async function AdminPage() {
                 <li key={n.id} className="py-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <b className="text-[15px]">{n.subject}</b>
-                    <span className="caps text-[14px] text-muted">{when.format(new Date(n.created_at))} · {n.status}</span>
+                    <span className="text-[14px] text-muted">{when.format(new Date(n.created_at))} · {n.status}</span>
                   </div>
                   <p className="max-w-none text-[14.5px] text-muted">
                     {n.reason.replace(/_/g, " ")} · {n.name}
@@ -313,11 +314,12 @@ export default async function AdminPage() {
   );
 }
 
+/* The register's tile, as a definition pair: the whole block is a <dl>, so each one is dt over dd. */
 function Stat({ n, label }: { n: string; label: string }) {
   return (
-    <div className="edge bg-panel p-4">
-      <dt className="heading text-[28px] leading-none">{n}</dt>
-      <dd className="caps text-[14px] text-muted">{label}</dd>
+    <div className="flex min-w-0 flex-col gap-1 rounded-card border border-line bg-surface p-4 shadow-1">
+      <dt className="heading text-[26px] leading-none tabular-nums text-ink">{n}</dt>
+      <dd className="m-0 text-[14px] text-muted">{label}</dd>
     </div>
   );
 }
@@ -328,7 +330,7 @@ function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] border-collapse text-[15px]">
         <thead>
-          <tr className="caps border-b border-line text-left text-[14px] text-muted">
+          <tr className="border-b border-line text-left text-[14px] font-medium text-muted">
             {head.map((h) => (
               <th key={h} className="py-2 pr-4 font-normal">{h}</th>
             ))}

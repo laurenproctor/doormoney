@@ -67,7 +67,7 @@ export default async function DashboardWidgetPage() {
           </p>
           {widgets.map((w) => (
             <div key={w.snippet} className="mb-4 last:mb-0">
-              {widgets.length > 1 && <p className="caps mb-2 text-[14px] text-accent-ink">{w.title}</p>}
+              {widgets.length > 1 && <p className="mb-2 text-[14px] font-medium text-ink">{w.title}</p>}
               <pre className="edge max-w-full overflow-x-auto bg-ground p-4 font-mono text-[14.5px] leading-[1.6] text-ink">
                 <code>{w.snippet}</code>
               </pre>
