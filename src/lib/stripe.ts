@@ -30,10 +30,25 @@ export async function createLotCheckoutSession(params: {
   /** "Kick drum head, Gutter Hymns, Fall run" */
   description: string;
   patronEmail: string;
+  /** The lot's offer version this purchase is bound to (migration 0035). */
+  offerVersion?: number;
+  /** The shape the offer contract was written in, where the offer has one (migration 0056). */
+  offerTermsVersion?: number | null;
   /** Where the embedded checkout sends the patron afterwards. Must contain {CHECKOUT_SESSION_ID}. */
   returnUrl: string;
 }) {
-  const metadata = { purchase_id: params.purchaseId, lot_id: params.lotId, run_id: params.runId, act_id: params.actId, act_slug: params.actSlug, kind: "lot" };
+  // Which exact offer this payment is for: the spot, the offer version it was bound to
+  // (migration 0035), and the shape the offer contract was written in (migration 0056). Stripe
+  // keeps metadata on the session and the charge, so a payment can be traced back to the terms it
+  // was made under without reading anything private into it.
+  const metadata = {
+    purchase_id: params.purchaseId, lot_id: params.lotId, run_id: params.runId,
+    act_id: params.actId, act_slug: params.actSlug, kind: "lot",
+    // Added only where the caller names one. An omitted version means "this caller did not say",
+    // never version zero, so a call that never identified an offer keeps the metadata it always had.
+    ...(params.offerVersion === undefined ? {} : { offer_version: String(params.offerVersion) }),
+    ...(params.offerTermsVersion ? { offer_terms_version: String(params.offerTermsVersion) } : {}),
+  };
   return stripe.checkout.sessions.create({
     mode: "payment",
     ui_mode: "embedded_page",

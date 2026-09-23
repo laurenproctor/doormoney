@@ -3,6 +3,8 @@ import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { Button } from "@/components/Button";
+import { OfferSummary } from "@/components/OfferSummary";
+import { isEmptyOfferTerms, type OfferTermsView } from "@/lib/offer-terms";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
@@ -20,6 +22,9 @@ export function LotCheckout({
   buyNow,
   note,
   terms = "Door Money holds the money and releases it under the fundraiser's terms. The organizer approves the sponsor's materials before anything goes up.",
+  offerTerms = {},
+  offerPolicy = [],
+  termsFingerprint = null,
   onClose,
 }: {
   lotId: string;
@@ -33,6 +38,19 @@ export function LotCheckout({
   note?: string;
   /** How the money moves on this fundraiser, from checkoutTerms in src/lib/record-words.ts. The default names no category. */
   terms?: string;
+  /**
+   * What this sponsorship includes, already public-safe. Shown before the card form so nobody pays
+   * for an offer they have not read. Empty on an offer whose organizer has written no terms.
+   */
+  offerTerms?: OfferTermsView;
+  /** What the category's delivery policy decides about cancelling and refunds. */
+  offerPolicy?: { key: string; label: string; sentence: string }[];
+  /**
+   * The fingerprint of the offer this page drew. Sent back so the server can refuse a payment
+   * against terms that have moved since. It is never read as the terms themselves: the route loads
+   * those from the lot and compares its own fingerprint with this one.
+   */
+  termsFingerprint?: string | null;
   /** Null on the claim page, where there is nothing to go back to. */
   onClose: (() => void) | null;
 }) {
@@ -54,7 +72,12 @@ export function LotCheckout({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "lot", lotId, patronName: name, email, ...(token ? { token } : {}), ...(buyNow ? { buyNow: true } : {}) }),
+        body: JSON.stringify({
+          kind: "lot", lotId, patronName: name, email,
+          ...(token ? { token } : {}),
+          ...(buyNow ? { buyNow: true } : {}),
+          ...(termsFingerprint ? { termsFingerprint } : {}),
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { clientSecret?: string; error?: string };
       if (!res.ok || !data.clientSecret) throw new Error(data.error ?? "Payment could not start. Try once more.");
@@ -81,6 +104,18 @@ export function LotCheckout({
       </div>
 
       {note && !clientSecret && <p className="mt-4 max-w-none text-[14.5px] leading-[1.6] text-accent-ink">{note}</p>}
+
+      {/* What is being bought, one press away, right where the money is. An offer whose organizer
+          wrote no terms shows nothing here, and the line under the form still says how the money
+          moves, exactly as it did before any of this existed. */}
+      {!clientSecret && !isEmptyOfferTerms(offerTerms) && (
+        <details className="mt-4 border-t border-line pt-4">
+          <summary className="caps cursor-pointer text-[14px] text-accent-ink">What this sponsorship includes</summary>
+          <div className="mt-4">
+            <OfferSummary terms={offerTerms} policy={offerPolicy} heading="" />
+          </div>
+        </details>
+      )}
 
       {clientSecret ? (
         <div className="mt-5 bg-white p-3">

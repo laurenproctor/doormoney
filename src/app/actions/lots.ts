@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { requireUser, ownedAct } from "@/lib/auth";
+import { isEmptyOfferTerms, isExclusive, offerTermsFromForm, parseOfferTerms, sameOfferTerms, storedOfferTerms, type OfferTerms } from "@/lib/offer-terms";
 import { templatesForFundraiser, type OpportunityTemplate } from "@/lib/opportunities";
 import { loadTemplates } from "@/lib/opportunity-templates";
 import { actPath, runPath } from "@/lib/urls";
@@ -16,6 +17,10 @@ type Row = {
   key: string; on: boolean; count: number; priceCents: number; mode: "fixed" | "auction"; buyNowCents: number | null;
   /** The organizer's estimate of who this reaches, and why. Discovery metadata, not a term of sale. */
   reachEstimate: number | null; reachBasis: string | null;
+  /** The offer contract: what the sponsor receives. Empty for an organizer who has written none. */
+  terms: OfferTerms;
+  /** The legacy half of the exclusivity section, kept in step with it on every save. */
+  exclusive: boolean;
 };
 
 const MAX_REACH = 1_000_000_000;
@@ -30,7 +35,7 @@ function parseRows(form: FormData, templates: readonly OpportunityTemplate[]): {
   for (const s of templates) {
     const on = form.get(`on_${s.key}`) === "1";
     if (!on) {
-      rows.push({ key: s.key, on: false, count: 0, priceCents: 0, mode: "fixed", buyNowCents: null, reachEstimate: null, reachBasis: null });
+      rows.push({ key: s.key, on: false, count: 0, priceCents: 0, mode: "fixed", buyNowCents: null, reachEstimate: null, reachBasis: null, terms: {}, exclusive: false });
       continue;
     }
     const dollars = String(form.get(`price_${s.key}`) ?? "").replace(/[^0-9.]/g, "");
@@ -67,7 +72,12 @@ function parseRows(form: FormData, templates: readonly OpportunityTemplate[]): {
       }
     }
 
-    rows.push({ key: s.key, on: true, count, priceCents, mode, buyNowCents, reachEstimate, reachBasis });
+    // The offer contract. Additive: an organizer who fills none of it in saves exactly the spot
+    // they saved before this existed, and one who fills part of it keeps the part they wrote.
+    const terms = parseOfferTerms(offerTermsFromForm(form, s.key));
+    if (!terms.ok) return { rows, error: `${s.name}: ${terms.error}` };
+
+    rows.push({ key: s.key, on: true, count, priceCents, mode, buyNowCents, reachEstimate, reachBasis, terms: terms.terms, exclusive: isExclusive(terms.terms) });
   }
   return { rows };
 }
@@ -86,7 +96,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   const { data: run } = await sb.from("runs").select("id,slug,status,category_key").eq("id", runId).eq("act_id", act.id).maybeSingle();
   if (!run) return { ok: false, error: "That run is not on this account." };
 
-  const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis").eq("run_id", runId).order("created_at");
+  const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis,offer_terms,exclusive").eq("run_id", runId).order("created_at");
   const current = existing ?? [];
 
   // The category is the fundraiser's, read from the row the session owns, never from the form.
@@ -104,9 +114,51 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   if (error) return { ok: false, error };
 
   type Discovery = { reach_estimate: number | null; reach_basis: string | null };
-  const inserts: ({ run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: "open"; buy_now_cents: number | null } & Discovery)[] = [];
-  const updates: ({ id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null } & Discovery)[] = [];
+  /**
+   * The offer contract, where the organizer wrote one.
+   *
+   * Sent only when there is something to send, and on an update only when it actually changed. Two
+   * reasons, and both matter. A lot nobody has written terms for keeps the row it has, so this
+   * changes nothing about the spots that already exist; and migration 0035's freeze compares the
+   * values it is handed, so a price change on a spot with a bid on it is still refused for the
+   * price and never for a document that did not move.
+   */
+  type Terms = { offer_terms?: OfferTerms; exclusive?: boolean };
+  const inserts: ({ run_id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: "open"; buy_now_cents: number | null } & Discovery & Terms)[] = [];
+  const updates: ({ id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null } & Discovery & Terms)[] = [];
   const deletes: string[] = [];
+
+  /**
+   * The offer contract this save should apply to one template's spots.
+   *
+   * Normally what the form carried. Not so once a spot on the template has sold or has a bid on
+   * it: the editor locks the whole row then, and a locked field is disabled, and a disabled control
+   * is never submitted. The form would arrive carrying an empty document, and taking it at face
+   * value would wipe the terms off the template's still-open spots and clear their exclusivity.
+   *
+   * So when the row is locked the terms are read back off the spot that locked it, which is the
+   * copy the database has frozen (migration 0035, widened in 0056) and the copy the sponsor bought.
+   * A new spot added to a locked template gets the same document rather than an empty one, and an
+   * open sibling that has somehow drifted is brought back to it.
+   *
+   * Server-side on purpose. The editor disables those fields as a courtesy; this is the rule.
+   */
+  const termsFor = (mine: readonly { status: string; offer_terms?: unknown; exclusive?: boolean | null }[], r: Row): { terms: OfferTerms; exclusive: boolean } => {
+    const frozen = mine.find((l) => l.status !== "open");
+    if (!frozen) return { terms: r.terms, exclusive: r.exclusive };
+    return { terms: storedOfferTerms(frozen), exclusive: frozen.exclusive ?? false };
+  };
+
+  /** What an existing lot's terms columns have to become, or nothing where they already say it. */
+  const termsChange = (lot: { offer_terms?: unknown; exclusive?: boolean | null }, want: { terms: OfferTerms; exclusive: boolean }): Terms => ({
+    ...(sameOfferTerms(storedOfferTerms(lot), want.terms) ? {} : { offer_terms: want.terms }),
+    ...(want.exclusive === (lot.exclusive ?? false) ? {} : { exclusive: want.exclusive }),
+  });
+  /** The same for a spot that does not exist yet: the column defaults say the rest. */
+  const termsNew = (want: { terms: OfferTerms; exclusive: boolean }): Terms => ({
+    ...(isEmptyOfferTerms(want.terms) ? {} : { offer_terms: want.terms }),
+    ...(want.exclusive ? { exclusive: true } : {}),
+  });
 
   for (const r of rows) {
     const s = templates.find((t) => t.key === r.key)!;
@@ -115,6 +167,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     const open = mine.filter((l) => l.status === "open");
     const want = r.on ? Math.max(r.count, locked.length) : locked.length;
     const total = want;
+    const terms = termsFor(mine, r);
 
     // Keep locked lots as they are, reuse open ones, then add or drop to reach the count.
     const keepOpen = open.slice(0, Math.max(0, total - locked.length));
@@ -124,10 +177,10 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     let n = locked.length;
     for (const l of keepOpen) {
       n += 1;
-      updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis });
+      updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsChange(l, terms) });
     }
     for (; n < total; n += 1) {
-      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis });
+      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsNew(terms) });
     }
   }
 
@@ -137,9 +190,13 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
   for (const u of updates) {
-    const { error: e } = await sb.from("lots").update({ label: u.label, price_cents: u.price_cents, mode: u.mode, buy_now_cents: u.buy_now_cents, reach_estimate: u.reach_estimate, reach_basis: u.reach_basis }).eq("id", u.id).eq("status", "open");
-    // Migration 0035 freezes a spot's terms the moment somebody bids on it.
-    if (e?.message.includes("lot_terms_frozen")) return { ok: false, error: `${u.label ?? "A spot"} already has a bid on it, so its price, its mode and its take-it-now number stay as they are.` };
+    const { id: _id, ...columns } = u;
+    void _id;
+    const { error: e } = await sb.from("lots").update(columns).eq("id", u.id).eq("status", "open");
+    // Migration 0035 freezes a spot's terms the moment somebody bids on it, and 0056 counts the
+    // offer contract among them: a sponsor who bid on an offer bid on the one they read.
+    if (e?.message.includes("lot_terms_frozen")) return { ok: false, error: `${u.label ?? "A spot"} already has a bid on it, so its price, its mode, its take-it-now number and the terms of its offer stay as they are.` };
+    if (e?.message.includes("lots_offer_terms_is_sponsor_facing")) return { ok: false, error: `${u.label ?? "A spot"}: those offer terms are too long, or hold something that belongs on the delivery record rather than in the offer.` };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
   if (inserts.length) {
@@ -147,6 +204,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     // Migration 0044. Neither should be reachable from the editor; both are said in words if they are.
     if (e?.message.includes("opportunity_category_mismatch")) return { ok: false, error: "One of those options belongs to a different category than this fundraiser, so nothing new was added." };
     if (e?.message.includes("sponsorship_option_retired")) return { ok: false, error: "One of those options is no longer offered for new sponsorships. The spots you already have on it are unchanged." };
+    if (e?.message.includes("lots_offer_terms_is_sponsor_facing")) return { ok: false, error: "Those offer terms are too long, or hold something that belongs on the delivery record rather than in the offer." };
     if (e) return { ok: false, error: "Some spots did not save. Try once more." };
   }
 

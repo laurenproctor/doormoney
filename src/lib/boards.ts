@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SAMPLE_BOARDS, type Backer, type Board, type BoardLot } from "@/lib/sample";
+import { loadOfferPolicy, policyStatements } from "@/lib/offer-policy";
+import { offerTermsOf, publicOfferTerms } from "@/lib/offer-terms";
 
 const configured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -163,6 +165,43 @@ export async function getOwnedRunBoard(runId: string, actId: string): Promise<Bo
   return shapeBoard(sb, actRow as ActRow, run as RunRow);
 }
 
+/**
+ * The offer contract for each option on this fundraiser, as a sponsor may read it.
+ *
+ * Through `public_offer_terms` (migration 0056), which is the public read path and the only one:
+ * it applies the whitelist, it carries nothing private, and `anon` holds no grant on the column
+ * itself, so this is what a signed-out visitor can see and all of it.
+ *
+ * A draft is the exception, and it is the organizer's own preview. The view excludes drafts by
+ * design, the way lots have excluded them since migration 0048, so the terms come from the table
+ * instead, under the visitor's own session. Row level security is what answers: the owner reads
+ * their own draft and nobody else reads anything. The whitelist is applied here so the preview is
+ * the same public-safe document the published page would draw.
+ *
+ * Either read failing leaves an option with no terms, which every page already draws as an offer
+ * whose organizer has written none. A board is never broken by this.
+ */
+async function loadOfferTerms(sb: SupabaseClient, run: RunRow, lotIds: string[]): Promise<Map<string, unknown>> {
+  const terms = new Map<string, unknown>();
+  if (!lotIds.length) return terms;
+  try {
+    if (run.status === "draft") {
+      const { data } = await sb.from("lots").select("id,offer_terms,exclusive").in("id", lotIds);
+      for (const row of (data ?? []) as { id: string; offer_terms: unknown; exclusive: boolean | null }[]) {
+        terms.set(row.id, publicOfferTerms(offerTermsOf(row)));
+      }
+      return terms;
+    }
+    const { data } = await sb.from("public_offer_terms").select("lot_id,offer_terms,exclusive").in("lot_id", lotIds);
+    for (const row of (data ?? []) as { lot_id: string; offer_terms: unknown; exclusive: boolean | null }[]) {
+      terms.set(row.lot_id, publicOfferTerms(offerTermsOf(row)));
+    }
+  } catch {
+    return terms;
+  }
+  return terms;
+}
+
 function shapeAct(actRow: ActRow): Board["act"] {
   const { id: _id, photo_url, ...rest } = actRow;
   void _id;
@@ -175,10 +214,13 @@ async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Prom
 
   const { data: lots, error: lotsError } = await sb
     .from("lots")
-    .select("id,surface_key,label,price_cents,mode,status,closes_at,buy_now_cents,winner_bid_id")
+    .select("id,surface_key,label,price_cents,mode,status,closes_at,buy_now_cents,winner_bid_id,reach_estimate,reach_basis")
     .eq("run_id", run.id)
     .order("created_at");
   if (lotsError) console.error("board lots query failed", lotsError.message);
+
+  const lotIdsForTerms = (lots ?? []).map((l) => l.id);
+  const offerTerms = await loadOfferTerms(sb, run, lotIdsForTerms);
 
   // Bids come through public_bids (migration 0022), which resolves the patron's name and masks it
   // for an anonymous bid. The base table no longer exposes patron_id, so a name cannot be joined
@@ -228,6 +270,9 @@ async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Prom
       soldTo: buyers.get(l.id)?.name ?? null,
       soldCents: buyers.get(l.id)?.amountCents ?? null,
       wonAtAuction: Boolean(l.winner_bid_id),
+      offerTerms: offerTerms.get(l.id) ?? null,
+      reachEstimate: l.reach_estimate ?? null,
+      reachBasis: l.reach_basis ?? null,
     };
   });
 
@@ -250,6 +295,7 @@ async function shapeBoard(sb: SupabaseClient, actRow: ActRow, run: RunRow): Prom
       purpose: run.purpose,
       audienceDescription: run.audience_description,
       sponsorPromise: run.sponsor_promise,
+      deliveryTerms: policyStatements(await loadOfferPolicy(sb, run.category_key)),
     },
     lots: shaped,
     backers,

@@ -4,6 +4,8 @@ import { Page } from "@/components/Page";
 import { Section, SectionHead } from "@/components/Brand";
 import { Countdown } from "@/components/Countdown";
 import { LotCheckout } from "@/components/LotCheckout";
+import { loadOfferPolicy, policyStatements } from "@/lib/offer-policy";
+import { offerTermsFingerprint, offerTermsView, storedOfferTerms } from "@/lib/offer-terms";
 import { themeFor } from "@/components/Theme";
 import { formatDateRange } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -31,6 +33,12 @@ type Row = {
   status: string;
   funding_deadline: string | null;
   winner_bid_id: string | null;
+  price_cents: number;
+  /** The offer contract, frozen since the first bid. Read here, never from the browser. */
+  offer_terms: unknown;
+  exclusive: boolean | null;
+  reach_estimate: number | null;
+  reach_basis: string | null;
   runs: { title: string; category_key: string | null; kind: string | null; starts_on: string | null; ends_on: string | null; show_count: number | null; acts: { slug: string; name: string; city: string | null } };
 };
 
@@ -41,7 +49,7 @@ export default async function ClaimPage({ params }: Props) {
   const sb = supabaseAdmin();
   const { data } = await sb
     .from("lots")
-    .select("id,label,surface_key,status,funding_deadline,winner_bid_id,runs!inner(title,category_key,kind,starts_on,ends_on,show_count,acts!inner(slug,name,city))")
+    .select("id,label,surface_key,status,funding_deadline,winner_bid_id,price_cents,offer_terms,exclusive,reach_estimate,reach_basis,runs!inner(title,category_key,kind,starts_on,ends_on,show_count,acts!inner(slug,name,city))")
     .eq("funding_token", token)
     .maybeSingle();
   const lot = data as unknown as Row | null;
@@ -59,6 +67,10 @@ export default async function ClaimPage({ params }: Props) {
   const period = periodOf(run.kind);
   const count = words.music && run.show_count !== null ? `${run.show_count} ${run.show_count === 1 ? period.unit : period.units}` : null;
   const dates = run.starts_on && run.ends_on ? formatDateRange(run.starts_on, run.ends_on) : null;
+  // The offer the winner bid on, read from the lot and shown before they pay. Once a bid exists the
+  // terms are frozen (migration 0035, widened in 0056), so this is what they bid against.
+  const terms = offerTermsView(storedOfferTerms(lot), { reach_estimate: lot.reach_estimate, reach_basis: lot.reach_basis });
+  const deliveryTerms = policyStatements(await loadOfferPolicy(sb, run.category_key));
 
   return (
     <Page
@@ -100,7 +112,17 @@ export default async function ClaimPage({ params }: Props) {
             The whole amount is charged now. {checkoutTerms(words, act.name)} If the {words.periodNoun} is cancelled, the share not yet released is refunded.
           </p>
           <div className="mt-8">
-            <LotCheckout lotId={lot.id} lotName={name.toLowerCase()} priceLabel={formatMoney(amountCents)} token={token} terms={checkoutTerms(words, act.name)} onClose={null} />
+            <LotCheckout
+              lotId={lot.id}
+              lotName={name.toLowerCase()}
+              priceLabel={formatMoney(amountCents)}
+              token={token}
+              terms={checkoutTerms(words, act.name)}
+              offerTerms={terms}
+              offerPolicy={deliveryTerms}
+              termsFingerprint={offerTermsFingerprint(storedOfferTerms(lot), lot.price_cents)}
+              onClose={null}
+            />
           </div>
         </Section>
       )}

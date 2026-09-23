@@ -22,6 +22,9 @@ import { EVIDENCE_KINDS } from "@/lib/delivery-policy";
 const initial: DeliveryState = { ok: false };
 const KIND_LABEL: Record<(typeof EVIDENCE_KINDS)[number], string> = { photo: "A photograph", link: "A link", document: "A document", note: "A written note" };
 
+/** The evidence kinds in words. Same keys the evidence table stores (migration 0045). */
+const PROMISED = { photo: "a photograph", link: "a link", document: "a document", note: "your own written record" } as const;
+
 function EvidenceForm({ row }: { row: DeliveryRow }) {
   const [state, action, pending] = useActionState(submitEvidenceAction, initial);
   const uid = useId();
@@ -134,6 +137,16 @@ export function DeliveryPanel({ rows, youth, categoryKey }: { rows: DeliveryRow[
           </div>
           <p className={`caps mt-2 text-[14px] ${row.delivered ? "text-accent-ink" : "text-muted"}`}>{row.delivered ? "Documented" : "Not documented yet"}</p>
           <p className="mt-2 max-w-[62ch] text-[15px] text-muted">{deliveryStatusLine(row)}</p>
+          {/* What this sponsor bought, from the purchase snapshot, so both sides read the same
+              promise. Absent where the offer named none: nothing is invented in its place. */}
+          {row.promised?.method && (
+            <p className="mt-2 max-w-[62ch] text-[14.5px] text-accent-ink">
+              Your offer said you would document this with {PROMISED[row.promised.method as keyof typeof PROMISED] ?? row.promised.method}.{" "}
+              {row.promised.visibility === "may_publish"
+                ? "It goes to the sponsor, and you may also publish it on the fundraiser's page."
+                : "It goes to the sponsor and stays private."}
+            </p>
+          )}
           <MaterialsDecision row={row} categoryKey={categoryKey} />
 
           {row.evidence.length > 0 && (

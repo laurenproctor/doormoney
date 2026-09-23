@@ -14,6 +14,9 @@ import { periodOf } from "@/lib/periods";
 import { lotName } from "@/lib/purchases";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { releaseRuleOf } from "@/lib/delivery-policy";
+import { OfferSummary } from "@/components/OfferSummary";
+import { policyStatementsFromSnapshot } from "@/lib/offer-policy";
+import { isEmptyOfferTerms, offerTermsOfSnapshot, promisedEvidence, type OfferTerms } from "@/lib/offer-terms";
 import { STATE_LABEL, deliveryStanding } from "@/lib/delivery-state";
 import { materialsPrompt, recordStrap, recordWords, releaseSentence } from "@/lib/record-words";
 
@@ -97,7 +100,11 @@ async function load(id: string) {
 type Delivery = {
   rule: "calendar" | "evidence";
   bought: { opportunity: string | null; purpose: string | null; promise: string | null; release: string | null } | null;
-  deliverables: { id: string; title: string; status: string; due_at: string | null; evidenceCount: number }[];
+  /** The offer contract as it stood on the day of purchase. Empty for anything bought before it existed. */
+  terms: OfferTerms;
+  /** Cancellation and refunds as they were sold, from the snapshot's own policy version. */
+  policy: { key: string; label: string; sentence: string }[];
+  deliverables: { id: string; title: string; status: string; due_at: string | null; evidenceCount: number; position: number; promised: { method: string | null; visibility: string } | null }[];
   /** Only what this visitor may see: their own as a party to the purchase, plus anything published. */
   evidence: { deliverable: string; kind: string; url: string | null; note: string | null; isPublic: boolean }[];
 };
@@ -116,9 +123,16 @@ async function loadDelivery(sb: ReturnType<typeof supabaseAdmin>, purchaseId: st
     const { data: snap, error } = await sb.from("purchase_snapshots").select("snapshot").eq("purchase_id", purchaseId).maybeSingle();
     if (error) return null;
     const snapshot = (snap as { snapshot: Record<string, unknown> } | null)?.snapshot ?? null;
-    const { data: rows } = await sb.from("deliverables").select("id,title,status,due_at,evidence(id,removed_at)").eq("purchase_id", purchaseId).order("position");
-    const deliverables = ((rows ?? []) as { id: string; title: string; status: string; due_at: string | null; evidence: { id: string; removed_at: string | null }[] }[]).map((d) => ({
-      id: d.id, title: d.title, status: d.status, due_at: d.due_at, evidenceCount: d.evidence.filter((e) => !e.removed_at).length,
+    // The terms this sponsorship was actually sold under. Read from the immutable snapshot and
+    // never from the lot, which its organizer may have edited since (migration 0045).
+    const purchased = offerTermsOfSnapshot(snapshot);
+    const { data: rows } = await sb.from("deliverables").select("id,title,status,due_at,position,evidence(id,removed_at)").eq("purchase_id", purchaseId).order("position");
+    const deliverables = ((rows ?? []) as { id: string; title: string; status: string; due_at: string | null; position: number; evidence: { id: string; removed_at: string | null }[] }[]).map((d) => ({
+      id: d.id, title: d.title, status: d.status, due_at: d.due_at, position: d.position,
+      evidenceCount: d.evidence.filter((e) => !e.removed_at).length,
+      // The rows are written from the snapshot in order (migration 0057), so position n is the nth
+      // promise in the document, and what was promised to document it is read back the same way.
+      promised: promisedEvidence(purchased, d.position),
     }));
 
     const session = await supabaseServer();
@@ -137,6 +151,8 @@ async function loadDelivery(sb: ReturnType<typeof supabaseAdmin>, purchaseId: st
     const o = snapshot as { opportunity?: { label?: string | null; template?: { name?: string } }; fundraiser?: { purpose?: string | null; sponsor_promise?: string | null }; policy?: { terms?: { release?: string } } } | null;
     return {
       rule: releaseRuleOf(snapshot),
+      terms: purchased,
+      policy: policyStatementsFromSnapshot(snapshot),
       bought: o ? { opportunity: o.opportunity?.label ?? o.opportunity?.template?.name ?? null, purpose: o.fundraiser?.purpose ?? null, promise: o.fundraiser?.sponsor_promise ?? null, release: o.policy?.terms?.release ?? null } : null,
       deliverables,
       evidence: mine.length ? mine : open,
@@ -154,6 +170,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const day = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+
+/** The evidence kinds in words. Same keys the evidence table stores (migration 0045). */
+const EVIDENCE_WORDS = { photo: "a photograph", link: "a link", document: "a document", note: "their own written record" } as const;
 
 export default async function RecordPage({ params }: Props) {
   const { id } = await params;
@@ -268,6 +287,16 @@ export default async function RecordPage({ params }: Props) {
               <p className="mt-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
                 This is the offer as it stood on the day of purchase. Changes to the fundraiser since then do not change it. {releaseSentence(words, act.name)}
               </p>
+              {/* The whole offer contract, behind a press. Same document, same order and same words
+                  the fundraiser's page showed before the payment, from the copy nothing can edit. */}
+              {!isEmptyOfferTerms(delivery.terms) && (
+                <details className="mt-6 border-t border-line pt-5">
+                  <summary className="caps cursor-pointer text-[14px] text-accent-ink">Sponsorship details</summary>
+                  <div className="mt-5">
+                    <OfferSummary terms={delivery.terms} policy={delivery.policy} heading="" />
+                  </div>
+                </details>
+              )}
             </>
           )}
           <ol className="mt-8 grid gap-px bg-line">
@@ -278,6 +307,16 @@ export default async function RecordPage({ params }: Props) {
                   {d.status === "delivered" ? "Documented" : d.due_at ? `Due ${day.format(new Date(d.due_at))}` : "Not yet"}
                   {d.evidenceCount > 0 && `, ${d.evidenceCount} ${d.evidenceCount === 1 ? "item" : "items"}`}
                 </span>
+                {/* What the offer said would document this one. Absent where it said nothing, which
+                    is not a gap to fill: Door Money checks that evidence exists, never that it is good. */}
+                {d.promised?.method && (
+                  <span className="text-[14.5px] text-muted md:col-span-2">
+                    {act.name} documents this with {EVIDENCE_WORDS[d.promised.method as keyof typeof EVIDENCE_WORDS] ?? d.promised.method}.{" "}
+                    {d.promised.visibility === "may_publish"
+                      ? "It comes to you, and they may also publish it on the fundraiser's page."
+                      : "It comes to you and stays private."}
+                  </span>
+                )}
               </li>
             ))}
           </ol>

@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { Eyebrow } from "@/components/Brand";
 import { Countdown } from "@/components/Countdown";
 import { LotCheckout } from "@/components/LotCheckout";
+import { OfferSummary } from "@/components/OfferSummary";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/money";
+import { offerHighlights, type OfferTermsView } from "@/lib/offer-terms";
 import { BidForm } from "./BidForm";
 
 export type LotView = {
@@ -33,6 +35,14 @@ export type LotView = {
   /** Set while an auction lot can still be taken outright at this price. */
   buyNowCents: number | null;
   closesAt: string | null;
+  /**
+   * What this sponsorship includes, as the organizer wrote it. Already the public-safe document
+   * (src/lib/boards.ts reads it through the public view), so nothing here filters anything: it is
+   * shown or it is absent. Empty on an offer whose organizer has written no terms.
+   */
+  offerTerms: OfferTermsView;
+  /** What the page showed, so paying for terms that have since moved is refused rather than taken. */
+  termsFingerprint: string | null;
 };
 
 /** Initials for the little mark next to a bidder: "Kettle St. Coffee" becomes "KS". */
@@ -72,6 +82,7 @@ export function BoardLots({
   closesLabel,
   heading,
   terms,
+  deliveryTerms = [],
 }: {
   /** The line beside the pay button, in this fundraiser's own words (checkoutTerms). */
   terms?: string;
@@ -79,9 +90,12 @@ export function BoardLots({
   closesAt: string | null;
   closesLabel: string;
   heading: string;
+  /** What the category's delivery policy decides. Shown inside every option's details. */
+  deliveryTerms?: { key: string; label: string; sentence: string }[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState<{ id: string; kind: "take" | "bid" | "buyNow" } | null>(null);
+  const [details, setDetails] = useState<string | null>(null);
   const [justBid, setJustBid] = useState<Set<string>>(new Set());
 
   // The lots this board watches, as one stable string. The array itself is a new object on every
@@ -145,6 +159,9 @@ export function BoardLots({
             const canAct = !l.sold && !l.pending && !l.awaitingFunding && !(auction && l.closed);
             const button = auction ? `Bid ${formatMoney(l.minimumCents)}` : `Take this spot for ${formatMoney(l.priceCents)}`;
             const mine = justBid.has(l.id);
+            const highlights = offerHighlights(l.offerTerms);
+            const detailed = highlights.length > 0;
+            const showing = details === l.id;
             return (
               <div key={l.id} data-reveal style={{ "--i": i } as CSSProperties} className="relative grid items-center gap-x-8 gap-y-3 bg-ground px-7 py-6 max-md:px-5 min-[681px]:grid-cols-[1fr_auto]">
                 <div>
@@ -154,6 +171,26 @@ export function BoardLots({
                     <div className="caps mt-2 text-[14px] text-muted">
                       Closes in <Countdown closesAt={l.closesAt} className="text-accent-ink" />
                     </div>
+                  )}
+                  {/* Scannable first: what this includes, in four or five facts. The whole offer is
+                      one press away, so the card never becomes a wall of terms. */}
+                  {detailed && (
+                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                      {highlights.map((h) => (
+                        <span key={h} className="caps border border-line px-2 py-1 text-[14px] text-muted">{h}</span>
+                      ))}
+                    </div>
+                  )}
+                  {detailed && (
+                    <button
+                      type="button"
+                      onClick={() => setDetails((cur) => (cur === l.id ? null : l.id))}
+                      aria-expanded={showing}
+                      aria-controls={`offer-details-${l.id}`}
+                      className="caps mt-3 cursor-pointer text-[14px] text-accent-ink hover:underline"
+                    >
+                      {showing ? "Hide offer details" : "Offer details"}
+                    </button>
                   )}
                 </div>
                 <div className="min-w-[200px] min-[681px]:text-right">
@@ -189,8 +226,23 @@ export function BoardLots({
                   {auction && l.closed && !l.sold && !l.awaitingFunding && <div className="caps mt-3 text-[14px] text-muted">Bidding closed</div>}
                 </div>
 
+                {detailed && showing && (
+                  <div id={`offer-details-${l.id}`} className="edge col-span-full mt-2 bg-panel p-6 max-md:p-4">
+                    <OfferSummary terms={l.offerTerms} policy={deliveryTerms} heading="Sponsorship details" />
+                  </div>
+                )}
+
                 {open?.id === l.id && open.kind === "take" && (
-                  <LotCheckout lotId={l.id} lotName={l.name.toLowerCase()} priceLabel={formatMoney(l.priceCents)} terms={terms} onClose={() => setOpen(null)} />
+                  <LotCheckout
+                    lotId={l.id}
+                    lotName={l.name.toLowerCase()}
+                    priceLabel={formatMoney(l.priceCents)}
+                    terms={terms}
+                    offerTerms={l.offerTerms}
+                    offerPolicy={deliveryTerms}
+                    termsFingerprint={l.termsFingerprint}
+                    onClose={() => setOpen(null)}
+                  />
                 )}
                 {open?.id === l.id && open.kind === "buyNow" && l.buyNowCents !== null && (
                   <LotCheckout
@@ -200,6 +252,9 @@ export function BoardLots({
                     buyNow
                     note="Taking it now ends the bidding on this spot. Anyone who bid is told, and nothing is charged to them."
                     terms={terms}
+                    offerTerms={l.offerTerms}
+                    offerPolicy={deliveryTerms}
+                    termsFingerprint={l.termsFingerprint}
                     onClose={() => setOpen(null)}
                   />
                 )}

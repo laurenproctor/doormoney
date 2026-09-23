@@ -193,6 +193,11 @@ export type Opportunity = {
   status: string;
 };
 
+/**
+ * A `lots` row, as far as this adapter reads it. The offer contract (`offer_terms`, migration 0056)
+ * is deliberately not among them: an opportunity here is the commercial terms, and what the sponsor
+ * receives is read through src/lib/offer-terms.ts by whoever is drawing it.
+ */
 export type LotRow = { id: string; run_id: string; surface_key: string; label: string | null; price_cents: number; mode: string; buy_now_cents: number | null; status: string };
 
 export function opportunityFromLot(row: LotRow): Opportunity {
@@ -235,8 +240,9 @@ export function startingPriceCents(template: Pick<OpportunityTemplate, "defaultP
  *
  * Today a purchase is bound to its lot at an offer version (migration 0035), which is what stops a
  * sponsor paying for terms that moved. The immutable copy of everything that was promised, and the
- * delivery and evidence policy it was bought under, arrive with expansion Phase 4. They will be
- * built from `lots.template_snapshot` (migration 0044) and the lot's own terms at that version.
+ * delivery and evidence policy it was bought under, live in `purchase_snapshots` (migration 0045),
+ * built from `lots.template_snapshot` (migration 0044) and the lot's own `offer_terms` (migration
+ * 0056) as they stood. Read a purchase's promise from there, never from the live lot.
  * Nothing here reads or writes a payment.
  */
 export type PurchasedOffer = {

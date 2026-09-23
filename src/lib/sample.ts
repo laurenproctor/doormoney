@@ -18,6 +18,17 @@ export interface BoardLot {
   soldCents?: number | null;
   /** True when the sale came out of the bidding rather than a take-it-now. */
   wonAtAuction?: boolean;
+  /**
+   * The offer contract, as a sponsor may read it: what they provide, where it appears, how often,
+   * when, who it reaches, production, exclusivity, approval, deliverables, evidence. Read through
+   * the public view (migration 0056), so it is already the public-safe document and never the
+   * whole column. Absent on an offer whose organizer has written none, which is every lot made
+   * before the contract existed.
+   */
+  offerTerms?: unknown;
+  /** The organizer's own reach estimate and its basis, where they gave both. */
+  reachEstimate?: number | null;
+  reachBasis?: string | null;
 }
 
 /** A fan who backed the run through the widget, as they asked to appear. */
@@ -58,6 +69,12 @@ export interface Board {
     purpose?: string | null;
     audienceDescription?: string | null;
     sponsorPromise?: string | null;
+    /**
+     * What this category's delivery policy decides about cancelling, refunds and materials that
+     * never arrive. The same sentences the organizer was shown in the editor, because they are the
+     * policy's and not the organizer's. Absent on the in-memory samples.
+     */
+    deliveryTerms?: { key: string; label: string; sentence: string }[];
     biddingClosesAt: string | null;
     /** Only set when the board came from the database. The samples are always open. */
     status?: string;

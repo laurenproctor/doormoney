@@ -3,11 +3,20 @@
 const NY = "America/New_York";
 const shortDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const stampDay = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: NY });
+const shortDayYear = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 /** "Oct 3 to Nov 2". Date-only strings are read as UTC so they never drift a day. */
 export function formatDateRange(startsOn: string | null, endsOn: string | null) {
   if (!startsOn || !endsOn) return "Dates to be confirmed";
   return `${shortDay.format(new Date(startsOn))} to ${shortDay.format(new Date(endsOn))}`;
+}
+
+/**
+ * "Oct 3, 2027" for one date-only string, with the year, because a delivery window and a deadline
+ * can sit in a different year from the reader. Read as UTC, so a date never drifts a day.
+ */
+export function formatDay(on: string) {
+  return shortDayYear.format(new Date(`${on}T00:00:00Z`));
 }
 
 /** "Friday" in New York time. */

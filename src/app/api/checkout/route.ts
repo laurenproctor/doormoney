@@ -5,6 +5,7 @@ import { patronFor, payingProfileId } from "@/lib/patrons";
 import { buyNowOpen, checkoutRefusal } from "@/lib/auctions";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
 import { CATEGORY_PAYMENTS_CLOSED, paymentsOpenFor } from "@/lib/payment-gate";
+import { offerTermsFingerprint, storedOfferTerms } from "@/lib/offer-terms";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
 import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
@@ -54,6 +55,12 @@ const Input = z.discriminatedUnion("kind", [
     token: z.string().trim().min(16).max(64).optional(),
     /** Taking an auction lot at its buy-it-now price instead of bidding. */
     buyNow: z.boolean().optional(),
+    /**
+     * The fingerprint of the offer the page drew (src/lib/offer-terms.ts). Opaque: it is compared
+     * with one this route computes from the lot and is never read as terms. The offer contract
+     * itself is deliberately not accepted from a browser at all, and zod drops anything else sent.
+     */
+    termsFingerprint: z.string().trim().max(40).optional(),
   }),
 ]);
 
@@ -70,6 +77,11 @@ type LotRow = {
   funding_token: string | null;
   funding_deadline: string | null;
   buy_now_cents: number | null;
+  /** The offer contract, read here and nowhere else: the browser's copy is never trusted. */
+  offer_terms: unknown;
+  exclusive: boolean | null;
+  /** Bumped on every offer made to a bidder (migration 0035). Recorded against the purchase. */
+  offer_version: number | null;
   runs: { id: string; slug: string; title: string; status: string; category_key: string | null; act_id: string; acts: { id: string; slug: string; name: string } };
 };
 
@@ -92,7 +104,7 @@ export async function POST(req: Request) {
 
   const { data: lotData, error: lotError } = await sb
     .from("lots")
-    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,runs!inner(id,slug,title,status,category_key,act_id,acts!inner(id,slug,name))")
+    .select("id,label,surface_key,price_cents,mode,status,winner_bid_id,funding_token,funding_deadline,buy_now_cents,offer_terms,exclusive,offer_version,runs!inner(id,slug,title,status,category_key,act_id,acts!inner(id,slug,name))")
     .eq("id", input.lotId)
     .maybeSingle();
   if (lotError) return fail("That did not load. Try once more.", 500);
@@ -104,6 +116,21 @@ export async function POST(req: Request) {
   if (!(await paymentsOpenFor(sb, lot.runs.category_key))) return fail(CATEGORY_PAYMENTS_CLOSED, 403);
   if (lot.status === "sold") return fail("That spot is already taken.", 409);
   if (lot.status !== "open" && lot.status !== "pending_funding") return fail("That spot is not for sale.", 400);
+
+  // The offer contract, from the lot. A lot's terms are only frozen once somebody has bid on it or
+  // paid for it (migration 0035, widened in 0056), so until then an organizer may still edit them,
+  // and a sponsor with the page open could otherwise pay for an offer that changed underneath them.
+  // The page sends back a fingerprint of what it drew and this compares it with its own, computed
+  // from the row it just read. Nothing about the terms themselves comes from the browser.
+  //
+  // A request that sends no fingerprint is not refused: the claim page has always been able to pay
+  // without one, and this is a guard against a stale page rather than a security boundary. What
+  // stops a sponsor being given different terms from the ones they paid for is the snapshot, which
+  // is written from the lot at the moment of purchase and can never be edited (migration 0045).
+  const offerTerms = storedOfferTerms({ offer_terms: lot.offer_terms });
+  if (input.termsFingerprint && input.termsFingerprint !== offerTermsFingerprint(offerTerms, lot.price_cents)) {
+    return fail("This sponsorship's terms changed while the page was open. Reload and read them again before paying.", 409);
+  }
 
   // Three ways to pay for a lot: a fixed price, an auction lot taken at its buy-it-now number, and
   // an auction lot the patron won, through the private token in their email.
@@ -158,6 +185,8 @@ export async function POST(req: Request) {
       runId: lot.runs.id,
       actId: act.id,
       actSlug: act.slug,
+      offerVersion: lot.offer_version ?? undefined,
+      offerTermsVersion: offerTerms.version ?? null,
       amountCents: amount,
       description: `${lotName(lot)}, ${act.name}, ${lot.runs.title}`,
       patronEmail: email,

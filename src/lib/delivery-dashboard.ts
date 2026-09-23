@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EvidenceKind } from "@/lib/delivery-policy";
+import { offerTermsOf, promisedEvidence } from "@/lib/offer-terms";
 
 /*
   What an organizer sees of delivery on one of their own fundraisers.
@@ -30,6 +31,12 @@ export type DeliveryRow = {
   dueAt: string | null;
   /** True while the sponsorship is still held. A refunded one cannot be delivered against. */
   open: boolean;
+  /**
+   * What the offer said would document this one, from the purchase snapshot rather than the lot, so
+   * the organizer is shown the promise the sponsor bought. Null where the offer named none, which is
+   * every sponsorship sold before the offer contract existed.
+   */
+  promised: { method: string | null; visibility: string } | null;
   evidence: DeliveryEvidence[];
 };
 
@@ -40,7 +47,11 @@ export type RawDeliverable = {
   status: string;
   due_at: string | null;
   position: number;
-  purchases: { id: string; lot_id: string; mark_status: string; payment_status: string };
+  purchases: {
+    id: string; lot_id: string; mark_status: string; payment_status: string;
+    /** The lot's offer contract. Absent wherever the read did not ask for it. */
+    lots?: { offer_terms: unknown } | null;
+  };
   evidence: RawEvidence[] | null;
 };
 
@@ -65,6 +76,15 @@ export function shapeDelivery(
       delivered: d.status === "delivered",
       dueAt: d.due_at,
       open: d.purchases.payment_status === "held",
+      // What the sponsor bought, from the lot the organizer already owns rather than from the
+      // purchase snapshot, which holds amounts and has no browser grant at all (migration 0045).
+      // The two are the same document by construction: a lot with a purchase on it has its terms
+      // frozen (freeze_lot_terms, migration 0035 widened in 0056), and the snapshot was written
+      // from that lot at the moment of purchase. So this is the purchased promise, read without a
+      // service-role query and without anybody's money passing through this file.
+      // Position n is the nth promise: the rows are written from the snapshot in that order
+      // (migration 0057), and neither the rows nor the document can be edited afterwards.
+      promised: d.purchases.lots ? promisedEvidence(offerTermsOf({ offer_terms: d.purchases.lots.offer_terms }), d.position) : null,
       evidence: (d.evidence ?? [])
         .filter((e) => !e.removed_at)
         .sort((a, b) => a.created_at.localeCompare(b.created_at))
@@ -82,7 +102,7 @@ export async function loadRunDelivery(sb: SupabaseClient, lotIds: string[], admi
   try {
     const { data, error } = await sb
       .from("deliverables")
-      .select("id,title,status,due_at,position,purchases!inner(id,lot_id,mark_status,payment_status),evidence(id,kind,url,note,visibility,shows_minor,created_at)")
+      .select("id,title,status,due_at,position,purchases!inner(id,lot_id,mark_status,payment_status,lots!inner(offer_terms)),evidence(id,kind,url,note,visibility,shows_minor,created_at)")
       .in("purchases.lot_id", lotIds)
       .order("position");
     if (error || !data) return [];

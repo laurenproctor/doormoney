@@ -4,12 +4,22 @@ import { saveLots, type LotsState } from "@/app/actions/lots";
 import { cancelRun, publishRun, unpublishRun } from "@/app/actions/run";
 import { Button } from "@/components/Button";
 import { OpportunityEditor } from "@/components/domain";
+import { OfferTermsEditor } from "@/components/OfferTermsEditor";
+import type { PolicyStatement } from "@/lib/offer-policy";
+import { EMPTY_OFFER_TERMS_DRAFT, draftFromTerms, offerTermsOf, type OfferTermsDraft } from "@/lib/offer-terms";
 import type { OpportunityDraft } from "@/lib/domain";
 import { templateSections, type OpportunityTemplate } from "@/lib/opportunities";
 import { formatMoney } from "@/lib/money";
 import { IN_KIND_NOTE, hasInKind, sponsorshipKindLabels } from "@/lib/sponsorship-kinds";
 
-export type ExistingLot = { id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string; buy_now_cents: number | null; reach_estimate: number | null; reach_basis: string | null };
+export type ExistingLot = {
+  id: string; surface_key: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; status: string;
+  buy_now_cents: number | null; reach_estimate: number | null; reach_basis: string | null;
+  /** The offer contract (migration 0056). Absent on a lot saved before it existed, which reads as empty. */
+  offer_terms?: unknown;
+  /** The boolean exclusivity has been stored in since 0001, read where the document has no exclusivity section. */
+  exclusive?: boolean | null;
+};
 
 type RowState = { on: boolean; count: string; price: string; mode: "fixed" | "auction"; buyNow: string; reach: string; reachBasis: string };
 
@@ -30,12 +40,18 @@ export function LotsEditor({
   lots,
   boardHref,
   publishable = true,
+  policy = [],
+  materialsWindowDays = null,
 }: {
   runId: string;
   runStatus: string;
   surfaces: OpportunityTemplate[];
   lots: ExistingLot[];
   boardHref: string;
+  /** What this category's delivery policy decides about cancelling, refunds and late materials. */
+  policy?: readonly PolicyStatement[];
+  /** The policy's own materials window, shown where an offer names no other. */
+  materialsWindowDays?: number | null;
   /**
    * False where the registry has not opened the category for publishing. The button is then not
    * offered. This is a courtesy: publishRun and the database both refuse whatever is drawn here.
@@ -61,6 +77,21 @@ export function LotsEditor({
   const set = (key: string, patch: Partial<RowState>) => setRows((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
   const lockedKeys = new Set(lots.filter((l) => l.status !== "open").map((l) => l.surface_key));
 
+  // The offer contract for each option, held here so the details section can show a live preview and
+  // say what is still missing, and so a save that comes back with a problem gives back every box
+  // with what was typed in it. Read from the first spot on each option: every spot on one option
+  // shares its terms, the same way they share a price. Empty where nobody has written any.
+  const [terms, setTerms] = useState<Record<string, OfferTermsDraft>>(() => {
+    const t: Record<string, OfferTermsDraft> = {};
+    for (const s of surfaces) {
+      const mine = lots.find((l) => l.surface_key === s.key);
+      t[s.key] = mine ? draftFromTerms(offerTermsOf(mine)) : { ...EMPTY_OFFER_TERMS_DRAFT };
+    }
+    return t;
+  });
+  const setTermsFor = (key: string, patch: Partial<OfferTermsDraft>) =>
+    setTerms((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+
   const [publishError, setPublishError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelled, setCancelled] = useState<{ refundedCents: number; patrons: number } | null>(null);
@@ -70,6 +101,10 @@ export function LotsEditor({
   // Sections come from the templates themselves, so a category this build has no words for still
   // draws one, under its own name.
   const groups = templateSections(surfaces);
+
+  // saveLots refuses one option at a time and names it, so the sentence can sit beside the option
+  // it is about rather than only at the bottom of the form.
+  const errorFor = (name: string) => (state.error?.startsWith(`${name}: `) ? state.error.slice(name.length + 2) : null);
 
   return (
     <>
@@ -87,16 +122,35 @@ export function LotsEditor({
                 // music, the catalog or saving. This file stays the adapter between them.
                 const draft: OpportunityDraft = { on: r.on, count: r.count, price: r.price, saleMethod: r.mode, buyNow: r.buyNow, reach: r.reach, reachBasis: r.reachBasis };
                 return (
-                  <OpportunityEditor
-                    key={s.key}
-                    template={{ key: s.key, name: s.name, seenBy: s.seenBy, suggestedPriceCents: s.defaultPriceCents, period: s.period, kindLabels: sponsorshipKindLabels(s.kinds), kindNote: hasInKind(s.kinds) ? IN_KIND_NOTE : null }}
-                    value={draft}
-                    locked={locked}
-                    onChange={(patch) => {
-                      const { saleMethod, ...rest } = patch;
-                      set(s.key, saleMethod ? { ...rest, mode: saleMethod } : rest);
-                    }}
-                  />
+                  <div key={s.key} className="border-b border-line last:border-b-0 [&>div:first-child]:border-b-0">
+                    <OpportunityEditor
+                      template={{ key: s.key, name: s.name, seenBy: s.seenBy, suggestedPriceCents: s.defaultPriceCents, period: s.period, kindLabels: sponsorshipKindLabels(s.kinds), kindNote: hasInKind(s.kinds) ? IN_KIND_NOTE : null }}
+                      value={draft}
+                      locked={locked}
+                      onChange={(patch) => {
+                        const { saleMethod, ...rest } = patch;
+                        set(s.key, saleMethod ? { ...rest, mode: saleMethod } : rest);
+                      }}
+                    />
+                    {/* The rest of the offer: what the sponsor receives, when, and how it is documented.
+                        Hidden rather than unmounted while the option is off, so nothing typed is lost. */}
+                    <div className="px-4 pb-4">
+                      <OfferTermsEditor
+                        templateKey={s.key}
+                        templateName={s.name}
+                        draft={terms[s.key] ?? EMPTY_OFFER_TERMS_DRAFT}
+                        onChange={(patch) => setTermsFor(s.key, patch)}
+                        reach={r.reach}
+                        reachBasis={r.reachBasis}
+                        onReachChange={(patch) => set(s.key, patch)}
+                        policy={policy}
+                        materialsWindowDays={materialsWindowDays}
+                        hidden={!r.on}
+                        locked={locked}
+                        error={errorFor(s.name)}
+                      />
+                    </div>
+                  </div>
                 );
               })}
             </div>
