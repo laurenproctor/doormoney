@@ -8,6 +8,16 @@ import type { PriceRoute, PricedRoute } from "@/lib/discovery-filters";
 import type { DiscoveryCardView, DiscoveryPreview } from "@/lib/discovery-query";
 
 /**
+ * The card's one action, written once.
+ *
+ * Both wordings take it, so "View sponsorships" and "See the project" are the same control at the
+ * same size. In rows it fills the column it is in rather than sitting at its own text width: the
+ * track is a fixed width, the label does not wrap, and a control sized by its own label was
+ * reaching past the right-hand edge of the row it belongs to.
+ */
+const ACTION = "mt-1 self-start whitespace-nowrap px-5 py-3 discovery-rows:lg:self-stretch";
+
+/**
  * One fundraiser, as a sponsor meets it in the list, in either layout.
  *
  * Only public, organizer-provided facts: who is raising, what the funding enables, where it
@@ -23,6 +33,11 @@ import type { DiscoveryCardView, DiscoveryPreview } from "@/lib/discovery-query"
  * One markup for both layouts. Tiles are the default; the `discovery-rows` variant (globals.css)
  * reads the attribute the reader's choice sets on <html> and re-lays the same elements, so there is
  * never a second copy of a card and the two views cannot disagree about what is in it.
+ *
+ * The organizer's own prose is clamped to a few lines. A card is a summary and the fundraiser's own
+ * page carries the whole of it, so the clamp keeps one card from setting the height of every other
+ * one. It only ever shortens; it never rewrites, never summarizes and never adds a word the
+ * organizer did not write, and the section it sits in still says what it is.
  */
 export function DiscoveryCard({
   card,
@@ -40,17 +55,17 @@ export function DiscoveryCard({
   const prices = priceLines(card);
   const hasOffers = card.availableOffers > 0;
   return (
-    <li className="discovery-rows:grid discovery-rows:grid-cols-[72px_1fr] discovery-rows:gap-x-5 discovery-rows:border-0 discovery-rows:border-b discovery-rows:border-line discovery-rows:bg-transparent discovery-rows:py-6 discovery-rows:md:grid-cols-[220px_1fr_260px] discovery-rows:md:gap-x-8 edge flex flex-col bg-panel">
+    <li className="discovery-rows:grid discovery-rows:grid-cols-[72px_minmax(0,1fr)] discovery-rows:gap-x-5 discovery-rows:border-0 discovery-rows:border-b discovery-rows:border-line discovery-rows:bg-transparent discovery-rows:py-6 discovery-rows:lg:grid-cols-[200px_minmax(0,1fr)_300px] discovery-rows:lg:gap-x-8 edge flex h-full flex-col bg-panel">
       {/* The organizer's photo, where they added one. A picture of who is raising, never documentation of the work. */}
       {card.organizerPhotoUrl && (
         <OrganizerPhoto
           src={card.organizerPhotoUrl}
-          frameClassName="discovery-rows:aspect-square discovery-rows:w-[72px] discovery-rows:md:aspect-[4/3] discovery-rows:md:w-full aspect-[16/9] w-full overflow-hidden bg-ground"
+          frameClassName="discovery-rows:aspect-square discovery-rows:w-[72px] discovery-rows:lg:aspect-auto discovery-rows:lg:max-h-none discovery-rows:lg:min-h-[190px] discovery-rows:lg:w-full aspect-[16/9] max-h-[220px] w-full overflow-hidden bg-ground"
           className="h-full w-full object-cover"
         />
       )}
 
-      <div className={`discovery-rows:px-0 discovery-rows:py-0 flex flex-1 flex-col gap-3.5 px-[26px] pt-6 ${card.organizerPhotoUrl ? "" : "discovery-rows:col-span-2 discovery-rows:md:col-span-1 discovery-rows:md:col-start-2"}`}>
+      <div className={`discovery-rows:px-0 discovery-rows:py-0 flex min-w-0 flex-1 flex-col gap-3.5 px-[26px] pt-6 ${card.organizerPhotoUrl ? "" : "discovery-rows:col-span-2 discovery-rows:lg:col-start-1 discovery-rows:lg:max-w-[72ch]"}`}>
         <div className="flex flex-wrap items-center gap-2.5">
           <CategoryBadge category={{ key: card.categoryKey, label: categoryLabel }} />
           {card.closingSoon && (
@@ -67,7 +82,7 @@ export function DiscoveryCard({
           </p>
         </div>
 
-        {card.purpose && <p className="text-[15px] leading-[1.6]">{card.purpose}</p>}
+        {card.purpose && <p className="line-clamp-3 text-[15px] leading-[1.6]">{card.purpose}</p>}
 
         <LocationSummary locations={card.locations} activityMode={card.activityMode} className="text-muted" />
 
@@ -100,20 +115,25 @@ export function DiscoveryCard({
         {card.sponsorPromise && (
           <div className="border-t border-line pt-3.5">
             <div className="caps text-[14px] text-accent-ink">Sponsor visibility</div>
-            <p className="mt-1.5 text-[15px] leading-[1.6]">{card.sponsorPromise}</p>
+            <p className="mt-1.5 line-clamp-2 text-[15px] leading-[1.6]">{card.sponsorPromise}</p>
           </div>
         )}
 
         {card.audience && (
           <p className="text-[15px] leading-[1.6] text-muted">
             <span className="caps text-[14px]">Audience</span>
-            <span className="block">{card.audience}</span>
+            <span className="line-clamp-2 block">{card.audience}</span>
           </p>
         )}
       </div>
 
-      <div className={`discovery-rows:mt-0 discovery-rows:border-0 discovery-rows:px-0 discovery-rows:pb-0 discovery-rows:pt-4 discovery-rows:md:border-l discovery-rows:md:border-line discovery-rows:md:pl-8 discovery-rows:md:pt-0 mt-auto flex flex-col gap-3.5 border-t border-line px-[26px] pb-7 pt-4 ${card.organizerPhotoUrl ? "discovery-rows:col-start-2 discovery-rows:md:col-start-3" : "discovery-rows:col-span-2 discovery-rows:md:col-span-1 discovery-rows:md:col-start-3"}`}>
-        <div className="flex flex-wrap gap-x-6 gap-y-3 discovery-rows:md:flex-col discovery-rows:md:gap-y-2.5">
+      {/*
+        The action block. In rows it takes the whole width under the card until there is room for
+        its own column, photo or no photo: indented under a thumbnail there was not room for the
+        button, which is how it came to sit outside the row it belongs to.
+      */}
+      <div className="discovery-rows:col-span-2 discovery-rows:mt-0 discovery-rows:border-0 discovery-rows:px-0 discovery-rows:pb-0 discovery-rows:pt-4 discovery-rows:lg:col-span-1 discovery-rows:lg:col-start-3 discovery-rows:lg:border-l discovery-rows:lg:border-line discovery-rows:lg:pl-8 discovery-rows:lg:pt-0 mt-auto flex min-w-0 flex-col gap-3.5 border-t border-line px-[26px] pb-7 pt-4">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 discovery-rows:lg:flex-col discovery-rows:lg:gap-y-2.5">
           {prices.map((p) => (
             <Stat key={p.label} value={p.value} label={p.label} />
           ))}
@@ -133,9 +153,9 @@ export function DiscoveryCard({
 
         {/* A fundraiser with nothing open to buy is still a page worth reading; it is not offered as a purchase. */}
         {hasOffers ? (
-          <ButtonLink href={card.href} className="mt-1 self-start whitespace-nowrap px-5 py-3">View sponsorships</ButtonLink>
+          <ButtonLink href={card.href} className={ACTION}>View sponsorships</ButtonLink>
         ) : (
-          <ButtonLink href={card.href} variant="ghost" className="mt-1 self-start whitespace-nowrap px-5 py-3">See the project</ButtonLink>
+          <ButtonLink href={card.href} variant="ghost" className={ACTION}>See the project</ButtonLink>
         )}
       </div>
     </li>
