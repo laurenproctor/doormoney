@@ -4,7 +4,6 @@ import { notFound, redirect } from "next/navigation";
 import { ButtonLink } from "@/components/Button";
 import { DashboardShell } from "@/components/DashboardShell";
 import { DeliveryPanel } from "@/components/DeliveryPanel";
-import { DraftPublishControls } from "@/components/DraftPublishControls";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { FundraiserStages } from "@/components/FundraiserStages";
 import { LotsEditor, type ExistingLot } from "@/components/LotsEditor";
@@ -19,6 +18,8 @@ import { ShareFundraiser } from "@/components/dashboard/ShareFundraiser";
 import { SponsorshipWorkTable } from "@/components/dashboard/SponsorshipWorkTable";
 import { TaskDecision } from "@/components/dashboard/TaskDecision";
 import { Badge, Card, Kpi, KpiUnit, MoneyBar, RunStrip, Table, Tabs, TaskDate, TaskRow, type BadgeKind, type DeskRow } from "@/components/desk";
+import { FundraiserReview } from "@/components/review/FundraiserReview";
+import { PublishedNotice } from "@/components/review/PublishedNotice";
 import { categoryStatus, draftCategories, draftDiscoveryRegistry, loadFundraiserDraft } from "@/app/actions/drafts";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { categoryWords } from "@/lib/category-words";
@@ -67,7 +68,7 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<str
 */
 export default async function RunPage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const { kit: kitParam, stage: stageParam } = sp;
+  const { kit: kitParam, stage: stageParam, published: publishedParam } = sp;
   const user = await requireUser(`/dashboard/runs/${id}`);
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   if (!act) redirect("/dashboard/act/new");
@@ -109,11 +110,13 @@ export default async function RunPage({ params, searchParams }: Props) {
   if (run.status === "draft") {
     const draft = await loadFundraiserDraft(id);
     if (!draft) notFound();
-    const stage: JourneyStage | null = isJourneyStage(stageAsked)
-      ? stageAsked
-      : stageAsked || tabAsked
-        ? null
-        : resumeStage(draft, { optionCount, hasTemplates: offerable.length > 0 });
+    /*
+      Where a draft opens. `resumeStage` always answers a stage now that Review is one, so a draft
+      with nothing asked for lands inside the journey rather than on a workspace. Asking for a tab
+      is the way out of it: the workspace's editors stay reachable for a draft, and the decision to
+      publish is not among them. That is the review stage's, and only the review stage's.
+    */
+    const stage: JourneyStage | null = tabAsked ? null : isJourneyStage(stageAsked) ? stageAsked : resumeStage(draft, { optionCount, hasTemplates: offerable.length > 0 });
     if (stage) {
       const heading = STAGE_HEADING[stage];
       const shell = { current: "/dashboard/runs", nav, actName: act.name, actSlug: act.slug, identity, theme: themeFor(act.slug), eyebrow: `Private draft · ${draft.title || "New fundraiser"}`, title: heading.title, accent: heading.accent, intro: <p>{heading.intro}</p> };
@@ -134,30 +137,69 @@ export default async function RunPage({ params, searchParams }: Props) {
           </Card>
         </DashboardShell>;
       }
-      // The sponsorships stage: one option at a time, through the workspace editor's own action.
-      const { label, publishEnabled } = await categoryStatus(categoryKey);
+      const { label, publishEnabled: categoryPublishable } = await categoryStatus(categoryKey);
       const stagePolicy = await loadOfferPolicy(sb, categoryKey);
-      const noTemplatesReason: NoTemplatesReason | null = offerable.length > 0 ? null : music && !act.type ? "music_type" : "none";
+      if (stage === "sponsorships") {
+        // The sponsorships stage: one option at a time, through the workspace editor's own action.
+        const noTemplatesReason: NoTemplatesReason | null = offerable.length > 0 ? null : music && !act.type ? "music_type" : "none";
+        return <DashboardShell {...shell}>
+          <FundraiserStages current="sponsorships" className="mb-7 max-w-[760px]" />
+          <Card>
+            <SponsorshipBuilder
+              runId={run.id}
+              categoryLabel={label}
+              templates={offerable}
+              lots={allLots}
+              policy={policyStatements(stagePolicy)}
+              materialsWindowDays={stagePolicy?.materialsWindowDays ?? null}
+              suggestedKeys={kit && kit.enabled && kitCarried ? suggestedTemplates(kit, surfaces).map((t) => t.key) : []}
+              kitLabel={kit && kitCarried ? kit.label : null}
+              goalCents={draft.goal_cents ?? null}
+              sponsorPromise={draft.sponsor_promise ?? null}
+              publishable={categoryPublishable}
+              noTemplatesReason={noTemplatesReason}
+              continueHref={stagePath(run.id, "review", kitCarried)}
+              backHref={stagePath(run.id, "funding", kitCarried)}
+            />
+          </Card>
+        </DashboardShell>;
+      }
+      /*
+        The review: the saved fundraiser read back, what is unfinished and where it is fixed, and
+        the decision. Readiness is the same input publishRun reads, computed once here, so the
+        list, the button and the refusal agree. The real page is offered where it can be drawn:
+        music's board is drawn from its dates and count, so before those exist the preview would
+        answer 404, and the review says so instead of linking.
+      */
+      const readinessInput = {
+        act,
+        run: { ...run, methods: run.verification_methods ?? [], other: run.verification_other ?? null },
+        lotCount: allLots.length,
+        auctionCount: allLots.filter((l) => l.mode === "auction").length,
+        categoryPublishable,
+        incompleteOffers: incompleteOffers(allLots, registry),
+      };
+      const previewReady = !music || Boolean(run.kind && run.starts_on && run.ends_on && run.show_count !== null);
       return <DashboardShell {...shell}>
-        <FundraiserStages current="sponsorships" className="mb-7 max-w-[760px]" />
-        <Card>
-          <SponsorshipBuilder
-            runId={run.id}
-            categoryLabel={label}
-            templates={offerable}
-            lots={allLots}
-            policy={policyStatements(stagePolicy)}
-            materialsWindowDays={stagePolicy?.materialsWindowDays ?? null}
-            suggestedKeys={kit && kit.enabled && kitCarried ? suggestedTemplates(kit, surfaces).map((t) => t.key) : []}
-            kitLabel={kit && kitCarried ? kit.label : null}
-            goalCents={draft.goal_cents ?? null}
-            sponsorPromise={draft.sponsor_promise ?? null}
-            publishable={publishEnabled}
-            noTemplatesReason={noTemplatesReason}
-            continueHref={stagePath(run.id, "review", kitCarried)}
-            backHref={stagePath(run.id, "funding", kitCarried)}
-          />
-        </Card>
+        <FundraiserStages current="review" className="mb-7 max-w-[760px]" />
+        <FundraiserReview
+          draft={{ ...draft, verification_methods: run.verification_methods ?? [], verification_other: run.verification_other ?? null }}
+          organizer={{ name: act.name, slug: act.slug, kindLabel: entityKindLabel(act.entity_kind), city: act.city, region: act.region, countryCode: act.country_code, bio: act.bio, photoUrl: act.photo_url }}
+          categoryKey={categoryKey}
+          categoryLabel={label}
+          lots={allLots}
+          templates={offerable}
+          policy={stagePolicy}
+          rows={readiness(readinessInput)}
+          blockers={publishBlockers(readinessInput)}
+          publishable={categoryPublishable}
+          discovery={await draftDiscoveryRegistry()}
+          kit={kitCarried}
+          preview={previewReady ? { href: `/dashboard/runs/${run.id}/preview` } : { why: "The preview draws a music fundraiser from its performance format, both dates and a number of performances; add those on the funding stage and it appears here." }}
+          publicUrl={runUrl(act.slug, run.slug)}
+          keepHref="/dashboard/runs"
+          workspaceHref={`/dashboard/runs/${run.id}`}
+        />
       </DashboardShell>;
     }
   }
@@ -171,10 +213,6 @@ export default async function RunPage({ params, searchParams }: Props) {
   // arrive. Stated in the offer editor, never chosen there: those terms belong to the policy the
   // purchase is recorded under, not to one organizer's offer.
   const offerPolicy = await loadOfferPolicy(sb, categoryKey);
-  // The starter kit this draft began from, where the address still carries it. It is not stored
-  // with the fundraiser, and one from another category is ignored. It names options to look at and
-  // ticks none of them.
-  const kitSuggestions = kit && kit.enabled && kitCarried ? suggestedTemplates(kit, surfaces) : [];
   const boardHref = runUrl(act.slug, run.slug);
   // What this fundraiser still owes its sponsors. Read under the organizer's own session, so row
   // level security decides. Empty for music, which releases on its calendar and owes no rows.
@@ -193,7 +231,8 @@ export default async function RunPage({ params, searchParams }: Props) {
   const metrics = view?.metrics ?? null;
   const work: WorkRow[] = view?.work ?? [];
   const target = previewTarget({ id: run.id, slug: run.slug, status: run.status }, act.slug);
-  // The same rules publishRun runs, so the stepper, the publish button and the refusal agree.
+  // The same rules publishRun runs, so the draft's stepper here, the review stage's list and the
+  // refusal all agree. The publish button is the review stage's and reads them there.
   const readinessInput = {
     act,
     run: { ...run, methods, other: run.verification_other ?? null },
@@ -202,7 +241,6 @@ export default async function RunPage({ params, searchParams }: Props) {
     categoryPublishable,
     incompleteOffers: incompleteOffers(allLots, registry),
   };
-  const blockers = draft ? publishBlockers(readinessInput) : [];
 
   /* ------------------------------------------------------------------ the tabs */
 
@@ -251,6 +289,9 @@ export default async function RunPage({ params, searchParams }: Props) {
       titleAside={<Badge kind={STATUS_KIND[run.status] ?? "neutral"}>{lifecycleLabel(run.status)}</Badge>}
       intro={<p>{headline({ run, period: period.unit, nextOn: view?.nextShow?.played_on ?? null, nextCity: view?.nextShow?.city ?? null, bidding: allLots.some((l) => l.mode === "auction") })}</p>}
     >
+      {/* Straight from the review stage's Publish. Said once, then the workspace is the workspace. */}
+      {publishedParam === "1" && isShareable(run.status) && <PublishedNotice url={boardHref} />}
+
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <ButtonLink href={target.path} register="desk" variant="outline">
           {target.label}
@@ -290,7 +331,7 @@ export default async function RunPage({ params, searchParams }: Props) {
 
       {tab === "overview" && (
         draft ? (
-          <DraftOverview input={readinessInput} runId={run.id} />
+          <DraftOverview input={readinessInput} runId={run.id} reviewHref={stagePath(run.id, "review", kitCarried)} />
         ) : (
           <>
             {metrics && (() => {
@@ -429,8 +470,14 @@ export default async function RunPage({ params, searchParams }: Props) {
               Built one at a time on the sponsorships stage, each with its own placement, price and terms. Sold options stay as they are.
             </p>
             <DraftOptionsSummary lots={allLots} templates={offerable} href={stagePath(run.id, "sponsorships", kitCarried)} />
-            <div className="mt-5 border-t border-line pt-5">
-              <DraftPublishControls runId={run.id} publishable={categoryPublishable} optionCount={optionCount} blockers={blockers} />
+            {/* Whether it goes up is the review stage's question, and it is asked in one place. */}
+            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-5">
+              <ButtonLink href={stagePath(run.id, "review", kitCarried)} register="desk" variant="outline">
+                Go to the review
+              </ButtonLink>
+              <span className="text-[14px] leading-[1.6] text-muted">
+                The review reads the whole fundraiser back, names anything unfinished, and is where you publish it.
+              </span>
             </div>
           </Card>
         ) : (
@@ -440,12 +487,6 @@ export default async function RunPage({ params, searchParams }: Props) {
                 ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold options stay as they are."
                 : "No prices are suggested here yet, so your own number is the only number. Offer only what you can deliver. Sold options stay as they are."}
             </p>
-            {kit && kitSuggestions.length > 0 && (
-              <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
-                The starter kit you began with, {kit.label}, suggests looking at: {kitSuggestions.map((t) => t.name).join(", ")}.
-                Nothing is offered until you tick it and set its price.
-              </p>
-            )}
             {/* Music's options are narrowed by the kind of musician, and a music organizer set up with the one-question flow has not said which yet. */}
             {music && !act.type && (
               <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
@@ -771,7 +812,7 @@ function DeliveryCommitmentCard({
  * count for the reason `draftProgress` leaves them out: Stripe never blocks a publish, and being
  * ready is the consequence of the four above rather than a fifth thing to do.
  */
-function DraftOverview({ input, runId }: { input: Parameters<typeof readiness>[0]; runId: string }) {
+function DraftOverview({ input, runId, reviewHref }: { input: Parameters<typeof readiness>[0]; runId: string; reviewHref: string }) {
   const rows = readiness(input);
   const { done, total, next } = draftProgress(rows);
   const steps = rows.filter((r) => !r.optional && r.key !== "publish");
@@ -794,6 +835,21 @@ function DraftOverview({ input, runId }: { input: Parameters<typeof readiness>[0
           )}
         </p>
       ))}
+      {/*
+        The way on to the journey's fourth stage, which is the only place a draft is published.
+        The steps above say what is unfinished and the review says it again with the decision
+        attached, both out of the same readiness rules, so they cannot disagree.
+      */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-3">
+        <ButtonLink href={reviewHref} register="desk" variant={next ? "outline" : "solid"}>
+          {next ? "Go to the review" : "Review and publish"}
+        </ButtonLink>
+        <span className="text-[14px] leading-[1.6] text-muted">
+          {next
+            ? "The review reads the whole fundraiser back and names anything still to do."
+            : "Every step above is done. The review is the last read before it goes up."}
+        </span>
+      </div>
     </Card>
   );
 }

@@ -3,9 +3,9 @@
  *
  * One journey for every category the registry lets save a draft. A stage is a page of the same
  * form, not a second form, and the stage is in the address (`?stage=funding`) so a reload lands
- * where the organizer was. The first two stages are drawn by FundraiserDraftForm. The last two are
- * the fundraiser's workspace for now: sponsorship options are priced there and the readiness
- * checklist is the review, until each gets a stage of its own.
+ * where the organizer was. The first two stages are drawn by FundraiserDraftForm, the third by
+ * SponsorshipBuilder and the fourth by FundraiserReview, which is where a draft is published. The
+ * fundraiser's workspace is still reachable for a draft by asking for one of its tabs.
  *
  * What "complete" means here is only which stage to open when somebody comes back to a draft. It is
  * never the publish gate. That stays in src/lib/readiness.ts and in the database (migration 0041),
@@ -20,8 +20,8 @@ export type Stage = (typeof STAGES)[number];
 /** The stages the draft form draws. */
 export type FormStage = "project" | "funding";
 
-/** The stages the guided journey draws itself. Review is still the workspace. */
-export type JourneyStage = FormStage | "sponsorships";
+/** The stages the guided journey draws itself: every one of them, now that Review is one. */
+export type JourneyStage = FormStage | "sponsorships" | "review";
 
 export const STAGE_LABEL: Record<Stage, string> = {
   project: "Project",
@@ -39,7 +39,7 @@ export function isFormStage(value: unknown): value is FormStage {
 }
 
 export function isJourneyStage(value: unknown): value is JourneyStage {
-  return isFormStage(value) || value === "sponsorships";
+  return isFormStage(value) || value === "sponsorships" || value === "review";
 }
 
 /** `?stage=funding`, read and refused rather than echoed. A repeated parameter takes the first. */
@@ -103,17 +103,19 @@ export function stageMissing(draft: StageDraft, stage: FormStage): string[] {
 }
 
 /**
- * The first stage with something still to say, or null when the journey's own stages are done.
+ * Where a saved draft opens: the first stage with something still to say, and Review once the
+ * three before it have been answered. A draft always lands somewhere in the journey; the
+ * workspace is for a fundraiser that has been published.
  *
  * The sponsorships stage is owed while a category that has sponsorship option templates has no
  * option saved. A category with no templates (Other today) has nothing to price, so it is not sent
  * there again: what it can say about proposed visibility it said on the funding stage.
  */
-export function resumeStage(draft: StageDraft, options: { optionCount: number; hasTemplates: boolean } = { optionCount: 1, hasTemplates: false }): JourneyStage | null {
+export function resumeStage(draft: StageDraft, options: { optionCount: number; hasTemplates: boolean } = { optionCount: 1, hasTemplates: false }): JourneyStage {
   if (stageMissing(draft, "project").length > 0) return "project";
   if (stageMissing(draft, "funding").length > 0) return "funding";
   if (options.hasTemplates && options.optionCount === 0) return "sponsorships";
-  return null;
+  return "review";
 }
 
 /** The headline and the line under it, per stage. Second person: the dashboard talks to one person. */
@@ -135,6 +137,12 @@ export const STAGE_HEADING: Record<JourneyStage, { title: string; accent: string
     accent: "count on?",
     intro: "Build one sponsorship option at a time: where the sponsor appears, what it costs, what they send, and what you deliver. A partial option can be saved; anything missing is named, never filled in for you.",
     continueLabel: "Continue to review",
+  },
+  review: {
+    title: "A promise you can",
+    accent: "stand behind.",
+    intro: "Read the fundraiser the way a sponsor would: what you want to make possible, and what you can credibly deliver in return. Then decide whether it goes up.",
+    continueLabel: "Publish fundraiser",
   },
 };
 

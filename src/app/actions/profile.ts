@@ -207,6 +207,7 @@ export async function saveProfileDetails(_prev: ProfileState, form: FormData): P
   }
 
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/profile/patron");
   const profile = await currentProfile(user.id);
   if (profile?.username) revalidatePath(`/patron/${profile.username}`);
   return { ok: true, message: "Saved." };
@@ -299,6 +300,7 @@ export async function setProfileVisibility(_prev: ProfileState, form: FormData):
   }
 
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/profile/patron");
   if (profile?.username) revalidatePath(`/patron/${profile.username}`);
   return { ok: true, message: publish ? "The profile is public." : "The profile is private again." };
 }
@@ -355,6 +357,7 @@ export async function setActivityShown(_prev: ProfileState, form: FormData): Pro
   }
 
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/profile/patron");
   const profile = await currentProfile(user.id);
   if (profile?.username) revalidatePath(`/patron/${profile.username}`);
   return {
@@ -403,6 +406,7 @@ export async function changeUsername(_prev: UsernameState, form: FormData): Prom
   }
 
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/profile/patron");
   revalidatePath("/dashboard/account");
   revalidatePath(`/patron/${wanted}`);
   revalidatePath(actPath(wanted));
