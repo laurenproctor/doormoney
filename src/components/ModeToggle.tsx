@@ -52,14 +52,21 @@ function setMode(next: Mode) {
  *
  * The label names the room it switches to, never the room you are in, because a control that names
  * its own current state is the oldest ambiguity in this kind of button. `aria-pressed` carries the
- * state properly for anybody who is listening rather than looking. The button is held to 24 by 24,
- * the smallest target WCAG asks for, because the glyph on its own is 22.
+ * state properly for anybody who is listening rather than looking.
+ *
+ * `size` is the target, and the target only: the same control, the same glyph, the same words. In
+ * the marketing nav it is held to 24 by 24, the smallest WCAG asks for, because the glyph on its
+ * own is 22 and the row around it is set by the caps links. In the workspace bar every other
+ * control is 44, which is the size a thumb wants, so the toggle is 44 there and lines up with
+ * them. Passing the size rather than overriding the classes from outside keeps one utility per
+ * property on the element, so nothing depends on which order Tailwind wrote the two of them.
  */
-export function ModeToggle({ className = "" }: { className?: string }) {
+export function ModeToggle({ className = "", size = "compact" }: { className?: string; size?: "compact" | "bar" }) {
   const mode = useSyncExternalStore(subscribe, readMode, serverMode);
+  const box = size === "bar" ? "h-11 w-11" : "h-6 w-6";
 
   // Before hydration there is no honest answer, so the space is held and nothing is claimed.
-  if (!mode) return <span aria-hidden="true" className={`inline-block h-6 w-6 ${className}`} />;
+  if (!mode) return <span aria-hidden="true" className={`inline-block ${box} ${className}`} />;
 
   const next = otherMode(mode);
   return (
@@ -68,7 +75,7 @@ export function ModeToggle({ className = "" }: { className?: string }) {
       onClick={() => setMode(next)}
       aria-pressed={mode === "light"}
       title={modeLabel(next)}
-      className={`inline-flex h-6 w-6 cursor-pointer items-center justify-center text-muted transition-colors hover:text-accent-ink ${className}`}
+      className={`inline-flex ${box} cursor-pointer items-center justify-center text-muted transition-colors hover:text-accent-ink ${className}`}
     >
       <span className="sr-only">{modeLabel(next)}</span>
       {next === "light" ? <SunIcon /> : <MoonIcon />}

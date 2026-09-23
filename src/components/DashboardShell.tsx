@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logout } from "@/components/dashboard/icons";
 import { Logo } from "@/components/Logo";
+import { ModeToggle } from "@/components/ModeToggle";
 import { Eyebrow } from "@/components/Brand";
 import { Theme } from "@/components/Theme";
 import { WorkspaceMenu, WorkspaceRail } from "@/components/dashboard/WorkspaceNav";
@@ -82,6 +83,11 @@ export function DashboardShell({
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
+          {/* The house lights, in the workspace too. The choice lives on <html> and in this
+              browser, so it is the same one the reader made on a public page; it is offered here
+              because the dashboard carries no marketing nav to offer it, and somebody who works in
+              this room all day is the reader most likely to want the other one. */}
+          <ModeToggle size="bar" className="outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-ink" />
           <form action={signOut}>
             <button
               type="submit"
