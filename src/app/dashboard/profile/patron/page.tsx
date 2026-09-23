@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
 import { ActivityList, ProfileDetailsForm, PublishForm } from "@/components/ProfileForms";
 import { PatronProfileView } from "@/components/PatronProfileView";
-import { PatronWorkspace } from "@/components/PatronWorkspace";
 import { currentProfile, ownedAct, requireUser } from "@/lib/auth";
 import { getCategoryLabels } from "@/lib/category-registry";
 import { dashboardNav } from "@/lib/dashboardModel";
@@ -116,68 +115,57 @@ export default async function PatronProfileWorkspace() {
       <div className="grid gap-6">
         <StatusBand published={published} ready={ready} hasProfile={Boolean(own)} publicPath={publicPath} host={host} username={username} />
 
-        {own && display ? (
-          <PatronWorkspace
-            previewLabel={published ? "Preview" : "Private preview"}
-            previewNote={
-              published
-                ? "This is your page as anybody with the address reads it."
-                : "Only you can see this profile preview. This is how it will read once you publish it."
+        {/*
+          The form is the page, and the preview sits under it.
+
+          It used to be one or the other behind an "Edit profile" switch, which meant a reader who
+          came here to change a line had to ask for the form first. Both are on the page now, in
+          the order the work happens: edit at the top, and what a reader will see underneath.
+        */}
+        <Card>
+          <ProfileDetailsForm
+            profile={own}
+            photo={photo}
+            header={header}
+            categories={categories}
+            publicPath={publicPath}
+            published={published}
+            heading={
+              <h2 className="heading text-[20px] leading-tight text-ink">
+                {own ? "Edit your patron profile" : "Create your patron profile"}
+              </h2>
             }
-            preview={
-              <div className="edge overflow-hidden bg-ground" data-theme={display.theme}>
-                <PatronProfileView
-                  profile={display}
-                  photo={photo}
-                  header={header}
-                  activity={shownAsPublic(activity)}
-                  labels={labels}
-                  density="panel"
-                />
-              </div>
-            }
-            editor={
-              <Card>
-                <CardHead level={2} eyebrow="The details">
-                  Edit your patron profile
-                </CardHead>
-                <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-                  Everything below is optional except the name, and all of it appears on the page above. Saving keeps
-                  the changes; it does not publish the page.
-                </p>
-                <div className="max-w-[720px]">
-                  <ProfileDetailsForm
-                    profile={own}
-                    photo={photo}
-                    header={header}
-                    categories={categories}
-                    publicPath={publicPath}
-                    published={published}
-                  />
-                </div>
-              </Card>
+            intro={
+              own
+                ? "Everything here is optional except the name, and all of it appears on the page below. Changes save on their own; saving never publishes the page."
+                : "A page needs a name; the rest is optional and can follow later. It stays private until you publish it, and no amount ever appears on it."
             }
           />
-        ) : (
-          <Card>
-            <CardHead level={2} eyebrow="Start here">
-              Create your patron profile
-            </CardHead>
-            <p className="mb-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
-              There is nothing to preview yet. A page needs a name; the rest is optional and can follow later. The
-              page stays private until you publish it, and no amount ever appears on it.
-            </p>
-            <div className="max-w-[720px]">
-              <ProfileDetailsForm
-                profile={null}
-                photo={null}
-                header={null}
-                categories={categories}
-                publicPath={publicPath}
-                published={false}
+        </Card>
+
+        {own && display && (
+          <section aria-labelledby="preview-head">
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+              <h2 id="preview-head" className="caps edge inline-block px-3 py-1.5 text-[14px] text-muted">
+                {published ? "Preview" : "Private preview"}
+              </h2>
+              <p className="max-w-[62ch] text-[15px] leading-[1.6] text-muted">
+                {published
+                  ? "Your page as anybody with the address reads it."
+                  : "Only you can see this. It is how the page will read once you publish it."}
+              </p>
+            </div>
+            <div className="edge overflow-hidden bg-ground" data-theme={display.theme}>
+              <PatronProfileView
+                profile={display}
+                photo={photo}
+                header={header}
+                activity={shownAsPublic(activity)}
+                labels={labels}
+                density="panel"
               />
             </div>
-          </Card>
+          </section>
         )}
 
         <Card>
@@ -186,7 +174,7 @@ export default async function PatronProfileWorkspace() {
           </CardHead>
           <p className="mb-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
             Choose what support activity appears publicly. Each one is its own decision, and no amount is ever
-            shown. {own ? `${shown} ${shown === 1 ? "is" : "are"} on the page above.` : "Anything put on shows here once the page exists."}
+            shown. {own ? `${shown} ${shown === 1 ? "is" : "are"} on the preview above.` : "Anything put on shows here once the page exists."}
           </p>
           <ActivityList items={activity} />
         </Card>
