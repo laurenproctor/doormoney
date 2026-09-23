@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Page } from "@/components/Page";
+import { Theme } from "@/components/Theme";
+import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
 import { ButtonLink } from "@/components/Button";
-import { NewsletterCTA } from "@/components/Newsletter";
 import { FilterPanel } from "@/components/discovery/FilterPanel";
 import { ActiveFilters } from "@/components/discovery/ActiveFilters";
 import { DiscoveryCard } from "@/components/discovery/DiscoveryCard";
+import { ViewSwitch } from "@/components/discovery/ViewSwitch";
 import { getCategoryLabels } from "@/lib/category-registry";
 import { getDiscoveryRegistry } from "@/lib/discovery-registry";
 import { discoveryChoicesForCategories } from "@/lib/discovery";
-import { discoveryCountries, findFundraisers } from "@/lib/discovery-query";
+import { discoveryCountries, findFundraisers, type DiscoveryStatus } from "@/lib/discovery-query";
 import { SORTS, hasFilters, hasOfferFilters, hrefWith, parseQuery, type RawParams } from "@/lib/discovery-filters";
 import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 
 export const metadata: Metadata = {
-  title: "Find a sponsorship",
+  title: "Find a project to sponsor",
   description:
-    "Every open fundraiser on Door Money: what each one funds, who it reaches, and the sponsorship options still open. Filter by category, place, funding purpose, audience and price.",
+    "Every open fundraiser on Door Money: what each one funds, who it reaches, and the sponsorship options still open. Search by name, or filter by category, place, funding purpose, audience and price.",
   // One address for search engines too, now that the old one redirects here.
   alternates: { canonical: "/fundraisers" },
 };
@@ -30,15 +32,28 @@ export const metadata: Metadata = {
   marketplace is not called an auction: each sponsorship is fixed price or open to bids, and the
   organizer decides which.
 
+  The word on the page is "project". A fundraiser is still what the thing is, in the database, in
+  every address and in every other part of the site; "project" is the display word for this one
+  surface, where a sponsor is looking at the work rather than at the mechanics of funding it. The
+  nav keeps "Fundraisers", because that is the word the rest of the site and the tests hold it to.
+
   Everything a sponsor chooses lives in the query string and nothing lives in client state, so a
   filtered page can be shared, bookmarked and reloaded, and the back button behaves. The filters are
   one plain GET form; the chips, the sort and the pages are plain links. There is no JavaScript
   needed to use this page and no personalization in what it returns.
 
+  The one thing that is not in the address is the layout. Tiles or rows is the reader's own choice,
+  kept in their browser (src/lib/discovery-view.ts), and it changes nothing about what was asked or
+  what came back: the same list, fetched once and ranked once, is drawn one way or the other by CSS.
+
   The read is src/lib/discovery-query.ts, which is two queries against the two public read-only
   views whatever the number of fundraisers. It deliberately does not use listOpenBoards: that loads
   a whole board per organizer, bids, buyers and backers included, which is a page of cards paid for
   with payment history nobody is going to read.
+
+  This page composes Nav, Theme and Footer itself rather than using Page, whose hero is a full
+  stage for a marketing headline. Discovery wants the heading small and the results high, and the
+  shared shell keeps its own defaults for every other page.
 */
 
 type Props = { searchParams: Promise<RawParams> };
@@ -64,25 +79,23 @@ export default async function FundraisersPage({ searchParams }: Props) {
     ...Object.fromEntries(registry.tags.map((t) => [t.key, t.label])),
   };
   const tagLabel = new Map(registry.tags.map((t) => [t.key, t.label]));
+  const unavailable = result.status === "unavailable";
 
   return (
-    <Page
-      theme="magenta"
-      current="/fundraisers"
-      eyebrow="Organizers raising now"
-      title="Find a"
-      accent="sponsorship"
-      headline="md"
-      intro={
-        <p>
-          Every open fundraiser: what the funding is for, who it reaches, and which sponsorship
-          options are still open. Filter by category, place, purpose, audience and price to find one
-          that fits.
-        </p>
-      }
-    >
-      <div className="mx-auto w-full max-w-[1120px] px-7 pb-[90px]">
-        <div className="grid gap-10 lg:grid-cols-[260px_1fr] lg:gap-12">
+    <Theme name="magenta">
+      <Nav current="/fundraisers" />
+      <main id="main" className="flex-1">
+        {/* A compact heading: the light is on the results, not on a headline. */}
+        <section className="pool border-b border-line">
+          <div className="hero-in mx-auto w-full max-w-[1120px] px-7 pb-9 pt-14 max-md:pt-10">
+            <h1 className="display max-w-[16ch] text-[clamp(34px,4.8vw,58px)] leading-[0.98]">
+              Find a project to <em className="text-accent-ink">sponsor.</em>
+            </h1>
+            <p className="mt-4 text-[17px] text-muted">Explore the work. See what sponsorship includes.</p>
+          </div>
+        </section>
+
+        <div className="mx-auto w-full max-w-[1120px] px-7 pb-[90px] pt-8">
           <FilterPanel
             query={query}
             categories={Object.entries(labels).map(([key, label]) => ({ key, label }))}
@@ -90,15 +103,21 @@ export default async function FundraisersPage({ searchParams }: Props) {
             countries={countries}
           />
 
-          <div>
-            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-b border-line pb-5">
-              <h2 className="heading text-[22px]">{countLine(result.total, filtersActive)}</h2>
+          <div className="mt-6">
+            <ActiveFilters query={query} labels={chipLabels} />
+          </div>
+
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b border-line pb-5">
+            <h2 id="results-heading" className="heading text-[22px]">
+              {unavailable ? "Projects unavailable" : countLine(result.total, filtersActive, result.everyResultHasOffers)}
+            </h2>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <nav aria-label="Sort" className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <span className="caps text-[14px] text-muted">Sort</span>
                 {SORTS.map((s) => (
                   <Link
                     key={s.key}
-                    href={hrefWith(query, { sort: s.key })}
+                    href={hrefWith(query, { sort: s.key, page: result.page })}
                     aria-current={query.sort === s.key ? "true" : undefined}
                     className={`caps text-[14px] no-underline ${
                       query.sort === s.key ? "text-accent-ink underline decoration-1 underline-offset-4" : "text-ink hover:text-accent-ink"
@@ -108,99 +127,120 @@ export default async function FundraisersPage({ searchParams }: Props) {
                   </Link>
                 ))}
               </nav>
+              <ViewSwitch />
             </div>
-
-            <ActiveFilters query={query} labels={chipLabels} />
-
-            {query.sort === "relevant" && result.total > 1 && (
-              <p className="mb-7 text-[14.5px] text-muted">
-                Most relevant puts the fundraisers with the most matching sponsorship options first.
-                Nobody pays for a place in this list.
-              </p>
-            )}
-
-            {result.capped && (
-              <p className="mb-7 text-[14.5px] text-accent-ink">
-                More fundraisers match than one page can rank. Narrow the list to see the rest.
-              </p>
-            )}
-
-            {result.cards.length === 0 ? (
-              <Empty filtersActive={filtersActive} live={result.live} />
-            ) : (
-              <div className="grid gap-[30px] md:grid-cols-2">
-                {result.cards.map((card) => (
-                  <DiscoveryCard
-                    key={card.id}
-                    card={card}
-                    categoryLabel={labels[card.categoryKey] ?? null}
-                    tagLabels={card.tags.map((t) => tagLabel.get(t)).filter((l): l is string => Boolean(l))}
-                    filtersActive={offerFiltersActive}
-                  />
-                ))}
-              </div>
-            )}
-
-            {result.pageCount > 1 && (
-              <nav aria-label="Pages" className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6">
-                {result.page > 1 ? (
-                  <ButtonLink href={hrefWith(query, { page: result.page - 1 })} variant="ghost">
-                    Previous
-                  </ButtonLink>
-                ) : (
-                  <span />
-                )}
-                <span className="caps text-[14px] text-muted">
-                  Page {result.page} of {result.pageCount}
-                </span>
-                {result.page < result.pageCount ? (
-                  <ButtonLink href={hrefWith(query, { page: result.page + 1 })} variant="ghost">
-                    Next
-                  </ButtonLink>
-                ) : (
-                  <span />
-                )}
-              </nav>
-            )}
-
-            {/* The organizer's way in, kept below the results so it never sits among the controls. */}
-            <aside className="edge mt-12 flex flex-col items-start gap-3.5 bg-panel px-[26px] py-7">
-              <div className="caps text-[14.5px] text-accent-ink">For organizers</div>
-              <div className="heading text-[clamp(24px,3vw,32px)] leading-[1.05]">Raise money for your own work</div>
-              <p className="text-[15px] leading-[1.7] text-muted">
-                Organizers choose what they offer, set the prices and keep the final say.
-              </p>
-              <ButtonLink href="/list">Create a fundraiser</ButtonLink>
-            </aside>
           </div>
-        </div>
-      </div>
 
-      <NewsletterCTA source="auctions" eyebrow="The next fundraiser" />
-    </Page>
+          {query.sort === "relevant" && result.total > 1 && (
+            <p className="mb-7 text-[14.5px] text-muted">
+              Most relevant puts the projects with the most matching sponsorship options first.
+              Nobody pays for a place in this list.
+            </p>
+          )}
+
+          {result.capped && (
+            <p className="mb-7 text-[14.5px] text-accent-ink">
+              More projects match than one page can rank. Narrow the list to see the rest.
+            </p>
+          )}
+
+          {result.cards.length === 0 ? (
+            <Empty filtersActive={filtersActive} status={result.status} failedRead={result.failedRead} />
+          ) : (
+            <ul
+              aria-labelledby="results-heading"
+              className="discovery-rows:grid-cols-1 discovery-rows:gap-0 discovery-rows:border-t discovery-rows:border-line grid gap-[30px] md:grid-cols-2 md:items-start"
+            >
+              {result.cards.map((card) => (
+                <DiscoveryCard
+                  key={card.id}
+                  card={card}
+                  categoryLabel={labels[card.categoryKey] ?? null}
+                  tagLabels={card.tags.map((t) => tagLabel.get(t)).filter((l): l is string => Boolean(l))}
+                  filtersActive={offerFiltersActive}
+                />
+              ))}
+            </ul>
+          )}
+
+          {result.pageCount > 1 && (
+            <nav aria-label="Pages" className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6">
+              {result.page > 1 ? (
+                <ButtonLink href={hrefWith(query, { page: result.page - 1 })} variant="ghost">
+                  Previous
+                </ButtonLink>
+              ) : (
+                <span />
+              )}
+              <span className="caps text-[14px] text-muted">
+                Page {result.page} of {result.pageCount}
+              </span>
+              {result.page < result.pageCount ? (
+                <ButtonLink href={hrefWith(query, { page: result.page + 1 })} variant="ghost">
+                  Next
+                </ButtonLink>
+              ) : (
+                <span />
+              )}
+            </nav>
+          )}
+
+          {/* The organizer's way in, one line, below the results so it never sits among the controls. */}
+          <aside className="mt-12 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-t border-line pt-8">
+            <p className="text-[15px] leading-[1.6] text-muted">
+              Organizers choose what they offer, set the prices and keep the final say.
+            </p>
+            <ButtonLink href="/list" variant="ghost" arrow>Create a fundraiser</ButtonLink>
+          </aside>
+        </div>
+      </main>
+      {/* The footer carries the one newsletter ask, so this page adds no second one. */}
+      <Footer />
+    </Theme>
   );
 }
 
-/** How many matched, said plainly. The number is the whole result, not the page. */
-function countLine(total: number, filtersActive: boolean): string {
-  if (total === 0) return filtersActive ? "No fundraisers match" : "No fundraisers are open";
-  const noun = total === 1 ? "fundraiser" : "fundraisers";
-  return filtersActive ? `${total} ${noun} match` : `${total} ${noun} open`;
+/**
+ * How many matched, said plainly. The number is the whole result, not the page.
+ *
+ * "Accepting sponsors" is said only when every counted project has at least one option open to
+ * buy. When any has none, the count is the count and nothing more; nothing is dropped from it to
+ * earn the phrase.
+ */
+function countLine(total: number, filtersActive: boolean, everyResultHasOffers: boolean): string {
+  if (total === 0) return filtersActive ? "No projects match" : "No projects are open";
+  const noun = total === 1 ? "project" : "projects";
+  if (filtersActive) return `${total} ${noun} ${total === 1 ? "matches" : "match"}`;
+  return everyResultHasOffers ? `${total} ${noun} accepting sponsors` : `${total} ${noun}`;
 }
 
 /**
  * Nothing matched, said honestly.
  *
  * It never suggests the filters were wrong or that something is coming. With no database connected
- * it says so, because an empty page and an unconfigured one are different facts.
+ * it says so, because an empty page and an unconfigured one are different facts. A read that
+ * failed is a third fact and gets its own words: the list could not be read, which is not the same
+ * as nothing being open, and the sample never stands in for it.
  */
-function Empty({ filtersActive, live }: { filtersActive: boolean; live: boolean }) {
+function Empty({ filtersActive, status, failedRead }: { filtersActive: boolean; status: DiscoveryStatus; failedRead: "fundraisers" | "offers" | null }) {
+  if (status === "unavailable") {
+    return (
+      <div className="edge bg-panel px-[26px] py-9" role="status">
+        <p className="text-[15px] leading-[1.7]">
+          {failedRead === "offers"
+            ? "Door Money could not read the sponsorship options just now, so it is not listing the projects without them."
+            : "Door Money could not read the projects just now."}
+        </p>
+        <p className="mt-3 text-[15px] leading-[1.7] text-muted">Reload the page to try again.</p>
+      </div>
+    );
+  }
   return (
     <div className="edge bg-panel px-[26px] py-9">
       {filtersActive ? (
         <>
           <p className="text-[15px] leading-[1.7]">
-            No open fundraiser matches all of those filters right now.
+            No open project matches all of those filters right now.
           </p>
           <p className="mt-3 text-[15px] leading-[1.7] text-muted">
             Removing one of them will widen the list.
@@ -211,11 +251,11 @@ function Empty({ filtersActive, live }: { filtersActive: boolean; live: boolean 
         </>
       ) : (
         <p className="text-[15px] leading-[1.7]">
-          No fundraiser is open to sponsors at the moment. {AVAILABILITY_NOTE}
+          No project is open to sponsors at the moment. {AVAILABILITY_NOTE}
         </p>
       )}
       {/* An unconfigured app and an empty one are different facts, and the page says which. */}
-      {!live && (
+      {status === "sample" && (
         <p className="mt-4 text-[14.5px] text-muted">
           No database is connected, so this page is showing the built-in sample. The sample records
           none of the structured discovery fields, so most filters correctly match nothing.
