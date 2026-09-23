@@ -62,7 +62,7 @@ export default async function RunPage({ params, searchParams }: Props) {
   if (run.status === "draft" && unready) {
     const draft = await loadFundraiserDraft(id);
     if (!draft) notFound();
-    return <DashboardShell current="/dashboard" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} identity={identity} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
+    return <DashboardShell current="/dashboard/runs" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} actSlug={act.slug} identity={identity} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
       <Card className="max-w-[760px]"><FundraiserDraftForm draft={draft} categories={await draftCategories()} musicOrganizer={act.type !== null} discovery={await draftDiscoveryRegistry()} /></Card>
     </DashboardShell>;
   }
@@ -109,9 +109,10 @@ export default async function RunPage({ params, searchParams }: Props) {
 
   return (
     <DashboardShell
-      current="/dashboard"
+      current="/dashboard/runs"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      actSlug={act.slug}
       identity={identity}
       eyebrow={statusLabel(run.status, music)}
       title={run.title}

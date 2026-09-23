@@ -301,12 +301,20 @@ test("a show with no venue or city is worth fixing before anyone turns up", () =
 
 /* ------------------------------------------------------------------ navigation */
 
-test("an organizer gets the fundraising pages, and the widget among them", () => {
+test("an organizer gets six destinations, named for where they go", () => {
   // /dashboard/act left the rail when the profile became one page: the organizer's own record is
-  // part of /dashboard/profile now and is reached from there.
+  // part of /dashboard/profile now and is reached from there. The widget left it on the Desk
+  // register: it is one fundraiser's embed snippet, so it belongs beside that fundraiser under
+  // Share rather than in the list of places to go.
   const nav = dashboardNav({ hasAct: true, roles: ["organizer"] });
-  const hrefs = nav.flatMap((s) => s.items.map((i) => i.href));
-  assert.deepEqual(hrefs, ["/dashboard", "/dashboard/runs", "/dashboard/payouts", "/dashboard/widget", "/patron", "/dashboard/profile", "/dashboard/account"]);
+  assert.deepEqual(nav.flatMap((s) => s.items), [
+    { href: "/dashboard", label: "Today" },
+    { href: "/dashboard/runs", label: "Fundraisers" },
+    { href: "/dashboard/payouts", label: "Money" },
+    { href: "/patron", label: "Backed by you" },
+    { href: "/dashboard/profile", label: "Profile" },
+    { href: "/dashboard/account", label: "Settings" },
+  ]);
 });
 
 test("an account made before the organizer role still gets them", () => {
@@ -314,14 +322,6 @@ test("an account made before the organizer role still gets them", () => {
   // both mean somebody who raises money here.
   const hrefs = dashboardNav({ hasAct: false, roles: ["musician"] }).flatMap((s) => s.items.map((i) => i.href));
   assert.ok(hrefs.includes("/dashboard/runs"), "a musician lost the fundraising section");
-});
-
-test("the widget snippet has an address of its own, off the marketing page", () => {
-  // Decision 14 took the widget out of the public nav, so the rail is the only way to it. It goes
-  // to the musician's own snippet in the dashboard, not to the page that sells the widget.
-  const hrefs = dashboardNav({ hasAct: true, roles: [] }).flatMap((s) => s.items.map((i) => i.href));
-  assert.ok(hrefs.includes("/dashboard/widget"));
-  assert.ok(!hrefs.includes("/widget"), "the rail sends a musician to the marketing page instead of their own snippet");
 });
 
 test("somebody who only backs musicians gets no fundraising pages", () => {
