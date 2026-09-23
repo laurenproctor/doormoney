@@ -14,6 +14,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --experimental-test-module-mocks --import ./tests/register.mjs --test tests/*.test.ts",
+    "test:copy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./tests/register.mjs --test tests/advisory/*.test.ts",
     "test:db": "supabase test db",
     "test:db:docker": "bash scripts/db-test.sh",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
