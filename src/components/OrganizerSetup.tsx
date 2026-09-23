@@ -44,7 +44,7 @@ export type SelfIdentity = {
 
 const initial: SetupState = {};
 
-export function OrganizerSetup({ self, existing, host, template }: {
+export function OrganizerSetup({ self, existing, host, template, live }: {
   self: SelfIdentity;
   /** The organizer this account already manages, when there is one. */
   existing: ExistingOrganizer | null;
@@ -52,6 +52,8 @@ export function OrganizerSetup({ self, existing, host, template }: {
   host: string;
   /** The starter kit this setup came in on, carried through to the next step. */
   template: string | null;
+  /** Whether this organizer already has a fundraiser out of draft. */
+  live: boolean;
 }) {
   const [state, action, pending] = useActionState(startOrganizer, initial);
   const [choice, setChoice] = useState<"self" | "organization">(existing ? "organization" : "self");
@@ -165,13 +167,14 @@ export function OrganizerSetup({ self, existing, host, template }: {
           kindLabel={existing ? existing.kindLabel : previewKind}
           place={existing ? existing.place : previewPlace}
           photoUrl={existing ? existing.photoUrl : photoUrl}
+          organization={Boolean(existing) || choice === "organization"}
         />
       </div>
 
       <div className="mt-10 border-t border-line pt-7">
         <p className="mb-6 flex items-center gap-2.5 text-[14.5px] text-muted">
           <Locked size={16} aria-hidden="true" className="flex-none" />
-          Nothing is public yet.
+          {live ? "This step publishes nothing." : "Nothing is public yet."}
         </p>
 
         {errors.form && (
@@ -493,10 +496,11 @@ function MoreDetails({ region, onRegion, onPhoto, errors }: {
   }, []);
 
   return (
-    <details open={open} className="mt-8 border-t border-line pt-6 [&_summary::-webkit-details-marker]:hidden">
+    <details open={open} className="group mt-8 border-t border-line pt-6 [&_summary::-webkit-details-marker]:hidden">
       <summary className="flex cursor-pointer list-none items-center gap-3.5 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink">
         <span aria-hidden="true" className="text-[18px] leading-none text-accent-ink">
-          +
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">&minus;</span>
         </span>
         <span className="min-w-0">
           <span className="heading block text-[15.5px] text-ink">Add a photo, bio, and links</span>
@@ -670,11 +674,13 @@ function PublicLink({ host, slug, editing, onEdit, onChange, onBlur, error, sugg
 // The preview
 // ---------------------------------------------------------------
 
-function Preview({ name, kindLabel, place, photoUrl }: {
+function Preview({ name, kindLabel, place, photoUrl, organization }: {
   name: string | null;
   kindLabel: string | null;
   place: string | null;
   photoUrl: string | null;
+  /** Which glyph stands in while there is no name and no photograph yet. */
+  organization: boolean;
 }) {
   const initials = useMemo(() => initialsFor(name), [name]);
   const line = [kindLabel, place].filter(Boolean).join(" · ");
@@ -689,6 +695,8 @@ function Preview({ name, kindLabel, place, photoUrl }: {
           <img src={photoUrl} alt="" className="h-full w-full object-cover" />
         ) : initials ? (
           <span className="heading text-[34px] leading-none text-accent-ink">{initials}</span>
+        ) : organization ? (
+          <Organization size={32} aria-hidden="true" className="text-muted" />
         ) : (
           <UserProfile size={32} aria-hidden="true" className="text-muted" />
         )}

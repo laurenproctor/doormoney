@@ -9,6 +9,7 @@ import { placeLine } from "@/lib/countries";
 import { accountDisplayName, suggestSlug } from "@/lib/organizer-setup";
 import { entityKindLabel } from "@/lib/participation";
 import { ownProfile } from "@/lib/patronprofile";
+import { supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 import { starterKit } from "@/lib/starter-kits";
 
@@ -42,7 +43,7 @@ export default async function NewActPage({ searchParams }: Props) {
   const user = await requireUser(kit ? `/dashboard/act/new?template=${kit.key}` : "/dashboard/act/new");
 
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
-  const own = await ownProfile(user.id);
+  const [own, live] = await Promise.all([ownProfile(user.id), hasPublicFundraiser(act?.id ?? null)]);
 
   const personName = fullName(profile);
   const displayName = accountDisplayName({
@@ -96,7 +97,27 @@ export default async function NewActPage({ searchParams }: Props) {
         existing={existing}
         host={SITE.url.replace(/^https?:\/\//, "")}
         template={kit?.key ?? null}
+        live={live}
       />
     </DashboardShell>
   );
+}
+
+/**
+ * Whether this organizer already has a fundraiser out of draft.
+ *
+ * Only to keep the status line true. An organizer with nothing published is not reachable at its
+ * address at all (`getActProfile` answers 404 for it), so "Nothing is public yet" is a fact rather
+ * than a promise; an organizer with a published fundraiser is already out there, and the line says
+ * what this step does instead. The same reading the profile page makes.
+ */
+async function hasPublicFundraiser(actId: string | null): Promise<boolean> {
+  if (!actId) return false;
+  const sb = await supabaseServer();
+  const { count } = await sb
+    .from("runs")
+    .select("id", { count: "exact", head: true })
+    .eq("act_id", actId)
+    .not("status", "in", "(draft,cancelled)");
+  return (count ?? 0) > 0;
 }

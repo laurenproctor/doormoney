@@ -187,7 +187,13 @@ export async function startOrganizer(_prev: SetupState, form: FormData): Promise
       website: str(form, "website"),
       instagram: str(form, "instagram"),
     });
-    if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+    if (!parsed.success) {
+      const errors = fieldErrors(parsed.error) ?? {};
+      // The link is made from the name while nobody has edited it, so a missing name is one
+      // problem to fix, not two.
+      if (!asked && errors.name) delete errors.slug;
+      return { errors };
+    }
     fields = parsed.data;
   }
 
