@@ -21,6 +21,15 @@
   --accent: #3d5afe;
   --accent-ink: #8296ff;
   --on-accent: #ffffff;
+  /* Where the light lands on a lifted block's top edge, and the shadow pooling under it. Tokens
+     rather than literals because they are the two things that invert with the room, not with the
+     colour of light: in a dark room the glint is the cream catching the truss, in a light one it
+     is white, and the pool is heavy in the dark and faint on paper. */
+  --glint: color-mix(in srgb, var(--ink) 14%, transparent);
+  --glint-soft: color-mix(in srgb, var(--ink) 12%, transparent);
+  --panel-glint: color-mix(in srgb, var(--ink) 13%, transparent);
+  --panel-sheen: color-mix(in srgb, var(--ink) 4%, transparent);
+  --pool: rgba(0, 0, 0, 0.85);
 }
 
 /* Blue is the house color: home, sign in, the dashboard, the widget embed. */
@@ -86,6 +95,87 @@
   --accent: #f4f0e8;
   --accent-ink: #f4f0e8;
   --on-accent: #0a0a0a;
+}
+
+/*
+  The light room.
+  ---------------------------------------------------------------------------
+  The same eight colours of light, thrown into a room with the walls painted instead of the dark.
+  A reader opts into this and nobody is given it by default (src/lib/mode.ts), so the brand a first
+  visitor meets is unchanged.
+
+  What inverts is the room: ground, ink, the hairlines, the panel washes, the glint along a lifted
+  block's top edge and the pool beneath it. What does not invert is the light. Every `--accent`
+  below is the same hex as in the dark, because that is the colour of the page and changing it
+  would make this a second brand rather than the same one with the house lights up.
+
+  `--accent-ink` does change, and has to. The design system's rule is that it is the tint of the
+  accent that clears 4.5:1 on its ground, and on a near-white ground that is a darker tint, not a
+  lighter one. Each was computed against its own ground rather than picked: blue 5.09, lime 4.66,
+  magenta 4.51, amber 4.51, teal 4.56, violet 5.20, red 4.57, mono 16.93. Ink clears about 17:1
+  everywhere and muted 5.7 to 6.3. Change a ground and the tint above it has to be computed again.
+
+  `--on-accent` is untouched in both rooms: it is text on an accent fill, and the fill is the same.
+*/
+:root[data-mode="light"] {
+  color-scheme: light;
+  --ink: #14131a;
+  --line: rgba(20, 19, 26, 0.14);
+  /* 0.47, not the 0.42 the dark room uses. A control boundary wants 3:1 against the fill behind
+     it, and near-black over near-white is a shallower step than cream over the dark ground: at
+     0.38 it measured 2.42:1 on every theme. At 0.47 the tightest is 3.12:1. */
+  --field-line: rgba(20, 19, 26, 0.47);
+  --panel: rgba(255, 255, 255, 0.66);
+  /* On paper the light lands as white, and the shadow under a block is a hint rather than a hole. */
+  --glint: rgba(255, 255, 255, 0.9);
+  --glint-soft: rgba(255, 255, 255, 0.75);
+  --panel-glint: rgba(255, 255, 255, 0.95);
+  --panel-sheen: rgba(255, 255, 255, 0.5);
+  --pool: rgba(20, 19, 26, 0.16);
+}
+
+/* Each theme, in the light room. Two selectors apiece: the wrapper <Theme> paints, and <html>
+   itself, which ThemeSync mirrors the theme onto for the fixed furniture outside the page. */
+:root[data-mode="light"][data-theme="blue"],
+[data-mode="light"] [data-theme="blue"] { --ground: #f4f5fb; --muted: #555f7a; --accent-ink: #3352ff; }
+
+:root[data-mode="light"][data-theme="lime"],
+[data-mode="light"] [data-theme="lime"] { --ground: #f7f9f0; --muted: #5a6142; --accent-ink: #5c7a00; }
+
+:root[data-mode="light"][data-theme="magenta"],
+[data-mode="light"] [data-theme="magenta"] { --ground: #fdf4f8; --muted: #7a5567; --accent-ink: #de006a; }
+
+:root[data-mode="light"][data-theme="amber"],
+[data-mode="light"] [data-theme="amber"] { --ground: #fbf7ef; --muted: #6f6047; --accent-ink: #9e6600; }
+
+:root[data-mode="light"][data-theme="teal"],
+[data-mode="light"] [data-theme="teal"] { --ground: #f0f8f6; --muted: #45635c; --accent-ink: #0d7f6c; }
+
+:root[data-mode="light"][data-theme="violet"],
+[data-mode="light"] [data-theme="violet"] { --ground: #f7f4fd; --muted: #615574; --accent-ink: #7833ff; }
+
+:root[data-mode="light"][data-theme="red"],
+[data-mode="light"] [data-theme="red"] { --ground: #fdf4f3; --muted: #7a5450; --accent-ink: #e01000; }
+
+/* Mono is the one theme whose light is the ink itself, so in this room it turns over: the cream
+   that was the accent becomes the ground, and the near-black that was the ground becomes the light. */
+:root[data-mode="light"][data-theme="mono"],
+[data-mode="light"] [data-theme="mono"] {
+  --ground: #f6f5f2; --muted: #5d5a54; --accent: #14131a; --accent-ink: #14131a; --on-accent: #f6f5f2;
+}
+
+/* With no theme chosen the room is still blue, as it is in the dark. */
+:root[data-mode="light"] { --ground: #f4f5fb; --muted: #555f7a; --accent-ink: #3352ff; }
+
+/*
+  The rig, with the house lights up.
+  A cone of colour that reads as a beam against the dark reads as a stain against paper, so the
+  lamps come down to a suggestion and the lens stops pretending to be a white-hot bulb. The rig is
+  still there, still swings with the scroll, and still holds still under reduced motion.
+*/
+[data-mode="light"] .stage-lights { opacity: 0.38; }
+[data-mode="light"] .stage-lights .lens {
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 70%, white) 0, color-mix(in srgb, var(--accent) 45%, transparent) 26%, transparent 62%);
 }
 
 @theme inline {
@@ -173,16 +263,16 @@ select option { background: var(--ground); color: var(--ink); }
 @utility glow {
   border: 1px solid var(--line);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ink) 14%, transparent),
-    0 34px 60px -34px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 var(--glint),
+    0 34px 60px -34px var(--pool),
     0 40px 90px -50px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 /* Accent-colored light spilling from behind a block, with the same shadow pooling beneath. */
 @utility lit {
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ink) 12%, transparent),
+    inset 0 1px 0 var(--glint-soft),
     0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent),
-    0 34px 60px -34px rgba(0, 0, 0, 0.85),
+    0 34px 60px -34px var(--pool),
     0 0 60px -10px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 /* A block that rises toward the light on hover. Cards and tiles; never text. */
@@ -198,9 +288,9 @@ select option { background: var(--ground); color: var(--ink); }
 .bg-panel {
   background-image: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--ink) 13%, transparent) 0,
-    color-mix(in srgb, var(--ink) 13%, transparent) 1px,
-    color-mix(in srgb, var(--ink) 4%, transparent) 1px,
+    var(--panel-glint) 0,
+    var(--panel-glint) 1px,
+    var(--panel-sheen) 1px,
     transparent 36%
   );
 }

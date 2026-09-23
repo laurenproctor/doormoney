@@ -53,6 +53,10 @@ Tokens live in `src/app/globals.css`. Use them; don't introduce new colors or fo
 
 Every page is a dark room with one color of light in it. The room is the same on every page; the light changes per page. Three stage lights (`StageLights`, mounted by `Theme`) throw the accent down the room from a truss above the page and swing as the reader scrolls; they hold still under reduced motion.
 
+**Two rooms, one brand.** A reader may turn the house lights up: `data-mode="light"` on `<html>`, set by `ModeToggle` in the nav and kept in that browser alone (`src/lib/mode.ts`, no cookie, no account, nothing sent anywhere). Dark is the default and the absence of the attribute, so the markup a first visitor is served carries none and a browser with no script gets the room as it was built. The owner overturned the earlier "no light mode" rule on 2026-09-22; dark stays the default and there is no third mode.
+
+The color of light never changes with the room. Each theme keeps its `accent` hex in both, because that is the page's color and a second set would be a second brand. What changes is the room around it: `ground`, `ink`, `line`, `field-line`, `panel`, and the two tokens that describe how light falls on a lifted block, `glint` and `pool`. `accent-ink` changes too and has to: it is the tint of the accent that clears 4.5:1 on its ground, and on a near-white ground that is a *darker* tint. The light values were computed against their own grounds, not picked (blue 5.09, lime 4.66, magenta 4.51, amber 4.51, teal 4.56, violet 5.20, red 4.57, mono 16.93). Move a ground and the tint above it has to be computed again. `field-line` is also its own number in each room (0.42 dark, 0.47 light): a control boundary wants 3:1, and near-black over near-white is a shallower step than cream over the dark ground, so the dark room's alpha measured only 2.42:1 here. Mono is the one theme that turns over: its light is the ink itself, so the cream becomes the ground and the near-black becomes the accent.
+
 - The room: `ground` (page background), `ink` `#F4F0E8` (text), `muted` (secondary text), `line` (1px rules and borders), `panel` (a lifted, translucent block).
 - The light: `accent` (fills, glows, rules, display type at 24px and up), `accent-ink` (the tint of the accent that clears 4.5:1 on the ground; use it for any accent text under 24px), `on-accent` (text on an accent fill).
 - Themes, set with `<Theme name>` or the `theme` prop on `Page`: blue (home, sign in, sign up, dashboard, the embed), lime (how sponsorship works, and music's own page under it), magenta (the fundraisers index at `/fundraisers`), amber (create a fundraiser, at `/list`), teal (widget), violet (contact), red (404), mono (the legal pages). An organizer's pages take a color by slug through `themeFor`, so each organizer keeps the same light, whatever the category. A patron's public page takes the light the patron chose from `PROFILE_THEMES` in `src/lib/profile.ts` (blue when they never chose). That list is the colored themes and nothing else: never a typed color, and never mono.
@@ -134,7 +138,7 @@ Rules that are music's say so. Friday calendar transfers and logo approval are m
 
 ## Do not
 
-- Add a light mode. The dark room and the colored light are the brand.
+- Make the light room the default, or offer a third mode. The dark room is the brand and is what every first visitor meets; the light room is a reader's own choice and nothing else. The owner overturned the former "no light mode" rule on 2026-09-22; see the design system section above.
 - Add analytics scripts, chat widgets or third-party embeds to the marketing pages without asking.
 - Store card numbers, ever. Stripe Elements only.
 - Write "you" on a page that talks to organizers and sponsors at once. The second person belongs on the pages somebody uses, not the pages that describe the market. See voice rule 1.
