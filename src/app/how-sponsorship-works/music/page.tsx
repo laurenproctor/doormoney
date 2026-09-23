@@ -241,7 +241,7 @@ export default function HowMusicSponsorshipWorksPage() {
             <li key={m.key} className="grid grid-cols-[26px_1fr] items-start gap-4 bg-ground p-5">
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex h-[26px] w-[26px] flex-none items-center justify-center border border-accent bg-accent text-[16px] leading-none text-on-accent"
+                className="mt-0.5 flex h-[26px] w-[26px] flex-none items-center justify-center border border-accent-line bg-accent text-[16px] leading-none text-on-accent"
               >
                 &#10003;
               </span>

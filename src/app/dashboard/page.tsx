@@ -273,7 +273,7 @@ function SponsorshipRow({ row, act, label }: { row: HomeSponsorship; act: OwnedA
           {row.waitingCount > 0 && (
             <Link
               href={`/dashboard/runs/${row.id}#delivery`}
-              className="caps border border-accent px-2 py-1 text-[14px] text-accent-ink no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+              className="caps border border-accent-line px-2 py-1 text-[14px] text-accent-ink no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
             >
               {row.waitingCount} waiting on you
             </Link>

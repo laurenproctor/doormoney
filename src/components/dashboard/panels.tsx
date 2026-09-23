@@ -228,7 +228,7 @@ export function PreviewLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="caps inline-flex min-h-[44px] items-center gap-2 border border-ink/40 px-4 text-[14px] text-ink no-underline outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+      className="caps inline-flex min-h-[44px] items-center gap-2 border border-field-line px-4 text-[14px] text-ink no-underline outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
     >
       <Launch size={16} aria-hidden="true" />
       {label}

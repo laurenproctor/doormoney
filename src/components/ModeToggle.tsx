@@ -52,13 +52,14 @@ function setMode(next: Mode) {
  *
  * The label names the room it switches to, never the room you are in, because a control that names
  * its own current state is the oldest ambiguity in this kind of button. `aria-pressed` carries the
- * state properly for anybody who is listening rather than looking.
+ * state properly for anybody who is listening rather than looking. The button is held to 24 by 24,
+ * the smallest target WCAG asks for, because the glyph on its own is 22.
  */
 export function ModeToggle({ className = "" }: { className?: string }) {
   const mode = useSyncExternalStore(subscribe, readMode, serverMode);
 
   // Before hydration there is no honest answer, so the space is held and nothing is claimed.
-  if (!mode) return <span aria-hidden="true" className={`inline-block h-[22px] w-[22px] ${className}`} />;
+  if (!mode) return <span aria-hidden="true" className={`inline-block h-6 w-6 ${className}`} />;
 
   const next = otherMode(mode);
   return (
@@ -67,7 +68,7 @@ export function ModeToggle({ className = "" }: { className?: string }) {
       onClick={() => setMode(next)}
       aria-pressed={mode === "light"}
       title={modeLabel(next)}
-      className={`cursor-pointer text-muted transition-colors hover:text-accent-ink ${className}`}
+      className={`inline-flex h-6 w-6 cursor-pointer items-center justify-center text-muted transition-colors hover:text-accent-ink ${className}`}
     >
       <span className="sr-only">{modeLabel(next)}</span>
       {next === "light" ? <SunIcon /> : <MoonIcon />}

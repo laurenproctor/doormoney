@@ -25,7 +25,7 @@ export function Nav({ current }: { current?: string }) {
               href={n.href}
               aria-current={current === n.href ? "page" : undefined}
               className={`caps border-b pb-1 text-[14px] no-underline transition-colors hover:text-ink ${
-                current === n.href ? "border-accent text-ink" : "border-transparent text-muted"
+                current === n.href ? "border-accent-line text-ink" : "border-transparent text-muted"
               }`}
             >
               {n.label}
@@ -46,7 +46,7 @@ export function Nav({ current }: { current?: string }) {
           </Link>
           <Link
             href="/signup"
-            className="caps border border-ink/40 px-5 py-2.5 text-[14px] text-ink no-underline transition-colors hover:border-ink max-md:px-3.5"
+            className="caps border border-field-line px-5 py-2.5 text-[14px] text-ink no-underline transition-colors hover:border-ink max-md:px-3.5"
           >
             Create an account
           </Link>

@@ -198,14 +198,14 @@ export default async function ListPage() {
                 </div>
                 <div className="mt-2.5 grid gap-1.5">
                   {[...WIDGET_TIERS.map((t) => [t.title, formatMoney(t.amountCents)]), ["Take a sponsorship", "$500+"]].map(([title, price], i) => (
-                    <span key={title} className={`flex justify-between border border-line px-2.5 py-1.5 text-[14px] ${i === 0 ? "border-accent! bg-accent/10" : ""}`}>
+                    <span key={title} className={`flex justify-between border border-line px-2.5 py-1.5 text-[14px] ${i === 0 ? "border-accent-line! bg-accent/10" : ""}`}>
                       {title}
                       <b>{price}</b>
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="caps mx-3.5 mb-3.5 mt-3 border border-accent bg-accent p-[10px] text-center text-[14px] text-on-accent">
+              <div className="caps mx-3.5 mb-3.5 mt-3 border border-accent-line bg-accent p-[10px] text-center text-[14px] text-on-accent">
                 Back for {formatMoney(WIDGET_TIERS[0].amountCents)}
               </div>
             </div>

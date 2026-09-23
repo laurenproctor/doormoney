@@ -327,7 +327,7 @@ function Unset({ children }: { children: ReactNode }) {
 }
 
 function Status({ children }: { children: ReactNode }) {
-  return <span className="caps border border-accent px-3 py-1.5 text-[14px] text-accent-ink">{children}</span>;
+  return <span className="caps border border-accent-line px-3 py-1.5 text-[14px] text-accent-ink">{children}</span>;
 }
 
 /* ------------------------------------------------------------------ the rows */

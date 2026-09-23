@@ -112,11 +112,11 @@
   `--accent-ink` does change, and has to. The design system's rule is that it is the tint of the
   accent that clears 4.5:1 on its ground, and on a near-white ground that is a darker tint, not a
   lighter one. Each is computed against its own ground rather than picked, and each is aimed past
-  4.5:1 rather than at it: 6.1:1 on every theme. The headroom is there because accent-ink also has
-  to read inside a hero, where it sits on a wash of the accent rather than on the bare ground and
-  gives up about a fifth of its contrast; on that wash the tightest is 5.0:1. Muted is aimed at
-  7:1, the AAA bar for body text, and holds 5.2:1 on the same wash. Ink clears 17.7:1 everywhere.
-  Change a ground and every value above it has to be computed again.
+  4.5:1 rather than at it. Both accent-ink and muted are aimed at 7:1, the AAA bar for body text.
+  The headroom is not decoration: both also have to read inside a hero, where they sit on a wash of
+  the accent rather than on the bare ground and give up about a fifth of their contrast. On that
+  wash the tightest are 5.79:1 and 5.25:1. Ink clears 17.7:1 everywhere. Change a ground and every
+  value above it has to be computed again.
 
   `--on-accent` is untouched in both rooms: it is text on an accent fill, and the fill is the same.
 */
@@ -140,25 +140,25 @@
 /* Each theme, in the light room. Two selectors apiece: the wrapper <Theme> paints, and <html>
    itself, which ThemeSync mirrors the theme onto for the fixed furniture outside the page. */
 :root[data-mode="light"][data-theme="blue"],
-[data-mode="light"] [data-theme="blue"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #2344fe; }
+[data-mode="light"] [data-theme="blue"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #0e32fe; }
 
 :root[data-mode="light"][data-theme="lime"],
-[data-mode="light"] [data-theme="lime"] { --ground: #fcfdf8; --muted: #525b33; --accent-ink: #4f6900; }
+[data-mode="light"] [data-theme="lime"] { --ground: #fcfdf8; --muted: #525b33; --accent-ink: #485f00; }
 
 :root[data-mode="light"][data-theme="magenta"],
-[data-mode="light"] [data-theme="magenta"] { --ground: #fffafc; --muted: #7c4660; --accent-ink: #bd005a; }
+[data-mode="light"] [data-theme="magenta"] { --ground: #fffafc; --muted: #7c4660; --accent-ink: #ad0053; }
 
 :root[data-mode="light"][data-theme="amber"],
-[data-mode="light"] [data-theme="amber"] { --ground: #fefbf5; --muted: #645438; --accent-ink: #855600; }
+[data-mode="light"] [data-theme="amber"] { --ground: #fefbf5; --muted: #645438; --accent-ink: #794e00; }
 
 :root[data-mode="light"][data-theme="teal"],
-[data-mode="light"] [data-theme="teal"] { --ground: #f8fdfc; --muted: #3c5d58; --accent-ink: #0e6c5c; }
+[data-mode="light"] [data-theme="teal"] { --ground: #f8fdfc; --muted: #3c5d58; --accent-ink: #0c6253; }
 
 :root[data-mode="light"][data-theme="violet"],
-[data-mode="light"] [data-theme="violet"] { --ground: #fdfbff; --muted: #604c88; --accent-ink: #6d23ff; }
+[data-mode="light"] [data-theme="violet"] { --ground: #fdfbff; --muted: #604c88; --accent-ink: #5a06ff; }
 
 :root[data-mode="light"][data-theme="red"],
-[data-mode="light"] [data-theme="red"] { --ground: #fffaf9; --muted: #7a4a45; --accent-ink: #bf1200; }
+[data-mode="light"] [data-theme="red"] { --ground: #fffaf9; --muted: #7a4a45; --accent-ink: #ae1100; }
 
 /* Mono is the one theme whose light is the ink itself, so in this room it turns over: the cream
    that was the accent becomes the ground, and the near-black that was the ground becomes the light. */
@@ -168,7 +168,38 @@
 }
 
 /* With no theme chosen the room is still blue, as it is in the dark. */
-:root[data-mode="light"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #2344fe; }
+:root[data-mode="light"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #0e32fe; }
+
+/*
+  The edge of a control, in the page's light.
+
+  Three things are cut from one accent and they are not interchangeable. `accent` is the light
+  itself: fills, glows, the bloom, anything whose job is to be the colour. `accent-ink` is the
+  tint that can be read as text. This is the third: the edge of something a person has to find and
+  operate, which WCAG asks to clear 3:1 against what is behind it, not 4.5:1.
+
+  In the dark room that is the accent, and nothing changes. In the light room it cannot be: lime
+  measures 1.16:1 on its own near-white ground, amber 1.77 and teal 1.59, so a focus ring, a
+  button's edge or a selected tile drawn in the raw accent is not there at all. In this room the
+  edge takes the readable tint instead, which clears 7:1.
+
+  Declared on every themed element rather than once on :root, because a custom property is
+  substituted where it is declared: written on :root alone it would resolve to the house blue and
+  stay blue under every other light.
+*/
+:root, [data-theme] { --accent-line: var(--accent); }
+:root[data-mode="light"], [data-mode="light"] [data-theme] { --accent-line: var(--accent-ink); }
+
+/*
+  Type in the light room.
+
+  Light type on a dark ground looks heavier than it is, and dark type on paper looks lighter. The
+  same Bodoni at the same weight reads thinner here than it does in the dark, and the H1 is where
+  it shows, because the display cut is a didone whose thin strokes are very thin indeed. A ratio
+  does not capture this: a hairline at 7:1 still reads faint. So the display face is set one step
+  up in this room. Same size, same letterspacing, same words; the compensation is optical.
+*/
+[data-mode="light"] .display { font-weight: 500; }
 
 /*
   The rig, with the house lights up.
@@ -190,6 +221,7 @@
   --color-panel: var(--panel);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-line: var(--accent-line);
   --color-on-accent: var(--on-accent);
   --font-display: var(--font-bodoni), "Bodoni MT", "Didot", Georgia, serif;
   --font-sans: var(--font-archivo), Helvetica, Arial, sans-serif;
@@ -221,7 +253,8 @@ body:has([data-embed]) {
 p { max-width: 62ch; }
 
 ::selection { background: var(--accent); color: var(--on-accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* The focus ring is an edge, not a fill: it takes the token that stays visible in both rooms. */
+:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 3px; }
 
 /* Links inside running text are underlined so they never rely on color alone. */
 article a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
@@ -230,7 +263,7 @@ article a:hover { color: var(--accent-ink); }
 /* Form controls sit on the ground, one line around them, the accent when focused. */
 input, select, textarea { background: transparent; color: var(--ink); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
-input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--accent) !important; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--accent-line) !important; }
 select option { background: var(--ground); color: var(--ink); }
 
 /* Reusable brand utilities. Prefer these over ad-hoc classes so pages stay consistent. */

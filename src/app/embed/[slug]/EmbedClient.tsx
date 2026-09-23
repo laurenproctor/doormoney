@@ -69,7 +69,7 @@ export function EmbedClient(p: {
   const period = periodOf(p.kind);
   const tierClass = (on: boolean) =>
     `grid cursor-pointer grid-cols-[72px_1fr] items-center gap-3 border px-3 py-2.5 text-left transition-colors ${
-      on ? "border-accent bg-accent/10" : "border-line bg-transparent hover:border-ink/50"
+      on ? "border-accent-line bg-accent/10" : "border-field-line bg-transparent hover:border-ink/50"
     }`;
 
   /** Step one done: make the backing and get a client secret for the Payment Element. */
@@ -221,7 +221,7 @@ export function EmbedClient(p: {
 }
 
 const cta =
-  "caps mt-4 flex cursor-pointer items-center justify-center gap-3 border border-accent bg-accent px-3 py-3.5 text-[14px] tracking-[0.16em] text-on-accent no-underline transition-colors hover:border-accent-ink hover:bg-accent-ink disabled:cursor-default disabled:opacity-60";
+  "caps mt-4 flex cursor-pointer items-center justify-center gap-3 border border-accent-line bg-accent px-3 py-3.5 text-[14px] tracking-[0.16em] text-on-accent no-underline transition-colors hover:border-accent-ink hover:bg-accent-ink disabled:cursor-default disabled:opacity-60";
 
 /** Step two: Stripe's Payment Element and the pay button. Card payments finish here; redirect methods come back to the return URL. */
 function PayStep({ tier, name, email, returnUrl, onBack, onDone }: { tier: Tier; name: string; email: string; returnUrl: string; onBack: () => void; onDone: () => void }) {
