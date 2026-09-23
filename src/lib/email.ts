@@ -5,6 +5,19 @@ import { SITE } from "@/lib/site";
 
 export type Mail = { to: string; subject: string; text: string; html: string; replyTo?: string };
 
+/**
+ * Where the automated financial alarms go: a failed transfer, a patron flag, a ledger event that
+ * does not balance, a refund that has stopped retrying.
+ *
+ * ALERTS_TO_EMAIL when it is set, and CONTACT_TO_EMAIL when it is not, so nothing stops working
+ * before the second address exists. The owner's decision, 2026-09-22: the split happens when the
+ * domain is bought. Until then a dispute arrives in the same inbox as a press inquiry, which is
+ * the thing the variable exists to end.
+ */
+export function alertsAddress(): string | undefined {
+  return process.env.ALERTS_TO_EMAIL?.trim() || process.env.CONTACT_TO_EMAIL?.trim() || undefined;
+}
+
 export function emailConfigured() {
   return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }

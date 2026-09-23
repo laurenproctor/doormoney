@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(124);
+select plan(128);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -533,10 +533,18 @@ select throws_ok(
 select throws_ok($$delete from financial_operations$$, '42501', null, 'anon cannot delete a refund that is owed');
 select throws_ok($$truncate table financial_operations$$, '42501', null, 'nor truncate them all');
 
+-- The ledger (0055), asserted here as well as in supabase/tests/ledger_test.sql, because this file
+-- is where the boundary is kept whole and a table missing from it is how migration 0029 found the
+-- last hole. Entries carry an amount for every payment on the platform.
+select throws_ok('select * from ledger_entries limit 1',   '42501', null, 'anon cannot read the ledger');
+select throws_ok('select * from ledger_accounts limit 1',  '42501', null, 'nor the chart of accounts');
+select throws_ok('select * from ledger_imbalances limit 1','42501', null, 'nor what is out of balance');
+
 reset role;
 select tests.as_user('11111111-1111-1111-1111-111111111111');
 
 select throws_ok('select * from financial_operations limit 1', '42501', null, 'a signed-in musician cannot read them either');
+select throws_ok('select * from ledger_entries limit 1', '42501', null, 'nor can a signed-in account read the ledger');
 select throws_ok(
   $$update financial_operations set status='succeeded'$$,
   '42501', null, 'and cannot mark a refund they owe as already sent');

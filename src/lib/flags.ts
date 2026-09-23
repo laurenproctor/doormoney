@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { lotName } from "@/lib/purchases";
 import { tierPlace } from "@/lib/catalog";
-import { flagConfirmation, flagRaised, sendEmail } from "@/lib/email";
+import { alertsAddress, flagConfirmation, flagRaised, sendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
 
 /*
@@ -123,7 +123,7 @@ export async function raiseFlag(sb: Admin, target: FlagTarget, note: string | nu
     .select("id");
 
   const count = paused?.length ?? 0;
-  const admin = process.env.CONTACT_TO_EMAIL;
+  const admin = alertsAddress();
   if (admin) {
     const r = await sendEmail(
       flagRaised({

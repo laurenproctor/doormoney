@@ -114,4 +114,9 @@ insert into purchases (lot_id, patron_id, amount_cents, fee_cents, payment_statu
 ('a1000000-0000-0000-0000-000000000005', 'c1000000-0000-0000-0000-000000000004',  35000,  5250, 'held', 'approved'),
 ('b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000005',   6000,   900, 'held', 'approved');
 
+-- Opening ledger entries for the three sample payments above (migration 0055). They never went
+-- through Stripe, so nothing else would ever open an account for them and a fresh stack would
+-- start with books that do not describe the data sitting in front of it. Idempotent.
+select public.open_seed_ledger();
+
 reset doormoney.trusted_load;
