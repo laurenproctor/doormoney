@@ -21,13 +21,13 @@ import Link from "next/link";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
 import { FundraiserStages } from "@/components/FundraiserStages";
 import { categoryStatus, draftCategories, draftDiscoveryRegistry, loadFundraiserDraft } from "@/app/actions/drafts";
-import { STAGE_HEADING, STAGE_LABEL, isFormStage, isJourneyStage, resumeStage, stageFromParam, stageMissing, stagePath, type FormStage, type JourneyStage } from "@/lib/fundraiser-stages";
-import { DraftPublishControls } from "@/components/DraftPublishControls";
+import { STAGE_HEADING, isFormStage, isJourneyStage, resumeStage, stageFromParam, stagePath, type JourneyStage } from "@/lib/fundraiser-stages";
 import { SponsorshipBuilder, type NoTemplatesReason } from "@/components/SponsorshipBuilder";
+import { FundraiserReview } from "@/components/review/FundraiserReview";
+import { PublishedNotice } from "@/components/review/PublishedNotice";
 import { savedOptionKeys, type BuilderLot } from "@/lib/sponsorship-builder";
 import { incompleteOffers } from "@/lib/offer-readiness";
-import { publishBlockers } from "@/lib/readiness";
-import { formatMoney } from "@/lib/money";
+import { publishBlockers, readiness } from "@/lib/readiness";
 import { entityKindLabel } from "@/lib/participation";
 import { SITE } from "@/lib/site";
 import { templatesForFundraiser } from "@/lib/opportunities";
@@ -47,7 +47,7 @@ const statusLabel = (status: string, music: boolean) =>
   (!music && status === "live" ? "Live, the work is under way" : STATUS_LABEL[status]) ?? status;
 
 export default async function RunPage({ params, searchParams }: Props) {
-  const [{ id }, { kit: kitParam, stage: stageParam }] = await Promise.all([params, searchParams]);
+  const [{ id }, { kit: kitParam, stage: stageParam, published: publishedParam }] = await Promise.all([params, searchParams]);
   const user = await requireUser(`/dashboard/runs/${id}`);
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   if (!act) redirect("/dashboard/act/new");
@@ -87,30 +87,30 @@ export default async function RunPage({ params, searchParams }: Props) {
   if (run.status === "draft") {
     const draft = await loadFundraiserDraft(id);
     if (!draft) notFound();
-    const stage: JourneyStage | null = isJourneyStage(stageAsked) ? stageAsked : stageAsked ? null : resumeStage(draft, { optionCount, hasTemplates: offerable.length > 0 });
-    if (stage) {
-      const heading = STAGE_HEADING[stage];
-      const shell = { current: "/dashboard/runs", nav: dashboardNav({ hasAct: true, roles: profile?.roles ?? [] }), actName: act.name, actSlug: act.slug, identity, eyebrow: `Private draft \u00b7 ${draft.title || "New fundraiser"}`, title: heading.title, accent: heading.accent, intro: <p>{heading.intro}</p> };
-      if (isFormStage(stage)) {
-        return <DashboardShell {...shell}>
-          <FundraiserStages current={stage} className="mb-7 max-w-[760px]" />
-          <Card>
-            <FundraiserDraftForm
-              draft={draft}
-              stage={stage}
-              categories={await draftCategories()}
-              musicOrganizer={act.type !== null}
-              discovery={await draftDiscoveryRegistry()}
-              organizer={{ name: act.name, photoUrl: act.photo_url, kindLabel: entityKindLabel(act.entity_kind), slug: act.slug, host: SITE.url.replace(/^https?:\/\//, "") }}
-              carriedKit={kitCarried}
-              backHref="/dashboard/runs"
-            />
-          </Card>
-        </DashboardShell>;
-      }
+    const stage: JourneyStage = isJourneyStage(stageAsked) ? stageAsked : resumeStage(draft, { optionCount, hasTemplates: offerable.length > 0 });
+    const heading = STAGE_HEADING[stage];
+    const shell = { current: "/dashboard/runs", nav: dashboardNav({ hasAct: true, roles: profile?.roles ?? [] }), actName: act.name, actSlug: act.slug, identity, eyebrow: `Private draft \u00b7 ${draft.title || "New fundraiser"}`, title: heading.title, accent: heading.accent, intro: <p>{heading.intro}</p> };
+    if (isFormStage(stage)) {
+      return <DashboardShell {...shell}>
+        <FundraiserStages current={stage} className="mb-7 max-w-[760px]" />
+        <Card>
+          <FundraiserDraftForm
+            draft={draft}
+            stage={stage}
+            categories={await draftCategories()}
+            musicOrganizer={act.type !== null}
+            discovery={await draftDiscoveryRegistry()}
+            organizer={{ name: act.name, photoUrl: act.photo_url, kindLabel: entityKindLabel(act.entity_kind), slug: act.slug, host: SITE.url.replace(/^https?:\/\//, "") }}
+            carriedKit={kitCarried}
+            backHref="/dashboard/runs"
+          />
+        </Card>
+      </DashboardShell>;
+    }
+    const { label, publishEnabled: categoryPublishable } = await categoryStatus(categoryKey);
+    const offerPolicy = await loadOfferPolicy(sb, categoryKey);
+    if (stage === "sponsorships") {
       // The sponsorships stage: one option at a time, through the workspace editor's own action.
-      const { label, publishEnabled } = await categoryStatus(categoryKey);
-      const offerPolicy = await loadOfferPolicy(sb, categoryKey);
       const noTemplatesReason: NoTemplatesReason | null = offerable.length > 0 ? null : music && !act.type ? "music_type" : "none";
       return <DashboardShell {...shell}>
         <FundraiserStages current="sponsorships" className="mb-7 max-w-[760px]" />
@@ -126,7 +126,7 @@ export default async function RunPage({ params, searchParams }: Props) {
             kitLabel={kit && kitCarried ? kit.label : null}
             goalCents={draft.goal_cents ?? null}
             sponsorPromise={draft.sponsor_promise ?? null}
-            publishable={publishEnabled}
+            publishable={categoryPublishable}
             noTemplatesReason={noTemplatesReason}
             continueHref={stagePath(run.id, "review", kitCarried)}
             backHref={stagePath(run.id, "funding", kitCarried)}
@@ -134,6 +134,43 @@ export default async function RunPage({ params, searchParams }: Props) {
         </Card>
       </DashboardShell>;
     }
+    /*
+      The review: the saved fundraiser read back, what is unfinished and where it is fixed, and the
+      decision. Readiness is the same input publishRun reads, computed once here, so the list, the
+      button and the refusal agree. The real page is offered where it can be drawn: music's board
+      is drawn from its dates and count, so before those exist the preview would answer 404, and
+      the review says so instead of linking.
+    */
+    const readinessInput = {
+      act,
+      run: { ...run, methods: run.verification_methods ?? [], other: run.verification_other ?? null },
+      lotCount: allLots.length,
+      auctionCount: allLots.filter((l) => l.mode === "auction").length,
+      categoryPublishable,
+      incompleteOffers: incompleteOffers(allLots, registry),
+    };
+    const previewReady = !music || Boolean(run.kind && run.starts_on && run.ends_on && run.show_count !== null);
+    return <DashboardShell {...shell}>
+      <FundraiserStages current="review" className="mb-7 max-w-[760px]" />
+      <FundraiserReview
+        draft={{ ...draft, verification_methods: run.verification_methods ?? [], verification_other: run.verification_other ?? null }}
+        organizer={{ name: act.name, slug: act.slug, kindLabel: entityKindLabel(act.entity_kind), city: act.city, region: act.region, countryCode: act.country_code, bio: act.bio, photoUrl: act.photo_url }}
+        categoryKey={categoryKey}
+        categoryLabel={label}
+        lots={allLots}
+        templates={offerable}
+        policy={offerPolicy}
+        rows={readiness(readinessInput)}
+        blockers={publishBlockers(readinessInput)}
+        publishable={categoryPublishable}
+        discovery={await draftDiscoveryRegistry()}
+        kit={kitCarried}
+        preview={previewReady ? { href: `/dashboard/runs/${run.id}/preview` } : { why: "The preview draws a music fundraiser from its performance format, both dates and a number of performances; add those on the funding stage and it appears here." }}
+        publicUrl={runUrl(act.slug, run.slug)}
+        keepHref="/dashboard/runs"
+        workspaceHref={`/dashboard/runs/${run.id}`}
+      />
+    </DashboardShell>;
   }
 
   const { label: categoryLabel, publishEnabled: categoryPublishable } = await categoryStatus(categoryKey);
@@ -145,7 +182,6 @@ export default async function RunPage({ params, searchParams }: Props) {
   // The starter kit this draft began from, where the address still carries it. It is not stored
   // with the fundraiser, and one from another category is ignored. It names options to look at and
   // ticks none of them.
-  const kitSuggestions = kit && kit.enabled && kitCarried ? suggestedTemplates(kit, surfaces) : [];
   const boardHref = runUrl(act.slug, run.slug);
   // What this fundraiser still owes its sponsors. Read under the organizer's own session, so row
   // level security decides. Empty for music, which releases on its calendar and owes no rows.
@@ -169,7 +205,7 @@ export default async function RunPage({ params, searchParams }: Props) {
   const work = view?.work ?? [];
   const showMetrics = Boolean(view?.metrics && music && act.type && run.kind && run.starts_on && run.ends_on);
   const target = previewTarget({ id: run.id, slug: run.slug, status: run.status }, act.slug);
-  // The same rules publishRun runs, so the checklist, the publish button and the refusal agree.
+  // The same rules publishRun runs, so the checklist a published fundraiser keeps agrees with them.
   const readinessInput = {
     act,
     run: { ...run, methods, other: run.verification_other ?? null },
@@ -178,7 +214,6 @@ export default async function RunPage({ params, searchParams }: Props) {
     categoryPublishable,
     incompleteOffers: incompleteOffers(allLots, registry),
   };
-  const blockers = run.status === "draft" ? publishBlockers(readinessInput) : [];
 
   return (
     <DashboardShell
@@ -201,6 +236,8 @@ export default async function RunPage({ params, searchParams }: Props) {
         </p>
       }
     >
+      {publishedParam === "1" && isShareable(run.status) && <PublishedNotice url={boardHref} />}
+
       {/* The way to look at it, which a closed fundraiser had no link to at all. */}
       <div className="mb-8 flex flex-wrap items-center gap-3">
         <PreviewLink href={target.path} label={target.label} />
@@ -228,18 +265,6 @@ export default async function RunPage({ params, searchParams }: Props) {
         </Card>
       )}
 
-      {run.status === "draft" ? (
-        <Card id="placements" className="mb-10">
-          <CardHead eyebrow={`Stage three of four \u00b7 ${STAGE_LABEL.sponsorships}`}>The sponsorship options</CardHead>
-          <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
-            Built one at a time on the sponsorships stage, each with its own placement, price and terms. Sold options stay as they are.
-          </p>
-          <DraftOptionsSummary lots={allLots} templates={offerable} href={stagePath(run.id, "sponsorships", kitCarried)} />
-          <div className="mt-8 border-t border-line pt-6">
-            <DraftPublishControls runId={run.id} publishable={categoryPublishable} optionCount={optionCount} blockers={blockers} />
-          </div>
-        </Card>
-      ) : (
       <Card id="placements" className="mb-10">
         <CardHead eyebrow="Sponsorship options">Price the sponsorship options</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
@@ -247,12 +272,6 @@ export default async function RunPage({ params, searchParams }: Props) {
             ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold options stay as they are."
             : "No prices are suggested here yet, so your own number is the only number. Offer only what you can deliver. Sold options stay as they are."}
         </p>
-        {kit && kitSuggestions.length > 0 && (
-          <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
-            The starter kit you began with, {kit.label}, suggests looking at: {kitSuggestions.map((t) => t.name).join(", ")}.
-            Nothing is offered until you tick it and set its price.
-          </p>
-        )}
         {/* Music's options are narrowed by the kind of musician, and a music organizer set up with the one-question flow has not said which yet. */}
         {music && !act.type && (
           <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
@@ -278,10 +297,9 @@ export default async function RunPage({ params, searchParams }: Props) {
           materialsWindowDays={offerPolicy?.materialsWindowDays ?? null}
         />
       </Card>
-      )}
 
       <Card id="verification" className="mb-10 max-w-[860px]">
-        <CardHead eyebrow={run.status === "draft" ? `Stage four of four · ${STAGE_LABEL.review}` : "Verification"}>How the placements will be recorded</CardHead>
+        <CardHead eyebrow="Verification">How the placements will be recorded</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           Select what sponsors will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
           claims more than that.
@@ -331,10 +349,8 @@ export default async function RunPage({ params, searchParams }: Props) {
       </Card>}
 
       <Card id="run-details" className="max-w-[760px]">
-        <CardHead eyebrow="The fundraiser">{run.status === "draft" ? "The project and the funding" : "Dates and details"}</CardHead>
-        {run.status === "draft"
-          ? <DraftStageSummary run={run} kit={kitCarried} />
-          : music
+        <CardHead eyebrow="The fundraiser">Dates and details</CardHead>
+        {music
             ? <RunForm run={run as RunInput} actType={act.type} />
             : <p className="max-w-[60ch] text-[15px] text-muted">
                 While this fundraiser is public its details stay as they are, so a sponsor reads the same promise they bought.
@@ -346,74 +362,3 @@ export default async function RunPage({ params, searchParams }: Props) {
 }
 
 
-/**
- * The first two stages of a draft, read back, each with the way into it. What is missing is named
- * from the resume rule, which is not the publish gate: the checklist above says what publishing
- * still wants, and this says what was written.
- */
-function DraftStageSummary({ run, kit }: {
-  run: { id: string; title: string | null; purpose: string | null; audience_description: string | null; sponsor_promise: string | null };
-  kit: string | null;
-}) {
-  const rows: { stage: FormStage; lines: { label: string; value: string | null }[] }[] = [
-    { stage: "project", lines: [{ label: "Name", value: run.title }, { label: "Who will experience it", value: run.audience_description }] },
-    { stage: "funding", lines: [{ label: "What the funding enables", value: run.purpose }, { label: "What sponsors can count on", value: run.sponsor_promise }] },
-  ];
-  return (
-    <ul className="divide-y divide-line">
-      {rows.map(({ stage, lines }) => {
-        const missing = stageMissing(run, stage);
-        return (
-          <li key={stage} className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 py-4 first:pt-0 last:pb-0">
-            <div className="min-w-0 flex-1">
-              <p className="caps mb-2 text-[14px] text-muted">{STAGE_LABEL[stage]}</p>
-              {lines.map((line) => (
-                <p key={line.label} className="text-[15px] leading-[1.6]">
-                  <span className="text-muted">{line.label}: </span>
-                  {line.value?.trim() ? line.value : <span className="text-muted">not yet said</span>}
-                </p>
-              ))}
-              {missing.length > 0 && <p className="mt-2 text-[14.5px] text-accent-ink">Still to say: {missing.join(", ")}.</p>}
-            </div>
-            <Link href={stagePath(run.id, stage, kit)} className="caps inline-flex min-h-[44px] items-center text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
-              Edit the {STAGE_LABEL[stage].toLowerCase()}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** The options a draft offers, read back, and the way into the stage that edits them. */
-function DraftOptionsSummary({ lots, templates, href }: { lots: BuilderLot[]; templates: { key: string; name: string }[]; href: string }) {
-  const keys = savedOptionKeys(lots);
-  return (
-    <div>
-      {keys.length === 0 ? (
-        <p className="text-[15px] text-muted">No sponsorship option yet.</p>
-      ) : (
-        <ul className="divide-y divide-line">
-          {keys.map((key) => {
-            const mine = lots.filter((l) => l.surface_key === key);
-            const name = templates.find((t) => t.key === key)?.name ?? key;
-            const locked = mine.some((l) => l.status !== "open");
-            return (
-              <li key={key} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3 first:pt-0">
-                <span className="text-[15px]">{name}</span>
-                <span className="text-[14.5px] text-muted">
-                  {formatMoney(mine[0].price_cents)} {mine[0].mode === "auction" ? "reserve" : "each"} · {mine.length} {mine.length === 1 ? "spot" : "spots"}{locked ? " · terms settled" : ""}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      <p className="mt-4">
-        <Link href={href} className="caps inline-flex min-h-[44px] items-center text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
-          {keys.length === 0 ? "Build the first option" : "Edit the options"}
-        </Link>
-      </p>
-    </div>
-  );
-}
