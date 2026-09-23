@@ -102,19 +102,35 @@ export async function saveAct(_prev: ActState, form: FormData): Promise<ActState
   const existing = await ownedAct(user.id);
   const row = parsed.data;
 
-  // The board address and the sign-in username are one word, so claiming either claims both.
-  // claim_username (migration 0024) does it in one transaction: it checks the whole namespace,
-  // refuses a word somebody has retired, holds the twelve-month rule, and moves the act's slug
-  // with the handle. The old word goes to the history, which is what makes the old board URL
-  // redirect rather than break. See docs/DECISIONS.md, decision 12.
+  // Whose word is this?
+  //
+  // For an organizer whose address *is* the account's handle, the two are one word and claiming
+  // either claims both. claim_username (migration 0024) does it in one transaction: it checks the
+  // whole namespace, refuses a word somebody has retired, holds the twelve-month rule, and moves
+  // the slug with the handle. The old word goes to the history, which is what makes the old URL
+  // redirect rather than break. See docs/DECISIONS.md, decision 12. Every organizer made before
+  // migration 0058 is this case, so nothing about it changes.
+  //
+  // An organizer holding a word of its own, which is what setting up an organization makes, moves
+  // alone through claim_act_slug (migration 0058). Renaming a business must never rename the word
+  // its owner signs in with, and before 0058 this line would have.
   const slug = parsed.data.slug;
   const previousSlug = existing?.slug ?? null;
-  const { data: claim, error: claimError } = await supabaseAdmin().rpc("claim_username", { p_user_id: user.id, p_username: slug });
-  if (claimError) {
-    console.error("address claim failed:", claimError.message);
+  const admin = supabaseAdmin();
+  // Which of the two it is, is the database's answer rather than a guess made here: claim_act_slug
+  // says 'is_handle' when the organizer is holding the account's own word, and then the pair moves
+  // together as it always has. A first organizer takes the handle's word, which is decision 8.
+  let claim: { data: unknown; error: { message: string } | null } = existing
+    ? await admin.rpc("claim_act_slug", { p_user_id: user.id, p_slug: slug, p_name: parsed.data.name })
+    : await admin.rpc("claim_username", { p_user_id: user.id, p_username: slug });
+  if (!claim.error && claim.data === "is_handle") {
+    claim = await admin.rpc("claim_username", { p_user_id: user.id, p_username: slug });
+  }
+  if (claim.error) {
+    console.error("address claim failed:", claim.error.message);
     return { ok: false, errors: { slug: "That did not save. Try once more." } };
   }
-  if (claim !== "ok") return { ok: false, errors: { slug: claimMessage(claim as string) } };
+  if (claim.data !== "ok") return { ok: false, errors: { slug: claimMessage(claim.data as string) } };
 
   // The ownership trigger adds organizer atomically without replacing any existing roles.
 
@@ -165,7 +181,9 @@ function dbMessage(code?: string) {
 function claimMessage(code: string) {
   if (code === "too_soon") return "An address can move once every twelve months. The date it next can is on the profile page.";
   if (code === "taken") return "That address is taken. Pick another.";
+  if (code === "reserved") return "That address is reserved. Pick another.";
   if (code === "invalid") return "Letters, digits and hyphens only, starting and ending with a letter or digit.";
+  if (code === "invalid_name") return "Enter the name before changing the address.";
   return "That did not save. Try once more.";
 }
 

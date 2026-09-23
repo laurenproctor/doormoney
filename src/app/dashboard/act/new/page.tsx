@@ -1,54 +1,123 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { DashboardShell, Card } from "@/components/DashboardShell";
-import { ActForm } from "@/components/ActForm";
+import { DashboardShell } from "@/components/DashboardShell";
+import { OrganizerSetup, type ExistingOrganizer } from "@/components/OrganizerSetup";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { dashboardNav } from "@/lib/dashboardModel";
-import { usernameFor } from "@/lib/username";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { placeLine } from "@/lib/countries";
+import { accountDisplayName, suggestSlug } from "@/lib/organizer-setup";
+import { entityKindLabel } from "@/lib/participation";
+import { ownProfile } from "@/lib/patronprofile";
+import { supabaseServer } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
 import { starterKit } from "@/lib/starter-kits";
 
-export const metadata: Metadata = { title: "Organizer profile" };
+/*
+  The first step toward a sponsorship: who is behind it.
+
+  This used to be a whole organizer profile, asked for before anybody had described anything: a
+  music subtype, an address that was also the sign-in username, a city, a region, a country code
+  typed by hand, social links, a bio, an audience and a photograph. All of it before the question
+  a sponsor actually reads, which is what the funding enables and what the sponsorship includes.
+
+  So the page asks one question. Somebody raising money under their own name is asked for nothing,
+  because this account already knows their name. An organization is asked for its name, and for
+  four lines that are all optional. Everything the long form collected is still collected, on
+  /dashboard/act, where the organizer is edited afterwards.
+
+  The music subtype is not here, and no value is dropped: `acts.type` is untouched by this screen,
+  every stored value stays, and the field is still on the editing page as music's own. What an
+  organizer raises money *for* is a fundraiser's category, chosen on the fundraiser.
+*/
+
+export const metadata: Metadata = { title: "New organizer", robots: { index: false, follow: false } };
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export default async function NewActPage({ searchParams }: Props) {
-  // A starter kit picked before there was a profile to hang a fundraiser on. It is looked up in the
-  // kit registry, so only a real kit's key travels on, and it is carried, never stored.
+  // A starter kit picked before there was an organizer to hang a fundraiser on. It is looked up in
+  // the kit registry, so only a real kit's key travels on, and it is carried, never stored.
   const { template } = await searchParams;
   const kit = typeof template === "string" ? starterKit(template) : null;
   const user = await requireUser(kit ? `/dashboard/act/new?template=${kit.key}` : "/dashboard/act/new");
+
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
-  if (act) redirect("/dashboard/act");
-  // The username claimed at sign-up is the board address, so the field starts there.
-  const username = await usernameFor(supabaseAdmin(), user.id);
+  const [own, live] = await Promise.all([ownProfile(user.id), hasPublicFundraiser(act?.id ?? null)]);
+
+  const personName = fullName(profile);
+  const displayName = accountDisplayName({
+    fullName: personName,
+    patronDisplayName: own?.displayName ?? null,
+    email: profile?.email ?? user.email ?? null,
+  });
+
+  // The organizer this account already manages, if it has one. One per account today
+  // (acts_one_per_owner, migration 0022), so this is a list of one or of none.
+  const existing: ExistingOrganizer | null = act
+    ? {
+        name: act.name,
+        slug: act.slug,
+        kindLabel: entityKindLabel(act.entity_kind),
+        place: placeLine({ city: act.city, region: act.region, countryCode: act.country_code }),
+        photoUrl: act.photo_url,
+      }
+    : null;
 
   return (
     <DashboardShell
       current="/dashboard/profile"
-      nav={dashboardNav({ hasAct: false, roles: profile?.roles ?? [] })}
-      identity={fullName(profile)}
-      eyebrow="Creating"
-      title="Organizer"
-      accent="profile"
-      intro={
-        <p>
-          The name sponsors and audiences will know: a band, a team, a company or your own. Creating it publishes
-          nothing. A fundraiser comes next.
-        </p>
+      nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
+      actName={act?.name}
+      identity={personName}
+      eyebrow={
+        <>
+          <Link
+            href="/dashboard/profile"
+            className="text-accent-ink underline decoration-1 underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+          >
+            Profile
+          </Link>
+          <span aria-hidden="true" className="mx-2.5 text-muted">
+            /
+          </span>
+          <span className="text-muted">New organizer</span>
+        </>
       }
+      title={"Who\u2019s behind"}
+      accent="your project?"
+      intro={<p>Use your profile or add a business, team, or organization.</p>}
     >
-      <Card className="max-w-[720px]">
-        <ActForm act={null} siteUrl={SITE.url} username={username} starterKitKey={kit?.key ?? null} />
-      </Card>
-      <p className="mt-6 text-[14.5px] text-muted">
-        <Link href="/dashboard/profile" className="text-accent-ink underline underline-offset-4">
-          Back to your profile
-        </Link>
-      </p>
+      <OrganizerSetup
+        self={{
+          name: displayName,
+          username: profile?.username ?? null,
+          suggestedSlug: displayName ? suggestSlug(displayName) : "",
+        }}
+        existing={existing}
+        host={SITE.url.replace(/^https?:\/\//, "")}
+        template={kit?.key ?? null}
+        live={live}
+      />
     </DashboardShell>
   );
+}
+
+/**
+ * Whether this organizer already has a fundraiser out of draft.
+ *
+ * Only to keep the status line true. An organizer with nothing published is not reachable at its
+ * address at all (`getActProfile` answers 404 for it), so "Nothing is public yet" is a fact rather
+ * than a promise; an organizer with a published fundraiser is already out there, and the line says
+ * what this step does instead. The same reading the profile page makes.
+ */
+async function hasPublicFundraiser(actId: string | null): Promise<boolean> {
+  if (!actId) return false;
+  const sb = await supabaseServer();
+  const { count } = await sb
+    .from("runs")
+    .select("id", { count: "exact", head: true })
+    .eq("act_id", actId)
+    .not("status", "in", "(draft,cancelled)");
+  return (count ?? 0) > 0;
 }

@@ -124,8 +124,9 @@ test("the kit survives the organizer-profile step a new organizer has to take fi
   assert.match(code("src/app/dashboard/runs/new/page.tsx"), /if \(!act\) redirect\(asked \? `\/dashboard\/act\/new\?template=\$\{asked\}` : "\/dashboard\/act\/new"\)/);
   const profile = code("src/app/dashboard/act/new/page.tsx");
   assert.match(profile, /const kit = typeof template === "string" \? starterKit\(template\) : null/, "looked up, never echoed");
-  assert.match(profile, /starterKitKey=\{kit\?\.key \?\? null\}/);
-  assert.match(code("src/components/ActForm.tsx"), /name="template" value=\{starterKitKey\}/);
+  assert.match(profile, /template=\{kit\?\.key \?\? null\}/);
+  assert.match(code("src/components/OrganizerSetup.tsx"), /name="template" value=\{template\}/);
+  assert.match(code("src/app/actions/organizer-setup.ts"), /newFundraiserPath\(typeof template === "string" \? template : null\)/);
   assert.match(code("src/app/actions/act.ts"), /redirect\(kit \? newFundraiserPath\(kit\.key\) : "\/dashboard"\)/);
 });
 

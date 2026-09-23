@@ -42,7 +42,8 @@ export function DashboardShell({
   actName?: string | null;
   /** The account holder's own name, from the page that already read the profile. */
   identity?: string | null;
-  eyebrow: string;
+  /** The line above the H1. A string on most pages, a breadcrumb where a page is a step in one. */
+  eyebrow: ReactNode;
   title: string;
   accent: string;
   intro?: ReactNode;

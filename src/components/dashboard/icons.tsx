@@ -243,3 +243,25 @@ export function Wallet(p: Props) {
     </Icon>
   );
 }
+
+/** A business, a team, a group: whoever is behind a fundraiser that is not one person. */
+export function Organization(p: Props) {
+  return (
+    <Icon {...p}>
+      <path d="M4 20V5.4a.9.9 0 0 1 .9-.9h8.2a.9.9 0 0 1 .9.9V20" />
+      <path d="M14 10.5h5.1a.9.9 0 0 1 .9.9V20" />
+      <path d="M2.5 20h19" />
+      <path d="M7 8.5h1.4M10.6 8.5H12M7 12.5h1.4M10.6 12.5H12M7 16.5h1.4M10.6 16.5H12M16.8 14h1.2M16.8 17.2h1.2" />
+    </Icon>
+  );
+}
+
+/** Private, and staying that way until somebody publishes something. */
+export function Locked(p: Props) {
+  return (
+    <Icon {...p}>
+      <rect x="4.6" y="10.4" width="14.8" height="9.6" rx="1.2" />
+      <path d="M8.2 10.4V7.6a3.8 3.8 0 0 1 7.6 0v2.8" />
+    </Icon>
+  );
+}
