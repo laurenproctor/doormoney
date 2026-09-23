@@ -220,12 +220,13 @@ since 0001 and a template is public by design.
 
 Built 2026-09-22 on `feat/sponsor-discovery-filtering`, migration **0054**, applied to the hosted
 project the same day and therefore frozen. `/fundraisers` is now a sponsor discovery surface: a
-filter rail, a result count, removable filter chips, three sort orders and paginated cards.
+toolbar, a result count, removable filter chips, three sort orders and paginated cards, drawn as
+tiles or rows (see **Tiles and rows**). Redesigned 2026-09-23 on `feat/discovery-tiles-rows`.
 `/auctions` and `/fundraiser` still redirect to it.
 
 Applying 0054 changed nothing anybody can see. It replaces two read-only views with the same two
-views plus a few columns, every one of which `anon` could already read on its own table, and the
-page that uses them is not on `main` yet.
+views plus a few columns, every one of which `anon` could already read on its own table. The page
+that uses them merged the same day.
 
 ### The query, and what it reads
 
@@ -246,16 +247,63 @@ fundraisers actually record, so the page never offers a country nobody is in.
 `organizer_slug`, `organizer_name`, `title`, `category_key`, `status`, `activity_mode`,
 `activity_locations`, `activity_country_codes`, `discovery_tags`, `purpose`,
 `audience_description`, `sponsor_promise`, `fundraising_starts_on`, `fundraising_ends_on`,
-`bidding_closes_at`, `created_at`. From `public_opportunity_discovery`: `id`, `run_id`, `name`,
-`price_cents`, `mode`, `buy_now_cents`, `effective_closes_at`.
+`bidding_closes_at`, `created_at`, `organizer_photo_url`. From `public_opportunity_discovery`:
+`id`, `run_id`, `name`, `price_cents`, `mode`, `buy_now_cents`, `effective_closes_at`,
+`placement_description`.
 
 Migration 0054 added `organizer_name`, the three prose fields and `bidding_closes_at` to the
 fundraiser view and `effective_closes_at` to the opportunity view. **It widened nothing**: every
 one of those columns was already granted to `anon` on its own table. It put columns a visitor could
 already read in one place so discovery is two queries rather than five.
 
-The prose fields are **shown and never filtered on**. Discovery narrows on the structured tags and
-nothing else; reading a filter out of a description would claim a fact the organizer never stated.
+Migration **0059** (2026-09-23, `feat/discovery-tiles-rows`, not yet applied to the hosted project)
+appends one column to each view, again widening nothing:
+
+- `organizer_photo_url` is `acts.photo_url`, in `anon`'s column list since 0022. It is the
+  organizer's own image, modeled as such on the card (`organizerPhotoUrl`): it says who is raising,
+  and no page may present it as documentation of the work or its delivery. The product holds no
+  image of a fundraiser itself, so none is invented and nothing stands in for a missing one.
+- `placement_description` is the offer contract's `placement.description`, read through
+  `sponsor_facing_offer_terms` (0056), the projection every public reader of the terms goes through.
+  One text column, trimmed, null where unwritten; never the document.
+
+Both are read by the same two queries. There is no per-card read for either. The view's
+`description` column (the template's `seen_by`) is deliberately not what a preview shows: a preview
+names the option the organizer actually offers and, where they wrote it, where the sponsor appears.
+
+The prose fields are **shown and never filtered on**, with one narrow, literal exception below (the
+name search). Discovery narrows on the structured tags and nothing else; reading a filter out of a
+description would claim a fact the organizer never stated.
+
+### The page's word
+
+The page says "project" where the rest of the site says "fundraiser": the heading, the count, the
+empty states. It is a display word for this one surface, where a sponsor is looking at the work
+rather than at the mechanics of funding it. Nothing else changes: the address is `/fundraisers`,
+the tables are `runs` and `lots`, and every other page says fundraiser. The nav's label for the
+page is "Browse projects" (`NAV` in `src/lib/site.ts`, held by `tests/category-neutral-copy.test.ts`
+and `tests/roles.test.ts`): the same display word, on the link to the same address.
+
+### The toolbar
+
+One plain GET form: the name search, then Category, Location (activity mode, place, country),
+Budget and More filters (funding purpose, audience, sale method, closing soon), and Apply. Each
+question is a native `<details>`, so it opens and closes from the keyboard with no script and keeps
+its draft selections when closed; on a wide screen a small client enhancement makes the row behave
+as menus (one open at a time, Escape closes and returns focus, a click elsewhere closes). Nothing is
+submitted on a keystroke. Clearing lives with the chips, one link beside what it clears.
+
+### Tiles and rows
+
+The results are one list, fetched once and ranked once. Tiles are what everybody lands on; rows are
+the same results in another shape, and neither is a separate query, ranker or copy of the markup.
+The choice is the reader's own: one attribute on `<html>` (`data-discovery-view="rows"`), kept in
+the browser under `doormoney:discovery-view`, read back before paint by an inline script in the
+root layout (`src/lib/discovery-view.ts`, the pattern `src/lib/mode.ts` and `src/lib/rail.ts` set),
+and drawn by the `discovery-rows` custom variant in `globals.css`. It is never in the address, so
+switching changes nothing about the search, the filters, the sort, the page or the scroll position,
+and asks the server for nothing. A stored value that is not `tiles` or `rows`, or storage that
+cannot be read, means tiles. With no script the switch is not offered and the tiles stand.
 
 ### Query parameters
 
@@ -269,6 +317,7 @@ same page.
 | `mode` | yes | `online`, `in_person`, `hybrid` | `runs.activity_mode` |
 | `country` | yes | a two-letter uppercase code | `runs.activity_country_codes` |
 | `place` | no | free text | city, region or country in `runs.activity_locations` |
+| `q` | no | free text, at most 80 characters | the fundraiser's title or the organizer's name, literally; see **Name search** |
 | `purpose` | yes | a `discovery_tags` key | `runs.discovery_tags`, funding-purpose facet |
 | `audience` | yes | a `discovery_tags` key | `runs.discovery_tags`, audience facet |
 | `min`, `max` | no | whole US dollars | see **Price range** below |
@@ -286,6 +335,33 @@ still shows results. **A filter is never silently widened**: a discovery tag is 
 only, not for registry membership, because the tag registry can come back empty and dropping the
 tag would quietly return more than the sponsor asked for while the page still said it was
 filtering. A key nothing carries narrows to nothing, which is the safe direction to be wrong in.
+
+### Name search
+
+`q` is a text lookup and nothing more: does the fundraiser's `title` or the organizer's `name`
+contain these characters, ignoring case. It is the one filter that reads a text field, and it reads
+only those two, which are names and not descriptions. It reads no `purpose`, `description`,
+`audience_description` or `sponsor_promise`, and it infers nothing: "Brooklyn" in a title is not a
+location filter, "jersey" is not a benefit, and "film" is not a category. The field that asks it
+says "Search projects or organizers" and must not claim to search places, benefits or keywords.
+
+The value is trimmed, its inner whitespace collapsed and it is cut at 80 characters
+(`cleanNameQuery`). Every other character is matched as typed: `*`, `%`, `_`, a quotation mark, a
+comma or a parenthesis is a character in a name, not an operator.
+
+It is applied in both places every fundraiser-level filter is. In the database it is one PostgREST
+`or` across the two columns (`nameSearchFilter`), applied **before the candidate cap**, so a name
+that exists is found rather than cut off at 200. The value is double-quoted for PostgREST's own
+grammar and the LIKE wildcards are escaped; `*` is the one character PostgREST turns into a
+wildcard even inside quotes, so the database answer is a superset for a name containing one, and
+`nameMatches` narrows it back to the literal match in TypeScript. Checked against a local
+PostgREST on 2026-09-23. The no-database sample is filtered by the same function.
+
+A bounded search is still bounded: with `q` set the cap applies to the fundraisers whose names
+match, and the page says so when it is reached rather than presenting the list as complete.
+
+Clearing the search removes `q` alone. Changing it, like changing any filter, returns to page one.
+It survives sorting, paging and every chip, and repeated filter parameters stay repeated beside it.
 
 ### Discovery grain
 
@@ -307,8 +383,29 @@ template's suggested price**.
 - Where a bidding option also carries a take-it-now price, **either** number falling inside the
   range is a match, because both are real numbers somebody could pay.
 
-The card's price line is built from the matching options only, so a filtered card shows the range a
-sponsor actually asked about.
+The card's prices are built from the matching options only, so a filtered card shows what the
+sponsor actually asked about, and they are **kept apart by buying route**. Each matching option
+carries its routes (`priceRoutes`): a fixed-price option's price; a bidding option's opening bid,
+which is where the bidding starts and not a price anybody is promised to win at; and its
+take-it-now number where the organizer set one. With a budget set, only the routes inside it count
+(`routesWithinBudget`), and membership is exactly the rule above: an option matches when at least
+one route fits. The card is then handed one span per route (`DiscoveryPricing`: `fixed`,
+`openingBid`, `buyNow`) and the lowest number with the option it belongs to. A $150 opening bid
+with a $500 take-it-now under a $200 budget therefore shows the opening bid and not the $500, and
+never shows "$150" as a sponsorship price. A fixed price and an opening bid are never folded into
+one unlabeled range.
+
+Each card also carries up to three of its matching options as previews (`DiscoveryPreview`):
+the option's own name, its sale method, its own numbers, its fitting routes and, where the
+organizer wrote it, where the sponsor appears. A preview is always one of the options that
+matched, never a template the organizer did not tick and never a more attractive option that did
+not match, and a preview's price is that option's own. The fundraiser-level `sponsor_promise` is
+carried separately (`sponsorPromise`) as the organizer's statement about the fundraiser; it is not
+a claim that every option includes every part of it.
+
+`matchingOffers` and `availableOffers` count sponsorship options, which is to say `lots` rows a
+sponsor could buy now. Neither is a count of remaining spots, which discovery does not read, and no
+page may call one the other.
 
 ### Closing soon
 
@@ -344,6 +441,16 @@ who wants one plain answer instead can sort by newest (`created_at` descending) 
 (earliest matching close first, with fundraisers on no clock after those on one). The page says in
 one line what most relevant does, above the results.
 
+### When the database does not answer
+
+`findFundraisers` reports where its answer came from (`status`): `live`, `sample` (no database is
+configured and the built-in sample stood in) or `unavailable` (a database is configured and a
+read failed, with `failedRead` saying which). Unavailable is its own state with no cards and a
+total of zero, and the page says the list could not be read. It never says nothing is open, and
+the sample never stands in for a database that is there and not answering. An offer read that
+fails is unavailable too, not a page of fundraisers with zero options: unknown availability is not
+zero availability.
+
 ### The bound
 
 Relevance and closing soon both depend on a fundraiser's matching options, so the ranking cannot be
@@ -351,6 +458,14 @@ done by the database before the options are read. The query narrows on every fun
 filter first, takes at most `CANDIDATE_CAP` (200), reads their options in one further query, and
 ranks what it has. Exact while a filtered set fits inside the cap; past it the page says so rather
 than quietly cutting the list, and the ranking would have to move into SQL. `PAGE_SIZE` is 12.
+
+### The count
+
+"N projects accepting sponsors" is said only when every counted project has at least one option
+open to buy. When any has none, the count is the count ("N projects"); with filters on it is
+"N projects match". Nothing is dropped from the count to earn the phrase, and a project with
+nothing open to buy is still listed, reads "No sponsorship options open right now" and offers
+"See the project" rather than "View sponsorships".
 
 ### Known gaps
 
@@ -388,8 +503,8 @@ than quietly cutting the list, and the ranking would have to move into SQL. `PAG
    together. **The owner's call.**
 4. **Delivery metadata on an offer.** Deliberately not added. `deliverables` (0045) already owns
    delivery timing, and a second place for a due date would create two answers to one question.
-5. **Rendering the tags.** No public page draws a discovery tag yet. When one does, it follows the
-   table above: absent renders as absent.
+5. **Rendering the tags.** `/fundraisers` draws a fundraiser's discovery tags on its card, from
+   the registry's labels, and follows the table above: absent renders as absent.
 6. **A category added later needs discovery words too**, alongside `src/lib/categories.ts`,
    `src/lib/verification.ts` and its `surfaces` rows. A category with no scoped tags still gets
    every category-agnostic one, so this is a choice rather than a blocker.

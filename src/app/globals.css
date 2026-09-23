@@ -8,6 +8,13 @@
 @custom-variant rail-collapsed (&:where([data-rail="collapsed"] *));
 
 /*
+  The discovery results in rows rather than tiles. The same attribute pattern (src/lib/discovery-view.ts):
+  set on <html> by an inline script before the list is painted, so the one list of results can say
+  what it looks like in rows without a second copy of itself. Nothing outside the results uses it.
+*/
+@custom-variant discovery-rows (&:where([data-discovery-view="rows"] *));
+
+/*
   Door Money tokens.
 
   Every page is a dark room with one color of light in it. The room (ground, ink, muted, line, panel)
@@ -219,6 +226,72 @@
   background: radial-gradient(circle, color-mix(in srgb, var(--accent) 70%, white) 0, color-mix(in srgb, var(--accent) 45%, transparent) 26%, transparent 62%);
 }
 
+/*
+  Status, cut from the light.
+  ---------------------------------------------------------------------------
+  ok IS the accent: an open fundraiser under a blue organizer is blue. attention is the one color
+  that does not change with the theme, so it means the same thing in every room. neutral is the
+  ink at low strength. Each has a wash for a pill and an ink for text.
+
+  These belong to the Desk register (docs/DESK_REGISTER.md, decision 20). Nothing on the Stage
+  register reads them, so the public pages are untouched. Every pair is measured in
+  tests/contrast.test.ts, in both rooms, for all eight themes.
+*/
+:root, [data-theme] {
+  --ok: var(--accent);
+  --ok-ink: var(--accent-ink);
+  --ok-wash: color-mix(in srgb, var(--accent) 14%, transparent);
+  --attention: #ffb020;
+  --attention-ink: #ffb020;
+  --attention-wash: rgba(255, 176, 32, 0.16);
+  --neutral-ink: var(--muted);
+  --neutral-wash: color-mix(in srgb, var(--ink) 8%, transparent);
+  --surface: color-mix(in srgb, var(--ink) 4%, var(--ground));
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --radius-card: 8px;
+  --radius-control: 6px;
+}
+:root[data-mode="light"], [data-mode="light"] [data-theme] {
+  --ok-wash: color-mix(in srgb, var(--accent) 35%, transparent);
+  --attention-ink: #8a5a00;
+  --attention-wash: #fbeecf;
+  --surface: #ffffff;
+  --shadow-1: 0 1px 2px rgba(20, 19, 26, 0.06);
+}
+/*
+  Blue is the one theme whose readable tint does not survive its own wash. In the light room
+  #0e32fe on 35% of #3d5afe over white measures 4.32:1, under the 4.5 a badge's word has to clear,
+  and the rule is to darken the ink rather than thin the wash: a wash a shade paler is a status
+  nobody sees. So blue's ok-ink is the accent taken 70% toward black, which measures 5.11:1 on the
+  wash and 8.33:1 on the ground. Every other theme clears the bar on accent-ink and keeps it.
+
+  The third selector is the room with no theme chosen, which is blue anyway. It is written as
+  :not([data-theme]) rather than bare so a lime page's <html>, which ThemeSync stamps with both
+  attributes, is not handed blue's number by a later rule of equal weight.
+*/
+:root[data-mode="light"][data-theme="blue"],
+[data-mode="light"] [data-theme="blue"],
+:root[data-mode="light"]:not([data-theme]) { --ok-ink: #2b3fb2; }
+
+/*
+  The Desk register: the workspace. Same tokens, scanned rather than read.
+
+  The room does not change across the two registers, and the light does not either. What changes
+  is the reading distance. Stage is a page somebody reads once; Desk is a page somebody works in,
+  so the type comes down, the measure comes off, the rig holds still and a single pool of the
+  accent sits at the top of the page instead of three lamps swinging behind it.
+*/
+[data-register="desk"] { font-size: 15px; line-height: 1.45; }
+[data-register="desk"] p { max-width: none; }
+[data-register="desk"] .display { font-size: 36px; line-height: 1; }
+[data-register="desk"] .stage-lights { display: none; }
+[data-register="desk"] [data-reveal] { opacity: 1; transform: none; transition: none; }
+[data-register="desk"] .hero-in > * { animation: none; }
+[data-register="desk"] .pool-static {
+  background-image: radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
+}
+
+
 @theme inline {
   --color-ground: var(--ground);
   --color-ink: var(--ink);
@@ -230,6 +303,19 @@
   --color-accent-ink: var(--accent-ink);
   --color-accent-line: var(--accent-line);
   --color-on-accent: var(--on-accent);
+  /* The Desk register's status tokens, so a workspace component can write bg-surface, text-ok-ink
+     or rounded-card rather than reaching for a value. Inline, like everything above: the utility
+     carries the reference and the room decides what it resolves to. */
+  --color-ok: var(--ok);
+  --color-ok-ink: var(--ok-ink);
+  --color-ok-wash: var(--ok-wash);
+  --color-attention-ink: var(--attention-ink);
+  --color-attention-wash: var(--attention-wash);
+  --color-neutral-wash: var(--neutral-wash);
+  --color-surface: var(--surface);
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+  --shadow-1: var(--shadow-1);
   --font-display: var(--font-bodoni), "Bodoni MT", "Didot", Georgia, serif;
   --font-sans: var(--font-archivo), Helvetica, Arial, sans-serif;
 }
@@ -590,7 +676,9 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
 }
 
 /*
-  The discovery filters: a panel that collapses on a phone and a rail that is always open from
-  1024px up. Driven by a nameless checkbox and `peer`, so it needs no JavaScript and submits
-  nothing: an input with no `name` is not part of the form data it sits beside.
+  The discovery toolbar's disclosures are native <details>, so they open and close from the keyboard
+  with no script. The summary is drawn as a control, so the browser's own marker is dropped here;
+  everything else about them is utility classes on the elements themselves.
 */
+.discovery-summary { list-style: none; }
+.discovery-summary::-webkit-details-marker { display: none; }

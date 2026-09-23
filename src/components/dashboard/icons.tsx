@@ -287,3 +287,17 @@ export function Locked(p: Props) {
     </Icon>
   );
 }
+
+/**
+ * The rest of what a row can do, folded behind one control. Filled rather than stroked, which is
+ * an exception to the stroked line above: three hairline circles at this size read as three smudges.
+ */
+export function Overflow({ size = 16, ...rest }: Props) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...rest}>
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </svg>
+  );
+}

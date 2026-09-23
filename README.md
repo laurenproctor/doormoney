@@ -21,9 +21,10 @@ Opens on http://localhost:3000. With no `.env.local` the app serves two sample f
 ```bash
 npm run verify           # lint, typecheck, unit tests, production build
 npm run test:db:docker   # the database suites, in a throwaway Postgres container (needs Docker)
+npm run test:copy        # the copy sweep: reads page source for music-only or city-bound phrasing. Advisory, not a gate
 ```
 
-CI runs both on every pull request, with no secrets and no way to reach a live service. The database gate applies every migration and the seed to a bare Postgres, runs every `supabase/tests/*_test.sql` suite, then races two sessions against each other for the things one session cannot show (`supabase/tests/concurrency_test.sh`).
+CI runs the first two on every pull request, with no secrets and no way to reach a live service. Before a push, the unit tests that touch the change plus `npm run typecheck` are enough (each takes a few seconds); CI runs the rest in about a minute and a half. See "Verifying a change" in `CLAUDE.md`. The database gate applies every migration and the seed to a bare Postgres, runs every `supabase/tests/*_test.sql` suite, then races two sessions against each other for the things one session cannot show (`supabase/tests/concurrency_test.sh`).
 
 `npm run typecheck` runs `next typegen` first, because the route types it needs do not exist in a fresh checkout.
 

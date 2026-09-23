@@ -9,7 +9,7 @@ import { DEFAULT_ROLES } from "@/lib/roles";
 import { homeForIntent, parseIntent } from "@/lib/intent";
 import { mfaVerifyPath } from "@/lib/mfa";
 import { subscribeNewAccount } from "@/lib/newsletter";
-import { LOGIN_MESSAGES } from "@/lib/login";
+import { LOGIN_MESSAGES, readLinkRequest } from "@/lib/login";
 import { NAME_MAX, PASSWORD_MAX, PASSWORD_MIN, SIGNUP_MESSAGES } from "@/lib/signup";
 
 /*
@@ -43,27 +43,21 @@ const Password = z
 // The email link. Unchanged, and still the way in for anyone with no password set.
 // ---------------------------------------------------------------
 
-const LinkInput = z.object({
-  email: z.string().trim().email("Enter a valid email address."),
-  next: z.string().optional(),
-  // Anything this does not recognise is dropped rather than refused: a stale link should still
-  // send somebody their way in.
-  intent: z.string().optional().transform(parseIntent),
-});
-
 /**
  * Sends a one-time sign-in link. Creates the account on first use, and an account created this
  * way is opened with the same capabilities as one created with a password: the trigger in
  * migration 0051 gives it both, because nothing here asks a new account to pick a side.
  */
 export async function sendMagicLink(_prev: LoginState, form: FormData): Promise<LoginState> {
-  const parsed = LinkInput.safeParse({ email: form.get("email"), next: form.get("next"), intent: form.get("intent") });
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Enter a valid email address." };
+  // Read through readLinkRequest and never straight off the form: the form sends no intent field,
+  // FormData.get answers null for it, and a schema read directly refused every request for it.
+  const request = readLinkRequest(form);
+  if (!request.ok) return { ok: false, error: request.error };
 
-  const email = parsed.data.email.toLowerCase();
+  const { email } = request;
   // An explicit destination wins. Without one the intent decides which action the dashboard
   // leads with, and with neither everybody lands on the same unified dashboard.
-  const next = safeNext(parsed.data.next, homeForIntent(parsed.data.intent));
+  const next = safeNext(request.next, homeForIntent(request.intent));
   const sb = await supabaseServer();
   const { error } = await sb.auth.signInWithOtp({
     email,

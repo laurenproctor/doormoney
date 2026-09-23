@@ -114,13 +114,14 @@ test("an account with nothing yet still has somewhere to go", () => {
   assert.deepEqual(hrefs({ hasAct: false, roles: [] }), ["/patron", "/dashboard/profile", "/dashboard/account"]);
 });
 
-test("the site nav no longer carries the widget, and names the browse page fundraisers", () => {
-  // Decision 14: the widget moved to the dashboard, and "Live boards" became "Fundraisers".
+test("the site nav no longer carries the widget, and names the browse page by what a sponsor does there", () => {
+  // Decision 14: the widget moved to the dashboard, and "Live boards" became "Fundraisers". The
+  // discovery redesign (2026-09-23) made that label "Browse projects"; the address did not move.
   // NAV is `as const`, so the href comparison only type-checks once it is widened. Putting the
   // widget back would widen the union again and this assertion would then fail, which is the point.
   const nav: readonly { href: string; label: string }[] = NAV;
   assert.ok(!nav.some((n) => n.href === "/widget"), "the widget is back in the site nav");
-  assert.equal(nav.find((n) => n.href === "/fundraisers")?.label, "Fundraisers");
+  assert.equal(nav.find((n) => n.href === "/fundraisers")?.label, "Browse projects");
   assert.ok(!nav.some((n) => /board/i.test(n.label)), "a nav label still says board");
 });
 

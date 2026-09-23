@@ -1,6 +1,8 @@
 import { SAMPLE_BOARDS } from "@/lib/sample";
+import { CATALOG } from "@/lib/catalog";
 import type { DiscoveryOffer } from "@/lib/discovery-filters";
 import type { DiscoveryFundraiserRow } from "@/lib/discovery-query";
+import { offerTermsOf, publicOfferTerms } from "@/lib/offer-terms";
 
 /**
  * The discovery page with no database behind it.
@@ -20,10 +22,14 @@ import type { DiscoveryFundraiserRow } from "@/lib/discovery-query";
  *   discovery_tags           empty. No sample organizer chose any.
  *   purpose / audience /     null where the sample board does not set them.
  *   sponsor_promise
+ *   organizer_photo_url      the sample act's photo where it has one, which none does. Never a
+ *                            stock image and never a picture of a stranger.
+ *   placement_description    read from the sample lot's offer terms through the same public
+ *                            projection the view uses (0056). None carries any, so null.
  *
- * So on a machine with no database the category, price, sale-method and closing filters work and
- * the rest correctly match nothing. That is the honest result, and a sample card is never evidence
- * that anything was persisted.
+ * So on a machine with no database the category, name, price, sale-method and closing filters work
+ * and the rest correctly match nothing. That is the honest result, and a sample card is never
+ * evidence that anything was persisted.
  */
 
 /**
@@ -57,7 +63,23 @@ function rows(): DiscoveryFundraiserRow[] {
       fundraising_ends_on: null,
       bidding_closes_at: b.run.biddingClosesAt,
       created_at: SAMPLE_CREATED_AT,
+      organizer_photo_url: b.act.photoUrl ?? null,
     }));
+}
+
+/**
+ * The option's name, the way the view reads it (`coalesce(l.label, s.name)`): the organizer's own
+ * label, else the name of the template they chose. The chosen template is the option; a template
+ * they did not tick is never named here.
+ */
+const nameOf = (label: string | null, surfaceKey: string) =>
+  label ?? CATALOG.find((c) => c.key === surfaceKey)?.name ?? surfaceKey;
+
+/** The placement, the way the view reads it: the public projection's own words, or nothing. */
+function placementOf(offerTerms: unknown): string | null {
+  const description = publicOfferTerms(offerTermsOf({ offer_terms: offerTerms })).placement?.description;
+  const trimmed = typeof description === "string" ? description.trim() : "";
+  return trimmed || null;
 }
 
 /**
@@ -73,11 +95,12 @@ function offers(): DiscoveryOffer[] {
         .map((l) => ({
           id: l.id,
           runId: b.act.slug,
-          name: l.label ?? l.surfaceKey,
+          name: nameOf(l.label, l.surfaceKey),
           priceCents: l.priceCents,
           saleMethod: l.mode,
           buyNowCents: l.buyNowCents ?? null,
           closesAt: l.mode === "auction" ? l.closesAt ?? b.run.biddingClosesAt : l.closesAt ?? null,
+          placement: placementOf(l.offerTerms),
         })),
     );
 }
