@@ -54,6 +54,10 @@ export default async function DashboardPage({ searchParams }: Props) {
   const firstName = profile?.first_name?.trim() || null;
   const gaps = profileGaps(act);
   const somethingFailed = sponsorships.failed || backed.failed || payouts.failed;
+  // Nothing has happened on this account yet: no organizer profile, nothing offered, nothing
+  // backed. The two cards are the whole page then, and the greeting stops saying "back".
+  const fresh = !act && sponsorships.rows.length === 0 && !backed.any;
+  const greeting = fresh ? "Welcome" : "Welcome back";
 
   return (
     <DashboardShell
@@ -61,7 +65,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
       actName={act?.name}
       identity={fullName(profile)}
-      eyebrow={firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+      eyebrow={firstName ? `${greeting}, ${firstName}` : greeting}
       title="Make something"
       accent="worth backing."
       intro={<p>Create a clear sponsorship opportunity or find a project you want to support.</p>}
@@ -98,19 +102,14 @@ export default async function DashboardPage({ searchParams }: Props) {
         </div>
       </section>
 
-      <section aria-labelledby="sponsorships-head" className="mb-12">
-        <SectionHead id="sponsorships-head" title="Your sponsorships" href={act ? "/dashboard/runs" : null} />
-        {sponsorships.rows.length === 0 ? (
-          <Card>
-            <p className="text-[15px] leading-[1.6] text-ink">No sponsorships yet.</p>
-            <p className="mb-6 mt-1 max-w-[52ch] text-[15px] leading-[1.6] text-muted">
-              Create your first opportunity when you are ready.
-            </p>
-            <ButtonLink href={CREATE.href} className="w-full sm:w-auto">
-              {CREATE.button}
-            </ButtonLink>
-          </Card>
-        ) : (
+      {/*
+        What is already happening, and only that. An empty list used to be drawn as an empty state
+        with the same button as the card above it, so a new account met each call to action twice.
+        The cards are the way in; these sections appear once there is something to show.
+      */}
+      {sponsorships.rows.length > 0 && (
+        <section aria-labelledby="sponsorships-head" className="mb-12">
+          <SectionHead id="sponsorships-head" title="Your sponsorships" href={act ? "/dashboard/runs" : null} />
           <Card className="p-0">
             <ul className="divide-y divide-line">
               {sponsorships.rows.map((row) => (
@@ -120,12 +119,12 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </ul>
           </Card>
-        )}
-      </section>
+        </section>
+      )}
 
-      <section aria-labelledby="backed-head" className="mb-12">
-        <SectionHead id="backed-head" title="Backed by you" href={backed.any ? "/patron" : null} />
-        {backed.any ? (
+      {backed.any && (
+        <section aria-labelledby="backed-head" className="mb-12">
+          <SectionHead id="backed-head" title="Backed by you" href="/patron" />
           <Card className="p-0">
             <ul className="divide-y divide-line">
               {backed.items.map((item) => (
@@ -149,18 +148,8 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </ul>
           </Card>
-        ) : (
-          <Card>
-            <p className="text-[15px] leading-[1.6] text-ink">You have not backed a project yet.</p>
-            <p className="mb-6 mt-1 max-w-[52ch] text-[15px] leading-[1.6] text-muted">
-              Browse current opportunities to find one that fits.
-            </p>
-            <ButtonLink href={DISCOVER.href} className="w-full sm:w-auto">
-              {DISCOVER.button}
-            </ButtonLink>
-          </Card>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Money the account is owed, which only means anything once there is an organizer profile. */}
       {act && (
