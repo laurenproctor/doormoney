@@ -44,7 +44,7 @@ export default async function NewRunPage({ searchParams }: Props) {
 
   return (
     <DashboardShell
-      current="/dashboard"
+      current="/dashboard/runs"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
       identity={fullName(profile)}

@@ -51,6 +51,7 @@ export default async function DashboardWidgetPage() {
       current="/dashboard/widget"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      actSlug={act.slug}
       identity={fullName(profile)}
       eyebrow={act.city ?? "Organizer"}
       title="On your"

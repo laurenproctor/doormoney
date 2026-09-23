@@ -62,9 +62,13 @@ export function MetricRow({ metrics }: { metrics: DashboardMetrics }) {
     { label: "Days left", value: String(metrics.daysLeft) },
   ];
   return (
-    <dl className="grid grid-cols-2 gap-px border border-line bg-line sm:grid-cols-3 lg:grid-cols-5">
+    /* The hairlines are the cells' own borders, pulled over the frame and clipped, rather than a
+       line-coloured background showing through the gaps: five figures never fill two, three or
+       five columns evenly, and in the light room an empty slot painted in the line colour reads
+       as a grey block sitting in the card. */
+    <dl className="grid grid-cols-2 overflow-hidden border border-line sm:grid-cols-3 lg:grid-cols-5">
       {items.map((m) => (
-        <div key={m.label} className="bg-ground px-4 py-4">
+        <div key={m.label} className="-mb-px -mr-px border-b border-r border-line px-4 py-4">
           <dt className="caps text-[14px] text-muted">{m.label}</dt>
           <dd className="heading mt-1.5 text-[clamp(20px,2.4vw,26px)] tabular-nums leading-none text-ink">{m.value}</dd>
           {m.hint && <p className="mt-1 text-[14px] text-muted">{m.hint}</p>}

@@ -74,7 +74,7 @@ export default async function RunPage({ params, searchParams }: Props) {
     const formStage: FormStage | null = isFormStage(stageAsked) ? stageAsked : stageAsked ? null : resumeStage(draft);
     if (formStage) {
       const heading = STAGE_HEADING[formStage];
-      return <DashboardShell current="/dashboard" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} identity={identity}
+      return <DashboardShell current="/dashboard/runs" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} actSlug={act.slug} identity={identity}
         eyebrow={`Private draft · ${draft.title || "New fundraiser"}`} title={heading.title} accent={heading.accent} intro={<p>{heading.intro}</p>}>
         <FundraiserStages current={formStage} className="mb-7 max-w-[760px]" />
         <Card>
@@ -134,9 +134,10 @@ export default async function RunPage({ params, searchParams }: Props) {
 
   return (
     <DashboardShell
-      current="/dashboard"
+      current="/dashboard/runs"
       nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })}
       actName={act.name}
+      actSlug={act.slug}
       identity={identity}
       eyebrow={statusLabel(run.status, music)}
       title={run.title}

@@ -36,6 +36,7 @@ export default async function FundraisersPage() {
       current="/dashboard/runs"
       nav={nav}
       actName={act.name}
+      actSlug={act.slug}
       identity={fullName(profile)}
       eyebrow="Creating"
       title="Your"

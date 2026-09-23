@@ -64,11 +64,17 @@ export default async function DashboardPage({ searchParams }: Props) {
       current="/dashboard"
       nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })}
       actName={act?.name}
+      actSlug={act?.slug}
       identity={fullName(profile)}
       eyebrow={firstName ? `${greeting}, ${firstName}` : greeting}
       title="Make something"
       accent="worth backing."
       intro={<p>Create a clear sponsorship opportunity or find a project you want to support.</p>}
+      action={
+        <ButtonLink href="/dashboard/runs/new" register="desk" variant="solid">
+          Create a fundraiser
+        </ButtonLink>
+      }
     >
       {somethingFailed && (
         <Card className="mb-8">
