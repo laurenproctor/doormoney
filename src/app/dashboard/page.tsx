@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Warning } from "@/components/dashboard/icons";
+import { MaterialsThumb, materialsDetail } from "@/components/dashboard/MaterialsThumb";
+import { RowMenu } from "@/components/dashboard/RowMenu";
 import { TaskDecision } from "@/components/dashboard/TaskDecision";
 import { Badge, Card, Kpi, KpiUnit, MoneyBar, Table, TaskDate, TaskRow, type BadgeKind, type DeskRow } from "@/components/desk";
 import { themeFor } from "@/components/Theme";
@@ -15,8 +17,9 @@ import {
   lifecycleLabel,
   organizerShareCents,
   plural,
+  previewTarget,
+  isShareable,
   waitingCount,
-  type WorkRow,
 } from "@/lib/dashboardModel";
 import { dayAndMonth, formatDay, formatWeekdayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -312,7 +315,7 @@ export default async function DashboardPage() {
                   { key: "next", label: "Next date", width: "minmax(0,1.4fr)" },
                   { key: "waiting", label: "Waiting on you", width: "minmax(0,1.1fr)" },
                 ]}
-                rows={sponsorships.rows.map(fundraiserRow)}
+                rows={sponsorships.rows.map((row) => fundraiserRow(row, act.slug))}
               />
             </div>
           </div>
@@ -361,31 +364,6 @@ const STATUS_KIND: Record<string, BadgeKind> = { open: "ok", live: "ok" };
 
 const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-/** What one sponsor sent, as it was sent, or the shape of what is missing. */
-function MaterialsThumb({ row, word }: { row: WorkRow; word: string }) {
-  if (row.markUrl) {
-    /* A plain image: the address is whatever the marks bucket holds, and the optimizer only fetches
-       what it has been told about. It is decoration, and the row says whose it is in words. */
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={row.markUrl} alt="" className="h-10 w-16 rounded-[4px] border border-line bg-neutral-wash object-contain p-0.5" />;
-  }
-  return (
-    <span className="flex h-10 w-16 items-center justify-center rounded-[4px] border border-dashed border-field-line text-[14px] text-muted">{row.markText ? "Name" : word}</span>
-  );
-}
-
-/** Who sent it, what they paid, when it arrived, and where the offer says it goes. */
-function materialsDetail(row: WorkRow): string {
-  return [
-    row.sponsor,
-    formatMoney(row.amountCents),
-    row.submittedAt ? `sent ${formatDay(row.submittedAt.slice(0, 10))}` : null,
-    row.placement,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
-
 function MoneyRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4 border-t border-line py-2">
@@ -406,13 +384,30 @@ function releaseLine(music: boolean, periodNoun: string): string {
     : "Door Money holds it and releases your share one deliverable at a time, as you document each one.";
 }
 
-/** One fundraiser, as a row. A draft says how far it has come; everything else says what it holds. */
-function fundraiserRow(run: HomeSponsorship): DeskRow {
+/**
+ * One fundraiser, as a row. A draft says how far it has come; everything else says what it holds.
+ *
+ * The kebab holds the three things somebody does to a fundraiser from a list: hand it to
+ * somebody, look at it the way a sponsor would, and open it to change it. Share is left off a
+ * draft, which has no public address yet: a menu item that hands over a 404 is worse than none.
+ */
+function fundraiserRow(run: HomeSponsorship, actSlug: string): DeskRow {
   const draft = run.draftStep;
+  const target = previewTarget({ id: run.id, slug: run.slug ?? "", status: run.status }, actSlug);
   return {
     key: run.id,
     href: `/dashboard/runs/${run.id}`,
     label: run.title,
+    menu: (
+      <RowMenu
+        label={`More for ${run.title}`}
+        items={[
+          ...(isShareable(run.status) ? [{ label: "Share", href: `/dashboard/runs/${run.id}?share=1` }] : []),
+          { label: target.kind === "preview" ? "Preview" : "Preview the public page", href: target.path },
+          { label: "Edit", href: draft ? `/dashboard/runs/${run.id}` : `/dashboard/runs/${run.id}?tab=details` },
+        ]}
+      />
+    ),
     cells: [
       <>
         <span className="font-medium">{run.title}</span>

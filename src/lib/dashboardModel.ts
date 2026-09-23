@@ -177,15 +177,31 @@ export type OpenBids = { cents: number; options: number };
  * raised total counts. Counting either again would tell an organizer the same money twice.
  */
 export function openBids(bids: BidRow[], openLotIds: readonly string[]): OpenBids {
+  const tops = topBidByLot(bids, openLotIds);
+  let cents = 0;
+  let options = 0;
+  for (const top of Object.values(tops)) {
+    cents += top;
+    options += 1;
+  }
+  return { cents, options };
+}
+
+/**
+ * The same tops, kept per option, so a table can say what one option is being bid.
+ *
+ * The rule is the one above: a passed bid is not held and an option that already closed is not
+ * open, so neither appears here. An option nobody has bid on is absent rather than zero, because
+ * zero would read as an offer of nothing.
+ */
+export function topBidByLot(bids: readonly BidRow[], openLotIds: readonly string[]): Record<string, number> {
   const open = new Set(openLotIds);
-  const tops = new Map<string, number>();
+  const tops: Record<string, number> = {};
   for (const bid of bids) {
     if (bid.passed_at || !open.has(bid.lot_id)) continue;
-    tops.set(bid.lot_id, Math.max(tops.get(bid.lot_id) ?? 0, bid.amount_cents));
+    tops[bid.lot_id] = Math.max(tops[bid.lot_id] ?? 0, bid.amount_cents);
   }
-  let cents = 0;
-  for (const top of tops.values()) cents += top;
-  return { cents, options: tops.size };
+  return tops;
 }
 
 /* ---------------------------------------------------------------------------------------------
@@ -236,6 +252,8 @@ export function paymentLabel(paymentStatus: string): string {
 
 export type WorkRow = {
   id: string;
+  /** The sponsorship option this purchase is against. Absent where the caller did not read it. */
+  lotId?: string | null;
   sponsor: string;
   option: string;
   amountCents: number;

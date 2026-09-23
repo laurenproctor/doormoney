@@ -20,6 +20,7 @@
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { isSettled, netCents, upcomingShow, type ShowRow } from "@/lib/dashboardModel";
 import { periodLine } from "@/lib/periods";
+import { readinessHref } from "@/lib/fundraiser-tabs";
 import { draftProgress, readiness, type ReadinessAct } from "@/lib/readiness";
 
 /** What a fundraiser's period covers, and the next date on it. Both absent where nothing is set. */
@@ -235,8 +236,9 @@ function step(act: HomeAct, run: RunRow, lotCount: number, auctionCount: number,
       categoryPublishable,
     }),
   );
-  // A checklist anchor belongs to the fundraiser's own page; anything else is already an address.
-  const href = next?.href ? (next.href.startsWith("#") ? `/dashboard/runs/${run.id}${next.href}` : next.href) : null;
+  // The fundraiser's workspace is in tabs now, so a checklist anchor resolves to the tab that
+  // draws it; anything else (the organizer page, payouts) is already an address of its own.
+  const href = next ? readinessHref(run.id, next) : null;
   return { done, total, label: next?.label ?? null, note: next?.note ?? null, href };
 }
 
