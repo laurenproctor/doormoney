@@ -110,7 +110,8 @@ export default async function PatronProfilePage({ params }: Props) {
         {/* The same component the owner's preview draws, so what they were shown is what is here. */}
         <PatronProfileView profile={profile} photo={photo} header={header} activity={activity} labels={labels} />
       </main>
-      <Footer />
+      {/* No two ways in under a page about one person. The footer's links are still the way on. */}
+      <Footer ways={false} />
     </Theme>
   );
 }
