@@ -128,15 +128,36 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
   const updates: ({ id: string; label: string | null; price_cents: number; mode: "fixed" | "auction"; buy_now_cents: number | null } & Discovery & Terms)[] = [];
   const deletes: string[] = [];
 
+  /**
+   * The offer contract this save should apply to one template's spots.
+   *
+   * Normally what the form carried. Not so once a spot on the template has sold or has a bid on
+   * it: the editor locks the whole row then, and a locked field is disabled, and a disabled control
+   * is never submitted. The form would arrive carrying an empty document, and taking it at face
+   * value would wipe the terms off the template's still-open spots and clear their exclusivity.
+   *
+   * So when the row is locked the terms are read back off the spot that locked it, which is the
+   * copy the database has frozen (migration 0035, widened in 0056) and the copy the sponsor bought.
+   * A new spot added to a locked template gets the same document rather than an empty one, and an
+   * open sibling that has somehow drifted is brought back to it.
+   *
+   * Server-side on purpose. The editor disables those fields as a courtesy; this is the rule.
+   */
+  const termsFor = (mine: readonly { status: string; offer_terms?: unknown; exclusive?: boolean | null }[], r: Row): { terms: OfferTerms; exclusive: boolean } => {
+    const frozen = mine.find((l) => l.status !== "open");
+    if (!frozen) return { terms: r.terms, exclusive: r.exclusive };
+    return { terms: storedOfferTerms(frozen), exclusive: frozen.exclusive ?? false };
+  };
+
   /** What an existing lot's terms columns have to become, or nothing where they already say it. */
-  const termsChange = (lot: { offer_terms?: unknown; exclusive?: boolean | null }, r: Row): Terms => ({
-    ...(sameOfferTerms(storedOfferTerms(lot), r.terms) ? {} : { offer_terms: r.terms }),
-    ...(r.exclusive === (lot.exclusive ?? false) ? {} : { exclusive: r.exclusive }),
+  const termsChange = (lot: { offer_terms?: unknown; exclusive?: boolean | null }, want: { terms: OfferTerms; exclusive: boolean }): Terms => ({
+    ...(sameOfferTerms(storedOfferTerms(lot), want.terms) ? {} : { offer_terms: want.terms }),
+    ...(want.exclusive === (lot.exclusive ?? false) ? {} : { exclusive: want.exclusive }),
   });
   /** The same for a spot that does not exist yet: the column defaults say the rest. */
-  const termsNew = (r: Row): Terms => ({
-    ...(isEmptyOfferTerms(r.terms) ? {} : { offer_terms: r.terms }),
-    ...(r.exclusive ? { exclusive: true } : {}),
+  const termsNew = (want: { terms: OfferTerms; exclusive: boolean }): Terms => ({
+    ...(isEmptyOfferTerms(want.terms) ? {} : { offer_terms: want.terms }),
+    ...(want.exclusive ? { exclusive: true } : {}),
   });
 
   for (const r of rows) {
@@ -146,6 +167,7 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     const open = mine.filter((l) => l.status === "open");
     const want = r.on ? Math.max(r.count, locked.length) : locked.length;
     const total = want;
+    const terms = termsFor(mine, r);
 
     // Keep locked lots as they are, reuse open ones, then add or drop to reach the count.
     const keepOpen = open.slice(0, Math.max(0, total - locked.length));
@@ -155,10 +177,10 @@ export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsSt
     let n = locked.length;
     for (const l of keepOpen) {
       n += 1;
-      updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsChange(l, r) });
+      updates.push({ id: l.id, label: total > 1 ? `${s.name} spot ${n}` : null, price_cents: r.priceCents, mode: r.mode, buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsChange(l, terms) });
     }
     for (; n < total; n += 1) {
-      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsNew(r) });
+      inserts.push({ run_id: runId, surface_key: r.key, label: total > 1 ? `${s.name} spot ${n + 1}` : null, price_cents: r.priceCents, mode: r.mode, status: "open", buy_now_cents: r.buyNowCents, reach_estimate: r.reachEstimate, reach_basis: r.reachBasis, ...termsNew(terms) });
     }
   }
 
