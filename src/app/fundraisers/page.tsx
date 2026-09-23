@@ -34,8 +34,8 @@ export const metadata: Metadata = {
 
   The word on the page is "project". A fundraiser is still what the thing is, in the database, in
   every address and in every other part of the site; "project" is the display word for this one
-  surface, where a sponsor is looking at the work rather than at the mechanics of funding it. The
-  nav keeps "Fundraisers", because that is the word the rest of the site and the tests hold it to.
+  surface, where a sponsor is looking at the work rather than at the mechanics of funding it, and
+  the nav's link to it says "Browse projects" for the same reason.
 
   Everything a sponsor chooses lives in the query string and nothing lives in client state, so a
   filtered page can be shared, bookmarked and reloaded, and the back button behaves. The filters are

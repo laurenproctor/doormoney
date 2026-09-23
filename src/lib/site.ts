@@ -46,12 +46,14 @@ export const SITE = {
   fundraiser, so it lives in the dashboard instead (MUSICIAN_LINKS in src/lib/roles.ts).
   See docs/DECISIONS.md, decision 14.
 
-  The index is at /fundraisers, the word the nav has always used for it. /auctions was its first
-  address and is in sent email and pasted snippets, so it redirects there and always will
+  The index is at /fundraisers. Its label is "Browse projects" (2026-09-23, with the discovery
+  redesign): a display word for the one page where a sponsor looks at the work, and nothing more.
+  The address, the tables and every other page keep the word fundraiser. /auctions was the index's
+  first address and is in sent email and pasted snippets, so it redirects there and always will
   (next.config.ts). /list stays where it is for the same reason.
 */
 export const NAV = [
-  { href: "/fundraisers", label: "Fundraisers" },
+  { href: "/fundraisers", label: "Browse projects" },
   { href: "/how-sponsorship-works", label: "How it works" },
   { href: "/list", label: "For organizers" },
   { href: "/contact", label: "Contact" },
