@@ -14,6 +14,7 @@ import {
   INTEREST_MAX,
   LOCATION_MAX,
   NAME_MAX,
+  NAME_MIN,
   PROFILE_THEMES,
   SUPPORT_LABEL,
   formatMonth,
@@ -43,6 +44,9 @@ const HEADER_ACCEPT = ["image/jpeg", "image/png", "image/webp"] as const;
 const IMAGE_MAX = 5 * 1024 * 1024;
 const chipClass =
   "caps edge cursor-pointer bg-panel px-4 py-2.5 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink";
+
+/** How long the form waits after the last change before saving itself. */
+const AUTOSAVE_MS = 1000;
 
 const initial: ProfileState = { ok: false };
 const initialUsername: UsernameState = { ok: false };
@@ -150,6 +154,8 @@ export function ProfileDetailsForm({
   categories,
   publicPath,
   published,
+  heading,
+  intro,
 }: {
   profile: OwnProfile | null;
   photo: string | null;
@@ -161,6 +167,10 @@ export function ProfileDetailsForm({
   publicPath: string | null;
   /** Whether that page answers to anybody yet. */
   published: boolean;
+  /** The section's own heading, which shares the sticky bar with the save control. */
+  heading?: ReactNode;
+  /** One line under the bar saying what this form is for. */
+  intro?: ReactNode;
 }) {
   const [state, action, pending] = useActionState(saveProfileDetails, initial);
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -168,20 +178,94 @@ export function ProfileDetailsForm({
   const uid = useId();
   const err = state.errors ?? {};
 
-  return (
-    <form action={action} noValidate encType="multipart/form-data">
-      {/*
-        The save control follows the reader down the form.
+  /*
+    The form saves itself a second after the last change.
 
-        This form is the longest thing on the page and the button used to sit at the very bottom,
-        which meant scrolling past every optional field to save one edit near the top, and no way
-        to tell from up there whether the last save worked. It sticks under the workspace header
-        instead, so the button and the last answer are wherever you are.
+    A profile is a page somebody edits in passing: a line of the bio, one more category, a
+    different color. Asking them to find a button for each of those is how half of it ends up
+    unsaved. So a change arms a timer, another change restarts it, and when they stop the form
+    submits itself through the same action the button uses. Nothing else changes: the same
+    validation, the same errors in the same places, and saving still publishes nothing.
+
+    Two guards. Nothing is sent while a save is in flight, because the second request would race
+    the first over the same row and the photograph it may be carrying. And nothing is sent before
+    there is a name to save under, since the row cannot be written without one: the form would
+    only answer "Enter a name" at somebody who has not reached that field yet. The button is
+    always there for both cases, and it is what works with no JavaScript at all.
+  */
+  const formRef = useRef<HTMLFormElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const busy = useRef(false);
+  const [dirty, setDirty] = useState(false);
+  const [named, setNamed] = useState((profile?.displayName ?? "").trim().length >= NAME_MIN);
+  // A save that has landed clears the two images, so the next autosave does not upload them again.
+  const [saved, setSaved] = useState(0);
+
+  useEffect(() => {
+    busy.current = pending;
+  }, [pending]);
+
+  /*
+    Reacting to a save that has landed, without an effect.
+
+    `useActionState` hands back a fresh object for every result, so comparing it with the last one
+    seen is how this component knows a save just finished. React supports adjusting state during
+    render like this and re-renders before committing; doing the same work in an effect would paint
+    the stale line first and the lint rule says so. The server action stays the form's own action,
+    untouched, so the button still submits with no JavaScript running.
+  */
+  const [answered, setAnswered] = useState(state);
+  if (answered !== state) {
+    setAnswered(state);
+    if (state.ok) {
+      setDirty(false);
+      setSaved((n) => n + 1);
+    }
+  }
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  function changed() {
+    const name = formRef.current?.elements.namedItem("display_name");
+    const ready = name instanceof HTMLInputElement && name.value.trim().length >= NAME_MIN;
+    setNamed(ready);
+    setDirty(true);
+    if (timer.current) clearTimeout(timer.current);
+    if (!ready) return;
+    const fire = () => {
+      // A save is running: wait for it rather than queue a second one behind it.
+      if (busy.current) {
+        timer.current = setTimeout(fire, 300);
+        return;
+      }
+      timer.current = null;
+      formRef.current?.requestSubmit();
+    };
+    timer.current = setTimeout(fire, AUTOSAVE_MS);
+  }
+
+  return (
+    <form ref={formRef} action={action} onChange={changed} noValidate encType="multipart/form-data">
+      {/*
+        The save control sits at the top right and follows the reader down the form.
+
+        This form is the longest thing on the page, so a button at the foot of it meant scrolling
+        past every optional field to save one edit near the top, and no way to tell from up there
+        whether the last save worked. It sticks under the workspace header instead: the state of
+        the form and the way to force a save are wherever the reader is.
       */}
       <div className="sticky top-[57px] z-20 -mx-6 mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-[color-mix(in_srgb,var(--ink)_5%,var(--ground))] px-6 py-3.5">
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
-        <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
-          {state.ok ? (
+        {heading}
+        <span role="status" aria-live="polite" className="ml-auto min-w-0 text-[14.5px] text-muted sm:text-right">
+          {pending ? (
+            "Saving…"
+          ) : dirty && !named ? (
+            "Add a display name and this saves on its own."
+          ) : dirty ? (
+            "Unsaved changes. Saving in a moment."
+          ) : state.ok ? (
             <>
               {state.message}{" "}
               {publicPath && published ? (
@@ -199,11 +283,16 @@ export function ProfileDetailsForm({
                 </>
               )}
             </>
+          ) : state.errors ? (
+            "Not saved. The messages below say why."
           ) : (
-            ""
+            "Changes save on their own, a moment after you stop."
           )}
         </span>
+        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save now"}</Button>
       </div>
+
+      {intro && <p className="mb-6 max-w-[62ch] text-[15px] leading-[1.6] text-muted">{intro}</p>}
 
       <Field id={`${uid}-name`} label="Display name" hint={`The name on the page. Up to ${NAME_MAX} characters.`} error={err.display_name}>
         {(props) => <input {...props} name="display_name" type="text" autoComplete="name" maxLength={NAME_MAX} defaultValue={profile?.displayName ?? ""} className={inputClass} />}
@@ -330,6 +419,7 @@ export function ProfileDetailsForm({
             describedBy={props["aria-describedby"]}
             invalid={props["aria-invalid"]}
             name="photo"
+            reset={saved}
             accept={PHOTO_ACCEPT}
             acceptWords="JPG, PNG, WebP or GIF"
             maxBytes={IMAGE_MAX}
@@ -353,6 +443,7 @@ export function ProfileDetailsForm({
               describedBy={props["aria-describedby"]}
               invalid={props["aria-invalid"]}
               name="header"
+              reset={saved}
               accept={HEADER_ACCEPT}
               acceptWords="JPG, PNG or WebP"
               maxBytes={IMAGE_MAX}

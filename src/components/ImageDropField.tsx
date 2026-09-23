@@ -28,6 +28,7 @@ export function ImageDropField({
   shape,
   describedBy,
   invalid,
+  reset,
 }: {
   id: string;
   name: string;
@@ -43,6 +44,12 @@ export function ImageDropField({
   shape: "circle" | "wide";
   describedBy?: string;
   invalid?: true;
+  /**
+   * A count of saves that have landed. When it moves, the chosen file is let go and the input is
+   * emptied: the form autosaves, and a file left sitting in the input would be uploaded again on
+   * every later save. `current` has by then become the image that was actually stored.
+   */
+  reset?: number;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -51,6 +58,17 @@ export function ImageDropField({
 
   // A preview is a blob address, and the browser keeps the blob until it is let go.
   useEffect(() => () => { if (chosen) URL.revokeObjectURL(chosen.url); }, [chosen]);
+
+  // The file is on the server now, so the input lets go of it. Skips the first render, where
+  // nothing has been saved and there is nothing to clear.
+  const lastReset = useRef(reset);
+  useEffect(() => {
+    if (reset === lastReset.current) return;
+    lastReset.current = reset;
+    if (input.current) input.current.value = "";
+    setChosen(null);
+    setRefused(null);
+  }, [reset]);
 
   function take(file: File | undefined) {
     if (!file) return;
@@ -125,7 +143,7 @@ export function ImageDropField({
       </label>
 
       <p role="status" aria-live="polite" className={`mt-2 max-w-none text-[14px] ${refused ? "text-[14.5px] text-accent-ink" : "text-muted"}`}>
-        {refused ?? (chosen ? `Chosen: ${chosen.name}, ${megabytes(chosen.size)}. It is saved when you save the profile.` : "")}
+        {refused ?? (chosen ? `Chosen: ${chosen.name}, ${megabytes(chosen.size)}. It uploads with the next save.` : "")}
       </p>
       {chosen && (
         <button type="button" onClick={clear} className="caps mt-1 cursor-pointer bg-transparent text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
