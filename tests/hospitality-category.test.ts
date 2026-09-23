@@ -46,10 +46,23 @@ test("migration 0047 adds the category for drafts, with publishing written out a
   assert.match(m, /hospitality already has a delivery policy/);
 });
 
-test("no other migration opens it: the files that name hospitality are 0047, the privacy fix found with it, and the one that gave it its public name", () => {
+test("no other migration opens it: every file that names hospitality leaves publishing off and adds no policy", () => {
+  // A property over the whole folder, not a list of file names: a new migration that mentions
+  // hospitality in a comment or a guard should not need this test edited, and one that opens it
+  // should fail here whatever it is called. Opening hospitality takes a policy row and
+  // publish_enabled, each in a migration that does nothing else (CLAUDE.md, the hospitality rule).
   const dir = path.join(ROOT, "supabase/migrations");
-  const naming = readdirSync(dir).filter((f) => /hospitality/i.test(read(`supabase/migrations/${f}`))).sort();
-  assert.deepEqual(naming, ["0047_hospitality_draft_category.sql", "0048_draft_options_are_private.sql", "0049_restaurants_and_other_categories.sql", "0050_patron_profile_customization.sql", "0053_discovery_contract.sql", "0054_discovery_read_model.sql"]);
+  const naming = readdirSync(dir).filter((f) => f.endsWith(".sql") && /hospitality/i.test(read(`supabase/migrations/${f}`))).sort();
+  assert.ok(naming.includes("0047_hospitality_draft_category.sql"), "0047 is the one that adds it");
+  for (const file of naming) {
+    const statements = sql(`supabase/migrations/${file}`).split(";");
+    for (const statement of statements) {
+      if (!/hospitality/i.test(statement)) continue;
+      assert.doesNotMatch(statement, /publish_enabled\s*=\s*true/i, `${file} enables publishing in a statement that names hospitality`);
+      assert.doesNotMatch(statement, /insert into (?:public\.)?delivery_policies/i, `${file} gives hospitality a delivery policy`);
+      assert.doesNotMatch(statement, /\('hospitality',[^)]*true,\s*true\)/i, `${file} seeds hospitality with publishing on`);
+    }
+  }
   // 0053 names it to scope one discovery tag to hospitality, which opens nothing, and to assert in
   // the migration itself that it left publishing and the delivery policy exactly as it found them.
   // 0054 only widens the two discovery views with columns anon could already read, and names
