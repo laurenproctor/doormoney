@@ -60,7 +60,8 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<str
   Overview is what is happening: four figures, what is waiting on the organizer beside the picture
   of the period, and every sponsorship option with the one thing worth doing to it. The other four
   are the editors, in the frames they were already in: LotsEditor, DeliveryPanel,
-  SponsorshipWorkTable, ShowsPanel, RunForm and VerificationEditor are untouched inside them.
+  SponsorshipWorkTable, ShowsPanel and RunForm are untouched inside them. VerificationEditor took
+  the register's own control, because both its call sites are this page now.
 
   Nothing here is arithmetic of its own. Every figure comes from src/lib/dashboard.ts or
   src/lib/dashboardModel.ts, the options table is shaped by src/lib/run-options.ts, and money taken
@@ -471,7 +472,7 @@ export default async function RunPage({ params, searchParams }: Props) {
             </p>
             <DraftOptionsSummary lots={allLots} templates={offerable} href={stagePath(run.id, "sponsorships", kitCarried)} />
             {/* Whether it goes up is the review stage's question, and it is asked in one place. */}
-            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-5">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-4">
               <ButtonLink href={stagePath(run.id, "review", kitCarried)} register="desk" variant="outline">
                 Go to the review
               </ButtonLink>
@@ -840,7 +841,7 @@ function DraftOverview({ input, runId, reviewHref }: { input: Parameters<typeof 
         The steps above say what is unfinished and the review says it again with the decision
         attached, both out of the same readiness rules, so they cannot disagree.
       */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-4">
         <ButtonLink href={reviewHref} register="desk" variant={next ? "outline" : "solid"}>
           {next ? "Go to the review" : "Review and publish"}
         </ButtonLink>
