@@ -75,6 +75,7 @@ export const CANDIDATE_CAP = 200;
  *   audience  repeatable  a `discovery_tags` key in the audience facet
  *   sale      repeatable  fixed | bidding
  *   place     single      free text matched against the activity locations
+ *   q         single      free text matched literally against the title and the organizer's name
  *   min, max  single      whole dollars
  *   closing   single      "soon"
  *   sort      single      relevant | newest | closing
@@ -88,6 +89,8 @@ export type DiscoveryQuery = {
   audiences: string[];
   sales: SaleParam[];
   place: string | null;
+  /** A name search: the fundraiser's title or the organizer's name, matched literally. Never a classifier. */
+  q: string | null;
   minCents: number | null;
   maxCents: number | null;
   closingSoon: boolean;
@@ -114,6 +117,20 @@ function dollarsToCents(raw: string | null): number | null {
 
 /** The shape every registry key has (migration 0053). Anything else was never a key. */
 const KEY_RE = /^[a-z][a-z0-9_]{1,39}$/;
+
+/** The longest name search the page will run. A title is capped well under this. */
+export const Q_MAX_LENGTH = 80;
+
+/**
+ * The name search, cleaned: trimmed, inner whitespace collapsed, cut at Q_MAX_LENGTH. Nothing
+ * else is changed, because the whole point is that it is matched as typed: a `*`, a `%` or a
+ * quotation mark is a character in a name, not an operator.
+ */
+export function cleanNameQuery(raw: string | null): string | null {
+  if (raw === null) return null;
+  const cleaned = raw.replace(/\s+/g, " ").trim().slice(0, Q_MAX_LENGTH).trim();
+  return cleaned || null;
+}
 
 /**
  * The query, read from the address.
@@ -147,6 +164,7 @@ export function parseQuery(
     audiences: [...new Set(list(params.audience).filter((k) => KEY_RE.test(k)))],
     sales: keep(list(params.sale), SALE_FILTERS.map((s) => s.param)) as SaleParam[],
     place: one(params.place),
+    q: cleanNameQuery(one(params.q)),
     minCents: lo,
     maxCents: hi,
     closingSoon: one(params.closing) === "soon",
@@ -159,8 +177,8 @@ export function parseQuery(
 export function hasFilters(q: DiscoveryQuery): boolean {
   return (
     q.categories.length > 0 || q.modes.length > 0 || q.countries.length > 0 || q.purposes.length > 0 ||
-    q.audiences.length > 0 || q.sales.length > 0 || q.place !== null || q.minCents !== null ||
-    q.maxCents !== null || q.closingSoon
+    q.audiences.length > 0 || q.sales.length > 0 || q.place !== null || q.q !== null ||
+    q.minCents !== null || q.maxCents !== null || q.closingSoon
   );
 }
 
@@ -179,6 +197,7 @@ export function toSearchParams(q: DiscoveryQuery): URLSearchParams {
   for (const t of q.audiences) p.append("audience", t);
   for (const s of q.sales) p.append("sale", s);
   if (q.place) p.set("place", q.place);
+  if (q.q) p.set("q", q.q);
   if (q.minCents !== null) p.set("min", String(q.minCents / 100));
   if (q.maxCents !== null) p.set("max", String(q.maxCents / 100));
   if (q.closingSoon) p.set("closing", "soon");
@@ -223,10 +242,40 @@ export type DiscoveryOffer = {
   buyNowCents: number | null;
   /** lot_close_time's rule: the option's own time, or the fundraiser's bidding clock for bidding. */
   closesAt: string | null;
+  /** Where the sponsor appears, from the offer contract's public projection (0059). Null when unwritten. */
+  placement: string | null;
 };
 
 const within = (cents: number, lo: number | null, hi: number | null) =>
   (lo === null || cents >= lo) && (hi === null || cents <= hi);
+
+/**
+ * The ways one option can be bought, each at the number it is bought at.
+ *
+ * A fixed-price option has one: its price. A bidding option has where the bidding opens, which is
+ * not a price anybody is promised to win at, and a take-it-now number where the organizer set one.
+ * They are kept apart all the way to the card, because "from $150" over a $150 opening bid and a
+ * $500 take-it-now would read as a $150 sponsorship, and nobody has been offered one.
+ */
+export type PriceRoute = "fixed" | "opening_bid" | "buy_now";
+export type PricedRoute = { route: PriceRoute; cents: number };
+
+export function priceRoutes(offer: DiscoveryOffer): PricedRoute[] {
+  if (offer.saleMethod === "fixed") return [{ route: "fixed", cents: offer.priceCents }];
+  const routes: PricedRoute[] = [{ route: "opening_bid", cents: offer.priceCents }];
+  if (offer.buyNowCents !== null) routes.push({ route: "buy_now", cents: offer.buyNowCents });
+  return routes;
+}
+
+/**
+ * The routes on this option that fall inside the sponsor's budget, and every route when no budget
+ * was set. An option is a price match when this is not empty, which is the same membership rule as
+ * before (either real number inside the range); what is new is that the card is told *which* route
+ * fitted, so a $500 take-it-now is never shown as within a $200 budget.
+ */
+export function routesWithinBudget(offer: DiscoveryOffer, q: DiscoveryQuery): PricedRoute[] {
+  return priceRoutes(offer).filter((r) => within(r.cents, q.minCents, q.maxCents));
+}
 
 /**
  * Whether one option matches the offer-level filters.
@@ -244,9 +293,7 @@ export function offerMatches(offer: DiscoveryOffer, q: DiscoveryQuery, now: Date
     if (!wanted.includes(offer.saleMethod)) return false;
   }
   if (q.minCents !== null || q.maxCents !== null) {
-    const priced = within(offer.priceCents, q.minCents, q.maxCents)
-      || (offer.buyNowCents !== null && within(offer.buyNowCents, q.minCents, q.maxCents));
-    if (!priced) return false;
+    if (routesWithinBudget(offer, q).length === 0) return false;
   }
   if (q.closingSoon && !isClosingSoon(offer.closesAt, now)) return false;
   return true;
@@ -267,6 +314,9 @@ export function isClosingSoon(closesAt: string | null, now: Date): boolean {
 
 /** A fundraiser, reduced to the structured facts discovery narrows on. Never its prose. */
 export type DiscoveryFundraiserFacts = {
+  /** The two names the name search reads, and the only prose anything here reads. */
+  title: string;
+  organizerName: string;
   categoryKey: string;
   activityMode: string | null;
   countryCodes: readonly string[];
@@ -292,7 +342,41 @@ export function fundraiserMatches(f: DiscoveryFundraiserFacts, q: DiscoveryQuery
   if (q.purposes.length && !q.purposes.some((t) => f.tags.includes(t))) return false;
   if (q.audiences.length && !q.audiences.some((t) => f.tags.includes(t))) return false;
   if (q.place && !placeMatches(f.locations, q.place)) return false;
+  if (q.q && !nameMatches(f, q.q)) return false;
   return true;
+}
+
+/**
+ * The name search: does the fundraiser's title or the organizer's name contain these characters,
+ * ignoring case? A text lookup and nothing more. It reads no purpose, description, audience or
+ * promise, and it infers no category, place or benefit from what it finds, because a filter read
+ * out of prose would claim a fact the organizer never stated.
+ *
+ * This is also the second opinion on the database's `ilike`, which PostgREST reads `*` as a
+ * wildcard in and which therefore returns a superset for a name containing one; this narrows it
+ * back to the literal match.
+ */
+export function nameMatches(f: { title: string; organizerName: string }, q: string): boolean {
+  const needle = q.toLowerCase();
+  if (!needle) return true;
+  return f.title.toLowerCase().includes(needle) || f.organizerName.toLowerCase().includes(needle);
+}
+
+/**
+ * The same name search, as one PostgREST `or` filter over the two columns.
+ *
+ * The value is double-quoted, which is how PostgREST carries a comma, a dot or a parenthesis
+ * through its own filter grammar; inside the quotes a backslash escapes a quote or a backslash.
+ * `%` and `_` are LIKE wildcards in Postgres and are escaped with a backslash, which has to be
+ * written twice to survive PostgREST's own unquoting. `*` is the one character that cannot be
+ * made literal on this path (PostgREST turns it into `%` even inside quotes), so it is left as a
+ * wildcard, the read comes back as a superset, and nameMatches narrows it. Checked against a
+ * local PostgREST on 2026-09-23.
+ */
+export function nameSearchFilter(q: string, columns: readonly string[] = ["title", "organizer_name"]): string {
+  const escaped = q.replace(/[\\%_"]/g, (c) => (c === "\\" ? "\\\\\\\\" : c === '"' ? '\\"' : `\\\\${c}`));
+  const pattern = `"%${escaped}%"`;
+  return columns.map((col) => `${col}.ilike.${pattern}`).join(",");
 }
 
 /** A place the organizer named, matched loosely on the words they wrote. Never the organizer's own city. */

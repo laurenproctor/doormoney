@@ -35,6 +35,7 @@ export function ActiveFilters({
     })),
   ];
 
+  if (query.q) chips.push({ key: "q", label: `Named “${query.q}”`, href: hrefWithout(query, "q") });
   if (query.place) chips.push({ key: "place", label: query.place, href: hrefWithout(query, "place") });
   if (query.minCents !== null) {
     chips.push({ key: "min", label: `From ${formatMoney(query.minCents)}`, href: hrefWithout(query, "minCents") });

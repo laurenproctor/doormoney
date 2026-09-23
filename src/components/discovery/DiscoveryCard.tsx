@@ -28,7 +28,7 @@ export function DiscoveryCard({
   /** True when the count shown should be "matching", rather than simply what is open. */
   filtersActive: boolean;
 }) {
-  const priceLine = priceText(card);
+  const prices = priceLines(card);
   return (
     <article className="edge flex flex-col gap-3.5 bg-panel px-[26px] py-7">
       <div className="flex flex-wrap items-center gap-2.5">
@@ -59,7 +59,9 @@ export function DiscoveryCard({
       )}
 
       <div className="flex flex-wrap gap-x-7 gap-y-3 border-t border-line pt-3.5">
-        {priceLine && <Stat value={priceLine} label={card.hasBidding && !card.hasFixed ? "bidding starts at" : "sponsorships from"} />}
+        {prices.map((p) => (
+          <Stat key={p.label} value={p.value} label={p.label} />
+        ))}
         <Stat
           value={String(filtersActive ? card.matchingOffers : card.availableOffers)}
           label={filtersActive ? countWord(card.matchingOffers, "match", "matches") : countWord(card.availableOffers, "option open", "options open")}
@@ -86,17 +88,22 @@ export function DiscoveryCard({
 }
 
 /**
- * The price, as a range when the options differ and one number when they do not.
+ * The prices, one line per buying route, each labeled for what it is.
  *
- * Built from the organizer's own numbers on the options that matched. A bidding option contributes
- * where its bidding starts, and its take-it-now price too where it has one, because both are real
- * numbers a sponsor could pay.
+ * Built from the organizer's own numbers on the options that matched, and only from the routes
+ * that fit the sponsor's budget. A fixed price, an opening bid and a take-it-now number are never
+ * folded into one range: "from $150" over an opening bid is not a price anybody is promised, and
+ * a take-it-now that sits outside the budget is not shown as inside it.
  */
-function priceText(card: DiscoveryCardView): string | null {
-  if (card.priceFromCents === null || card.priceToCents === null) return null;
-  return card.priceFromCents === card.priceToCents
-    ? formatMoney(card.priceFromCents)
-    : `${formatMoney(card.priceFromCents)}–${formatMoney(card.priceToCents)}`;
+function priceLines(card: DiscoveryCardView): { value: string; label: string }[] {
+  const { fixed, openingBid, buyNow } = card.pricing;
+  const span = (s: { fromCents: number; toCents: number }) =>
+    s.fromCents === s.toCents ? formatMoney(s.fromCents) : `${formatMoney(s.fromCents)} to ${formatMoney(s.toCents)}`;
+  const lines: { value: string; label: string }[] = [];
+  if (fixed) lines.push({ value: span(fixed), label: fixed.fromCents === fixed.toCents ? "fixed price" : "fixed prices" });
+  if (openingBid) lines.push({ value: span(openingBid), label: openingBid.fromCents === openingBid.toCents ? "opening bid" : "opening bids" });
+  if (buyNow) lines.push({ value: span(buyNow), label: "take it now" });
+  return lines;
 }
 
 function saleText(card: DiscoveryCardView): string | null {

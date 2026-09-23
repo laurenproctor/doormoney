@@ -51,6 +51,8 @@ export function FilterPanel({
         <form method="get" action="/fundraisers" className="mt-5 lg:mt-0">
           {/* The sort survives a change of filters. Left out at the default so the address stays short. */}
           {query.sort !== "relevant" && <input type="hidden" name="sort" value={query.sort} />}
+          {/* The name search is not asked here yet; it is carried so applying a filter never drops it. */}
+          {query.q && <input type="hidden" name="q" value={query.q} />}
 
           <Group legend="Category">
             {categories.map((c) => (

@@ -9,7 +9,7 @@ import { DiscoveryCard } from "@/components/discovery/DiscoveryCard";
 import { getCategoryLabels } from "@/lib/category-registry";
 import { getDiscoveryRegistry } from "@/lib/discovery-registry";
 import { discoveryChoicesForCategories } from "@/lib/discovery";
-import { discoveryCountries, findFundraisers } from "@/lib/discovery-query";
+import { discoveryCountries, findFundraisers, type DiscoveryStatus } from "@/lib/discovery-query";
 import { SORTS, hasFilters, hasOfferFilters, hrefWith, parseQuery, type RawParams } from "@/lib/discovery-filters";
 import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 
@@ -92,7 +92,7 @@ export default async function FundraisersPage({ searchParams }: Props) {
 
           <div>
             <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-b border-line pb-5">
-              <h2 className="heading text-[22px]">{countLine(result.total, filtersActive)}</h2>
+              <h2 className="heading text-[22px]">{result.status === "unavailable" ? "Fundraisers unavailable" : countLine(result.total, filtersActive)}</h2>
               <nav aria-label="Sort" className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <span className="caps text-[14px] text-muted">Sort</span>
                 {SORTS.map((s) => (
@@ -126,7 +126,7 @@ export default async function FundraisersPage({ searchParams }: Props) {
             )}
 
             {result.cards.length === 0 ? (
-              <Empty filtersActive={filtersActive} live={result.live} />
+              <Empty filtersActive={filtersActive} status={result.status} failedRead={result.failedRead} />
             ) : (
               <div className="grid gap-[30px] md:grid-cols-2">
                 {result.cards.map((card) => (
@@ -192,9 +192,23 @@ function countLine(total: number, filtersActive: boolean): string {
  * Nothing matched, said honestly.
  *
  * It never suggests the filters were wrong or that something is coming. With no database connected
- * it says so, because an empty page and an unconfigured one are different facts.
+ * it says so, because an empty page and an unconfigured one are different facts. A read that
+ * failed is a third fact and gets its own words: the list could not be read, which is not the same
+ * as nothing being open, and the sample never stands in for it.
  */
-function Empty({ filtersActive, live }: { filtersActive: boolean; live: boolean }) {
+function Empty({ filtersActive, status, failedRead }: { filtersActive: boolean; status: DiscoveryStatus; failedRead: "fundraisers" | "offers" | null }) {
+  if (status === "unavailable") {
+    return (
+      <div className="edge bg-panel px-[26px] py-9" role="status">
+        <p className="text-[15px] leading-[1.7]">
+          {failedRead === "offers"
+            ? "Door Money could not read the sponsorship options just now, so it is not showing the fundraisers without them."
+            : "Door Money could not read the fundraisers just now."}
+        </p>
+        <p className="mt-3 text-[15px] leading-[1.7] text-muted">Reload the page to try again.</p>
+      </div>
+    );
+  }
   return (
     <div className="edge bg-panel px-[26px] py-9">
       {filtersActive ? (
@@ -215,7 +229,7 @@ function Empty({ filtersActive, live }: { filtersActive: boolean; live: boolean 
         </p>
       )}
       {/* An unconfigured app and an empty one are different facts, and the page says which. */}
-      {!live && (
+      {status === "sample" && (
         <p className="mt-4 text-[14.5px] text-muted">
           No database is connected, so this page is showing the built-in sample. The sample records
           none of the structured discovery fields, so most filters correctly match nothing.
