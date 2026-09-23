@@ -99,9 +99,9 @@ test("hospitality is a starting category since 2026-09-21, and being listed open
   assert.doesNotMatch(read("src/lib/starting-categories.ts"), /key: "restaurants"/);
   // The patron-side pickers read the registry's own preference switch (migration 0050), in both places, and never
   // publish_enabled: a patron can say they support restaurants while no hospitality fundraiser can be published.
-  assert.match(read("src/app/dashboard/profile/page.tsx"), /from\("fundraiser_categories"\)\.select\("key,label"\)\.eq\("preference_enabled", true\)/);
+  assert.match(read("src/app/dashboard/profile/patron/page.tsx"), /from\("fundraiser_categories"\)\.select\("key,label"\)\.eq\("preference_enabled", true\)/);
   assert.match(read("src/app/actions/profile.ts"), /from\("fundraiser_categories"\)\.select\("key"\)\.eq\("preference_enabled", true\)/);
-  for (const file of ["src/app/dashboard/profile/page.tsx", "src/app/actions/profile.ts"]) assert.doesNotMatch(read(file), /\.eq\("publish_enabled"/, `${file} asks the preference switch`);
+  for (const file of ["src/app/dashboard/profile/patron/page.tsx", "src/app/actions/profile.ts"]) assert.doesNotMatch(read(file), /\.eq\("publish_enabled"/, `${file} asks the preference switch`);
 });
 
 // ---------------------------------------------------------------

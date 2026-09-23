@@ -5,7 +5,7 @@ import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
 import { Eyebrow } from "@/components/Brand";
 import { AccountNameForm } from "@/components/AccountForms";
-import { ActivityList, ProfileDetailsForm, PublishForm, UsernameForm } from "@/components/ProfileForms";
+import { UsernameForm } from "@/components/ProfileForms";
 import { currentProfile, ownedAct, requireUser, type OwnedAct } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 import { fullName } from "@/lib/names";
@@ -23,7 +23,7 @@ import {
 } from "@/lib/participation";
 import { SITE } from "@/lib/site";
 import { formatDay, interestsText, nextUsernameChange, usernameChangeAllowed } from "@/lib/profile";
-import { eligibleActivity, linkPatronRows, ownProfile, signedPhotoUrl, type OwnProfile } from "@/lib/patronprofile";
+import { eligibleActivity, linkPatronRows, ownProfile, type OwnProfile } from "@/lib/patronprofile";
 
 /*
   One profile, in three parts.
@@ -62,18 +62,10 @@ export default async function ProfilePage() {
     ownProfile(user.id),
     getCategoryLabels(),
   ]);
-  const [activity, photo, header, publicFundraisers] = await Promise.all([
+  const [activity, publicFundraisers] = await Promise.all([
     eligibleActivity(user.id, verified),
-    signedPhotoUrl(own?.photoPath ?? null),
-    signedPhotoUrl(own?.headerPath ?? null),
     countPublicFundraisers(act?.id ?? null),
   ]);
-
-  // The categories a patron may say they support come from the registry: the ones it offers as a
-  // preference (migration 0050), which is a separate switch from whether a category can publish.
-  const sb = await supabaseServer();
-  const { data: registry } = await sb.from("fundraiser_categories").select("key,label").eq("preference_enabled", true).order("key");
-  const categories = (registry ?? []) as { key: string; label: string }[];
 
   const personName = fullName(profile);
   const username = profile?.username ?? null;
@@ -221,70 +213,50 @@ export default async function ProfilePage() {
 
         {/* ---------------------------------------------------------------- Supporting */}
         <Part id="supporting" eyebrow="Supporting" title="What you support">
-          <div className="grid gap-6">
-            <Card>
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <Status>{PATRON_STATUS_LABEL[supporting]}</Status>
-                {own && (
-                  <span className="text-[14.5px] text-muted">
-                    {shown} {shown === 1 ? "thing" : "things"} on the page
-                  </span>
-                )}
-              </div>
-              <p className="mb-7 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
-                {PATRON_STATUS_WORDS[supporting]} No amount is ever shown on it.
-              </p>
-
-              {own ? (
-                <Details rows={patronRows(own, labels, interestsText(own.interests))} />
-              ) : (
-                <p className="max-w-[62ch] border-y border-line py-4 text-[15px] leading-[1.6] text-muted">
-                  Nothing is filled in yet. The form at the foot of this page makes the page, and a new page stays
-                  private until you publish it.
-                </p>
+          <Card>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Status>{PATRON_STATUS_LABEL[supporting]}</Status>
+              {own && (
+                <span className="text-[14.5px] text-muted">
+                  {shown} {shown === 1 ? "thing" : "things"} on the page
+                </span>
               )}
+            </div>
+            <p className="mb-7 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
+              {PATRON_STATUS_WORDS[supporting]} No amount is ever shown on it.
+            </p>
 
-              <div className="mt-7 flex flex-wrap items-center gap-4">
-                <PublishForm published={published} ready={Boolean(own && username)} />
-                <Link href="#patron-details" className="caps text-[14px] text-accent-ink underline underline-offset-4">
-                  {own ? "Edit patron page" : "Create patron page"}
+            {own ? (
+              <Details rows={patronRows(own, labels, interestsText(own.interests))} />
+            ) : (
+              <p className="max-w-[62ch] border-y border-line py-4 text-[15px] leading-[1.6] text-muted">
+                Nothing is filled in yet. A page needs a name, and a new page stays private until you publish it.
+              </p>
+            )}
+
+            {/*
+              The patron page has a room of its own.
+
+              Editing it means a long form, a decision about every sponsorship and backing, and a
+              look at what a reader will see, which is three things that do not fit under the third
+              heading of a page about the whole account. They moved to /dashboard/profile/patron,
+              together, and this is the way in. What is left here is the summary and the status, so
+              the account home still answers "what do I support" without scrolling.
+            */}
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <ButtonLink href="/dashboard/profile/patron">{own ? "Edit patron profile" : "Create patron profile"}</ButtonLink>
+              {own && published && username && (
+                <Link href={`/patron/${username}`} className="caps text-[14px] text-accent-ink underline underline-offset-4">
+                  View the public page
                 </Link>
-              </div>
-              {!own && (
-                <p className="mt-4 max-w-[62ch] text-[14.5px] text-muted">Fill in the details below first. A page needs a name.</p>
               )}
-              {own && !username && (
-                <p className="mt-4 max-w-[62ch] text-[14.5px] text-muted">Claim a username above. It is the address of the page.</p>
-              )}
-            </Card>
-
-            <Card>
-              <CardHead level={3} eyebrow="Public support">What appears on the page</CardHead>
-              <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-                Choose what support activity appears publicly. Each one is its own decision, and no amount is ever
-                shown.
+            </div>
+            {own && !username && (
+              <p className="mt-4 max-w-[62ch] text-[14.5px] text-muted">
+                Claim a username above before publishing. It is the address of the page.
               </p>
-              <ActivityList items={activity} />
-            </Card>
-
-            {/* Last on the page on purpose: the longest form here is the most optional thing on it. */}
-            <Card id="patron-details">
-              <CardHead level={3} eyebrow="The details">Your patron page</CardHead>
-              <p className="mb-6 max-w-[62ch] text-[15px] text-muted">
-                This information appears on your public profile when you publish it. All of it is optional.
-              </p>
-              <div className="max-w-[720px]">
-                <ProfileDetailsForm
-                  profile={own}
-                  photo={photo}
-                  header={header}
-                  categories={categories}
-                  publicPath={username ? `/patron/${username}` : null}
-                  published={published}
-                />
-              </div>
-            </Card>
-          </div>
+            )}
+          </Card>
         </Part>
       </div>
     </DashboardShell>
@@ -296,7 +268,7 @@ export default async function ProfilePage() {
 /** One of the three parts, with its own heading so the page reads as a list of three. */
 function Part({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
   return (
-    <section aria-labelledby={`${id}-head`}>
+    <section id={id} aria-labelledby={`${id}-head`} className="scroll-mt-20">
       <div className="mb-6 border-b border-line pb-5">
         <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
         <h2 id={`${id}-head`} className="heading text-[clamp(22px,3vw,30px)] leading-tight text-ink">

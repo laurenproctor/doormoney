@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { changeUsername, saveProfileDetails, setActivityShown, setProfileVisibility, type ProfileState, type UsernameState } from "@/app/actions/profile";
@@ -188,9 +189,14 @@ export function ProfileDetailsForm({
                   View your profile
                 </a>
               ) : publicPath ? (
-                "Publish it above and anybody with the address can read it."
+                "Publishing is above. Saving on its own changes nothing anybody else can read."
               ) : (
-                "Claim a username above to give it an address."
+                <>
+                  <Link href="/dashboard/profile#identity" className="text-accent-ink underline underline-offset-4">
+                    Claim a username
+                  </Link>{" "}
+                  to give the page an address.
+                </>
               )}
             </>
           ) : (
@@ -402,7 +408,7 @@ export function PublishForm({ published, ready }: { published: boolean; ready: b
     <form action={action}>
       <input type="hidden" name="publish" value={published ? "no" : "yes"} />
       <Button type="submit" variant={published ? "ghost" : "solid"} disabled={pending || (!published && !ready)}>
-        {pending ? (published ? "Hiding…" : "Publishing…") : published ? "Hide profile" : "Publish profile"}
+        {pending ? (published ? "Unpublishing…" : "Publishing…") : published ? "Unpublish profile" : "Publish profile"}
       </Button>
       <p role="status" aria-live="polite" className="mt-3 text-[14.5px] text-muted">
         {state.ok ? state.message : ""}
