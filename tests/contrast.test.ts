@@ -126,3 +126,105 @@ test("a control's edge never falls back to the raw accent in the light room", ()
   // The focus ring is the one edge that has to hold everywhere, so it reads the token.
   assert.match(CSS, /:focus-visible \{ outline: 2px solid var\(--accent-line\)/);
 });
+
+/*
+  The Desk register's status tokens.
+  ---------------------------------------------------------------------------
+  ok is the page's own light, so it changes with the theme and has to be measured under all eight.
+  attention is the one color that does not change, which is exactly why it needs measuring: one
+  amber has to clear the bar on sixteen different grounds. neutral is the ink at low strength.
+
+  Each pair is read out of globals.css and composited the way a browser composites it: a wash is
+  laid over `surface`, and `surface` is itself the ink laid over the ground. Nothing below is a
+  number typed beside the design; every one of them is computed from the file.
+
+  If a theme fails, darken the ink. Never lighten the ground: a wash pale enough to rescue a tint
+  is a status nobody notices, which is the opposite of what these are for.
+*/
+
+/** The declarations of one rule, found by a selector that may be one of several on the rule. */
+function desk(selector: string) {
+  const at = CSS.indexOf(selector);
+  assert.notEqual(at, -1, `globals.css no longer has ${selector}`);
+  return CSS.slice(at, CSS.indexOf("}", at));
+}
+const DESK_DARK = desk(":root, [data-theme] {\n  --ok: var(--accent);");
+const DESK_LIGHT = desk(':root[data-mode="light"], [data-mode="light"] [data-theme] {\n  --ok-wash:');
+
+/** "color-mix(in srgb, var(--x) 14%, …)", as a fraction. */
+function part(rule: string, name: string): number {
+  const found = rule.match(new RegExp(`--${name}:\\s*color-mix\\(in srgb, var\\(--[a-z-]+\\) (\\d+)%`));
+  assert.ok(found, `--${name} is no longer a color-mix, so this test is measuring the wrong thing`);
+  return Number(found[1]) / 100;
+}
+/** An rgba() wash over what is behind it, or a flat hex if that is what the room declares. */
+function wash(rule: string, name: string, behind: string): string {
+  const flat = rule.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, "i"));
+  if (flat) return flat[1];
+  const rgba = rule.match(new RegExp(`--${name}:\\s*rgba\\((\\d+), (\\d+), (\\d+), ([0-9.]+)\\)`));
+  assert.ok(rgba, `--${name} is neither a hex nor an rgba, so this test cannot composite it`);
+  const hex = "#" + [1, 2, 3].map((i) => Number(rgba[i]).toString(16).padStart(2, "0")).join("");
+  return mix(hex, behind, Number(rgba[4]));
+}
+
+/**
+ * A theme that states an ok-ink of its own in the light room, if it does. Read by scanning the
+ * rules rather than by a fixed selector, so the selector list can be rewritten without this test
+ * quietly stopping measuring anything.
+ */
+function statedOkInk(theme: string): string | undefined {
+  for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const [, selector, body] = rule;
+    if (!selector.includes('[data-mode="light"]') || !selector.includes(`[data-theme="${theme}"]`)) continue;
+    const found = body.match(/--ok-ink:\s*(#[0-9a-f]{6})/i);
+    if (found) return found[1];
+  }
+  return undefined;
+}
+
+/** What a workspace block is actually painted on, in one room, under one light. */
+function deskRoom(room: "dark" | "light", theme: string) {
+  const t = themeIn(room, theme);
+  const rule = room === "dark" ? DESK_DARK : DESK_LIGHT;
+  const surfaceHex = rule.match(/--surface:\s*(#[0-9a-f]{6})/i)?.[1];
+  const surface = surfaceHex ?? mix(t.ink, t.ground, part(DESK_DARK, "surface"));
+  const okInk = (room === "light" ? statedOkInk(theme) : undefined) ?? t.accentInk;
+  return {
+    ...t,
+    surface,
+    okInk,
+    okWash: mix(t.accent, surface, part(rule, "ok-wash")),
+    attentionInk: rule.match(/--attention-ink:\s*(#[0-9a-f]{6})/i)?.[1] ?? "#ffb020",
+    attentionWash: wash(rule, "attention-wash", surface),
+    neutralWash: mix(t.ink, surface, part(DESK_DARK, "neutral-wash")),
+  };
+}
+
+for (const room of ["dark", "light"] as const) {
+  test(`${room} room: every status word on the Desk register clears 4.5:1 on its own pill`, () => {
+    for (const theme of THEMES) {
+      const d = deskRoom(room, theme);
+      const pairs = [
+        ["ok-ink on ok-wash", d.okInk, d.okWash],
+        ["attention-ink on attention-wash", d.attentionInk, d.attentionWash],
+        ["neutral-ink on neutral-wash", d.muted, d.neutralWash],
+        ["attention-ink on the ground", d.attentionInk, d.ground],
+        ["attention-ink on a card", d.attentionInk, d.surface],
+        ["ink on a card", d.ink, d.surface],
+        ["muted on a card", d.muted, d.surface],
+      ] as const;
+      for (const [what, fg, bg] of pairs) {
+        const measured = ratio(fg, bg);
+        assert.ok(measured >= 4.5, `${room}/${theme}: ${what} is ${fg} on ${bg}, ${measured.toFixed(2)}:1`);
+      }
+    }
+  });
+}
+
+test("the one theme whose ok-ink had to be darkened says so, and nothing else was", () => {
+  // Blue's readable tint does not survive its own wash in the light room, so that theme states a
+  // darker ok-ink. Every other theme inherits accent-ink, which is the point of the default.
+  const darkened = THEMES.filter((theme) => deskRoom("light", theme).okInk !== themeIn("light", theme).accentInk);
+  assert.deepEqual(darkened, ["blue"]);
+  for (const theme of THEMES) assert.equal(deskRoom("dark", theme).okInk, themeIn("dark", theme).accentInk, `dark/${theme}`);
+});
