@@ -144,12 +144,22 @@ export default async function FundraisersPage({ searchParams }: Props) {
             </p>
           )}
 
+          {/*
+            Tiles are one height. Every tile in the grid is sized to the tallest of them
+            (`grid-auto-rows: 1fr`, and no items-start, so each one stretches to fill the row it is
+            in), and the card pins its action block to the bottom, so the buttons line up across
+            the page however much any one organizer wrote. The card clamps its own prose, which is
+            what keeps that shared height a reasonable one.
+
+            One column and rows both put it back: a height shared down a single column is only a
+            column of holes, and a row's height is its own.
+          */}
           {result.cards.length === 0 ? (
             <Empty filtersActive={filtersActive} status={result.status} failedRead={result.failedRead} />
           ) : (
             <ul
               aria-labelledby="results-heading"
-              className="discovery-rows:grid-cols-1 discovery-rows:gap-0 discovery-rows:border-t discovery-rows:border-line grid gap-[30px] md:grid-cols-2 md:items-start"
+              className="discovery-rows:grid-cols-1 discovery-rows:gap-0 discovery-rows:border-t discovery-rows:border-line discovery-rows:[grid-auto-rows:auto] grid gap-[30px] md:grid-cols-2 md:[grid-auto-rows:1fr]"
             >
               {result.cards.map((card) => (
                 <DiscoveryCard
