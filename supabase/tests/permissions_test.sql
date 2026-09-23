@@ -36,8 +36,11 @@ update patrons set name='Dana Whitfield' where id=(select patron_id from bids wh
 -- It carries music's own details, so the suites below that cancel every fundraiser of this act can.
 insert into runs (id,act_id,title,slug,status,category_key,kind,starts_on,ends_on,show_count)
   select 'a0480000-0000-4000-8000-000000000001', id, 'Unannounced tour', 'unannounced-tour-0048', 'draft', 'music', 'tour', '2027-03-01', '2027-03-20', 12 from acts where slug='gutter-hymns';
-insert into lots (id,run_id,surface_key,price_cents,mode) values
-  ('a0480000-0000-4000-8000-0000000000a1','a0480000-0000-4000-8000-000000000001','posts_email',77700,'fixed');
+-- These spots carry no offer terms, as every spot did before migration 0060, and their fundraiser is
+-- already public, so they are marked grandfathered the way 0060 marks the real ones (0061 refuses the
+-- shape otherwise). The test is about what it was about, not about offer terms.
+insert into lots (id,run_id,surface_key,price_cents,mode, terms_grandfathered) values
+  ('a0480000-0000-4000-8000-0000000000a1','a0480000-0000-4000-8000-000000000001','posts_email',77700,'fixed', true);
 
 -- Two accounts with paid history, for the patron profile tests below.
 --   user 1 owns Kettle St. Coffee (a placement won in the open) and the anonymous bidder's row.

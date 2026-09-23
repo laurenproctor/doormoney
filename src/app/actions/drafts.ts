@@ -175,3 +175,27 @@ export async function saveDraftForm(_previous: DraftState, form: FormData): Prom
   if (result.ok && target && value("intent") !== "save") redirect(stagePath(value("id"), target, carried));
   return result;
 }
+
+/**
+ * The one line a category with no sponsorship option templates can say about visibility.
+ *
+ * Other has no templates (migration 0049), so it cannot hold a priced option, and a music organizer
+ * who has not said what kind of musician they are has none to choose from yet. The sponsorships
+ * stage still asks what a sponsor could count on and stores the answer where it has always lived,
+ * `runs.sponsor_promise`, the same column the funding stage writes. Nothing else is written: no
+ * lot, no price, no publish. The same ownership and draft checks as every other draft save.
+ */
+export async function saveSponsorVisibility(_previous: DraftState, form: FormData): Promise<DraftState> {
+  const user = await requireUser("/dashboard");
+  const act = await ownedAct(user.id);
+  if (!act) return { ok: false, error: "Create your organizer profile first." };
+  const id = String(form.get("id") ?? "");
+  const promise = String(form.get("sponsor_promise") ?? "").trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, error: "The draft could not be found. Reload and try again." };
+  if (promise.length > 2000) return { ok: false, error: "Keep this under 2,000 characters.", errors: { sponsor_promise: "Keep this under 2,000 characters." } };
+  const sb = await supabaseServer();
+  const { data, error } = await sb.from("runs").update({ sponsor_promise: promise || null }).eq("id", id).eq("act_id", act.id).eq("status", "draft").select("id").maybeSingle();
+  if (error || !data) return { ok: false, error: "The draft did not save. Check that it is still a draft on your account." };
+  revalidatePath(`/dashboard/runs/${id}`);
+  return { ok: true, id };
+}

@@ -14,9 +14,12 @@ select plan(21);
 -- it, with a later start date, which makes it what "the organizer's current fundraiser" means.
 insert into runs (id, act_id, slug, kind, title, starts_on, ends_on, show_count, status, verification_methods) values
  ('e5000000-0000-4000-8000-00000000000b','11111111-1111-1111-1111-111111111111','winter-residency','residency','Winter residency','2026-12-01','2026-12-29',8,'open',array['end_of_run_record']);
-insert into lots (id, run_id, surface_key, price_cents, mode, status) values
- ('e5000000-0000-4000-8000-0000000000b1','e5000000-0000-4000-8000-00000000000b','kick_head',90000,'fixed','open'),
- ('e5000000-0000-4000-8000-0000000000a1','22222222-2222-2222-2222-222222222222','amp_grille',30000,'fixed','open');
+-- These spots carry no offer terms, as every spot did before migration 0060, and their fundraiser is
+-- already public, so they are marked grandfathered the way 0060 marks the real ones (0061 refuses the
+-- shape otherwise). The test is about what it was about, not about offer terms.
+insert into lots (id, run_id, surface_key, price_cents, mode, status, terms_grandfathered) values
+ ('e5000000-0000-4000-8000-0000000000b1','e5000000-0000-4000-8000-00000000000b','kick_head',90000,'fixed','open', true),
+ ('e5000000-0000-4000-8000-0000000000a1','22222222-2222-2222-2222-222222222222','amp_grille',30000,'fixed','open', true);
 
 select is((select count(*)::int from runs where act_id='11111111-1111-1111-1111-111111111111' and status in ('open','live')),2,
   'one organizer has two fundraisers open');

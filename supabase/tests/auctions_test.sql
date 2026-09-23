@@ -23,10 +23,13 @@ update runs set bidding_closes_at = now() + interval '1 hour' where id = '222222
 update lots set closes_at = null where run_id = '22222222-2222-2222-2222-222222222222';
 
 -- Two fresh lots on it, born under the guards like any lot the dashboard would make.
-insert into lots (id, run_id, surface_key, label, price_cents, mode, status, buy_now_cents) values
-  ('a3000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'rig_rundown', 'Rig rundown, second cut', 40000, 'auction', 'open', 60000),
-  ('a3000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'hang_tags', null, 5000, 'fixed', 'open', null),
-  ('a3000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'riser_fascia', null, 100000, 'auction', 'open', null);
+-- These spots carry no offer terms, as every spot did before migration 0060, and their fundraiser is
+-- already public, so they are marked grandfathered the way 0060 marks the real ones (0061 refuses the
+-- shape otherwise). The test is about what it was about, not about offer terms.
+insert into lots (id, run_id, surface_key, label, price_cents, mode, status, buy_now_cents, terms_grandfathered) values
+  ('a3000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'rig_rundown', 'Rig rundown, second cut', 40000, 'auction', 'open', 60000, true),
+  ('a3000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'hang_tags', null, 5000, 'fixed', 'open', null, true),
+  ('a3000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'riser_fascia', null, 100000, 'auction', 'open', null, true);
 
 -- ---------------------------------------------------------------
 -- The arithmetic matches src/lib/money.ts and src/lib/auctions.ts.

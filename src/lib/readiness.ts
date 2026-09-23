@@ -18,6 +18,7 @@
  * simply waits. That is the existing rule and this does not change it.
  */
 import { organizerNoun } from "@/lib/categories";
+import { incompleteOfferSentence, type IncompleteOffer } from "@/lib/offer-readiness";
 import { OTHER_KEY, OTHER_MIN, verificationPublishable, type VerificationChoice } from "@/lib/verification";
 
 export type ReadinessAct = {
@@ -54,6 +55,12 @@ export type ReadinessInput = {
    * and a default of true here would be the quiet way that stops being true.
    */
   categoryPublishable: boolean;
+  /**
+   * Sponsorship options still missing terms the product contract asks for before a purchase
+   * (src/lib/offer-readiness.ts). Computed by the caller from the lots, and empty for a fundraiser
+   * that has been published before, so nothing already sold is held to a rule written later.
+   */
+  incompleteOffers?: readonly IncompleteOffer[];
 };
 
 export type ReadinessRow = {
@@ -112,7 +119,7 @@ function runMissing(run: ReadinessRun): string {
  * Everything between this draft and a public fundraiser, in the order an organizer would fix it.
  * Empty means publishing will go through. Each line names the thing and where it lives.
  */
-export function publishBlockers({ act, run, lotCount, auctionCount, categoryPublishable }: ReadinessInput): string[] {
+export function publishBlockers({ act, run, lotCount, auctionCount, categoryPublishable, incompleteOffers = [] }: ReadinessInput): string[] {
   const out: string[] = [];
   const noun = organizerNoun(run.category_key ?? "music");
   if (!categoryPublishable) out.push("This category can hold drafts. Publishing is not open for it yet.");
@@ -120,6 +127,9 @@ export function publishBlockers({ act, run, lotCount, auctionCount, categoryPubl
   else if (!filled(act.bio)) out.push(`Add a short bio on the ${noun} page. The fundraiser leads with it.`);
   if (!runComplete(run)) out.push(`Finish the fundraiser: ${runMissing(run).charAt(0).toLowerCase()}${runMissing(run).slice(1)}`);
   if (lotCount === 0) out.push("Add at least one sponsorship option before publishing.");
+  // A partial option saves as a private draft. It does not publish: a sponsor has to be able to read
+  // every term before they pay, and an option whose terms are missing is not yet an offer.
+  for (const offer of incompleteOffers) out.push(incompleteOfferSentence(offer));
   if (auctionCount > 0 && !filled(run.bidding_closes_at)) out.push("Sponsorship options open to bids need a bidding close time. Set one below.");
   if (!verificationComplete(run)) {
     const pickedOther = (run.methods ?? []).includes(OTHER_KEY);
@@ -137,7 +147,7 @@ export function publishBlockers({ act, run, lotCount, auctionCount, categoryPubl
 
 /** The six rows on the fundraiser dashboard, in order. */
 export function readiness(input: ReadinessInput): ReadinessRow[] {
-  const { act, run, lotCount, auctionCount } = input;
+  const { act, run, lotCount, auctionCount, incompleteOffers = [] } = input;
   const published = run.status === "open" || run.status === "live";
   const blockers = publishBlockers(input);
   const auctionsNeedClose = auctionCount > 0 && !filled(run.bidding_closes_at);
@@ -173,13 +183,15 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
     {
       key: "lots",
       label: "Sponsorships",
-      done: lotCount > 0 && !auctionsNeedClose,
+      done: lotCount > 0 && !auctionsNeedClose && incompleteOffers.length === 0,
       note:
         lotCount === 0
           ? "Nothing priced yet."
-          : auctionsNeedClose
-            ? `${lotCount} priced, but the options open to bids need a bidding close time.`
-            : `${lotCount} ${lotCount === 1 ? "sponsorship option" : "sponsorship options"} priced.`,
+          : incompleteOffers.length > 0
+            ? `${incompleteOffers.length === 1 ? `${incompleteOffers[0].name} still needs` : `${incompleteOffers.length} options still need`} the terms a sponsor reads before paying: ${incompleteOffers[0].missing.slice(0, 3).map((m) => m.charAt(0).toLowerCase() + m.slice(1)).join("; ")}${incompleteOffers[0].missing.length > 3 ? "; and more" : ""}.`
+            : auctionsNeedClose
+              ? `${lotCount} priced, but the options open to bids need a bidding close time.`
+              : `${lotCount} ${lotCount === 1 ? "sponsorship option" : "sponsorship options"} priced.`,
       href: "#placements",
     },
     {

@@ -15,9 +15,12 @@ insert into acts (id,owner_id,name,slug,type) values
 insert into runs (id,act_id,title,slug,status,category_key,purpose,audience_description,sponsor_promise,delivery_due_at,category_details) values
  ('e6000000-0000-4000-8000-000000000010','e6000000-0000-4000-8000-00000000000a','Winter production','winter-delivery','open','theater','Rights and a rehearsal room.','Ninety seats a night.','A program credit.','2026-12-20T20:00:00Z','{}'),
  ('e6000000-0000-4000-8000-000000000011','e6000000-0000-4000-8000-00000000000b','Spring season','season-delivery','open','sports','Kit and travel.','Families at home fixtures.','A touchline banner.',null,'{"sport":"Soccer","level":"youth"}');
-insert into lots (id,run_id,surface_key,price_cents,mode,status) values
- ('e6000000-0000-4000-8000-0000000000a1','e6000000-0000-4000-8000-000000000010','playbill_credit',50000,'fixed','open'),
- ('e6000000-0000-4000-8000-0000000000b1','e6000000-0000-4000-8000-000000000011','touchline_banner',80000,'fixed','open');
+-- These spots carry no offer terms, as every spot did before migration 0060, and their fundraiser is
+-- already public, so they are marked grandfathered the way 0060 marks the real ones (0061 refuses the
+-- shape otherwise). The test is about what it was about, not about offer terms.
+insert into lots (id,run_id,surface_key,price_cents,mode,status, terms_grandfathered) values
+ ('e6000000-0000-4000-8000-0000000000a1','e6000000-0000-4000-8000-000000000010','playbill_credit',50000,'fixed','open', true),
+ ('e6000000-0000-4000-8000-0000000000b1','e6000000-0000-4000-8000-000000000011','touchline_banner',80000,'fixed','open', true);
 insert into patrons (id,name,contact_email,profile_id) values
  ('e6000000-0000-4000-8000-0000000000c1','Kettle St. Coffee','delivery-sponsor@example.com','e6000000-0000-4000-8000-000000000003');
 
@@ -163,7 +166,10 @@ insert into fundraiser_categories (key,label,publish_enabled) values ('dance','D
 insert into surfaces (key,name,group_key,category_key,default_period,sort) values ('studio_wall_delivery','Studio wall','studio','dance','term',901);
 insert into runs (id,act_id,title,slug,status,category_key,purpose,audience_description,sponsor_promise) values
  ('e6000000-0000-4000-8000-000000000012','e6000000-0000-4000-8000-00000000000a','Spring term','term-delivery','open','dance','Studio hire.','Families.','A wall.');
-insert into lots (id,run_id,surface_key,price_cents,mode,status) values ('e6000000-0000-4000-8000-0000000000d1','e6000000-0000-4000-8000-000000000012','studio_wall_delivery',30000,'fixed','open');
+-- These spots carry no offer terms, as every spot did before migration 0060, and their fundraiser is
+-- already public, so they are marked grandfathered the way 0060 marks the real ones (0061 refuses the
+-- shape otherwise). The test is about what it was about, not about offer terms.
+insert into lots (id,run_id,surface_key,price_cents,mode,status, terms_grandfathered) values ('e6000000-0000-4000-8000-0000000000d1','e6000000-0000-4000-8000-000000000012','studio_wall_delivery',30000,'fixed','open', true);
 select throws_ok($$select begin_lot_purchase('e6000000-0000-4000-8000-0000000000d1','e6000000-0000-4000-8000-0000000000c1',30000,4500)$$,
   '23514','no_delivery_policy','a category with no delivery policy cannot be bought at all, in any mode');
 insert into delivery_policies (category_key,version,release_rule) values ('dance',1,'evidence');
