@@ -1,6 +1,13 @@
 @import "tailwindcss";
 
 /*
+  The dashboard's navigation rail, folded to its icons. The state is an attribute on <html>, set by
+  an inline script before the rail is painted (src/lib/rail.ts), so the rail's own classes can say
+  what they look like folded without a component knowing. Nothing outside the rail uses it.
+*/
+@custom-variant rail-collapsed (&:where([data-rail="collapsed"] *));
+
+/*
   Door Money tokens.
 
   Every page is a dark room with one color of light in it. The room (ground, ink, muted, line, panel)

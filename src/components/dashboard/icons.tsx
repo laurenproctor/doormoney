@@ -156,6 +156,28 @@ export function Logout(p: Props) {
   );
 }
 
+/** Fold the navigation rail to its icons: a panel with the chevron pointing into it. */
+export function SidePanelClose(p: Props) {
+  return (
+    <Icon {...p}>
+      <rect x="3" y="4" width="18" height="16" rx="1" />
+      <path d="M9 4v16" />
+      <path d="m16 9-3 3 3 3" />
+    </Icon>
+  );
+}
+
+/** Open the navigation rail back out: the same panel, chevron pointing away. */
+export function SidePanelOpen(p: Props) {
+  return (
+    <Icon {...p}>
+      <rect x="3" y="4" width="18" height="16" rx="1" />
+      <path d="M9 4v16" />
+      <path d="m13 9 3 3-3 3" />
+    </Icon>
+  );
+}
+
 /** The overview: everything at once. */
 export function Dashboard(p: Props) {
   return (
