@@ -16,25 +16,34 @@ const WAYS = [
   { href: "/list", label: "Create a fundraiser" },
 ] as const;
 
-export function Footer({ note }: { note?: string }) {
+/**
+ * @param note  A line under the wordmark, for a page that owes the reader one.
+ * @param ways  False leaves the two ways in out. A page whose whole subject is one person closes
+ *   on that person, not on two links somewhere else; the patron profile is the one that asks for
+ *   it. Everything below, the email ask, the links and the fine print, stays exactly as it is.
+ */
+export function Footer({ note, ways = true }: { note?: string; ways?: boolean }) {
   return (
     <footer className="border-t border-line pb-12 pt-16">
       <div className="mx-auto max-w-[1120px] px-7">
-        {/* The two ways in, on one line. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 pb-12">
-          <p className="heading max-w-[20ch] text-[clamp(22px,2.8vw,30px)] leading-[1.15]">
-            Find a sponsorship, or create a fundraiser.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            {WAYS.map((w) => (
-              <ButtonLink key={w.href} href={w.href} variant="ghost" arrow>
-                {w.label}
-              </ButtonLink>
-            ))}
+        {ways && (
+          /* The two ways in, on one line. */
+          <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 pb-12">
+            <p className="heading max-w-[20ch] text-[clamp(22px,2.8vw,30px)] leading-[1.15]">
+              Find a sponsorship, or create a fundraiser.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              {WAYS.map((w) => (
+                <ButtonLink key={w.href} href={w.href} variant="ghost" arrow>
+                  {w.label}
+                </ButtonLink>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="border-t border-line pt-10">
+        {/* The rule belongs to the block above it, so with no block above there is no rule. */}
+        <div className={ways ? "border-t border-line pt-10" : ""}>
           <NewsletterStrip source="footer" />
         </div>
 
