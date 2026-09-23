@@ -4,7 +4,7 @@
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { publishBlockers, readiness, type ReadinessInput } from "@/lib/readiness";
+import { draftProgress, publishBlockers, readiness, type ReadinessInput } from "@/lib/readiness";
 
 const ANSWER = "The musician photographs the marked case at selected dates, with the room and the date beside each image.";
 
@@ -200,4 +200,27 @@ test("the checklist names the organizer the way its category does", () => {
   const sports = theater();
   sports.run.category_key = "sports";
   assert.equal(readiness(sports)[0].label, "Team profile");
+});
+
+/* ------------------------------------------------------------------ how far a draft has come */
+
+test("a draft's progress counts the four things that hold it back, and names the next one", () => {
+  const done = draftProgress(readiness(ready()));
+  assert.deepEqual([done.done, done.total, done.next], [4, 4, null]);
+
+  const input = ready();
+  input.lotCount = 0;
+  input.auctionCount = 0;
+  const partial = draftProgress(readiness(input));
+  assert.equal(partial.total, 4);
+  assert.equal(partial.done, 3);
+  assert.equal(partial.next?.key, "lots");
+});
+
+test("payout setup is never one of the steps, because it never holds a publish up", () => {
+  const input = ready();
+  input.act.stripe_payouts_enabled = false;
+  input.act.stripe_account_id = null;
+  const progress = draftProgress(readiness(input));
+  assert.deepEqual([progress.done, progress.total], [4, 4]);
 });

@@ -1,16 +1,19 @@
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { lotName } from "@/lib/purchases";
 import type { OwnedAct } from "@/lib/auth";
+import { offerTermsOf } from "@/lib/offer-terms";
 import {
   defaultRun,
   groupPayouts,
   logoState,
+  openBids,
   playedCount,
   preparationItems,
   daysRemaining,
   raisedCents,
   selectableRuns,
   upcomingShow,
+  type BidRow,
   type PayoutTotals,
   type PrepItem,
   type ShowRow,
@@ -42,11 +45,18 @@ export type DashboardRun = {
   endsOn: string;
   status: string;
   showCount: number;
+  /** What the organizer said they are raising. Null unless they set one: no goal, no bar. */
+  goalCents: number | null;
 };
 
 export type DashboardMetrics = {
   raisedCents: number;
+  /** Held on a card until an option closes: the top live bid on each option still open. */
+  bidsCents: number;
   sponsorshipsSold: number;
+  /** Options still open, and how many of those have a bid on them. */
+  optionsOpen: number;
+  optionsWithBids: number;
   patrons: number;
   showsPlayed: number;
   showsTotal: number;
@@ -77,6 +87,7 @@ type RunRow = {
   ends_on: string;
   status: string;
   show_count: number;
+  goal_cents: number | null;
   verification_methods: string[] | null;
 };
 
@@ -89,6 +100,7 @@ const shapeRun = (r: RunRow): DashboardRun => ({
   endsOn: r.ends_on,
   status: r.status,
   showCount: r.show_count,
+  goalCents: r.goal_cents,
 });
 
 /** What a purchase row looks like once PostgREST has embedded the lot and the patron's name. */
@@ -101,8 +113,9 @@ type PurchaseRow = {
   mark_text: string | null;
   mark_url: string | null;
   mark_note: string | null;
+  mark_submitted_at: string | null;
   patron_id: string;
-  lots: { label: string | null; surface_key: string; run_id: string } | null;
+  lots: { label: string | null; surface_key: string; run_id: string; offer_terms: unknown } | null;
   patron_names: { name: string } | null;
 };
 
@@ -132,7 +145,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
 
   const { data: runRows, error: runsError } = await sb
     .from("runs")
-    .select("id,slug,title,kind,starts_on,ends_on,status,show_count,verification_methods")
+    .select("id,slug,title,kind,starts_on,ends_on,status,show_count,goal_cents,verification_methods")
     .eq("act_id", act.id)
     .order("starts_on", { ascending: false });
 
@@ -177,7 +190,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     supabaseAdmin()
       .from("purchases")
       .select(
-        "id,amount_cents,refunded_cents,payment_status,mark_status,mark_text,mark_url,mark_note,patron_id,lots!inner(label,surface_key,run_id),patron_names(name)",
+        "id,amount_cents,refunded_cents,payment_status,mark_status,mark_text,mark_url,mark_note,mark_submitted_at,patron_id,lots!inner(label,surface_key,run_id,offer_terms),patron_names(name)",
       )
       .eq("lots.run_id", chosen.id)
       .order("created_at"),
@@ -185,7 +198,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     sb.from("shows").select("id,played_on,venue,city,played,attendance,photo_url").eq("run_id", chosen.id).order("played_on"),
   ]);
 
-  const failed = Boolean(lotsResult.error || purchaseResult.error || backingResult.error || showResult.error);
+  let failed = Boolean(lotsResult.error || purchaseResult.error || backingResult.error || showResult.error);
   for (const [what, result] of [
     ["lots", lotsResult],
     ["purchases", purchaseResult],
@@ -209,7 +222,30 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     markNote: p.mark_note,
     markText: p.mark_text,
     markUrl: p.mark_url,
+    submittedAt: p.mark_submitted_at,
+    // Where the offer says the sponsor appears, in the organizer's own words. Absent where the
+    // offer says nothing, which is every offer written before migration 0056.
+    placement: offerTermsOf(p.lots).placement?.description ?? null,
   }));
+
+  /*
+    What is bid but not paid. Read with the service role, for the reason the purchases above are:
+    bids carry a patron id and an amount, and the filter is this act's own options. Only the lots
+    still open are asked about, so a bid that became a purchase is not counted twice, and only a
+    total and a count of options leave this function.
+  */
+  const lots = lotsResult.data ?? [];
+  const openLotIds = lots.filter((l) => l.status === "open").map((l) => l.id);
+  let bids: BidRow[] = [];
+  if (openLotIds.length > 0) {
+    const bidResult = await supabaseAdmin().from("bids").select("lot_id,amount_cents,passed_at").in("lot_id", openLotIds);
+    if (bidResult.error) {
+      console.error("dashboard bids query failed:", bidResult.error.message);
+      failed = true;
+    }
+    bids = (bidResult.data ?? []) as BidRow[];
+  }
+  const held = openBids(bids, openLotIds);
 
   // Both sides of the money, netted the same way.
   const settled = [
@@ -222,7 +258,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
   for (const p of purchases) if (p.payment_status !== "requires_payment") patronIds.add(p.patron_id);
   for (const b of backings) if (b.payment_status !== "requires_payment") patronIds.add(b.patron_id);
 
-  const sold = (lotsResult.data ?? []).filter((l) => l.status === "sold").length;
+  const sold = lots.filter((l) => l.status === "sold").length;
   const methods = chosen.verification_methods ?? [];
 
   return {
@@ -231,7 +267,10 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     selected: shapeRun(chosen),
     metrics: {
       raisedCents: raisedCents(settled),
+      bidsCents: held.cents,
       sponsorshipsSold: sold,
+      optionsOpen: openLotIds.length,
+      optionsWithBids: held.options,
       patrons: patronIds.size,
       showsPlayed: playedCount(shows),
       showsTotal: shows.length || chosen.show_count,
