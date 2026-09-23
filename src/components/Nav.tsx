@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ModeToggle } from "@/components/ModeToggle";
 import { NAV, SITE } from "@/lib/site";
 import { Logo } from "@/components/Logo";
 
@@ -24,14 +25,18 @@ export function Nav({ current }: { current?: string }) {
               href={n.href}
               aria-current={current === n.href ? "page" : undefined}
               className={`caps border-b pb-1 text-[14px] no-underline transition-colors hover:text-ink ${
-                current === n.href ? "border-accent text-ink" : "border-transparent text-muted"
+                current === n.href ? "border-accent-line text-ink" : "border-transparent text-muted"
               }`}
             >
               {n.label}
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-6">
+        <div className="ml-auto flex items-center gap-5">
+          {/* The house lights. Quiet, to the left of the account links, and on every page that
+              carries the nav. The pages with no nav (sign in, sign up, the password flows) keep
+              whichever room the reader already chose: the choice lives on <html>, not on a page. */}
+          <ModeToggle />
           <Link
             href="/login"
             aria-current={current === "/login" ? "page" : undefined}
@@ -41,7 +46,7 @@ export function Nav({ current }: { current?: string }) {
           </Link>
           <Link
             href="/signup"
-            className="caps border border-ink/40 px-5 py-2.5 text-[14px] text-ink no-underline transition-colors hover:border-ink max-md:px-3.5"
+            className="caps border border-field-line px-5 py-2.5 text-[14px] text-ink no-underline transition-colors hover:border-ink max-md:px-3.5"
           >
             Create an account
           </Link>

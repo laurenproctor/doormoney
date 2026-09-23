@@ -93,7 +93,7 @@ export function ForgotPasswordForm() {
               // The field is back on the next paint, so wait for it before reaching for it.
               requestAnimationFrame(() => inputRef.current?.focus());
             }}
-            className="caps w-full cursor-pointer border border-ink/40 bg-transparent px-7 py-4 text-[14px] tracking-[0.16em] text-ink outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+            className="caps w-full cursor-pointer border border-field-line bg-transparent px-7 py-4 text-[14px] tracking-[0.16em] text-ink outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
           >
             Try another email or username
           </button>

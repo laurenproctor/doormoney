@@ -24,7 +24,7 @@ export function ShareFundraiser({ url }: { url: string }) {
             setSaid("Could not copy. The address is on the fundraiser page.");
           }
         }}
-        className="caps inline-flex min-h-[44px] cursor-pointer items-center gap-2 border border-ink/40 px-4 text-[14px] text-ink outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+        className="caps inline-flex min-h-[44px] cursor-pointer items-center gap-2 border border-field-line px-4 text-[14px] text-ink outline-none transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
       >
         <Copy size={16} aria-hidden="true" />
         Share

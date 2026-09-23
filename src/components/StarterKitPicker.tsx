@@ -26,7 +26,7 @@ export function StarterKitPicker({ group, categoryChosen, selectedKey, recommend
       {group.kits.map(({ kit, availability }) => {
         const on = kit.key === selectedKey;
         return <button key={kit.key} type="button" onClick={() => onSelect(kit.key)} aria-pressed={on}
-          className={`cursor-pointer border p-4 text-left transition-colors ${on ? "border-accent bg-accent/10" : "border-line bg-transparent hover:border-ink/50"}`}>
+          className={`cursor-pointer border p-4 text-left transition-colors ${on ? "border-accent-line bg-accent/10" : "border-field-line bg-transparent hover:border-ink/50"}`}>
           <span className="heading block text-[17px]">{kit.label}</span>
           <span className="mt-1 block text-[14.5px] text-muted">{kit.shortDescription}</span>
           {availability === "draft_only" && <span className="caps mt-2 block text-[14px] text-accent-ink">Draft only</span>}

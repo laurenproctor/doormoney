@@ -21,6 +21,15 @@
   --accent: #3d5afe;
   --accent-ink: #8296ff;
   --on-accent: #ffffff;
+  /* Where the light lands on a lifted block's top edge, and the shadow pooling under it. Tokens
+     rather than literals because they are the two things that invert with the room, not with the
+     colour of light: in a dark room the glint is the cream catching the truss, in a light one it
+     is white, and the pool is heavy in the dark and faint on paper. */
+  --glint: color-mix(in srgb, var(--ink) 14%, transparent);
+  --glint-soft: color-mix(in srgb, var(--ink) 12%, transparent);
+  --panel-glint: color-mix(in srgb, var(--ink) 13%, transparent);
+  --panel-sheen: color-mix(in srgb, var(--ink) 4%, transparent);
+  --pool: rgba(0, 0, 0, 0.85);
 }
 
 /* Blue is the house color: home, sign in, the dashboard, the widget embed. */
@@ -88,6 +97,121 @@
   --on-accent: #0a0a0a;
 }
 
+/*
+  The light room.
+  ---------------------------------------------------------------------------
+  The same eight colours of light, thrown into a room with the walls painted instead of the dark.
+  A reader opts into this and nobody is given it by default (src/lib/mode.ts), so the brand a first
+  visitor meets is unchanged.
+
+  What inverts is the room: ground, ink, the hairlines, the panel washes, the glint along a lifted
+  block's top edge and the pool beneath it. What does not invert is the light. Every `--accent`
+  below is the same hex as in the dark, because that is the colour of the page and changing it
+  would make this a second brand rather than the same one with the house lights up.
+
+  `--accent-ink` does change, and has to. The design system's rule is that it is the tint of the
+  accent that clears 4.5:1 on its ground, and on a near-white ground that is a darker tint, not a
+  lighter one. Each is computed against its own ground rather than picked, and each is aimed past
+  4.5:1 rather than at it. Both accent-ink and muted are aimed at 7:1, the AAA bar for body text.
+  The headroom is not decoration: both also have to read inside a hero, where they sit on a wash of
+  the accent rather than on the bare ground and give up about a fifth of their contrast. On that
+  wash the tightest are 5.79:1 and 5.25:1. Ink clears 17.7:1 everywhere. Change a ground and every
+  value above it has to be computed again.
+
+  `--on-accent` is untouched in both rooms: it is text on an accent fill, and the fill is the same.
+*/
+:root[data-mode="light"] {
+  color-scheme: light;
+  --ink: #14131a;
+  --line: rgba(20, 19, 26, 0.14);
+  /* 0.47, not the 0.42 the dark room uses. A control boundary wants 3:1 against the fill behind
+     it, and near-black over near-white is a shallower step than cream over the dark ground: at
+     0.42 it measures 2.71:1 on these grounds. At 0.47 the tightest is 3.15:1. */
+  --field-line: rgba(20, 19, 26, 0.47);
+  --panel: rgba(255, 255, 255, 0.66);
+  /* On paper the light lands as white, and the shadow under a block is a hint rather than a hole. */
+  --glint: rgba(255, 255, 255, 0.9);
+  --glint-soft: rgba(255, 255, 255, 0.75);
+  --panel-glint: rgba(255, 255, 255, 0.95);
+  --panel-sheen: rgba(255, 255, 255, 0.5);
+  --pool: rgba(20, 19, 26, 0.16);
+}
+
+/* Each theme, in the light room. Two selectors apiece: the wrapper <Theme> paints, and <html>
+   itself, which ThemeSync mirrors the theme onto for the fixed furniture outside the page. */
+:root[data-mode="light"][data-theme="blue"],
+[data-mode="light"] [data-theme="blue"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #0e32fe; }
+
+:root[data-mode="light"][data-theme="lime"],
+[data-mode="light"] [data-theme="lime"] { --ground: #fcfdf8; --muted: #525b33; --accent-ink: #485f00; }
+
+:root[data-mode="light"][data-theme="magenta"],
+[data-mode="light"] [data-theme="magenta"] { --ground: #fffafc; --muted: #7c4660; --accent-ink: #ad0053; }
+
+:root[data-mode="light"][data-theme="amber"],
+[data-mode="light"] [data-theme="amber"] { --ground: #fefbf5; --muted: #645438; --accent-ink: #794e00; }
+
+:root[data-mode="light"][data-theme="teal"],
+[data-mode="light"] [data-theme="teal"] { --ground: #f8fdfc; --muted: #3c5d58; --accent-ink: #0c6253; }
+
+:root[data-mode="light"][data-theme="violet"],
+[data-mode="light"] [data-theme="violet"] { --ground: #fdfbff; --muted: #604c88; --accent-ink: #5a06ff; }
+
+:root[data-mode="light"][data-theme="red"],
+[data-mode="light"] [data-theme="red"] { --ground: #fffaf9; --muted: #7a4a45; --accent-ink: #ae1100; }
+
+/* Mono is the one theme whose light is the ink itself, so in this room it turns over: the cream
+   that was the accent becomes the ground, and the near-black that was the ground becomes the light. */
+:root[data-mode="light"][data-theme="mono"],
+[data-mode="light"] [data-theme="mono"] {
+  --ground: #fbfaf8; --muted: #585651; --accent: #14131a; --accent-ink: #14131a; --on-accent: #fbfaf8;
+}
+
+/* With no theme chosen the room is still blue, as it is in the dark. */
+:root[data-mode="light"] { --ground: #fbfcff; --muted: #4c5486; --accent-ink: #0e32fe; }
+
+/*
+  The edge of a control, in the page's light.
+
+  Three things are cut from one accent and they are not interchangeable. `accent` is the light
+  itself: fills, glows, the bloom, anything whose job is to be the colour. `accent-ink` is the
+  tint that can be read as text. This is the third: the edge of something a person has to find and
+  operate, which WCAG asks to clear 3:1 against what is behind it, not 4.5:1.
+
+  In the dark room that is the accent, and nothing changes. In the light room it cannot be: lime
+  measures 1.16:1 on its own near-white ground, amber 1.77 and teal 1.59, so a focus ring, a
+  button's edge or a selected tile drawn in the raw accent is not there at all. In this room the
+  edge takes the readable tint instead, which clears 7:1.
+
+  Declared on every themed element rather than once on :root, because a custom property is
+  substituted where it is declared: written on :root alone it would resolve to the house blue and
+  stay blue under every other light.
+*/
+:root, [data-theme] { --accent-line: var(--accent); }
+:root[data-mode="light"], [data-mode="light"] [data-theme] { --accent-line: var(--accent-ink); }
+
+/*
+  Type in the light room.
+
+  Light type on a dark ground looks heavier than it is, and dark type on paper looks lighter. The
+  same Bodoni at the same weight reads thinner here than it does in the dark, and the H1 is where
+  it shows, because the display cut is a didone whose thin strokes are very thin indeed. A ratio
+  does not capture this: a hairline at 7:1 still reads faint. So the display face is set one step
+  up in this room. Same size, same letterspacing, same words; the compensation is optical.
+*/
+[data-mode="light"] .display { font-weight: 500; }
+
+/*
+  The rig, with the house lights up.
+  A cone of colour that reads as a beam against the dark reads as a stain against paper, so the
+  lamps come down to a suggestion and the lens stops pretending to be a white-hot bulb. The rig is
+  still there, still swings with the scroll, and still holds still under reduced motion.
+*/
+[data-mode="light"] .stage-lights { opacity: 0.38; }
+[data-mode="light"] .stage-lights .lens {
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 70%, white) 0, color-mix(in srgb, var(--accent) 45%, transparent) 26%, transparent 62%);
+}
+
 @theme inline {
   --color-ground: var(--ground);
   --color-ink: var(--ink);
@@ -97,6 +221,7 @@
   --color-panel: var(--panel);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-line: var(--accent-line);
   --color-on-accent: var(--on-accent);
   --font-display: var(--font-bodoni), "Bodoni MT", "Didot", Georgia, serif;
   --font-sans: var(--font-archivo), Helvetica, Arial, sans-serif;
@@ -128,7 +253,8 @@ body:has([data-embed]) {
 p { max-width: 62ch; }
 
 ::selection { background: var(--accent); color: var(--on-accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* The focus ring is an edge, not a fill: it takes the token that stays visible in both rooms. */
+:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 3px; }
 
 /* Links inside running text are underlined so they never rely on color alone. */
 article a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
@@ -137,7 +263,7 @@ article a:hover { color: var(--accent-ink); }
 /* Form controls sit on the ground, one line around them, the accent when focused. */
 input, select, textarea { background: transparent; color: var(--ink); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
-input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--accent) !important; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--accent-line) !important; }
 select option { background: var(--ground); color: var(--ink); }
 
 /* Reusable brand utilities. Prefer these over ad-hoc classes so pages stay consistent. */
@@ -173,16 +299,16 @@ select option { background: var(--ground); color: var(--ink); }
 @utility glow {
   border: 1px solid var(--line);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ink) 14%, transparent),
-    0 34px 60px -34px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 var(--glint),
+    0 34px 60px -34px var(--pool),
     0 40px 90px -50px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 /* Accent-colored light spilling from behind a block, with the same shadow pooling beneath. */
 @utility lit {
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ink) 12%, transparent),
+    inset 0 1px 0 var(--glint-soft),
     0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent),
-    0 34px 60px -34px rgba(0, 0, 0, 0.85),
+    0 34px 60px -34px var(--pool),
     0 0 60px -10px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 /* A block that rises toward the light on hover. Cards and tiles; never text. */
@@ -198,9 +324,9 @@ select option { background: var(--ground); color: var(--ink); }
 .bg-panel {
   background-image: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--ink) 13%, transparent) 0,
-    color-mix(in srgb, var(--ink) 13%, transparent) 1px,
-    color-mix(in srgb, var(--ink) 4%, transparent) 1px,
+    var(--panel-glint) 0,
+    var(--panel-glint) 1px,
+    var(--panel-sheen) 1px,
     transparent 36%
   );
 }
@@ -394,6 +520,51 @@ html[data-js] [data-reveal][data-in] .rule { transform: scaleX(1); }
   .hero-art > .flutes { inset: 0 -50% 45% 20%; }
   .hero-art > .fade { height: 120px; }
   .hero-art > img { inset: 0; width: 100%; object-position: 65% center; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+}
+
+/*
+  The hero, with the house lights up.
+
+  Every move the dark room makes here is a move toward black: the photograph prints at half
+  brightness so cream type reads over it, the bloom is screened on top, and the corners fall away
+  into shadow. On paper each one turns into its opposite. The print becomes a dark rectangle in a
+  light room, the screen blend stops painting anything at all (screen over near-white is
+  near-white), and the vignette leaves a grey stain in the corners.
+
+  The photograph is also the one thing the words cannot sit on. Small text in this room is either
+  muted or accent-ink, both of them dark tints, and no combination of brightness, contrast and
+  opacity lifts a photograph far enough for a dark tint to clear 4.5:1 on its shadows without
+  erasing the picture. So the photograph moves out from under the words rather than being washed
+  out until it is safe: it keeps the right of the hero, where nothing is set, and the words keep
+  the ground their tints were computed against. What crosses the whole room is the bloom, held to
+  a wash.
+*/
+[data-mode="light"] .hero-art::after {
+  background: radial-gradient(ellipse 92% 85% at 46% 44%, transparent 52%, color-mix(in srgb, var(--ground) 82%, transparent) 100%);
+}
+/* A wash rather than a beam. 14% is the strength every accent-ink and muted value was measured
+   against, and normal rather than screen because screen over near-white paints nothing. */
+[data-mode="light"] .hero-art > .bloom,
+[data-mode="light"] .hero-art.has-photo > .bloom { opacity: 0.14; mix-blend-mode: normal; }
+/* The print goes pale, so ink clears 4.5:1 even on its darkest corner (4.9:1 measured). */
+[data-mode="light"] .hero-art.has-photo > img { filter: grayscale(1) brightness(1.42) contrast(0.62); opacity: 0.55; }
+[data-mode="light"] .hero-art > .tint { background: color-mix(in srgb, var(--accent) 26%, var(--ground)); }
+[data-mode="light"] .hero-art > .flutes::before {
+  background: repeating-linear-gradient(90deg, rgba(20, 19, 26, 0.05) 0 1px, rgba(255, 255, 255, 0.4) 1px 2px, transparent 2px 7px);
+}
+/* Above the phone layout the words have a column of their own, and the print clears it. */
+@media (min-width: 861px) {
+  [data-mode="light"] .hero-art > img {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0 50%, #000 78%, #000 100%), radial-gradient(ellipse 60% 78% at 60% 48%, #000 28%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(90deg, transparent 0 50%, #000 78%, #000 100%), radial-gradient(ellipse 60% 78% at 60% 48%, #000 28%, transparent 100%);
+    mask-composite: intersect;
+  }
+}
+/* On a phone the words run the full width, so there is no column to clear into and the print stays
+   out of the light room's hero. The wash and the rig carry it. */
+@media (max-width: 860px) {
+  [data-mode="light"] .hero-art > img { display: none; }
 }
 
 /* A quiet stage light behind a section or card: the accent, very dim, pooled at the top. */

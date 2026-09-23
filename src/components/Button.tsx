@@ -6,9 +6,9 @@ const base =
 const styles = {
   /** Filled with the page's light. One per view. A glint on its top edge, its own light pooling beneath. */
   solid:
-    "border-accent bg-accent text-on-accent [box-shadow:inset_0_1px_0_rgba(255,255,255,0.28),0_18px_36px_-18px_var(--accent)] hover:border-accent-ink hover:bg-accent-ink hover:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.28),0_22px_40px_-16px_var(--accent)]",
+    "border-accent-line bg-accent text-on-accent [box-shadow:inset_0_1px_0_rgba(255,255,255,0.28),0_18px_36px_-18px_var(--accent)] hover:border-accent-ink hover:bg-accent-ink hover:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.28),0_22px_40px_-16px_var(--accent)]",
   /** Outlined, for the second choice. */
-  ghost: "border-ink/40 bg-transparent text-ink hover:border-ink",
+  ghost: "border-field-line bg-transparent text-ink hover:border-ink",
 } as const;
 
 type Variant = keyof typeof styles;

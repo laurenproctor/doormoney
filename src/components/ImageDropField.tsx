@@ -97,7 +97,7 @@ export function ImageDropField({
         onDrop={drop}
         className={`flex cursor-pointer items-center gap-5 border border-dashed p-5 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink ${
           shape === "wide" ? "flex-col items-stretch" : ""
-        } ${over ? "border-accent bg-accent/10" : "border-line bg-panel hover:border-ink/50"}`}
+        } ${over ? "border-accent-line bg-accent/10" : "border-field-line bg-panel hover:border-ink/50"}`}
       >
         {shown ? (
           // eslint-disable-next-line @next/next/no-img-element
