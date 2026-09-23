@@ -361,6 +361,8 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 const NAV_HOME: Record<string, string> = {
   "/dashboard/act": "/dashboard/profile",
   "/dashboard/act/new": "/dashboard/profile",
+  // The patron page's own workspace. It is one part of Profile, not a fourth thing in the sidebar.
+  "/dashboard/profile/patron": "/dashboard/profile",
 };
 
 /** The section a path belongs to, so one nav item is marked current on child routes too. */

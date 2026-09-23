@@ -1,7 +1,9 @@
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { CATALOG, tierPlace } from "@/lib/catalog";
+import type { PatronActivityView } from "@/lib/domain";
 import { readProfileLinks, type ProfileLink } from "@/lib/links";
-import { isProfileTheme, profileTheme, type PatronKind, type ProfileTheme, type SupportKind } from "@/lib/profile";
+import { formatMonth, isProfileTheme, profileTheme, type PatronKind, type ProfileTheme, type SupportKind } from "@/lib/profile";
+import { actPath } from "@/lib/urls";
 
 /**
  * Reading a patron's public profile, and reading what the patron themselves may put on it.
@@ -28,8 +30,17 @@ const PAID = ["held", "released", "partially_refunded"];
 // The public page
 // ---------------------------------------------------------------
 
-export type PublicProfile = {
-  username: string;
+/**
+ * A patron profile as a page draws it.
+ *
+ * The public page and the owner's private preview render the same component, and this is what
+ * they both hand it. The public side builds one out of the sanitised view; the owner's side
+ * builds one out of their own row, which is how a preview exists before anything is published.
+ * The address is the one field that may be missing: a profile can be filled in and saved before a
+ * username is claimed, and the preview then has a page with no address yet.
+ */
+export type PatronProfileDisplay = {
+  username: string | null;
   displayName: string;
   /** An individual, a business, a brand. Null where the patron did not say. */
   kind: PatronKind | null;
@@ -42,12 +53,17 @@ export type PublicProfile = {
   categories: { key: string; label: string }[];
   /** A kind of work they support, in their own words. Text, never a category. */
   customTag: string | null;
-  photoPath: string | null;
-  /** The header image, in the same private bucket as the photo. */
-  headerPath: string | null;
   /** The light the page is lit with. Always one of the design system's themes. */
   theme: ProfileTheme;
   patronSince: string;
+};
+
+export type PublicProfile = PatronProfileDisplay & {
+  /** A published profile always has one: the view joins on it. */
+  username: string;
+  photoPath: string | null;
+  /** The header image, in the same private bucket as the photo. */
+  headerPath: string | null;
 };
 
 export type PublicActivity = {
@@ -138,6 +154,78 @@ export async function getPublicActivity(username: string): Promise<PublicActivit
     detail: r.kind === "backing" ? `A name on ${tierPlace(r.detail ?? "")}` : (r.detail ?? "Sponsorship"),
     supportedAt: r.supported_at,
   }));
+}
+
+/**
+ * The public activity row, as the domain component takes it.
+ *
+ * No amount, because neither the view nor the owner's own list carries one. The category is the
+ * fundraiser's own, named by the registry, and is left out where the registry has no name for it.
+ * A sponsorship and a backing keep their own labels.
+ */
+export function activityView(item: PublicActivity, labels: Readonly<Record<string, string>>): PatronActivityView {
+  const live = item.runStatus === "open" || item.runStatus === "live";
+  const label = item.categoryKey ? labels[item.categoryKey] : undefined;
+  return {
+    support: item.kind === "backing" ? "backing" : "sponsorship",
+    organizerName: item.actName,
+    organizerHref: live ? actPath(item.actSlug) : null,
+    fundraiserTitle: item.runTitle,
+    category: item.categoryKey && label ? { key: item.categoryKey, label } : null,
+    detail: item.detail,
+    month: formatMonth(item.supportedAt),
+  };
+}
+
+/**
+ * The owner's own row, shaped the way the public page reads one.
+ *
+ * This is what makes the private preview possible without opening a public read path: the profile
+ * was loaded under the owner's own session (`ownProfile`), and this only changes its shape. It
+ * touches no view, and a profile nobody has published still has nothing an anonymous visitor can
+ * fetch.
+ */
+export function ownProfileDisplay(
+  own: OwnProfile,
+  username: string | null,
+  labels: Readonly<Record<string, string>>,
+): PatronProfileDisplay {
+  return {
+    username,
+    displayName: own.displayName,
+    kind: own.kind,
+    bio: own.bio,
+    location: own.location,
+    website: own.website,
+    links: own.links,
+    interests: own.interests,
+    categories: own.categoryKeys.map((key) => ({ key, label: labels[key] ?? key })),
+    customTag: own.customTag,
+    theme: profileTheme(own.theme),
+    patronSince: own.patronSince,
+  };
+}
+
+/**
+ * What the public page would show, out of what the owner has ticked.
+ *
+ * The same two rules the public view applies, applied here rather than read from there: only an
+ * item the patron put on the page, and never one won through an anonymous bid. An unpublished
+ * preview can therefore show what publication would show without anything being published.
+ */
+export function shownAsPublic(items: EligibleItem[]): PublicActivity[] {
+  return items
+    .filter((item) => item.shown && !item.anonymous)
+    .map((item) => ({
+      kind: item.kind,
+      actName: item.actName,
+      actSlug: item.actSlug,
+      runTitle: item.runTitle,
+      categoryKey: item.categoryKey,
+      runStatus: item.runStatus,
+      detail: item.detail,
+      supportedAt: item.supportedAt,
+    }));
 }
 
 /** Every published profile, for the sitemap. A private one is not in the view, so it is not here. */
@@ -310,6 +398,8 @@ export type EligibleItem = {
   actName: string;
   actSlug: string;
   runTitle: string;
+  /** The fundraiser's category, so the owner's preview names it the way the public page does. */
+  categoryKey: string | null;
   runStatus: string;
   detail: string;
   supportedAt: string;
@@ -335,13 +425,13 @@ export async function eligibleActivity(userId: string, verifiedEmail: string | n
   const [purchases, backings, shown] = await Promise.all([
     admin
       .from("purchases")
-      .select("id,created_at,patron_id,lots!inner(id,label,surface_key,runs!inner(title,status,acts!inner(name,slug)))")
+      .select("id,created_at,patron_id,lots!inner(id,label,surface_key,runs!inner(title,status,category_key,acts!inner(name,slug)))")
       .in("patron_id", patronIds)
       .in("payment_status", PAID)
       .order("created_at", { ascending: false }),
     admin
       .from("backings")
-      .select("id,created_at,tier,runs!inner(title,status,acts!inner(name,slug))")
+      .select("id,created_at,tier,runs!inner(title,status,category_key,acts!inner(name,slug))")
       .in("patron_id", patronIds)
       .in("payment_status", PAID)
       .order("created_at", { ascending: false }),
@@ -352,9 +442,9 @@ export async function eligibleActivity(userId: string, verifiedEmail: string | n
     id: string;
     created_at: string;
     patron_id: string;
-    lots: { id: string; label: string | null; surface_key: string; runs: { title: string; status: string; acts: { name: string; slug: string } } };
+    lots: { id: string; label: string | null; surface_key: string; runs: { title: string; status: string; category_key: string | null; acts: { name: string; slug: string } } };
   };
-  type BackingRow = { id: string; created_at: string; tier: string; runs: { title: string; status: string; acts: { name: string; slug: string } } };
+  type BackingRow = { id: string; created_at: string; tier: string; runs: { title: string; status: string; category_key: string | null; acts: { name: string; slug: string } } };
 
   const purchaseRows = (purchases.data ?? []) as unknown as PurchaseRow[];
 
@@ -386,6 +476,7 @@ export async function eligibleActivity(userId: string, verifiedEmail: string | n
       actName: p.lots.runs.acts.name,
       actSlug: p.lots.runs.acts.slug,
       runTitle: p.lots.runs.title,
+      categoryKey: p.lots.runs.category_key ?? null,
       runStatus: p.lots.runs.status,
       detail: surfaceName(p.lots.label, p.lots.surface_key),
       supportedAt: p.created_at,
@@ -398,6 +489,7 @@ export async function eligibleActivity(userId: string, verifiedEmail: string | n
       actName: b.runs.acts.name,
       actSlug: b.runs.acts.slug,
       runTitle: b.runs.title,
+      categoryKey: b.runs.category_key ?? null,
       runStatus: b.runs.status,
       detail: `A name on ${tierPlace(b.tier)}`,
       supportedAt: b.created_at,

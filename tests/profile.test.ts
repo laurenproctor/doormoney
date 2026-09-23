@@ -237,8 +237,10 @@ test("the page colors are the design system's themes, the same list the database
 
 test("the public page is lit by the profile and writes no color of its own", async () => {
   const { readFileSync } = await import("node:fs");
+  // The page holds the light; the body it draws moved to the component the owner's preview shares.
   const page = readFileSync(new URL("../src/app/patron/[username]/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /<Theme name=\{theme\}>/);
-  assert.match(page, /<HeroArt theme=\{theme\} src=\{header\} signed=\{Boolean\(header\)\} \/>/, "the header is a signed link from the private bucket, never a public address");
-  assert.doesNotMatch(page, /#[0-9a-f]{6}\b|style=\{\{[^}]*color/i, "no hex and no inline color");
+  const view = readFileSync(new URL("../src/components/PatronProfileView.tsx", import.meta.url), "utf8");
+  assert.match(page, /<Theme name=\{profile\.theme\}>/);
+  assert.match(view, /<HeroArt theme=\{profile\.theme\} src=\{header\} signed=\{Boolean\(header\)\} \/>/, "the header is a signed link from the private bucket, never a public address");
+  for (const source of [page, view]) assert.doesNotMatch(source, /#[0-9a-f]{6}\b|style=\{\{[^}]*color/i, "no hex and no inline color");
 });
