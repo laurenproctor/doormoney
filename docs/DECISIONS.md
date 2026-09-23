@@ -523,3 +523,56 @@ against it, but the arithmetic should be checked against the ledger when this is
 **Sequencing.** Not before remediation Phase 4 ships. This changes when money moves, and the ledger
 is the thing that would show the change went right. It lands with the expansion Phase 4 list in
 decision 17, which already carries missed evidence, delivery failures and release timing.
+
+---
+
+## 20. Two registers over one set of tokens
+
+**Blocks:** the workspace rebuild in `docs/DESK_REGISTER.md`, PRs 1 to 5.
+
+The design system was written for the public site: a dark room, one color of light, three lamps on
+a truss, Bodoni in caps, thin rules, no rounded corners, blocks that catch the light. It is right
+for a page somebody reads once and it is wrong for a page somebody works in. The dashboard has
+been the same system at the same reading distance, which is why it grew a card for every sentence
+and a heading for every card, and why an organizer opening it could not tell in a glance which of
+the things on it was waiting on them.
+
+The temptation was a second design: a plain product interface behind the sign-in, with its own
+grays and its own controls. That was rejected. An organizer moves between their own fundraiser
+page and the public one it publishes to several times an hour, and two designs would make those
+two products. The color a fundraiser is lit with is also the one thing tying an organizer's
+workspace to their public page, and a workspace painted gray would throw it away.
+
+**Decided (2026-09-23):** one set of tokens, two registers.
+
+1. **Stage is the public site**, unchanged. Home, how sponsorship works, `/fundraisers`, an
+   organizer's page, a fundraiser's page, the legal pages, the widget. Nothing in this decision
+   touches it, and the tokens it reads are the tokens it read before.
+2. **Desk is the signed-in workspace**: the dashboard, the fundraiser page behind it, money,
+   the patron pages, settings, admin. Same room, same light per organizer, scanned rather than
+   read. It is `data-register="desk"` on the workspace shell, a scoped block of CSS, and the
+   primitives in `src/components/desk/`.
+3. **What changes between them is reading distance, never color.** Type comes down to 15px, the
+   measure comes off, the H1 is 36px and there is one per screen, cards take an 8px corner and
+   controls a 6px one, caps shrink to a status word inside a badge, and the rig holds still: no
+   stage lights, no reveal on scroll, one static pool of the accent at the top of the page. The
+   eight themes, the two rooms and every accent hex are exactly what they were.
+4. **Status is three states and nothing else is colored.** **ok** is the organizer's own light, so
+   an open fundraiser under a blue organizer is blue. **attention** is amber under every theme and
+   in both rooms, which is the whole reason it can mean one thing everywhere. **neutral** is the
+   ink at low strength: a draft, a count of nothing. There is no fourth. A page that wants to color
+   something that is not one of these three wants a word instead.
+5. **The word carries the state.** Every badge says it in a word and the dot beside it is
+   `aria-hidden`, so nothing on this register is said in color alone. That is also what lets
+   attention be one hue rather than eight.
+6. **Every pair is measured.** `tests/contrast.test.ts` reads the tokens out of `globals.css` and
+   checks each status ink on its own pill, on a card and on the ground, in both rooms, for all
+   eight themes. When one fails the ink is darkened and never the ground: a wash pale enough to
+   rescue a tint is a status nobody notices, which is the opposite of what these are for. Blue in
+   the light room is the one theme that needed it, and the file says so where it happens.
+
+**What this decision does not do.** It does not add a color, a font or a second component library,
+and it does not change an address: `/dashboard/runs/[id]`, `/dashboard/payouts` and `/patron` stay
+where they are and only their labels move. It does not touch a migration, Stripe, the webhook or
+the cron routes. And it does not make the workspace a different product: an organizer should be
+able to see, from the light on the page, which of their fundraisers they are looking at.
