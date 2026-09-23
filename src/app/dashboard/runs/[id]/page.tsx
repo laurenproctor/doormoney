@@ -17,9 +17,13 @@ import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { dashboardNav, isShareable, previewTarget } from "@/lib/dashboardModel";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
+import Link from "next/link";
 import { FundraiserDraftForm } from "@/components/FundraiserDraftForm";
+import { FundraiserStages } from "@/components/FundraiserStages";
 import { categoryStatus, draftCategories, draftDiscoveryRegistry, loadFundraiserDraft } from "@/app/actions/drafts";
-import { runComplete } from "@/lib/readiness";
+import { STAGE_HEADING, STAGE_LABEL, isFormStage, resumeStage, stageFromParam, stageMissing, stagePath, type FormStage } from "@/lib/fundraiser-stages";
+import { entityKindLabel } from "@/lib/participation";
+import { SITE } from "@/lib/site";
 import { templatesForFundraiser } from "@/lib/opportunities";
 import { loadTemplates } from "@/lib/opportunity-templates";
 import { formatDateRange } from "@/lib/dates";
@@ -37,7 +41,7 @@ const statusLabel = (status: string, music: boolean) =>
   (!music && status === "live" ? "Live, the work is under way" : STATUS_LABEL[status]) ?? status;
 
 export default async function RunPage({ params, searchParams }: Props) {
-  const [{ id }, { kit: kitParam }] = await Promise.all([params, searchParams]);
+  const [{ id }, { kit: kitParam, stage: stageParam }] = await Promise.all([params, searchParams]);
   const user = await requireUser(`/dashboard/runs/${id}`);
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   if (!act) redirect("/dashboard/act/new");
@@ -52,19 +56,41 @@ export default async function RunPage({ params, searchParams }: Props) {
     .maybeSingle();
   if (!run) notFound();
 
-  // The simple form until the fundraiser can say what it is. Music asks for its own details and a
-  // music profile to hang them on; every other category asks the shared questions instead. Once
-  // either is answered the full workspace opens, whatever the category.
+  /*
+    A draft is written in stages (src/lib/fundraiser-stages.ts). The address names the stage when
+    somebody is on one, and a draft opened with no stage named resumes at the first stage that
+    still has something to say. Once the project and the funding are both answered, or when the
+    address asks for a later stage, the fundraiser's workspace opens: that is where the sponsorship
+    options are priced and where the readiness checklist says what is still owed, so continuing past
+    an unfinished stage is allowed and is answered there rather than refused here.
+  */
   const music = run.category_key === "music";
-  const unready = music
-    ? !act.type || !run.kind || !run.starts_on || !run.ends_on || run.show_count === null
-    : !runComplete(run);
-  if (run.status === "draft" && unready) {
+  const kit = typeof kitParam === "string" ? starterKit(kitParam) : null;
+  const kitCarried = kit && run.status === "draft" && kitFitsCategory(kit, run.category_key ?? "music") ? kit.key : null;
+  const stageAsked = stageFromParam(stageParam);
+  if (run.status === "draft") {
     const draft = await loadFundraiserDraft(id);
     if (!draft) notFound();
-    return <DashboardShell current="/dashboard/runs" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} actSlug={act.slug} identity={identity} eyebrow="Private draft" title={draft.title || "New fundraiser"} accent="">
-      <Card className="max-w-[760px]"><FundraiserDraftForm draft={draft} categories={await draftCategories()} musicOrganizer={act.type !== null} discovery={await draftDiscoveryRegistry()} /></Card>
-    </DashboardShell>;
+    const formStage: FormStage | null = isFormStage(stageAsked) ? stageAsked : stageAsked ? null : resumeStage(draft);
+    if (formStage) {
+      const heading = STAGE_HEADING[formStage];
+      return <DashboardShell current="/dashboard/runs" nav={dashboardNav({ hasAct: true, roles: profile?.roles ?? [] })} actName={act.name} actSlug={act.slug} identity={identity}
+        eyebrow={`Private draft · ${draft.title || "New fundraiser"}`} title={heading.title} accent={heading.accent} intro={<p>{heading.intro}</p>}>
+        <FundraiserStages current={formStage} className="mb-7 max-w-[760px]" />
+        <Card>
+          <FundraiserDraftForm
+            draft={draft}
+            stage={formStage}
+            categories={await draftCategories()}
+            musicOrganizer={act.type !== null}
+            discovery={await draftDiscoveryRegistry()}
+            organizer={{ name: act.name, photoUrl: act.photo_url, kindLabel: entityKindLabel(act.entity_kind), slug: act.slug, host: SITE.url.replace(/^https?:\/\//, "") }}
+            carriedKit={kitCarried}
+            backHref="/dashboard/runs"
+          />
+        </Card>
+      </DashboardShell>;
+    }
   }
 
   const { label: categoryLabel, publishEnabled: categoryPublishable } = await categoryStatus(run.category_key ?? "music");
@@ -80,8 +106,7 @@ export default async function RunPage({ params, searchParams }: Props) {
   // The starter kit this draft began from, where the address still carries it. It is not stored
   // with the fundraiser, and one from another category is ignored. It names options to look at and
   // ticks none of them.
-  const kit = typeof kitParam === "string" ? starterKit(kitParam) : null;
-  const kitSuggestions = kit && kit.enabled && run.status === "draft" && kitFitsCategory(kit, run.category_key ?? "music") ? suggestedTemplates(kit, surfaces) : [];
+  const kitSuggestions = kit && kit.enabled && kitCarried ? suggestedTemplates(kit, surfaces) : [];
   const boardHref = runUrl(act.slug, run.slug);
   const allLots = lots ?? [];
   // What this fundraiser still owes its sponsors. Read under the organizer's own session, so row
@@ -119,7 +144,8 @@ export default async function RunPage({ params, searchParams }: Props) {
       accent=""
       intro={
         <p className="caps">
-          {music
+          {/* Music counts its shows only once it has a count and both dates; a draft with neither says what it is. */}
+          {music && run.show_count !== null && run.starts_on && run.ends_on
             ? `${run.show_count} ${run.kind === "season" ? "gigs" : "shows"}, ${formatDateRange(run.starts_on, run.ends_on)}.`
             : run.starts_on && run.ends_on
               ? `${categoryLabel}, ${formatDateRange(run.starts_on, run.ends_on)}.`
@@ -164,7 +190,7 @@ export default async function RunPage({ params, searchParams }: Props) {
       )}
 
       <Card id="placements" className="mb-10">
-        <CardHead eyebrow="Step three of four">Price the sponsorship options</CardHead>
+        <CardHead eyebrow={run.status === "draft" ? `Stage three of four · ${STAGE_LABEL.sponsorships}` : "Sponsorship options"}>Price the sponsorship options</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           {music
             ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold options stay as they are."
@@ -176,8 +202,15 @@ export default async function RunPage({ params, searchParams }: Props) {
             Nothing is offered until you tick it and set its price.
           </p>
         )}
+        {/* Music's options are narrowed by the kind of musician, and a music organizer set up with the one-question flow has not said which yet. */}
+        {music && !act.type && (
+          <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
+            Music&apos;s sponsorship options depend on what kind of musician this is: a touring band, a house act or a soloist.{" "}
+            <Link href="/dashboard/act" className="text-accent-ink underline decoration-1 underline-offset-4">Say which on the organizer page</Link> and the options appear here.
+          </p>
+        )}
         {/* A category with no templates (Other, today). Nothing is invented to fill the list. */}
-        {surfaces.length === 0 && (
+        {surfaces.length === 0 && !(music && !act.type) && (
           <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
             This category has no sponsorship options to choose from yet. Your draft keeps what you wrote about the funding, the
             audience and what a sponsor receives, and that statement is the whole offer for now.
@@ -196,7 +229,7 @@ export default async function RunPage({ params, searchParams }: Props) {
       </Card>
 
       <Card id="verification" className="mb-10 max-w-[860px]">
-        <CardHead eyebrow="Step four of four">How the placements will be recorded</CardHead>
+        <CardHead eyebrow={run.status === "draft" ? `Stage four of four · ${STAGE_LABEL.review}` : "Verification"}>How the placements will be recorded</CardHead>
         <p className="mb-6 max-w-[60ch] text-[15px] text-muted">
           Select what sponsors will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
           claims more than that.
@@ -246,9 +279,9 @@ export default async function RunPage({ params, searchParams }: Props) {
       </Card>}
 
       <Card id="run-details" className="max-w-[760px]">
-        <CardHead eyebrow="The fundraiser">Dates and details</CardHead>
+        <CardHead eyebrow="The fundraiser">{run.status === "draft" ? "The project and the funding" : "Dates and details"}</CardHead>
         {run.status === "draft"
-          ? <FundraiserDraftForm draft={await loadFundraiserDraft(id)} categories={await draftCategories()} musicOrganizer={act.type !== null} discovery={await draftDiscoveryRegistry()} />
+          ? <DraftStageSummary run={run} kit={kitCarried} />
           : music
             ? <RunForm run={run as RunInput} actType={act.type} />
             : <p className="max-w-[60ch] text-[15px] text-muted">
@@ -260,3 +293,42 @@ export default async function RunPage({ params, searchParams }: Props) {
   );
 }
 
+
+/**
+ * The first two stages of a draft, read back, each with the way into it. What is missing is named
+ * from the resume rule, which is not the publish gate: the checklist above says what publishing
+ * still wants, and this says what was written.
+ */
+function DraftStageSummary({ run, kit }: {
+  run: { id: string; title: string | null; purpose: string | null; audience_description: string | null; sponsor_promise: string | null };
+  kit: string | null;
+}) {
+  const rows: { stage: FormStage; lines: { label: string; value: string | null }[] }[] = [
+    { stage: "project", lines: [{ label: "Name", value: run.title }, { label: "Who will experience it", value: run.audience_description }] },
+    { stage: "funding", lines: [{ label: "What the funding enables", value: run.purpose }, { label: "What sponsors can count on", value: run.sponsor_promise }] },
+  ];
+  return (
+    <ul className="divide-y divide-line">
+      {rows.map(({ stage, lines }) => {
+        const missing = stageMissing(run, stage);
+        return (
+          <li key={stage} className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 py-4 first:pt-0 last:pb-0">
+            <div className="min-w-0 flex-1">
+              <p className="caps mb-2 text-[14px] text-muted">{STAGE_LABEL[stage]}</p>
+              {lines.map((line) => (
+                <p key={line.label} className="text-[15px] leading-[1.6]">
+                  <span className="text-muted">{line.label}: </span>
+                  {line.value?.trim() ? line.value : <span className="text-muted">not yet said</span>}
+                </p>
+              ))}
+              {missing.length > 0 && <p className="mt-2 text-[14.5px] text-accent-ink">Still to say: {missing.join(", ")}.</p>}
+            </div>
+            <Link href={stagePath(run.id, stage, kit)} className="caps inline-flex min-h-[44px] items-center text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
+              Edit the {STAGE_LABEL[stage].toLowerCase()}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}

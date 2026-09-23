@@ -10,8 +10,54 @@ import { discoveryTagErrors, type DiscoveryRegistry } from "@/lib/discovery";
 import { getDiscoveryRegistry } from "@/lib/discovery-registry";
 import { slugify } from "@/lib/slug";
 import { kitFitsCategory, starterKit } from "@/lib/starter-kits";
+import { stageAfter, stagePath } from "@/lib/fundraiser-stages";
 
-export type DraftState = { ok: boolean; error?: string; id?: string };
+export type DraftState = {
+  ok: boolean;
+  /** Everything wrong, in one line, for the alert under the form. */
+  error?: string;
+  /** The same, one message per input, keyed by the input's name, for the line under each field. */
+  errors?: Record<string, string>;
+  id?: string;
+};
+
+/** The schema's paths, by the name of the input that carries each one. */
+const INPUT_FOR: Record<string, string> = { goal_cents: "goal_amount", bidding_closes_at: "bidding_closes_utc" };
+const inputName = (path: PropertyKey[]) => {
+  const head = String(path[0] ?? "");
+  if (head === "category_details" && path[1] !== undefined) return `detail_${String(path[1])}`;
+  return INPUT_FOR[head] ?? head;
+};
+/** What each input is called in a sentence, so an error names the field the way the form does. */
+const LABEL: Record<string, string> = {
+  category_key: "Category", title: "Name", purpose: "What the funding enables", description: "The story",
+  audience_description: "Who will experience it", sponsor_promise: "What sponsors can count on", goal_amount: "Funding goal",
+  goal_currency: "Goal currency", activity_mode: "Where the activity takes place", activity_locations: "Places", timezone: "Time zone",
+  fundraising_starts_on: "Fundraising starts", fundraising_ends_on: "Fundraising ends", starts_on: "Activity starts", ends_on: "Activity ends",
+  delivery_due_at: "Delivery deadline", bidding_closes_utc: "Bidding closes", kind: "Performance format", show_count: "Number of performances",
+  expected_attendance: "Expected audience size", discovery_tags: "Discovery tags",
+};
+/** Zod's own words are for programmers. These are the ones a person can act on, where the schema has none of its own. */
+const PLAIN: Record<string, string> = {
+  category_key: "Choose a category.",
+  goal_amount: "Enter an amount in dollars, like 5000 or 5000.50, or leave it empty.",
+  show_count: "Enter a whole number, or leave it empty.",
+  expected_attendance: "Enter a whole number, or leave it empty.",
+  timezone: "Choose a valid time zone, like Europe/London.",
+  activity_locations: "Check the places: a country needs its two-letter code and a city is at most 100 characters.",
+};
+const humanize = (name: string) => LABEL[name] ?? name.replace(/^detail_/, "").replace(/_/g, " ");
+
+function fieldErrors(issues: readonly { path: PropertyKey[]; message: string; code: string }[]): { error: string; errors: Record<string, string> } {
+  const errors: Record<string, string> = {};
+  for (const issue of issues) {
+    const name = inputName(issue.path);
+    if (errors[name]) continue;
+    // A message the schema wrote by hand (a refine) is kept. Zod's generated ones are replaced.
+    errors[name] = issue.code === "custom" ? issue.message : issue.code === "too_big" ? "Too long. Keep it shorter." : PLAIN[name] ?? "Check this value.";
+  }
+  return { error: Object.entries(errors).map(([name, message]) => `${humanize(name)}: ${message}`).join(" "), errors };
+}
 
 export async function draftCategories(): Promise<FundraiserCategory[]> {
   await requireUser("/dashboard");
@@ -62,7 +108,7 @@ export async function saveFundraiserDraft(input: unknown): Promise<DraftState> {
   const act = await ownedAct(user.id);
   if (!act) return { ok: false, error: "Create your organizer profile first." };
   const parsed = FundraiserDraftInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(" ") };
+  if (!parsed.success) return { ok: false, ...fieldErrors(parsed.error.issues) };
   const sbForRegistry = await supabaseServer();
   const [categories, registry] = await Promise.all([draftCategories(), getDiscoveryRegistry(sbForRegistry)]);
   // A tag already on the row is not held to the registry's `active` flag: retiring a tag takes it
@@ -118,12 +164,14 @@ export async function saveDraftForm(_previous: DraftState, form: FormData): Prom
     starts_on: optional("starts_on"), ends_on: optional("ends_on"), kind: optional("kind"),
     show_count: value("show_count"), expected_attendance: value("expected_attendance"),
   });
-  if (result.ok && !value("id")) {
-    // The starter kit is creation context and is not saved with the draft. It rides along in the
-    // address for the pages after the first save, and only a real kit of this category is carried.
-    const kit = starterKit(value("starter_kit"));
-    const carried = kit && kitFitsCategory(kit, value("category_key")) ? `?kit=${kit.key}` : "";
-    redirect(`/dashboard/runs/${result.id}${carried}`);
-  }
+  // The starter kit is creation context and is not saved with the draft. It rides along in the
+  // address for the pages after the first save, and only a real kit of this category is carried.
+  const kit = starterKit(value("starter_kit"));
+  const carried = kit && kitFitsCategory(kit, value("category_key")) ? kit.key : null;
+  // Which stage the form was on and which button was pressed decide where a save lands. A form
+  // that said neither is the save as it always was: a new draft goes to its own page, an edit stays.
+  const target = stageAfter(value("intent"), value("stage"));
+  if (result.ok && !value("id")) redirect(stagePath(result.id!, target, carried));
+  if (result.ok && target && value("intent") !== "save") redirect(stagePath(value("id"), target, carried));
   return result;
 }
