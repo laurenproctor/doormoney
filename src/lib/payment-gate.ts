@@ -54,3 +54,15 @@ export async function paymentsOpenFor(sb: SupabaseClient, categoryKey: string | 
 
 /** What a sponsor is told. Says what is true, and promises no date. */
 export const CATEGORY_PAYMENTS_CLOSED = "Payments are not open for this kind of fundraiser yet.";
+
+/**
+ * Whether a bid may go in with no card behind it at all.
+ *
+ * Only on a Door Money running without Stripe keys, which is how the sample fundraisers take bids
+ * under `next dev`. Never on a production build: every `next build` runs as production and Vercel
+ * sets `VERCEL_ENV` on every deployment, so a deployment that has lost its Stripe key refuses bids
+ * rather than taking them unbacked. The action asks this only when Stripe is not configured.
+ */
+export function cardlessBidsAllowed(env: { NODE_ENV?: string; VERCEL_ENV?: string } = process.env): boolean {
+  return env.NODE_ENV !== "production" && !env.VERCEL_ENV;
+}

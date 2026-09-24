@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { bidRefusalMessage, minimumBidCents, notifyOutbid } from "@/lib/auctions";
+import { CATEGORY_PAYMENTS_CLOSED, cardlessBidsAllowed, paymentsOpenFor } from "@/lib/payment-gate";
 import { patronFor, payingProfileId } from "@/lib/patrons";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
@@ -16,6 +17,14 @@ import { runPath } from "@/lib/urls";
   clock and the minimum against what is actually there at that instant, and inserts, all in one
   transaction. This file gathers the inputs, verifies the card with Stripe, and turns a refusal
   into words. It reads nothing about the lot that the database will not read again under the lock.
+
+  Two things are this file's to hold, because the database cannot see them. A bid is charged at the
+  close with nobody present, so while Stripe is configured a bid needs a card that /api/bids/setup
+  stored for this lot and this bidder, read back from Stripe and never taken on the browser's word.
+  And a bid is where that payment starts, so the same gate checkout and the setup route ask is
+  asked here too, before anything is written: a category without open payments takes no bid,
+  whichever door the request came through. Before 2026-09-23 both were only on the setup route,
+  which a caller of this action could skip.
 */
 
 const Id = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
@@ -27,9 +36,11 @@ const Input = z.object({
   email: z.string().trim().email().max(200),
   anonymous: z.boolean().default(false),
   /**
-   * The SetupIntent the browser just confirmed. Only the id travels: the card, the customer and
-   * whether it actually succeeded are read back from Stripe below, so nothing here is taken on the
-   * browser's word. Optional, so a Door Money running without Stripe keys still takes bids.
+   * The SetupIntent the browser just confirmed. Only the id travels: the card, the customer, whose
+   * bid it was stored for and whether it actually succeeded are all read back from Stripe below, so
+   * nothing here is taken on the browser's word. Optional in the schema because a Door Money
+   * running without Stripe keys has none to send; required by the action whenever Stripe is
+   * configured.
    */
   setupIntentId: z.string().trim().max(120).optional(),
   /** Left empty by people, filled in by robots. */
@@ -38,7 +49,12 @@ const Input = z.object({
 
 export type BidResult = { ok: true; amountCents: number; nextMinimumCents: number } | { ok: false; error: string };
 
-type LotRow = { id: string; price_cents: number; runs: { slug: string; acts: { slug: string } } };
+type LotRow = { id: string; price_cents: number; runs: { slug: string; category_key: string | null; acts: { slug: string } } };
+
+const SETUP_INTENT_USED = "That card already backs a bid. Start the bid again.";
+
+/** The saved card behind a bid, as Stripe confirmed it. */
+type Card = { paymentMethodId: string; setupIntentId: string };
 
 export async function placeBid(input: z.input<typeof Input>): Promise<BidResult> {
   const parsed = Input.safeParse(input);
@@ -46,13 +62,23 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
   const { lotId, amountCents, patronName, email, anonymous, website, setupIntentId } = parsed.data;
   if (website) return { ok: false, error: "That bid did not go through." };
 
+  // With Stripe, every bid has a card behind it. Without Stripe, a bid may go in bare only where
+  // the sample fundraisers live, and never on a production build.
+  const stripeOn = stripeConfigured();
+  if (!stripeOn && !cardlessBidsAllowed()) return { ok: false, error: "Bidding is unavailable right now. Try again shortly." };
+  if (stripeOn && !setupIntentId) return { ok: false, error: "A bid needs a saved card behind it. Try once more." };
+
   const sb = supabaseAdmin();
-  // Only for the address to revalidate afterwards. Whether the lot takes a bid is decided under
-  // its lock below, not from this read.
-  const { data, error } = await sb.from("lots").select("id,price_cents,runs!inner(slug,acts!inner(slug))").eq("id", lotId).maybeSingle();
+  // For the category and the address to revalidate afterwards. Whether the lot takes a bid is
+  // decided under its lock below, not from this read.
+  const { data, error } = await sb.from("lots").select("id,price_cents,runs!inner(slug,category_key,acts!inner(slug))").eq("id", lotId).maybeSingle();
   if (error) return { ok: false, error: "That did not load. Try once more." };
   const lot = data as unknown as LotRow | null;
   if (!lot) return { ok: false, error: bidRefusalMessage("lot_not_found") };
+
+  // A saved card is charged at the close, so a bid is where that payment starts. Same gate as
+  // checkout and the setup route, and asked before the patron row, which is the first write.
+  if (!(await paymentsOpenFor(sb, lot.runs.category_key))) return { ok: false, error: CATEGORY_PAYMENTS_CLOSED };
 
   // A bidder who happens to be signed in, under their own verified address, gets the patron row
   // tied to their account. Bidding still needs no account, and the address typed here decides
@@ -61,24 +87,11 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
   const patronId = await patronFor(sb, patronName, email, payingProfileId(session.user, email));
   if (!patronId) return { ok: false, error: "That did not save. Try once more." };
 
-  // The card, if one was stored a moment ago. Read from Stripe rather than from the form: a
-  // payment method id posted by a browser proves nothing, and a SetupIntent that belongs to
-  // somebody else's customer must never end up on this patron's bid.
-  let card: { paymentMethodId: string; setupIntentId: string } | null = null;
-  if (setupIntentId && stripeConfigured()) {
-    const { data: patron } = await sb.from("patrons").select("stripe_customer_id").eq("id", patronId).maybeSingle();
-    const customerId = (patron as { stripe_customer_id: string | null } | null)?.stripe_customer_id ?? null;
-    try {
-      const intent = await stripe.setupIntents.retrieve(setupIntentId);
-      const intentCustomer = typeof intent.customer === "string" ? intent.customer : intent.customer?.id ?? null;
-      const paymentMethodId = typeof intent.payment_method === "string" ? intent.payment_method : intent.payment_method?.id ?? null;
-      if (intent.status !== "succeeded" || !paymentMethodId) return { ok: false, error: "The card was not saved. Try once more." };
-      if (!customerId || intentCustomer !== customerId) return { ok: false, error: "That card is not on this bid. Try once more." };
-      card = { paymentMethodId, setupIntentId };
-    } catch (e) {
-      console.error("bid setup intent read failed", setupIntentId, e instanceof Error ? e.message : e);
-      return { ok: false, error: "The card was not saved. Try once more." };
-    }
+  let card: Card | null = null;
+  if (stripeOn && setupIntentId) {
+    const confirmed = await confirmedCard(sb, setupIntentId, lot.id, patronId);
+    if ("error" in confirmed) return { ok: false, error: confirmed.error };
+    card = confirmed;
   }
 
   const { data: placed, error: bidError } = await sb.rpc("place_bid", {
@@ -90,6 +103,9 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
     p_setup_intent_id: card?.setupIntentId ?? null,
   });
   if (bidError) {
+    // Two bids carrying the same SetupIntent, arriving together: the read above let both through
+    // and the index from migration 0063 let one land.
+    if (bidError.code === "23505") return { ok: false, error: SETUP_INTENT_USED };
     // The database raises the reason as the message. Anything it did not mean to say is logged.
     if (bidError.code !== "23514" && bidError.code !== "P0002") console.error("place_bid failed", lot.id, bidError.code, bidError.message);
     return { ok: false, error: bidRefusalMessage(bidError.message, bidError.details) };
@@ -106,4 +122,40 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
 
   revalidatePath(runPath(lot.runs.acts.slug, lot.runs.slug));
   return { ok: true, amountCents, nextMinimumCents: bid.next_minimum_cents ?? minimumBidCents(lot.price_cents, amountCents) };
+}
+
+/**
+ * The card a SetupIntent stored, once Stripe has said all of this about it: it succeeded and holds
+ * a payment method; it belongs to this patron's own customer; /api/bids/setup created it for this
+ * lot and this patron (its metadata, which only the server writes); and no bid already carries it.
+ * A payment method id posted by a browser proves nothing, and a SetupIntent stored for somebody
+ * else's bid, or for another spot, must never end up on this one.
+ */
+async function confirmedCard(sb: ReturnType<typeof supabaseAdmin>, setupIntentId: string, lotId: string, patronId: string): Promise<Card | { error: string }> {
+  const { data: patron } = await sb.from("patrons").select("stripe_customer_id").eq("id", patronId).maybeSingle();
+  const customerId = (patron as { stripe_customer_id: string | null } | null)?.stripe_customer_id ?? null;
+
+  let paymentMethodId: string;
+  try {
+    const intent = await stripe.setupIntents.retrieve(setupIntentId);
+    const intentCustomer = typeof intent.customer === "string" ? intent.customer : intent.customer?.id ?? null;
+    const method = typeof intent.payment_method === "string" ? intent.payment_method : intent.payment_method?.id ?? null;
+    if (intent.status !== "succeeded" || !method) return { error: "The card was not saved. Try once more." };
+    const meta = intent.metadata ?? {};
+    const ours = meta.kind === "bid" && meta.lot_id === lotId && meta.patron_id === patronId && Boolean(customerId) && intentCustomer === customerId;
+    if (!ours) return { error: "That card is not on this bid. Try once more." };
+    paymentMethodId = method;
+  } catch (e) {
+    console.error("bid setup intent read failed", setupIntentId, e instanceof Error ? e.message : e);
+    return { error: "The card was not saved. Try once more." };
+  }
+
+  // One stored card, one bid. A second bid wants a second SetupIntent, so that what the close
+  // charges is always the card the patron confirmed for that exact bid. Migration 0063 holds the
+  // same rule as a unique index, for two requests that get past this read together.
+  const { data: used, error } = await sb.from("bids").select("id").eq("stripe_setup_intent_id", setupIntentId).limit(1).maybeSingle();
+  if (error) return { error: "That did not load. Try once more." };
+  if (used) return { error: SETUP_INTENT_USED };
+
+  return { paymentMethodId, setupIntentId };
 }
