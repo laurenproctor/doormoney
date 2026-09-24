@@ -18,7 +18,7 @@
 --   The sample data's opening entries, which are the owner's decision of 2026-09-22: sample rows
 --   balance rather than being excluded by name.
 --
---   The two ways of reading it (migration 0064): the books by account with the sample data left
+--   The two ways of reading it (migration 0065): the books by account with the sample data left
 --   out, and the books by payment with it in, both read by the service role and nobody else.
 
 begin;

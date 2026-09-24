@@ -67,6 +67,34 @@ the same SetupIntent cannot both land, whatever the action read first (`auctions
 assertions). `place_bid` still accepts a null card, because Postgres cannot see whether Stripe is
 configured; that half of the rule is the action's.
 
+### A hold on an option costs something to ask for
+
+**Held** as of migration `0065`, for checkout.
+
+`/api/checkout` holds a fixed-price option for whoever posts to it: a name, an email address, no
+account and no card. That is the right rule for one buyer and, until 0065, the whole rule: nothing
+counted the requests, because the handler runs where memory does not survive from one request to
+the next. A script could hold every option on the site and hold each again as it lapsed, and the
+hold lasted forty-five minutes against a session that died at thirty-five.
+
+The counting is now the database's, in `checkout_attempts` and `begin_lot_purchase_limited`, which
+records the attempt, applies four limits under an advisory lock per address and per email (sixty
+attempts from one address in ten minutes, thirty on one option, twenty-five open holds from one
+address, two for one email), and only then calls `begin_lot_purchase`, which is untouched and is
+still the one place a hold is decided. The email is the key that is tight and the address is
+loose on purpose: patrons buy at shows, where a room shares the venue's Wi-Fi or a carrier's
+address, and a per-address limit sized for one person would refuse the crowd. The per-option
+limit is the backstop against a script, whatever addresses it comes from. A refusal is a word, never an exception, so the refused
+attempt stays counted. The route asks a honeypot before it reads anything, says one sentence for
+all four limits, and asks Stripe for a session that ends when the hold does: thirty-one minutes,
+released by `checkout.session.expired` through the existing webhook path, with the database's own
+clearing two minutes behind it for a payment made in the session's last seconds. Proved by
+`supabase/tests/checkout_holds_test.sql` and `tests/checkout-route.test.ts`.
+
+What it does not do. `/api/bids/setup` has the honeypot and no counting; a bid stores a card and
+holds nothing, so the cost of a flood there is patron rows and SetupIntents, not a locked board.
+`patronFor` still writes a patron row before the limiter is asked, on both routes. Both are Phase 6.
+
 ### A declined mark receives the refund promised by the product
 
 **Held**, since migration 0031.
@@ -108,13 +136,13 @@ that exists at Stripe and not here, or here and not at Stripe, goes unnoticed.
 
 ### Financial totals must be derivable from an immutable ledger
 
-**Partly held**, since migrations 0055 and 0064. Reconciliation is Phase 4's piece 4.
+**Partly held**, since migrations 0055 and 0065. Reconciliation is Phase 4's piece 4.
 
 `ledger_entries` (0055) is append only by grant and by trigger, every event's entries sum to zero
 or the deferred constraint refuses the write, and `src/lib/ledger.ts` writes it from every path
 that moves money: the charge and Stripe's fee when a payment is held, the transfer and the fee it
 earns on every Friday slice, and the refund from either side. `/admin` reads revenue from
-`ledger_balances` (0064) and from nothing else; the last sum of list prices went with it.
+`ledger_balances` (0065) and from nothing else; the last sum of list prices went with it.
 
 What is still missing is the check the other way. The tables stay authoritative and the ledger
 mirrors them, so a transfer the job sent and could not write down is a real transfer the books do

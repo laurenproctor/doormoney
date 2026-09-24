@@ -2,7 +2,7 @@
 
 Phase 4 is being built in four pieces, as `docs/PHASE_4_INVENTORY.md` proposes. This document grows
 a section per piece. Piece 1 (0039) and the first half of piece 2 (0055) are applied to the hosted
-project. Piece 2's second half (0064) is below.
+project. Piece 2's second half (0065) is below.
 
 ## Piece 1: webhook event states and the retry worker
 
@@ -71,7 +71,7 @@ that order, and nothing else reads them.
 
 Two migrations, applied on different days. `0055_ledger.sql` (2026-09-22) is the table, the chart of
 accounts, the balance trigger and the sample data's opening entries; it was applied with the offer
-terms migrations and is frozen. `0064_ledger_balances.sql` is what the writer ships with: one more
+terms migrations and is frozen. `0065_ledger_balances.sql` is what the writer ships with: one more
 account (`organizer_receivable`), and two read-only views, `ledger_balances` and
 `ledger_payment_balances`, both granted to `service_role` only, with every write privilege revoked.
 It creates no table, changes no grant on any existing table, and nothing in it changes when or
@@ -82,12 +82,12 @@ whether a cent moves.
 Additive, and the code needs it: `/admin` reads `ledger_balances` and a hand refund beyond what was
 held posts to `organizer_receivable`. So the migration goes first and the code follows. In between,
 the deployed code writes nothing to the ledger and reads neither view, and `/admin` after the code
-deploy says "Apply migration 0064" in its Books card rather than failing, if the order slips.
+deploy says "Apply migration 0065" in its Books card rather than failing, if the order slips.
 
 1. **Check the ledger and apply.**
 
    ```
-   supabase migration list          # expect 0001 to 0063 aligned, 0064 local only
+   supabase migration list          # expect 0001 to 0063 aligned, 0065 local only
    supabase db push                 # from a terminal, never from a Claude session
    ```
 

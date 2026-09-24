@@ -35,7 +35,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
   3. Money refunded by hand beyond what Door Money still held (a Dashboard refund after slices had
      gone out) is a receivable from the organizer, recovered from later slices or absorbed, which is
-     decision 18. The account is organizer_receivable, added by migration 0064. A hand refund of
+     decision 18. The account is organizer_receivable, added by migration 0065. A hand refund of
      less than what was held is split between liability and fee in their proportion.
 
   Nothing here decides whether a cent moves, and nothing here talks to Stripe: the one Stripe read

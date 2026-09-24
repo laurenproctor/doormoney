@@ -8,8 +8,10 @@ export const stripeConfigured = () => Boolean(process.env.STRIPE_SECRET_KEY);
 /** Tags lot checkouts in the Stripe Dashboard so they can be told apart from fan backings. */
 const LOT_CHECKOUT_LABEL = "doormoney_lot_qhtzmvkr";
 
-/** How long a patron has to finish paying once they start. The lot is held for them meanwhile. */
-export const CHECKOUT_MINUTES = 30;
+import { checkoutClock } from "@/lib/checkout-hold";
+
+/** How long a patron has to finish paying once they start. The lot is held for them meanwhile. Lives in src/lib/checkout-hold.ts with the rest of the clock. */
+export { CHECKOUT_MINUTES } from "@/lib/checkout-hold";
 
 /**
  * Charge model (docs/ROADMAP.md, Phase 3; docs/DECISIONS.md, decision 2A):
@@ -36,6 +38,11 @@ export async function createLotCheckoutSession(params: {
   offerTermsVersion?: number | null;
   /** Where the embedded checkout sends the patron afterwards. Must contain {CHECKOUT_SESSION_ID}. */
   returnUrl: string;
+  /**
+   * When the session ends, set explicitly so that the hold on the option ends with it
+   * (src/lib/checkout-hold.ts). Stripe's floor is thirty minutes from creation.
+   */
+  expiresAt?: Date;
 }) {
   // Which exact offer this payment is for: the spot, the offer version it was bound to
   // (migration 0035), and the shape the offer contract was written in (migration 0056). Stripe
@@ -62,8 +69,7 @@ export async function createLotCheckoutSession(params: {
     ],
     payment_intent_data: { description: params.description, metadata },
     metadata,
-    // Stripe wants at least 30 minutes; the extra five keep a slow request from landing under the line.
-    expires_at: Math.floor(Date.now() / 1000) + (CHECKOUT_MINUTES + 5) * 60,
+    expires_at: Math.floor((params.expiresAt ?? checkoutClock().sessionExpiresAt).getTime() / 1000),
     integration_identifier: LOT_CHECKOUT_LABEL,
   });
 }

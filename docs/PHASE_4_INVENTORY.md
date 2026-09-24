@@ -41,7 +41,7 @@ is subscribed to eighteen.
 
 ### 1. An immutable ledger whose entries balance
 
-**Built: the schema 2026-09-22 (0055), the writer 2026-09-24 (0064, `src/lib/ledger.ts`).** What
+**Built: the schema 2026-09-22 (0055), the writer 2026-09-24 (0065, `src/lib/ledger.ts`).** What
 follows is the reading as it was.
 
 **Missing entirely.** There is no ledger table. What the system knows about money is the current

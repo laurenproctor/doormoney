@@ -542,7 +542,7 @@ select throws_ok($$truncate table financial_operations$$, '42501', null, 'nor tr
 select throws_ok('select * from ledger_entries limit 1',   '42501', null, 'anon cannot read the ledger');
 select throws_ok('select * from ledger_accounts limit 1',  '42501', null, 'nor the chart of accounts');
 select throws_ok('select * from ledger_imbalances limit 1','42501', null, 'nor what is out of balance');
-select throws_ok('select * from ledger_balances limit 1',  '42501', null, 'nor the books by account (0064)');
+select throws_ok('select * from ledger_balances limit 1',  '42501', null, 'nor the books by account (0065)');
 select throws_ok('select * from ledger_payment_balances limit 1', '42501', null, 'nor the books by payment');
 
 reset role;

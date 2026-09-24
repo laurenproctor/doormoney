@@ -268,8 +268,8 @@ minimum, and the pgTAP suite shows a stale offer held and not sold, twice.
 Give Door Money an authoritative financial history and a way to recover.
 
 **Status: two of four pieces are built and applied; the ledger is written by every money path
-since 2026-09-24 (migrations 0055 and 0064).** Piece 1 (webhook event states) merged 2026-09-19 and
-piece 2 (the ledger) in two steps: the schema, 0055, on 2026-09-22 and the writer with 0064 on
+since 2026-09-24 (migrations 0055 and 0065).** Piece 1 (webhook event states) merged 2026-09-19 and
+piece 2 (the ledger) in two steps: the schema, 0055, on 2026-09-22 and the writer with 0065 on
 2026-09-24. Disputes and reconciliation are untouched.
 `docs/PHASE_4_INVENTORY.md` is the reading done beforehand: what exists, what is missing item by
 item, five things this list leaves out, and the decisions that have to be made before the dispute
@@ -287,7 +287,7 @@ it needs somewhere to record a failure.
   earns on every Friday slice (and from `transfer.created` when the job died before writing it), and
   the refund whether `refundRow` sent it or a person did in the Dashboard. Door Money earns its fee
   as the money releases, which is `refundDue`'s arithmetic read the other way; a hand refund beyond
-  what was held is a receivable from the organizer (`organizer_receivable`, `0064`). `/admin` reads
+  what was held is a receivable from the organizer (`organizer_receivable`, `0065`). `/admin` reads
   revenue from `ledger_balances` and nothing else. Reversals, disputes, dispute fees and
   recoveries are piece 3's entries, and `held_unresolved` waits on decision 16.
 - [x] Redesign webhook-event storage to distinguish received, processing, processed, and failed and
@@ -342,7 +342,10 @@ credentials does not break published board links.
 ## Phase 6: production and abuse hardening
 
 - Durable rate limits on checkout, bidding, contact, newsletter, auth and expensive public actions,
-  plus bot protection where it fits.
+  plus bot protection where it fits. Checkout's is done ahead of the phase (migration 0065, the
+  `checkout_attempts` table and `begin_lot_purchase_limited`), because an unlimited hold was a way
+  to stop every sale; see `docs/SYSTEM_INVARIANTS.md`, "A hold on an option costs something to ask
+  for". Bidding, contact, newsletter and auth are still open.
 - Validate required production environment variables at startup, and remove fallbacks that let the
   app quietly run in mock mode.
 - Structured logging, error monitoring, financial alerts and request correlation ids.

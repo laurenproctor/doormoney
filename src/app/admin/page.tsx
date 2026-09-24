@@ -47,7 +47,7 @@ export default async function AdminPage() {
       .in("status", ["received", "processing", "retryable", "failed"])
       .order("received_at", { ascending: false })
       .limit(100),
-    // The books, summed by account with the sample data left out (migration 0064). Revenue is read
+    // The books, summed by account with the sample data left out (migration 0065). Revenue is read
     // from here and nowhere else: the fee earned as money released, never a sum of list prices.
     db.from("ledger_balances").select("account_key,label,kind,balance_cents,entry_count"),
     // Always empty while the constraint trigger stands (migration 0055). Read so that "always" is checked.
@@ -138,11 +138,11 @@ export default async function AdminPage() {
           </CardHead>
           <p className="mb-5 max-w-none text-[15px] text-muted">
             Every charge, transfer, fee and refund is written to the ledger by the path that moved it, as balanced entries that cannot be edited
-            (migrations 0055 and 0064). Sample data is left out of these sums. Door Money earns its fee as the money releases, so &ldquo;earned&rdquo; is
+            (migrations 0055 and 0065). Sample data is left out of these sums. Door Money earns its fee as the money releases, so &ldquo;earned&rdquo; is
             what has been released, not what has been charged; &ldquo;not yet earned&rdquo; is the fee on money still held.
           </p>
           {books.error ? (
-            <p className="max-w-none text-[15px] text-muted">The ledger views are not on this database yet. Apply migration 0064.</p>
+            <p className="max-w-none text-[15px] text-muted">The ledger views are not on this database yet. Apply migration 0065.</p>
           ) : (
             <Table
               head={["Account", "Balance", "Entries", "What it is"]}
