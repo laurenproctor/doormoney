@@ -75,7 +75,7 @@ test("a draft whose only option has an unfinished offer is not four of four", ()
   assert.deepEqual([step.done, step.total], [3, 4]);
   assert.equal(step.label, "Sponsorships");
   assert.match(step.note ?? "", /Kick drum head still needs/);
-  assert.equal(step.href, `/dashboard/runs/${RUN.id}#placements`);
+  assert.equal(step.href, `/dashboard/runs/${RUN.id}?tab=options`);
 });
 
 test("the same draft is four of four once the offer states what a sponsor reads", () => {

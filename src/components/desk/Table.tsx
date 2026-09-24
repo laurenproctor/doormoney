@@ -91,9 +91,10 @@ export function Table({
  * The control that sits in that last column. It draws the kebab and names itself; what opening it
  * does belongs to the page, which is why this takes the rest of a button's props and adds nothing.
  */
-export function RowMenuButton({ label = "More", ...props }: ComponentProps<"button"> & { label?: string }) {
+export function RowMenuButton({ label = "More", ref, ...props }: ComponentProps<"button"> & { label?: string }) {
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={label}
       className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-control border border-transparent text-muted hover:bg-neutral-wash hover:text-ink"
