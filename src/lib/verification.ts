@@ -77,6 +77,15 @@ const WORDS: Record<string, Rewording> = {
     end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
     other: { note: "Something else, in the venue's own words." },
   },
+  digital_workers: {
+    selected_show_photos: { label: "Dated samples of selected placements", note: "A dated sample of the signature or background, with private information removed." },
+    venue_date_record: { label: "Eligible activity and date list", note: "A dated count of eligible emails or meetings, without recipients or participants' names." },
+    attendance_estimates: { label: "Audience estimate", note: "An estimate with its basis, not a claim that an email was opened or a background was viewed." },
+    social_post_links: { note: "Links to posts, if posting is part of the agreed placement." },
+    short_video: { label: "Short capture of the placement", note: "A short capture of the background in use, without showing meeting participants." },
+    end_of_run_record: { label: "End-of-fundraiser placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
+    other: { note: "Something else, in the worker's own words." },
+  },
   // Other (migration 0049) borrows nobody's words. There is no shared shape to name, so each line
   // says only what any placement has: a place, a date, an audience. Nothing here mentions a show.
   other: {

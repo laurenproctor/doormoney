@@ -1,10 +1,10 @@
 # Door Money product contract
 
-Effective 2026-09-18. Governed by decision 17 in `DECISIONS.md`. Starting set extended 2026-09-21 (Restaurants & hospitality, and Other).
+Effective 2026-09-18. Governed by decision 17 in `DECISIONS.md`. Starting set extended 2026-09-21 (Restaurants & hospitality, and Other) and 2026-09-24 (Digital workers).
 
 ## Purpose and exchange
 
-Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, theater, and restaurants and hospitality, with Other for a project that fits none of them. Organizers fund their work by offering specified visibility. Sponsors support work and communities that matter to them while receiving the exposure described in the purchased offer.
+Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, theater, restaurants and hospitality, and digital workers, with Other for a project that fits none of them. Organizers fund their work by offering specified visibility. Sponsors support work and communities that matter to them while receiving the exposure described in the purchased offer.
 
 **Confirmed product principle:** every sponsorship must make clear both what the funding enables and what the sponsor can count on receiving. This is the test for product fit across categories and places.
 
@@ -14,7 +14,7 @@ A sponsorship is not an investment, ownership stake, or promise of commercial re
 
 ## Starting categories and expansion
 
-These stable keys are the starting set, not the maximum scope of the product. The first four defined the initial cohort for Phase 2. `hospitality` and `other` joined the set on 2026-09-21, which is the set doing what it was designed to do: grow. The intent is to expand to as many categories as can sustain a clear, deliverable sponsorship promise. This document does not itself add database values or enable checkout.
+These stable keys are the starting set, not the maximum scope of the product. The first four defined the initial cohort for Phase 2. `hospitality` and `other` joined on 2026-09-21; `digital_workers` joined on 2026-09-24. The intent is to expand to as many categories as can sustain a clear, deliverable sponsorship promise. This document does not itself add database values or enable checkout.
 
 | Key | Public name | Responsible organizer | Fundraiser scope | Relevant details | Example visibility |
 | --- | --- | --- | --- | --- | --- |
@@ -23,9 +23,12 @@ These stable keys are the starting set, not the maximum scope of the product. Th
 | `film` | Film | Filmmaker or production organization | A named production, completion, or screening effort | Format, production stage, audience, and relevant production or release milestones | Agreed credits, screening materials, promotional channels, or specifically agreed product placement |
 | `theater` | Theater | Theater company or authorized producer | A named production, performance season, or touring production | Production, venue or location, audience, and performance or production dates | Program, foyer signage, website, or agreed promotion |
 | `hospitality` | Restaurants & hospitality | Restaurant, bar, hospitality venue, caterer, or community kitchen | A dinner series, chef residency, guest experience, or community meal program | Kind of venue, program format, audience, and activity dates | Restaurant spaces, sponsored guest experiences, dinner series, chef residencies, or community meal programs |
+| `digital_workers` | Digital workers | Independent worker with control over the offered channels | A named digital project, independent practice, or research and production effort | The work, actual audience, eligible accounts and calls, and the agreed month | Monthly email signature or virtual meeting background |
 | `other` | Other | Organizer | A named project that fits none of the categories above | None of its own: the shared fields are the whole form | None suggested: the organizer states the placement |
 
-**Availability is not the same for every row.** Music is published and takes payments. Sports teams, film, and theater may publish, and take live payments only once their delivery policy is active. Restaurants & hospitality and Other are draft-only: an organizer can save a private draft, and nothing in either category can be published or bought until the owner deliberately enables its delivery and payment policy. That takes two separate acts, a delivery policy row and `publish_enabled`, and neither category has either.
+**Availability is not the same for every row.** Music is published and takes payments. Sports teams, film, and theater may publish, and take live payments only once their delivery policy is active. Restaurants & hospitality, Digital workers, and Other are draft-only: an organizer can save a private draft, and nothing in those categories can be published or bought until the owner deliberately enables its delivery and payment policy. That takes two separate acts, a delivery policy row and `publish_enabled`, and none of them has either.
+
+Digital workers' two templates describe placement, not an impression count. A sender can document an eligible email signature and a worker can count eligible meetings without disclosing recipients or attendees. Sponsorships must not assume the worker controls an employer's email or a client's meeting.
 
 The internal key for Restaurants & hospitality is `hospitality`. There is no `restaurants` key, and there must not be one: a second key would split the category's templates, words, and future delivery policy. A restaurant is one kind of hospitality organizer, not the only one.
 

@@ -2,7 +2,8 @@
  * The starting categories, in the words the marketing pages use for them.
  *
  * The set grows: it began as four (decision 17), and Restaurants & hospitality and Other joined it
- * with migration 0049. Being listed here opens nothing. The last two hold private drafts only, and
+ * with migration 0049; Digital workers joined later. Being listed here opens nothing. The latest
+ * three categories hold private drafts only, and
  * AVAILABILITY_NOTE says so wherever the set is shown.
  *
  * This is copy, not the registry. Which categories exist is decided by `fundraiser_categories`
@@ -55,6 +56,12 @@ export const STARTING_CATEGORIES: readonly StartingCategory[] = [
     funds: "Dinner series, chef residencies, guest experiences, and community meal programs.",
     placements: "Possible placements include restaurant spaces, sponsored guest experiences, dinner series, chef residencies, and community meal programs.",
   },
+  {
+    key: "digital_workers",
+    label: "Digital workers",
+    funds: "Independent digital projects, production, research, and the tools needed to do the work.",
+    placements: "Possible placements include a monthly email signature and a virtual meeting background on calls the worker joins.",
+  },
   // A controlled way in, not a way round the explanation. It has no templates, no suggested price
   // and no starter kit, so nothing here names a placement: the organizer states it.
   {
@@ -75,7 +82,7 @@ export const STARTING_CATEGORIES: readonly StartingCategory[] = [
 export const SEEDED_CATEGORY_KEYS: readonly string[] = ["music", "sports", "film", "theater"] as const;
 
 /** The starting categories in a sentence, for metadata, sign up and the new-fundraisers email. One list, so they cannot drift. */
-export const STARTING_CATEGORIES_LIST = "music, sports teams, film, theater, and restaurants and hospitality";
+export const STARTING_CATEGORIES_LIST = "music, sports teams, film, theater, restaurants and hospitality, and digital workers";
 
 /** The starting set is a start. Said wherever the set is listed. */
 export const STARTING_CATEGORIES_NOTE =
@@ -92,11 +99,11 @@ export const CATEGORY_TEST: readonly string[] = [
 /**
  * What is open today, in one place, because it changes.
  *
- * Music is published and takes payments. Every other starting category holds private drafts:
- * publishing is decided per category in the registry and live payment by the category's delivery
+ * Music is published and takes payments. Publishing is decided per category in the registry and
+ * live payment by the category's delivery
  * policy (src/lib/payment-gate.ts), and only the owner switches either on. Restaurants &
- * hospitality and Other have neither switch (migrations 0047 and 0049). Change this sentence when
+ * hospitality, Digital workers and Other have neither switch. Change this sentence when
  * one of them opens; never imply on a marketing page that every category can be sponsored already.
  */
 export const AVAILABILITY_NOTE =
-  "Music fundraisers are open to sponsors today. Organizers in the remaining starting categories can prepare private drafts while publishing and delivery terms for each one are finished.";
+  "Music fundraisers are open to sponsors today. Some categories can publish in test mode; the remaining categories can prepare private drafts while delivery terms are finished.";

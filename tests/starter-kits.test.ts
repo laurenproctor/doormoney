@@ -88,10 +88,11 @@ const words = (kit: StarterKit) => [
 // ---------------------------------------------------------------
 
 test("the test reads the real category registry", () => {
-  assert.deepEqual(REGISTRY.map((c) => c.key), [...LAUNCH, "hospitality", "other"]);
+  assert.deepEqual(REGISTRY.map((c) => c.key), [...LAUNCH, "hospitality", "other", "digital_workers"]);
   assert.ok(REGISTRY.filter((c) => LAUNCH.includes(c.key)).every((c) => c.publish_enabled), "0041 turned publishing on for the four");
   assert.deepEqual(REGISTRY.find((c) => c.key === "hospitality"), { key: "hospitality", label: "Restaurants & hospitality", detail_keys: ["venue_kind", "format"], draft_enabled: true, publish_enabled: false }, "0047 adds hospitality for drafts only, and 0049 gives it its public name");
   assert.deepEqual(REGISTRY.find((c) => c.key === "other"), { key: "other", label: "Other", detail_keys: [], draft_enabled: true, publish_enabled: false }, "0049 adds Other for drafts only, with no details of its own");
+  assert.deepEqual(REGISTRY.find((c) => c.key === "digital_workers"), { key: "digital_workers", label: "Digital workers", detail_keys: [], draft_enabled: true, publish_enabled: false });
   assert.equal(REGISTRY.some((c) => c.key === "restaurants"), false, "there is one hospitality key");
 });
 

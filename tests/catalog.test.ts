@@ -65,6 +65,7 @@ const sqlRows = [
   ...surfaceRows(read("supabase/seed.sql")),
   ...surfaceRows(read("supabase/migrations/0040_category_sponsorship_options.sql")),
   ...surfaceRows(read("supabase/migrations/0047_hospitality_draft_category.sql")),
+  ...surfaceRows(read("supabase/migrations/20260924162520_digital_workers_category.sql")),
 ];
 
 test("the parser found both sets of rows, not one of them", () => {
