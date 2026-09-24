@@ -4,10 +4,11 @@ import { CATALOG } from "@/lib/catalog";
 import { payoutNotice, purchaseReceipt, saleNotice, sendEmail, spotTaken } from "@/lib/email";
 import { releaseRuleForPurchase } from "@/lib/delivery";
 import { paymentBelongsToRow } from "@/lib/fundraiser-identity";
+import { chargeDetails, recordCharge } from "@/lib/ledger";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { queueRefund } from "@/lib/refunds";
 import { SITE } from "@/lib/site";
-import { stripe } from "@/lib/stripe";
+import { retrieveIntentWithCharge } from "@/lib/stripe";
 import { runUrl } from "@/lib/urls";
 
 /*
@@ -122,12 +123,18 @@ export async function holdPurchase(
   if (p.payment_status !== "requires_payment") return { ok: true as const, already: true };
 
   // The charge behind the intent, read from Stripe before the transaction rather than inside it.
+  // Its balance transaction comes with it, which is where Stripe states its fee.
   const piId = params.paymentIntentId;
-  let chargeId: string | null = null;
-  if (piId) {
-    const pi = await stripe.paymentIntents.retrieve(piId);
-    chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id ?? null;
-  }
+  const charge = chargeDetails(piId ? await retrieveIntentWithCharge(piId) : null);
+  const chargeId = charge.chargeId;
+
+  // The books, before the state change rather than after it. The money is real once Stripe has a
+  // charge for it, whatever this system goes on to decide about the lot, and writing first is what
+  // makes a retry whole: a hold that fails after this line is retried into "already" below, and
+  // the entries are found on the books, whereas a ledger write after the hold would be skipped by
+  // that same "already" for good. The write is keyed, so the retry finds it rather than doubling it.
+  if (chargeId) await recordCharge(sb, { purchaseId: p.id }, { amountCents: p.amount_cents, feeCents: p.fee_cents, ...charge });
+  else console.error("purchase held with no charge behind it, so nothing was written to the ledger", p.id, piId);
 
   const { data: outcome, error } = await sb.rpc("fulfil_lot_purchase", {
     p_purchase_id: p.id,

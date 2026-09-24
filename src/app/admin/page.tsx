@@ -20,11 +20,11 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
 
   const flags = await openFlags(db);
-  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns, owedRefunds, stuckEvents] = await Promise.all([
+  const [acts, runs, lots, purchases, backings, notes, waitlist, newsletter, mailRuns, owedRefunds, stuckEvents, books, imbalances] = await Promise.all([
     db.from("acts").select("id,slug,name,type,city,stripe_account_id,stripe_payouts_enabled,founding,created_at,profiles(email)").order("created_at", { ascending: false }),
     db.from("runs").select("id,act_id,title,kind,status,starts_on,ends_on,show_count,created_at").order("created_at", { ascending: false }),
     db.from("lots").select("id,run_id,surface_key,label,price_cents,mode,status"),
-    db.from("purchases").select("id,lot_id,amount_cents,fee_cents,payment_status,mark_status,created_at").order("created_at", { ascending: false }),
+    db.from("purchases").select("id,lot_id,amount_cents,fee_cents,refunded_cents,payment_status,mark_status,created_at").order("created_at", { ascending: false }),
     db.from("backings").select("id,run_id,tier,amount_cents,fee_cents,payment_status,display_name,source,origin,created_at").order("created_at", { ascending: false }).limit(200),
     db.from("contact_messages").select("id,reason,name,organization,email,subject,message,status,created_at").order("created_at", { ascending: false }).limit(100),
     db.from("waitlist").select("id,role,name,email,city,act_type,created_at").order("created_at", { ascending: false }).limit(200),
@@ -47,6 +47,11 @@ export default async function AdminPage() {
       .in("status", ["received", "processing", "retryable", "failed"])
       .order("received_at", { ascending: false })
       .limit(100),
+    // The books, summed by account with the sample data left out (migration 0065). Revenue is read
+    // from here and nowhere else: the fee earned as money released, never a sum of list prices.
+    db.from("ledger_balances").select("account_key,label,kind,balance_cents,entry_count"),
+    // Always empty while the constraint trigger stands (migration 0055). Read so that "always" is checked.
+    db.from("ledger_imbalances").select("purchase_id,backing_id,event_key,off_by_cents,occurred_at"),
   ]);
   const subscribers = (newsletter.data ?? []).filter((n) => !n.unsubscribed_at);
 
@@ -79,6 +84,26 @@ export default async function AdminPage() {
     .filter((p) => p.payment_status === "held" && p.mark_status !== "approved")
     .reduce((n, p) => n + p.amount_cents, 0);
 
+  // What each run actually took: every purchase that was charged, refunds off. A spot won at
+  // auction sells above its list price and a refund takes money back, so the lot's price says
+  // neither; before 2026-09-24 this column summed list prices.
+  const CHARGED = ["held", "released", "partially_refunded", "refunded"];
+  const takenByLot = new Map<string, number>();
+  for (const p of purchases.data ?? []) {
+    if (!CHARGED.includes(p.payment_status)) continue;
+    takenByLot.set(p.lot_id, (takenByLot.get(p.lot_id) ?? 0) + p.amount_cents - (p.refunded_cents ?? 0));
+  }
+
+  // The books. A liability, revenue or fee account carries a credit balance, which the ledger
+  // stores as a negative number; it is shown here from its own side, so "Door Money revenue"
+  // reads as money earned rather than as a minus sign.
+  type Balance = { account_key: string; label: string; kind: string; balance_cents: number; entry_count: number };
+  const balances = ((books.data ?? []) as Balance[]).map((b) => ({ ...b, balance_cents: Number(b.balance_cents), shown: b.kind === "asset" || b.kind === "expense" ? Number(b.balance_cents) : -Number(b.balance_cents) }));
+  const balance = (key: string) => balances.find((b) => b.account_key === key)?.shown ?? 0;
+  const bookEntries = balances.reduce((n, b) => n + Number(b.entry_count), 0);
+  type Imbalance = { purchase_id: string | null; backing_id: string | null; event_key: string; off_by_cents: number; occurred_at: string };
+  const unbalanced = (imbalances.data ?? []) as Imbalance[];
+
   return (
     <DashboardShell current="/admin" nav={adminNav()} actName="Door Money staff" theme="mono" eyebrow="Staff" title="Admin" accent="">
       <div className="grid gap-[30px]">
@@ -99,12 +124,56 @@ export default async function AdminPage() {
           <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
           <Stat n={formatMoney(held)} label="held" />
           <Stat n={formatMoney(waitingOnLogo)} label="waiting on a logo" />
+          <Stat n={formatMoney(balance("platform_fee"))} label="earned" />
           <Stat n={String(owed.length)} label={owed.length === 1 ? "refund owed" : "refunds owed"} />
           <Stat n={String(events.length)} label={events.length === 1 ? "event unfinished" : "events unfinished"} />
           <Stat n={String(flags.length)} label={flags.length === 1 ? "flag open" : "flags open"} />
           <Stat n={String((waitlist.data ?? []).length)} label="on the list" />
           <Stat n={String(subscribers.length)} label="get new fundraisers" />
         </dl>
+
+        <Card>
+          <CardHead eyebrow="The books">
+            {books.error ? "Not readable" : `${bookEntries} ${bookEntries === 1 ? "entry" : "entries"}${unbalanced.length ? `, ${unbalanced.length} out of balance` : ""}`}
+          </CardHead>
+          <p className="mb-5 max-w-none text-[15px] text-muted">
+            Every charge, transfer, fee and refund is written to the ledger by the path that moved it, as balanced entries that cannot be edited
+            (migrations 0055 and 0065). Sample data is left out of these sums. Door Money earns its fee as the money releases, so &ldquo;earned&rdquo; is
+            what has been released, not what has been charged; &ldquo;not yet earned&rdquo; is the fee on money still held.
+          </p>
+          {books.error ? (
+            <p className="max-w-none text-[15px] text-muted">The ledger views are not on this database yet. Apply migration 0065.</p>
+          ) : (
+            <Table
+              head={["Account", "Balance", "Entries", "What it is"]}
+              rows={balances.map((b) => [
+                b.label,
+                formatMoney(b.shown, { cents: true }),
+                String(b.entry_count),
+                b.kind === "asset" ? "money Door Money holds or is owed" : b.kind === "liability" ? "money Door Money owes" : b.kind === "revenue" ? "earned" : "spent",
+              ])}
+            />
+          )}
+          {unbalanced.length > 0 && (
+            <>
+              <p className="mt-5 max-w-none text-[15px] text-muted">
+                An event whose entries do not sum to zero. The database refuses one at the moment it is written, so anything here got past that and wants a
+                person.
+              </p>
+              <Table
+                head={["Payment", "Event", "Off by", "When"]}
+                rows={unbalanced.map((u) => [
+                  <Link key="r" href={`/record/${u.purchase_id ?? u.backing_id}`} className="text-accent-ink underline decoration-1 underline-offset-4">
+                    {u.purchase_id ? "Sponsorship" : "Backing"}
+                  </Link>,
+                  u.event_key,
+                  formatMoney(Number(u.off_by_cents), { cents: true }),
+                  when.format(new Date(u.occurred_at)),
+                ])}
+              />
+            </>
+          )}
+        </Card>
 
         {owed.length > 0 && (
           <Card>
@@ -206,7 +275,7 @@ export default async function AdminPage() {
         <Card>
           <CardHead eyebrow="Runs">{runRows.length} described</CardHead>
           <Table
-            head={["Act", "Run", "Status", "Dates", "Shows", "Spots", "Sold", "Listed at"]}
+            head={["Act", "Run", "Status", "Dates", "Shows", "Spots", "Sold", "Taken", "Listed at"]}
             rows={runRows.map((r) => {
               const ls = lotsByRun.get(r.id) ?? [];
               return [
@@ -216,7 +285,8 @@ export default async function AdminPage() {
                 formatDateRange(r.starts_on, r.ends_on),
                 String(r.show_count),
                 String(ls.length),
-                `${ls.filter((l) => l.status === "sold").length} (${formatMoney(ls.filter((l) => l.status === "sold").reduce((n, l) => n + l.price_cents, 0))})`,
+                String(ls.filter((l) => l.status === "sold").length),
+                formatMoney(ls.reduce((n, l) => n + (takenByLot.get(l.id) ?? 0), 0)),
                 formatMoney(ls.reduce((n, l) => n + l.price_cents, 0)),
               ];
             })}

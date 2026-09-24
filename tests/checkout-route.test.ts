@@ -136,6 +136,7 @@ mock.module("@/lib/stripe", { namedExports: {
   CHECKOUT_MINUTES: 30,
   createBackingIntent: async (params: Record<string, unknown>) => { intents.push(params); return { id: "pi_test", client_secret: "pi_secret" }; },
   createLotCheckoutSession: async (params: Record<string, unknown>) => { sessions.push(params); return { id: "cs_test", client_secret: "cs_secret" }; },
+  retrieveIntentWithCharge: async (id: string) => ({ id, latest_charge: null }),
   transferSliceToAct: async () => ({}), customerForPatron: async () => "cus", createBidSetupIntent: async () => ({}), chargeSavedCard: async () => ({}),
 } });
 

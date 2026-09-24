@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { dropBacking, fulfilBacking } from "@/lib/backings";
 import { tierPlace } from "@/lib/catalog";
 import { payoutsOn, refundIssued, sendEmail } from "@/lib/email";
+import { recordRefund, recordTransfer } from "@/lib/ledger";
 import { backoffMinutes, MAX_ATTEMPTS } from "@/lib/outbox";
 import { fulfilLotPurchase, lotName, ownerEmail, releaseLot } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
@@ -94,12 +95,18 @@ export async function applyStripeEvent(sb: Admin, event: Stripe.Event): Promise<
       const transfer = event.data.object;
       const payoutId = transfer.metadata?.payout_id;
       if (!payoutId) return "ignored";
-      const { error } = await sb
+      const { data: marked, error } = await sb
         .from("payout_schedule")
         .update({ status: "paid", stripe_transfer_id: transfer.id, paid_at: new Date(transfer.created * 1000).toISOString() })
         .eq("id", payoutId)
-        .eq("status", "scheduled");
+        .eq("status", "scheduled")
+        .select("id,purchase_id,backing_id,amount_cents");
       if (error) throw new Error(`transfer.created ${transfer.id}: ${error.message}`);
+      // The row was still scheduled, so the job died before writing it, and before writing the
+      // books. Write those here too. A row the job did mark is left alone: the job wrote the
+      // ledger itself, or reported that it could not.
+      const slice = (marked as { purchase_id: string | null; backing_id: string | null; amount_cents: number }[] | null)?.[0];
+      if (slice) await recordHealedTransfer(sb, slice, payoutId, transfer);
       return "processed";
     }
     case "account.updated": {
@@ -141,6 +148,21 @@ async function applyChargeRefunded(sb: Admin, charge: Stripe.Charge): Promise<Ou
     if (charge.amount_refunded <= p.refunded_cents) return "processed";
 
     const full = charge.amount_refunded >= p.amount_cents;
+
+    // The books, before the row is mirrored, so a write that fails here is retried into this same
+    // branch rather than past it. Keyed by the running total, which is what Door Money's own refund
+    // names too: when that refund's webhook lands here first, this writes the event and refundRow
+    // finds it; when refundRow got there first, the mirror above has already returned.
+    const newlyRefunded = charge.amount_refunded - p.refunded_cents;
+    const latestRefund = charge.refunds?.data?.[0];
+    await recordRefund(sb, table === "purchases" ? { purchaseId: p.id } : { backingId: p.id }, {
+      by: "hand",
+      refundCents: newlyRefunded,
+      totalRefundedCents: charge.amount_refunded,
+      stripeObjectId: latestRefund?.id ?? charge.id,
+      occurredAt: typeof latestRefund?.created === "number" ? new Date(latestRefund.created * 1000) : null,
+    });
+
     const { error } = await sb
       .from(table)
       .update({ refunded_cents: charge.amount_refunded, refunded_at: new Date().toISOString(), payment_status: full ? "refunded" : "partially_refunded" })
@@ -201,6 +223,29 @@ async function refundDetail(sb: Admin, table: "purchases" | "backings", id: stri
   const row = data as unknown as B | null;
   if (!row) return null;
   return { to: row.patrons?.contact_email ?? null, patronName: row.display_name, actName: row.runs.acts.name, what: `a name on ${tierPlace(row.tier)}` };
+}
+
+/**
+ * The books for a transfer the Friday job sent and never wrote down. The slice's payment is read
+ * for its amount and fee, which the fee accrual needs; the write itself is keyed by the payout row
+ * and finds the job's own entry if the job did get that far.
+ */
+async function recordHealedTransfer(sb: Admin, slice: { purchase_id: string | null; backing_id: string | null; amount_cents: number }, payoutId: string, transfer: Stripe.Transfer) {
+  const payment = slice.purchase_id ? ({ purchaseId: slice.purchase_id } as const) : slice.backing_id ? ({ backingId: slice.backing_id } as const) : null;
+  if (!payment) return;
+  const table = payment.purchaseId ? "purchases" : "backings";
+  const { data, error } = await sb.from(table).select("amount_cents,fee_cents").eq("id", payment.purchaseId ?? payment.backingId).maybeSingle();
+  if (error) throw new Error(`transfer.created ${transfer.id}: ${error.message}`);
+  const row = data as { amount_cents: number; fee_cents: number } | null;
+  if (!row) return;
+  await recordTransfer(sb, payment, {
+    payoutId,
+    sliceCents: slice.amount_cents,
+    transferId: transfer.id,
+    occurredAt: new Date(transfer.created * 1000),
+    amountCents: row.amount_cents,
+    feeCents: row.fee_cents,
+  });
 }
 
 /* ---------------------------------------------------------------------------------------------

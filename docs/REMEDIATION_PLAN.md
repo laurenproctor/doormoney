@@ -267,7 +267,10 @@ minimum, and the pgTAP suite shows a stale offer held and not sold, twice.
 
 Give Door Money an authoritative financial history and a way to recover.
 
-**Status: the first of four pieces is built, on branch `remediation-phase-4-events`.**
+**Status: two of four pieces are built and applied; the ledger is written by every money path
+since 2026-09-24 (migrations 0055 and 0065).** Piece 1 (webhook event states) merged 2026-09-19 and
+piece 2 (the ledger) in two steps: the schema, 0055, on 2026-09-22 and the writer with 0065 on
+2026-09-24. Disputes and reconciliation are untouched.
 `docs/PHASE_4_INVENTORY.md` is the reading done beforehand: what exists, what is missing item by
 item, five things this list leaves out, and the decisions that have to be made before the dispute
 work can be written. That document proposes splitting this phase into four pieces, because it is
@@ -275,8 +278,18 @@ larger than the three before it and its halves do not depend on each other. The 
 webhook-event states and the worker that retries them: no new money behavior, and everything after
 it needs somewhere to record a failure.
 
-- Add an immutable ledger covering patron charges, Door Money fees, act liabilities, transfers,
+- [x] Add an immutable ledger covering patron charges, Door Money fees, act liabilities, transfers,
   refunds, transfer reversals, disputes, dispute fees, recoveries and adjustments. Entries balance.
+  Migration `0055` is the table: append only by grant and by trigger, a deferred constraint that
+  refuses an unbalanced event, and a unique index per (payment, event, account) that is the
+  idempotency key. `src/lib/ledger.ts` is the writer, called from the four paths that move money:
+  the charge and Stripe's own fee when a purchase or backing is held, the transfer and the fee it
+  earns on every Friday slice (and from `transfer.created` when the job died before writing it), and
+  the refund whether `refundRow` sent it or a person did in the Dashboard. Door Money earns its fee
+  as the money releases, which is `refundDue`'s arithmetic read the other way; a hand refund beyond
+  what was held is a receivable from the organizer (`organizer_receivable`, `0065`). `/admin` reads
+  revenue from `ledger_balances` and nothing else. Reversals, disputes, dispute fees and
+  recoveries are piece 3's entries, and `held_unresolved` waits on decision 16.
 - [x] Redesign webhook-event storage to distinguish received, processing, processed, and failed and
   retryable. A webhook that returns `ok: false` is not processed. Migration `0039` gives
   `stripe_events` six states, an attempt count, the error, a retry time and the payload;
@@ -292,7 +305,10 @@ it needs somewhere to record a failure.
   reversals and ledger entries.
 - Add a dead-letter queue, actionable staff alerts, and admin visibility into unresolved financial
   operations.
-- Calculate revenue from actual charges and ledger entries, not from configured lot prices.
+- [x] Calculate revenue from actual charges and ledger entries, not from configured lot prices.
+  `/admin`'s "earned" tile and its Books card are `ledger_balances`; the runs table's money column
+  is what each run's purchases were charged, refunds off. The musician dashboard's "worth" went
+  with the 2026-09-22 dashboard rework.
 - Replay tests using Stripe fixtures or the Stripe CLI in test mode.
 
 **Gate.** For every cent Stripe reports, Door Money can explain its source, current owner, state and

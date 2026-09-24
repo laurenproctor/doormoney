@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { recordRefund } from "@/lib/ledger";
 import { stripe } from "@/lib/stripe";
 
 /*
@@ -57,6 +58,7 @@ async function refundRow(sb: Admin, table: SourceTable, id: string, reason: Refu
 
   const { data: slices } = await sb.from("payout_schedule").select("id,amount_cents,status").eq(column, p.id);
   const paidNet = (slices ?? []).filter((s) => s.status === "paid").reduce((n, s) => n + s.amount_cents, 0);
+  const net = p.amount_cents - p.fee_cents;
   const amount = refundDue(p, paidNet);
 
   // Nothing left to send to the act either way.
@@ -65,10 +67,22 @@ async function refundRow(sb: Admin, table: SourceTable, id: string, reason: Refu
   if (amount <= 0) return { ok: true as const, refundedCents: 0, already: false };
   if (!p.stripe_payment_intent_id) return { ok: false as const, reason: `${key} has no payment to refund` };
 
-  await stripe.refunds.create(
+  const refund = await stripe.refunds.create(
     { payment_intent: p.stripe_payment_intent_id, amount, reason: "requested_by_customer", metadata: { [column]: p.id, door_money_reason: reason } },
     { idempotencyKey: `refund_${p.id}_${reason}` },
   );
+  // The books, before the row is marked: a write that fails after this is retried into "already"
+  // above, and the refund would never reach the ledger. Keyed by the total refunded, which is what
+  // the charge.refunded webhook for this same refund also names, so whichever arrives second
+  // finds it written. The unreleased net is this function's own figure from payout_schedule.
+  await recordRefund(sb, table === "purchases" ? { purchaseId: p.id } : { backingId: p.id }, {
+    by: "door_money",
+    refundCents: amount,
+    totalRefundedCents: amount,
+    unreleasedNetCents: Math.max(0, net - paidNet),
+    stripeObjectId: refund.id,
+    occurredAt: typeof refund.created === "number" ? new Date(refund.created * 1000) : null,
+  });
   await sb
     .from(table)
     .update({ refunded_cents: amount, refunded_at: new Date().toISOString(), payment_status: amount >= p.amount_cents ? "refunded" : "partially_refunded" })

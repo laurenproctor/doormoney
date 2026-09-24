@@ -3,9 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { tierPlace } from "@/lib/catalog";
 import { backingNotice, backingReceipt, sendEmail } from "@/lib/email";
 import { paymentBelongsToRow } from "@/lib/fundraiser-identity";
+import { chargeDetails, recordCharge } from "@/lib/ledger";
 import { feeCents, weeklySlices } from "@/lib/money";
 import { ownerEmail } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
+import { retrieveIntentWithCharge } from "@/lib/stripe";
 import { runUrl } from "@/lib/urls";
 
 /*
@@ -62,9 +64,18 @@ export async function fulfilBacking(sb: Admin, pi: Stripe.PaymentIntent) {
   }
   if (b.payment_status !== "requires_payment") return { ok: true as const, already: true };
 
+  // The delivered intent names its charge and nothing more. Read it back with the balance
+  // transaction, which is where Stripe states its fee, and write the books before the row is
+  // marked held: a hold that fails after this is retried into "already" above, and the entries are
+  // already there. The write is keyed, so a retry finds it rather than doubling it.
+  const charge = chargeDetails(await retrieveIntentWithCharge(pi.id));
+  const chargeId = charge.chargeId ?? chargeOf(pi);
+  if (chargeId) await recordCharge(sb, { backingId: b.id }, { amountCents: b.amount_cents, feeCents: b.fee_cents, ...charge, chargeId });
+  else console.error("backing held with no charge behind it, so nothing was written to the ledger", b.id, pi.id);
+
   const { data: updated, error } = await sb
     .from("backings")
-    .update({ payment_status: "held", stripe_payment_intent_id: pi.id, stripe_charge_id: chargeOf(pi) })
+    .update({ payment_status: "held", stripe_payment_intent_id: pi.id, stripe_charge_id: chargeId })
     .eq("id", b.id)
     .eq("payment_status", "requires_payment")
     .select("id");

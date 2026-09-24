@@ -1,5 +1,6 @@
 import { tierPlace } from "@/lib/catalog";
 import { alertsAddress, payoutProblem, recordReady, sendEmail } from "@/lib/email";
+import { recordTransfer } from "@/lib/ledger";
 import { lotName, notifyPayout } from "@/lib/purchases";
 import { slicePlan } from "@/lib/release";
 import { SITE } from "@/lib/site";
@@ -29,7 +30,7 @@ export type PayoutSummary = {
   closed: number;
 };
 
-type Source = { id: string; stripe_charge_id: string | null; payment_status: string; mark_status?: string | null };
+type Source = { id: string; amount_cents: number; fee_cents: number; stripe_charge_id: string | null; payment_status: string; mark_status?: string | null };
 type DueRow = {
   id: string;
   act_id: string;
@@ -50,7 +51,7 @@ async function dueRows(sb: ReturnType<typeof supabaseAdmin>, ranOn: string) {
     sb
       .from("payout_schedule")
       // A sponsorship's logo decides whether its money is owed, so the Friday job reads it here.
-      .select(`id,act_id,amount_cents,due_on,purchase_id,backing_id,${source}!inner(id,stripe_charge_id,payment_status${source === "purchases" ? ",mark_status" : ""}),${ACT}`)
+      .select(`id,act_id,amount_cents,due_on,purchase_id,backing_id,${source}!inner(id,amount_cents,fee_cents,stripe_charge_id,payment_status${source === "purchases" ? ",mark_status" : ""}),${ACT}`)
       .eq("status", "scheduled")
       .not(source === "purchases" ? "purchase_id" : "backing_id", "is", null)
       .lte("due_on", ranOn);
@@ -84,6 +85,7 @@ export async function runWeeklyPayouts(today = new Date()): Promise<PayoutSummar
       skip(plan.hold);
       continue;
     }
+    if (!source) continue; // slicePlan has already refused a slice with no payment behind it
     try {
       const transfer = await transferSliceToAct({
         amountCents: row.amount_cents,
@@ -107,6 +109,23 @@ export async function runWeeklyPayouts(today = new Date()): Promise<PayoutSummar
         paidByAct.set(row.act_id, entry);
         if (row.purchase_id) touchedPurchases.add(row.purchase_id);
         if (row.backing_id) touchedBackings.add(row.backing_id);
+
+        // The books: the slice left, and the fee it earns. Keyed by the row, so a transfer.created
+        // delivery for this same transfer finds it written. If this write fails the transfer has
+        // still gone and the row still says paid, which is the truth; the failure is reported
+        // below with the others so a person hears about it today rather than at reconciliation.
+        try {
+          await recordTransfer(sb, row.purchase_id ? { purchaseId: row.purchase_id } : { backingId: row.backing_id ?? "" }, {
+            payoutId: row.id,
+            sliceCents: row.amount_cents,
+            transferId: transfer.id,
+            occurredAt: new Date(transfer.created * 1000),
+            amountCents: source.amount_cents,
+            feeCents: source.fee_cents,
+          });
+        } catch (e) {
+          summary.errors.push({ payoutId: row.id, message: `transfer ${transfer.id} was sent and the slice is marked paid, but the ledger entry was not written: ${e instanceof Error ? e.message : String(e)}` });
+        }
       }
     } catch (e) {
       summary.errors.push({ payoutId: row.id, message: e instanceof Error ? e.message : String(e) });

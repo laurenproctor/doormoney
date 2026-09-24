@@ -41,6 +41,9 @@ is subscribed to eighteen.
 
 ### 1. An immutable ledger whose entries balance
 
+**Built: the schema 2026-09-22 (0055), the writer 2026-09-24 (0065, `src/lib/ledger.ts`).** What
+follows is the reading as it was.
+
 **Missing entirely.** There is no ledger table. What the system knows about money is the current
 state of four tables (`purchases`, `backings`, `payout_schedule`, `financial_operations`), each of
 which is updated in place. A row says where a payment is now and nothing about how it got there.
@@ -102,6 +105,9 @@ Friday, which is reported weekly and never escalates.
 
 ### 6. Revenue from charges, not list prices
 
+**Done 2026-09-24.** `/admin` reads `ledger_balances`; the runs table sums what purchases were
+charged, refunds off. The musician dashboard's "worth" went with the 2026-09-22 rework.
+
 **Three places add up list prices.** `/admin` totals sold sponsorships by `lots.price_cents`, twice
 (`src/app/admin/page.tsx`, lines 167 and 168). The musician's dashboard computes "worth" the same
 way (`src/app/dashboard/page.tsx`, line 44). An auction sells above its list price and a refund
@@ -124,7 +130,8 @@ name. That should be re-checked on the day, from a terminal.
 
 ## What the plan does not list, and the gate requires
 
-1. **Stripe's own fees.** No file in the repo mentions them. Stripe takes its processing fee out
+1. **Stripe's own fees.** Recorded since 2026-09-24: `stripe_fee` entries, read off the charge's
+   balance transaction when the payment is held. As first written: no file in the repo mentions them. Stripe takes its processing fee out
    of the platform balance, which means out of Door Money's 15%. On a full refund Door Money
    returns its fee and Stripe keeps theirs, so every refund costs Door Money money that no table
    records. The gate says every cent Stripe reports. These are cents Stripe reports, on the
