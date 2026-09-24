@@ -19,6 +19,7 @@ const SEEDED: Record<string, string> = {
   film: "Film",
   theater: "Theater",
   hospitality: "Restaurants & hospitality",
+  digital_workers: "Digital workers",
   other: "Other",
 };
 

@@ -192,7 +192,7 @@ test("every category in the registry has its own wording, and none of it is musi
   for (const insert of sql.matchAll(/insert into public\.fundraiser_categories \([^)]*\) values([\s\S]*?);/g)) {
     for (const row of insert[1].matchAll(/\('([a-z][a-z0-9_]*)',\s*'/g)) registered.add(row[1]);
   }
-  assert.deepEqual([...registered].sort(), ["film", "hospitality", "music", "other", "sports", "theater"], "the registry, as the migrations leave it");
+  assert.deepEqual([...registered].sort(), ["digital_workers", "film", "hospitality", "music", "other", "sports", "theater"], "the registry, as the migrations leave it");
 
   const MUSIC_ONLY = /musician|\bbands?\b|\bshows?\b|\btours?\b|\bmerch\b|\blogos?\b|\bgigs?\b|\bruns?\b|\bpatrons?\b/i;
   for (const category of [...registered].filter((c) => c !== "music")) {

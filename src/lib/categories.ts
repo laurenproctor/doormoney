@@ -139,6 +139,13 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
       },
     },
   },
+  digital_workers: {
+    organizer: "digital worker",
+    organizers: "digital workers",
+    titleLabel: "Project or practice name",
+    details: {},
+    formNote: "Describe the work you are funding and the audience you actually reach. Choose only placements on accounts and calls you control.",
+  },
   // Other, a draft-only category (migration 0049). The neutral words, written out so the choice is
   // in the file and not a fallback somebody might change. No details, on purpose: the registry
   // allows none, and the shared fields are the whole form. There are no templates and no starter

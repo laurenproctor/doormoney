@@ -94,7 +94,7 @@ test("no other migration opens it: every file that names hospitality leaves publ
 });
 
 test("hospitality is a starting category since 2026-09-21, and being listed opens nothing", () => {
-  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "other"]);
+  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "digital_workers", "other"]);
   assert.equal(STARTING_CATEGORIES.find((c) => c.key === "hospitality")!.label, "Restaurants & hospitality");
   assert.doesNotMatch(read("src/lib/starting-categories.ts"), /key: "restaurants"/);
   // The patron-side pickers read the registry's own preference switch (migration 0050), in both places, and never

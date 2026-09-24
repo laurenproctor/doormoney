@@ -44,18 +44,18 @@ const MUSIC_ONLY = /musician|\bbands?\b|\bshows?\b|\btours?\b|\bmerch\b|\blogos?
 // The starting categories, and the sentence that keeps them a start
 // ---------------------------------------------------------------
 
-test("the starting categories are the contract's six, by the registry's keys and names", () => {
-  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "other"]);
-  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Other"]);
+test("the starting categories use the registry's keys and names", () => {
+  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.key), ["music", "sports", "film", "theater", "hospitality", "digital_workers", "other"]);
+  assert.deepEqual(STARTING_CATEGORIES.map((c) => c.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Digital workers", "Other"]);
   for (const c of STARTING_CATEGORIES) {
     assert.match(c.placements, /^Possible placements include /, `${c.key}: an example is a possibility, never an included benefit`);
     assert.doesNotMatch(`${c.funds} ${c.placements}`, /guarantee|verified|certif|impressions/i, c.key);
   }
 });
 
-test("the section renders all six without counting them, says they are a start and not a limit, and says what is open today", () => {
+test("the section renders the starting set without counting it, says it is a start and what is open today", () => {
   const out = text(renderToStaticMarkup(createElement(StartingCategories, { labels: {} })));
-  for (const name of ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Other"]) assert.ok(out.includes(name), name);
+  for (const name of ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Digital workers", "Other"]) assert.ok(out.includes(name), name);
   assert.doesNotMatch(out, /\b(?:four|five|six) categories\b/i, "the heading never counts a set that grows");
   assert.ok(out.includes(STARTING_CATEGORIES_NOTE));
   assert.match(out, /A start, not a limit/);
