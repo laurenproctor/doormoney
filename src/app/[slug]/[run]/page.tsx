@@ -1,4 +1,5 @@
 import { getCategoryLabels } from "@/lib/category-registry";
+import { signedInSponsor } from "@/lib/auth";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getBoard } from "@/lib/boards";
@@ -53,6 +54,8 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
   // fundraiser by the same organizer. See src/lib/payment-returns.ts.
   const paid = await lotPaidNotice(typeof sp.paid === "string" ? sp.paid : undefined, board.run.id);
 
-  const labels = await getCategoryLabels();
-  return <BoardView board={board} slug={slug} paid={paid} categoryName={labels[board.run.categoryKey]} />;
+  // The signed-in visitor, if any, so the sponsor forms use the account's email. Null with no
+  // session and null with no database: the page renders the same either way.
+  const [labels, viewer] = await Promise.all([getCategoryLabels(), signedInSponsor()]);
+  return <BoardView board={board} slug={slug} paid={paid} categoryName={labels[board.run.categoryKey]} viewer={viewer} />;
 }

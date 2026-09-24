@@ -6,12 +6,14 @@ import { placeBid } from "@/app/actions/bids";
 import { Button } from "@/components/Button";
 import { formatMoney } from "@/lib/money";
 import { elementsAppearance } from "@/lib/stripeAppearance";
+import { sponsorFields, type SignedInSponsor } from "@/lib/sponsor-identity";
 
 /**
  * Placing a bid, in two steps: who and how much, then the card.
  *
- * Straight bidding, so the number here is what the patron pays if it wins. Nobody signs in to bid,
- * so the form takes a name and an email and offers to keep the name off the page.
+ * Straight bidding, so the number here is what the patron pays if it wins. Nobody has to sign in
+ * to bid, so the form takes a name and an email and offers to keep the name off the page. A
+ * visitor who is signed in bids under the account's email and is not asked for one.
  *
  * The card is stored, not charged. It sits against the patron until the close, and only the winning
  * bid is ever charged; an outbid patron has nothing to release. Taking it here is what stops a bid
@@ -25,10 +27,26 @@ const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 type Details = { amountCents: number; name: string; email: string; anonymous: boolean };
 
-export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lotId: string; lotName: string; minimumCents: number; onDone: () => void; onClose: () => void }) {
+export function BidForm({
+  lotId,
+  lotName,
+  minimumCents,
+  viewer = null,
+  onDone,
+  onClose,
+}: {
+  lotId: string;
+  lotName: string;
+  minimumCents: number;
+  /** The signed-in visitor, whose account email the bid is recorded under. */
+  viewer?: SignedInSponsor | null;
+  onDone: () => void;
+  onClose: () => void;
+}) {
+  const start = sponsorFields(viewer);
   const [amount, setAmount] = useState(String(Math.round(minimumCents / 100)));
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(start.name);
+  const [email, setEmail] = useState(start.email);
   const [anonymous, setAnonymous] = useState(false);
   const [website, setWebsite] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +131,7 @@ export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lot
           <CardStep lotId={lotId} details={card.details} website={website} onDone={onDone} />
         </Elements>
       ) : (
-        <form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-[140px_1fr_1fr_auto] md:items-end">
+        <form onSubmit={submit} className={`mt-5 grid gap-4 md:items-end ${start.emailIsAccount ? "md:grid-cols-[140px_1fr_auto]" : "md:grid-cols-[140px_1fr_1fr_auto]"}`}>
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Bid</span>
             <div className="field flex items-center gap-1 px-3.5 py-3">
@@ -136,28 +154,31 @@ export function BidForm({ lotId, lotName, minimumCents, onDone, onClose }: { lot
             <span className="caps mb-2 block text-[14px] text-muted">Name, as it should appear</span>
             <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="organization" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
-          <label className="block">
-            <span className="caps mb-2 block text-[14px] text-muted">Email</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
-          </label>
+          {!start.emailIsAccount && (
+            <label className="block">
+              <span className="caps mb-2 block text-[14px] text-muted">Email</span>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
+            </label>
+          )}
           <Button type="submit" disabled={pending} arrow>
             {pending ? "One second" : confirmed ? "Confirm the bid" : stripePromise ? "Continue" : "Place the bid"}
           </Button>
+          {start.emailIsAccount && <p className="col-span-full max-w-none text-[14px] leading-[1.6] text-muted">The bid is recorded under {email}.</p>}
 
-          <label className="flex items-center gap-2.5 text-[14.5px] text-muted md:col-span-4">
+          <label className="flex items-center gap-2.5 text-[14.5px] text-muted col-span-full">
             <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
             Show the bid as &quot;Anonymous patron&quot; on this page. The organizer still sees the name.
           </label>
           {/* Left empty by people, filled in by robots. */}
           <input value={website} onChange={(e) => setWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
 
-          <p className="max-w-none text-[14px] leading-[1.6] text-muted md:col-span-4">
+          <p className="max-w-none text-[14px] leading-[1.6] text-muted col-span-full">
             {stripePromise
               ? "A bid is what the patron pays if it wins. The card is stored now and charged only if the bid wins at the close. An outbid patron is never charged."
               : "A bid is what the patron pays if it wins. Nothing is charged now. At the close the top bid has 48 hours to put the money up, and the spot goes to the next bid if it does not."}
           </p>
           {error && (
-            <p role="alert" className="text-[14.5px] text-accent-ink md:col-span-4">
+            <p role="alert" className="text-[14.5px] text-accent-ink col-span-full">
               {error}
             </p>
           )}

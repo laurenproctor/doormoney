@@ -8,6 +8,7 @@ import { OfferSummary } from "@/components/OfferSummary";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/money";
 import { offerHighlights, type OfferTermsView } from "@/lib/offer-terms";
+import type { SignedInSponsor } from "@/lib/sponsor-identity";
 import { BidForm } from "./BidForm";
 
 export type LotView = {
@@ -83,7 +84,10 @@ export function BoardLots({
   heading,
   terms,
   deliveryTerms = [],
+  viewer = null,
 }: {
+  /** The signed-in visitor, handed to the forms so the account's email is used rather than typed. */
+  viewer?: SignedInSponsor | null;
   /** The line beside the pay button, in this fundraiser's own words (checkoutTerms). */
   terms?: string;
   lots: LotView[];
@@ -194,6 +198,8 @@ export function BoardLots({
                   )}
                 </div>
                 <div className="min-w-[200px] min-[681px]:text-right">
+                  {/* In the flow above the amount, never floated over it: a stamp on top of a number is two things fighting for one corner. */}
+                  {l.sold && <div className="caps mb-3 inline-block bg-accent px-2.5 py-1 text-[14px] text-on-accent">Sold</div>}
                   <div className="caps text-[14px] text-muted">{label}</div>
                   <div className={`heading mt-1 text-[30px] leading-none ${l.sold ? "text-muted" : "text-accent-ink"}`}>{formatMoney(amount)}</div>
                   <div className="mt-2 flex items-center gap-2 min-[681px]:justify-end">
@@ -241,6 +247,7 @@ export function BoardLots({
                     offerTerms={l.offerTerms}
                     offerPolicy={deliveryTerms}
                     termsFingerprint={l.termsFingerprint}
+                    viewer={viewer}
                     onClose={() => setOpen(null)}
                   />
                 )}
@@ -255,6 +262,7 @@ export function BoardLots({
                     offerTerms={l.offerTerms}
                     offerPolicy={deliveryTerms}
                     termsFingerprint={l.termsFingerprint}
+                    viewer={viewer}
                     onClose={() => setOpen(null)}
                   />
                 )}
@@ -263,6 +271,7 @@ export function BoardLots({
                     lotId={l.id}
                     lotName={l.name.toLowerCase()}
                     minimumCents={l.minimumCents}
+                    viewer={viewer}
                     onClose={() => setOpen(null)}
                     onDone={() => {
                       setOpen(null);
@@ -271,7 +280,6 @@ export function BoardLots({
                     }}
                   />
                 )}
-                {l.sold && <div className="caps absolute right-5 top-4 bg-accent px-2.5 py-1 text-[14px] text-on-accent min-[681px]:right-7 min-[681px]:top-6">Sold</div>}
               </div>
             );
           })}
