@@ -22,8 +22,8 @@ insert into patron_profiles (profile_id,display_name,published,published_at,patr
 -- The preference switch, and what it did not open
 -- ---------------------------------------------------------------
 select results_eq($$select key from fundraiser_categories where preference_enabled order by key$$,
-  $$values ('film'),('hospitality'),('music'),('sports'),('theater')$$,
-  'a patron may list the four that publish, and hospitality');
+  $$values ('digital_workers'),('film'),('hospitality'),('music'),('sports'),('theater')$$,
+  'a patron may list the four that publish, hospitality and digital workers');
 select is((select preference_enabled from fundraiser_categories where key='other'),false,
   'the other category is not a preference: Other on the profile is a typed tag');
 select results_eq($$select key from fundraiser_categories where publish_enabled order by key$$,
@@ -79,7 +79,7 @@ select throws_ok($$update patron_profiles set header_path='e5000000-0000-4000-80
   'so nobody can point their header at somebody else''s object');
 select throws_ok($$update fundraiser_categories set preference_enabled=true where key='other'$$,'42501',null,'nor switch a category on');
 select results_eq($$select key from fundraiser_categories where preference_enabled order by key$$,
-  $$values ('film'),('hospitality'),('music'),('sports'),('theater')$$,
+  $$values ('digital_workers'),('film'),('hospitality'),('music'),('sports'),('theater')$$,
   'the profile form reads the list under the account''s own session');
 select throws_ok($$insert into patron_profile_categories (profile_id,category_key) values ('e5000000-0000-4000-8000-000000000002','hospitality')$$,'42501',null,
   'and a category is still recorded by the server, never by the browser');
