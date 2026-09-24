@@ -28,8 +28,9 @@
  *   category has no registry row is unavailable, whatever it says here. Hospitality is in the
  *   registry as a draft-only category (0047) with no delivery policy, so its kits resolve to
  *   draft_only: they can shape a private draft, which cannot be published or paid for. Digital
- *   workers follow the same rule (migration 20260924162520). Before a category's migration is
- *   applied to a database its kits resolve to unavailable there, which is the safe reading.
+ *   workers can publish after migration 20260924172831, with only test-mode payments under its
+ *   proposed policy. Before a category's migration is applied to a database its kits resolve to
+ *   unavailable there, which is the safe reading.
  *
  * Category keys are the registry's keys and category names are the registry's labels
  * (src/lib/category-words.ts). There is no second list of categories here.
@@ -439,7 +440,7 @@ export const STARTER_KITS: readonly StarterKit[] = [
     enabled: true, draftOnly: true,
   },
 
-  // Digital workers can start private projects using controlled placements. These kits suggest
+  // Digital workers can start projects using controlled placements. These kits suggest
   // options; the worker decides what to offer and price. Client accounts, meetings and research
   // participants are not sponsor inventory.
   {
@@ -457,7 +458,7 @@ export const STARTER_KITS: readonly StarterKit[] = [
       sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
     },
     note: "Offer only accounts, meetings and public project pages you control. Do not include client communications or private meeting details.",
-    enabled: true, draftOnly: true,
+    enabled: true, draftOnly: false,
   },
   {
     key: "build_digital_product", version: 1, categoryKey: "digital_workers",
@@ -473,7 +474,7 @@ export const STARTER_KITS: readonly StarterKit[] = [
       sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
     },
     note: "The product's users are not automatically the audience for an email signature, meeting background or project page. Describe each placement's actual reach.",
-    enabled: true, draftOnly: true,
+    enabled: true, draftOnly: false,
   },
   {
     key: "publish_independent_research", version: 1, categoryKey: "digital_workers",
@@ -489,7 +490,7 @@ export const STARTER_KITS: readonly StarterKit[] = [
       sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
     },
     note: "A sponsor has no say in the findings. Do not offer visibility in confidential research calls or identify participants.",
-    enabled: true, draftOnly: true,
+    enabled: true, draftOnly: false,
   },
 
   // Other (migration 0049) has no kits, on purpose. A kit is a situation Door Money can describe,

@@ -32,8 +32,8 @@ select is((select count(*)::int from delivery_policies where category_key='hospi
   'it has no delivery policy, proposed or active');
 select ok((public.current_delivery_policy('hospitality')).category_key is null,
   'so the policy a purchase would be sold under does not exist');
-select is((select count(*)::int from fundraiser_categories where publish_enabled),4,
-  'the four launch categories are still the only ones that publish');
+select is((select count(*)::int from fundraiser_categories where publish_enabled),5,
+  'the four launch categories and digital workers may publish; hospitality remains draft-only');
 
 select results_eq($$select key from surfaces where category_key='hospitality' order by sort$$,
   $$values ('sponsored_martini_cart'),('sponsored_table_plaque'),('sponsored_restaurant_space'),('chef_residency'),('dinner_series'),('community_meal_program')$$,

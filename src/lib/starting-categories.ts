@@ -102,7 +102,7 @@ export const CATEGORY_TEST: readonly string[] = [
  * Music is published and takes payments. Publishing is decided per category in the registry and
  * live payment by the category's delivery
  * policy (src/lib/payment-gate.ts), and only the owner switches either on. Restaurants &
- * hospitality, Digital workers and Other have neither switch. Change this sentence when
+ * hospitality and Other have neither switch; Digital workers may publish in test mode. Change this sentence when
  * one of them opens; never imply on a marketing page that every category can be sponsored already.
  */
 export const AVAILABILITY_NOTE =

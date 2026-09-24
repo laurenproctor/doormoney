@@ -31,6 +31,7 @@ export default async function FlagPage({ params }: Props) {
 
   const open = Boolean(target.flagged_at && !target.flag_cleared_at);
   const period = periodOf(target.kind).noun;
+  const digitalWorkerPlacement = target.source === "purchases" && target.categoryKey === "digital_workers";
   const recordHref = `/record/${id}`;
 
   return (
@@ -53,8 +54,9 @@ export default async function FlagPage({ params }: Props) {
             </p>
           ) : (
             <p className="mt-5">
-              A sponsorship is paid for before the {period} starts, and the money reaches {target.actName} week by week as it goes on. If the {period} stops
-              happening, saying so here holds the rest of it.
+              {digitalWorkerPlacement
+                ? `If ${target.actName} has not delivered the placement promised in your offer, tell Door Money here. Unreleased money stays on hold while we review the promise and the evidence.`
+                : <>A sponsorship is paid for before the {period} starts, and the money reaches {target.actName} week by week as it goes on. If the {period} stops happening, saying so here holds the rest of it.</>}
             </p>
           )}
           <p className="mt-4 text-[15px] text-muted">
@@ -71,12 +73,12 @@ export default async function FlagPage({ params }: Props) {
         <Section>
           <SectionHead eyebrow="What this does">The money stops, and a person reads it</SectionHead>
           <p className="text-muted">
-            Slices already sent for weeks the {period} played stay sent. Everything not yet released is held. Door Money reads the note, checks with{" "}
-            {target.actName}, and either releases the hold or sends the unreleased part back to the card it was paid with. The act is not told by this
-            page; Door Money looks first.
+            {digitalWorkerPlacement
+              ? <>Money already released is not reversed automatically. Door Money reads your note, checks the purchased offer and evidence with {target.actName}, and refunds the unreleased share and its fee if the agreed placement was not delivered. This page puts unpaid releases on hold; it does not cancel a sponsorship or issue a refund by itself.</>
+              : <>Slices already sent for weeks the {period} played stay sent. Everything not yet released is held. Door Money reads the note, checks with {target.actName}, and either releases the hold or sends the unreleased part back to the card it was paid with. The act is not told by this page; Door Money looks first.</>}
           </p>
           <div className="mt-8 max-w-[720px]">
-            <FlagForm id={id} what={target.what} />
+            <FlagForm id={id} what={target.what} placeholder={digitalWorkerPlacement ? "The promised project-page credit was not on the agreed page during the delivery window." : undefined} />
           </div>
         </Section>
       )}
@@ -85,8 +87,9 @@ export default async function FlagPage({ params }: Props) {
         <Section>
           <SectionHead eyebrow="Next">Nothing else to do</SectionHead>
           <p className="text-muted">
-            The hold stays until Door Money has looked. Anything already sent to {target.actName} for weeks the {period} played is not affected. A note
-            about the outcome comes by email.
+            {digitalWorkerPlacement
+              ? <>The hold stays until Door Money has checked the purchased promise and evidence. Anything already released is not automatically reversed. A note about the outcome comes by email.</>
+              : <>The hold stays until Door Money has looked. Anything already sent to {target.actName} for weeks the {period} played is not affected. A note about the outcome comes by email.</>}
           </p>
         </Section>
       )}

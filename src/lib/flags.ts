@@ -42,12 +42,13 @@ export type FlagTarget = Row & {
   actSlug: string;
   runTitle: string;
   runStatus: string;
+  categoryKey: string | null;
   /** runs.kind, so the pages can name the period rather than call it "the run". */
   kind: string;
 };
 
-const RUN = "runs!inner(title,kind,status,acts!inner(name,slug))";
-type RunShape = { title: string; kind: string; status: string; acts: { name: string; slug: string } };
+const RUN = "runs!inner(title,kind,status,category_key,acts!inner(name,slug))";
+type RunShape = { title: string; kind: string; status: string; category_key: string | null; acts: { name: string; slug: string } };
 
 /** The purchase or backing behind a record id, in the shape the flag pages need. Null if nothing matches. */
 export async function flagTarget(sb: Admin, id: string): Promise<FlagTarget | null> {
@@ -71,6 +72,7 @@ export async function flagTarget(sb: Admin, id: string): Promise<FlagTarget | nu
       actSlug: run.acts.slug,
       runTitle: run.title,
       runStatus: run.status,
+      categoryKey: run.category_key,
       kind: run.kind,
     };
   }
@@ -92,6 +94,7 @@ export async function flagTarget(sb: Admin, id: string): Promise<FlagTarget | nu
     actSlug: row.runs.acts.slug,
     runTitle: row.runs.title,
     runStatus: row.runs.status,
+    categoryKey: row.runs.category_key,
     kind: row.runs.kind,
   };
 }

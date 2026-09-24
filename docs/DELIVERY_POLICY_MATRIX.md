@@ -84,7 +84,7 @@ Youth sports: `category_details.level = 'youth'` means no evidence item may be p
 
 ### Digital workers: proposed evidence policy
 
-Digital workers has a proposed version 1 evidence policy in migration 20260924171215. Its three controlled placements, evidence expectations and release sequence are in `docs/DIGITAL_WORKERS_RELEASE_PROPOSAL.md`. The category remains draft-only, so even a test-mode purchase needs a separate publication change; the proposed policy cannot accept live money.
+Digital workers has a proposed version 1 evidence policy in migration 20260924171215. Its three controlled placements, evidence expectations and release sequence are in `docs/DIGITAL_WORKERS_RELEASE_PROPOSAL.md`. Migration 20260924172831 separately enables publication for test-mode purchases. The proposed policy cannot accept live money. Migration 20260924172818 removed an unsupported cancellation promise; 20260924174814 says sponsors cannot cancel for convenience, but may flag a failure to deliver for Door Money review and a refund of unreleased money when confirmed. Self-service cancellation remains unavailable; a reviewed-failure refund flow still needs test-mode verification.
 
 ## 5. States
 

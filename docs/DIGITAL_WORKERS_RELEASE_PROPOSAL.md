@@ -1,6 +1,6 @@
 # Digital workers: project-page placement and release path
 
-**Status:** Placement scope approved; evidence policy recorded as proposed. The category still saves private drafts only. This document does not open publication or payments.
+**Status:** Placement scope approved; evidence policy proposed. Migration 20260924172831 opens publication and Stripe test-mode purchases. The policy remains closed for live money.
 
 ## Inventory
 
@@ -20,11 +20,13 @@ The project-page offer names the public URL, its placement near the project intr
 
 Use the existing evidence release rule: accept the sponsor's materials first, then release each deliverable's share when its evidence is attached. An unmet deliverable stays held under the existing policy; the organizer cannot rewrite cancellation or refund behavior in the offer. The offer must state the quantity and delivery window that the worker can support. Any reach estimate must have its basis; neither template promises that a recipient read an email or a participant noticed a background.
 
+Sponsors cannot cancel because their plans changed, including before the worker accepts materials. If a worker fails to deliver the agreed placement, the sponsor can flag that purchase. Door Money compares the purchased offer, its delivery window and evidence with what happened, then returns the unreleased share and its fee when non-delivery is confirmed. Flagging pauses unpaid releases during review; migration 20260924174814 also pauses any evidence release created after the flag. The flag is not a refund by itself. A sponsor's missing or unsuitable materials do not establish worker non-delivery. Money already released is not automatically reversed. The current admin path for a confirmed case is a manual Stripe refund for that purchase; an in-app reviewed-failure resolution and test-mode refund pass remain prerequisites for live activation.
+
 ## Steps before launch
 
-1. Record the proposed evidence policy without enabling publication. That row exists in migration 20260924171215; it cannot accept live money.
-2. In a separate change, enable publishing and remove the three kits' `draftOnly` flags after reviewing the offer and public screens with all three placements. This is required before a test purchase is possible.
-3. With Stripe test keys, run a purchase, materials approval, evidence release and refund, including a page credit whose URL changes or disappears. Check the purchased snapshot and sponsor's record.
-4. Activate the policy for live payments only after those flows and sponsor-facing terms have been reviewed and the wider money-path safety gate is met. Patron preference is already enabled and does not affect any of these gates.
+1. The proposed evidence policy is recorded in migration 20260924171215. Migration 20260924172818 removed an unsupported pre-approval cancellation promise; 20260924174814 limits sponsor refund requests to reviewed failures to deliver. Sponsors can flag a placement, but the app does not offer self-service cancellation. Organizer cancellation and declined materials use the existing refund path.
+2. The separate publication change in 20260924172831 enables public fundraisers and removes the kits' `draftOnly` flags. The policy remains proposed, so live payment stays closed.
+3. With Stripe test keys, run a purchase, materials approval, evidence release and organizer cancellation/refund. Also flag a missed page credit whose URL changes or disappears and test the reviewed, purchase-specific refund. Check the purchased snapshot and sponsor's record.
+4. Activate the policy for live payments only after those flows and sponsor-facing terms have been reviewed and the wider money-path safety gate is met. Patron preference does not affect any of these gates.
 
 No laptop sticker is offered.
