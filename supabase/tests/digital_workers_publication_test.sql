@@ -2,7 +2,7 @@
 -- evidence and release eligibility. The second purchase remains refundable on cancellation.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 select is((select publish_enabled from fundraiser_categories where key='digital_workers'),true,
   'digital workers may publish after the separate category switch');
@@ -65,8 +65,8 @@ select results_eq($$select policy_category,policy_version,snapshot->'policy'->>'
   $$values ('digital_workers',1,'evidence')$$,'the purchase snapshots its policy and evidence release rule');
 select is((select snapshot->'policy'->'terms'->>'sponsor_cancellation' from purchase_snapshots s join purchases p on p.id=s.purchase_id
   where p.lot_id='f7000000-0000-4000-8000-0000000000a1'),
-  'Not offered. A sponsor may flag a placement and Door Money looks at it.',
-  'the sponsor receives the corrected cancellation term');
+  'A sponsor cannot cancel because plans changed. If the worker fails to deliver the agreed placement, the sponsor may flag it. Door Money reviews the offer and evidence and refunds the unreleased share, including its fee, when it confirms non-delivery.',
+  'the sponsor receives the reviewed failure-to-deliver term, without cancellation for convenience');
 select is((select d.title from deliverables d join purchases p on p.id=d.purchase_id
   where p.lot_id='f7000000-0000-4000-8000-0000000000a1'),'Project page credit',
   'the promised page credit becomes a deliverable');
@@ -98,6 +98,14 @@ select is((select fulfil_lot_purchase(id,'pi_atlas_email','ch_atlas_email','cs_a
 select is((select count(*)::int from payout_schedule s join purchases p on p.id=s.purchase_id
   where p.lot_id='f7000000-0000-4000-8000-0000000000a2'),0,
   'the undelivered email placement has released nothing and remains fully refundable');
+update purchases set flagged_at=now(),flag_note='The promised email credit did not appear.'
+ where lot_id='f7000000-0000-4000-8000-0000000000a2';
+insert into payout_schedule (act_id,purchase_id,due_on,amount_cents)
+ select 'f7000000-0000-4000-8000-00000000000a',p.id,'2026-12-04',8500
+ from purchases p where p.lot_id='f7000000-0000-4000-8000-0000000000a2';
+select is((select s.status::text from payout_schedule s join purchases p on p.id=s.purchase_id
+  where p.lot_id='f7000000-0000-4000-8000-0000000000a2'),'paused',
+  'evidence laid after a sponsor flag stays paused while Door Money reviews');
 update runs set status='cancelled',cancelled_at=now() where slug='atlas-publication';
 select is((select count(*)::int from purchases p join lots l on l.id=p.lot_id join runs r on r.id=l.run_id
   where r.slug='atlas-publication' and l.id='f7000000-0000-4000-8000-0000000000a2'

@@ -30,6 +30,8 @@ These stable keys are the starting set, not the maximum scope of the product. Th
 
 Digital workers' three templates describe placement, not an impression count. A sender can document an eligible email signature, a worker can count eligible meetings without disclosing recipients or attendees, and a dated capture and URL can document a sponsor credit on a public project page the worker controls. Sponsorships must not assume the worker controls an employer's email, a client's meeting or a client's site. A page credit does not prove visits or clicks.
 
+A sponsor cannot cancel a Digital workers engagement for a change of plans. If the worker fails to deliver the purchased placement, the sponsor may flag it for Door Money review; confirmed non-delivery returns the unreleased share and its fee. Flagging alone does not refund or reverse a completed release.
+
 Digital workers have three editable project starters: an independent project, a digital product, and independent research. The first two suggest all three approved placement templates; the research starter suggests the email signature alone. All three set no price or reach, and create no sponsorship option until the worker chooses one.
 
 Patrons can list Digital workers among the categories they support. That preference is descriptive; the separate publication switch and proposed delivery policy decide what a fundraiser may do.

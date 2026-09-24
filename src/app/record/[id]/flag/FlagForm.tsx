@@ -4,7 +4,7 @@ import { raisePatronFlag } from "@/app/actions/flags";
 import { Button } from "@/components/Button";
 
 /** The patron says the run is not happening. One note, one button, and the money stops. */
-export function FlagForm({ id, what }: { id: string; what: string }) {
+export function FlagForm({ id, what, placeholder = "The dates came off the venue's calendar." }: { id: string; what: string; placeholder?: string }) {
   const [note, setNote] = useState("");
   const [website, setWebsite] = useState("");
   const [done, setDone] = useState<{ paused: number } | null>(null);
@@ -45,7 +45,7 @@ export function FlagForm({ id, what }: { id: string; what: string }) {
           onChange={(e) => setNote(e.target.value)}
           rows={4}
           maxLength={1000}
-          placeholder="The dates came off the venue's calendar."
+          placeholder={placeholder}
           className="field w-full px-3.5 py-3 text-[15px]"
         />
       </label>
