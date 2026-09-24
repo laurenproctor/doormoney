@@ -1,8 +1,8 @@
 # Phase 4: deployment checklist
 
 Phase 4 is being built in four pieces, as `docs/PHASE_4_INVENTORY.md` proposes. This document grows
-a section per piece. Piece 1 (0039) and the first half of piece 2 (0055) are applied to the hosted
-project. Piece 2's second half (0065) is below.
+a section per piece. Piece 1 (0039) and both halves of piece 2 (0055 and 0065, the latter applied
+2026-09-24) are on the hosted project. Piece 2's checklist is below.
 
 ## Piece 1: webhook event states and the retry worker
 

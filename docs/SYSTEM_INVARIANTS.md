@@ -69,10 +69,10 @@ configured; that half of the rule is the action's.
 
 ### A hold on an option costs something to ask for
 
-**Held** as of migration `0065`, for checkout.
+**Held** as of migration `0064`, for checkout.
 
 `/api/checkout` holds a fixed-price option for whoever posts to it: a name, an email address, no
-account and no card. That is the right rule for one buyer and, until 0065, the whole rule: nothing
+account and no card. That is the right rule for one buyer and, until 0064, the whole rule: nothing
 counted the requests, because the handler runs where memory does not survive from one request to
 the next. A script could hold every option on the site and hold each again as it lapsed, and the
 hold lasted forty-five minutes against a session that died at thirty-five.
