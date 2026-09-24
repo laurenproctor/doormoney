@@ -190,22 +190,36 @@ test("a backing that cannot be fulfilled throws, so Stripe sends the event again
 
 const transfer = (event: Stripe.Event) => event.data.object as Stripe.Transfer;
 
-/** A Supabase client that remembers the writes asked of it and answers with `result`. */
-function recordingDb(result: { error: { message: string } | null } = { error: null }) {
-  const writes: { table: string; row: Record<string, unknown>; filters: Record<string, unknown> }[] = [];
+/**
+ * A Supabase client that remembers the writes asked of it and answers with `result`. With no
+ * `data` in the answer, an update marked nothing: the payout job had already written the row.
+ */
+function recordingDb(result: { data?: unknown; error: { message: string } | null } = { error: null }) {
+  const writes: { table: string; verb: string; row: Record<string, unknown>; filters: Record<string, unknown> }[] = [];
   const sb = {
     from(table: string) {
-      const write = { table, row: {} as Record<string, unknown>, filters: {} as Record<string, unknown> };
+      const write = { table, verb: "select", row: {} as Record<string, unknown>, filters: {} as Record<string, unknown> };
       const query = {
         update(row: Record<string, unknown>) {
+          write.verb = "update";
           write.row = row;
           writes.push(write);
+          return query;
+        },
+        insert(rows: Record<string, unknown>[]) {
+          write.verb = "insert";
+          write.row = { rows };
+          writes.push(write);
+          return query;
+        },
+        select() {
           return query;
         },
         eq(key: string, value: unknown) {
           write.filters[key] = value;
           return query;
         },
+        maybeSingle: async () => ({ data: (result.data as unknown[] | undefined)?.[0] ?? null, error: result.error }),
         then<T>(resolve: (value: typeof result) => T) {
           return Promise.resolve(result).then(resolve);
         },
@@ -247,6 +261,33 @@ test("a transfer that names a payout marks that payout paid, at the transfer's o
   assert.equal(writes[0]!.row.paid_at, new Date(transfer(event).created * 1000).toISOString());
   // Only a slice still waiting, so a replay cannot repay one already settled.
   assert.deepEqual(writes[0]!.filters, { id: "po1", status: "scheduled" });
+});
+
+test("a transfer the job never wrote down gets its ledger entries here, and one the job did write is left alone", async () => {
+  // The update marked the row, so the job died between the transfer and the write. The stand-in
+  // answers every read with the same row, which serves as the slice and as the payment behind it.
+  const slice = { id: "po1", purchase_id: "p1", backing_id: null, amount_cents: 1700, fee_cents: 1500 };
+  const { sb, writes } = recordingDb({ data: [slice], error: null });
+  const event = fixture("transfer.created");
+  transfer(event).metadata = { payout_id: "po1" };
+
+  assert.equal(await applyStripeEvent(sb, event), "processed");
+  const ledger = writes.filter((w) => w.table === "ledger_entries");
+  assert.equal(ledger.length, 1, "the books were written once");
+  const rows = ledger[0]!.row.rows as { event_key: string; account_key: string; amount_cents: number; purchase_id?: string }[];
+  assert.ok(rows.every((r) => r.purchase_id === "p1"));
+  assert.deepEqual(
+    rows.filter((r) => r.event_key === "transfer_po1").map((r) => [r.account_key, r.amount_cents]),
+    [["organizer_liability", 1700], ["platform_cash", -1700]],
+  );
+  // The stand-in reads the same row back as the ledger, so "already released" is what it holds:
+  // the fee accrual is whatever the arithmetic says on top of that, and it balances.
+  const release = rows.filter((r) => r.event_key === "release_po1");
+  assert.equal(release.reduce((n, r) => n + r.amount_cents, 0), 0);
+
+  const { sb: settled, writes: none } = recordingDb({ error: null });
+  assert.equal(await applyStripeEvent(settled, event), "processed");
+  assert.equal(none.filter((w) => w.table === "ledger_entries").length, 0, "a row the job already marked is the job's to have written");
 });
 
 test("a payout that cannot be written down throws, so Stripe sends the event again", async () => {

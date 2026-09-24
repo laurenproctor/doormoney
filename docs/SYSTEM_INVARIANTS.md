@@ -108,11 +108,19 @@ that exists at Stripe and not here, or here and not at Stripe, goes unnoticed.
 
 ### Financial totals must be derivable from an immutable ledger
 
-**Violated.** Enforced by Phase 4.
+**Partly held**, since migrations 0055 and 0064. Reconciliation is Phase 4's piece 4.
 
-There is no ledger. Totals are computed from mutable rows on `purchases`, `backings` and
-`payout_schedule`, and revenue is read from configured lot prices rather than from what was actually
-charged.
+`ledger_entries` (0055) is append only by grant and by trigger, every event's entries sum to zero
+or the deferred constraint refuses the write, and `src/lib/ledger.ts` writes it from every path
+that moves money: the charge and Stripe's fee when a payment is held, the transfer and the fee it
+earns on every Friday slice, and the refund from either side. `/admin` reads revenue from
+`ledger_balances` (0064) and from nothing else; the last sum of list prices went with it.
+
+What is still missing is the check the other way. The tables stay authoritative and the ledger
+mirrors them, so a transfer the job sent and could not write down is a real transfer the books do
+not show, and until piece 4 compares the books to Stripe's own objects that gap is found only by a
+person reading the payout summary or `ledger_payment_balances`. Reversals, disputes and recoveries
+have no entries yet either; they are piece 3.
 
 ### A payment only moves the way money moves
 

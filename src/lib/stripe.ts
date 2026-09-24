@@ -97,6 +97,15 @@ export async function createBackingIntent(params: {
   });
 }
 
+/**
+ * A payment intent with its charge and the charge's balance transaction expanded, which is where
+ * Stripe states its processing fee. One read, made by the paths that fulfil a payment, so the books
+ * can record the charge and the fee together (src/lib/ledger.ts, chargeDetails).
+ */
+export async function retrieveIntentWithCharge(paymentIntentId: string) {
+  return stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["latest_charge.balance_transaction"] });
+}
+
 /** One weekly slice to an act. The idempotency key is the payout row id, so a retried job never pays twice. */
 export async function transferSliceToAct(params: {
   amountCents: number;

@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 -- `supabase test db` provides this schema; creating it keeps the file runnable under plain psql too.
 create schema if not exists tests;
-select plan(128);
+select plan(130);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed gives us two acts, their lots, bids and patrons.
@@ -542,6 +542,8 @@ select throws_ok($$truncate table financial_operations$$, '42501', null, 'nor tr
 select throws_ok('select * from ledger_entries limit 1',   '42501', null, 'anon cannot read the ledger');
 select throws_ok('select * from ledger_accounts limit 1',  '42501', null, 'nor the chart of accounts');
 select throws_ok('select * from ledger_imbalances limit 1','42501', null, 'nor what is out of balance');
+select throws_ok('select * from ledger_balances limit 1',  '42501', null, 'nor the books by account (0064)');
+select throws_ok('select * from ledger_payment_balances limit 1', '42501', null, 'nor the books by payment');
 
 reset role;
 select tests.as_user('11111111-1111-1111-1111-111111111111');
