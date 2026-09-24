@@ -3,16 +3,18 @@
 -- Run with `npm run test:db:docker` (what CI runs) or `supabase test db` against a local stack.
 --
 -- Three things are under test. The boundary: the attempts table holds addresses and email
--- addresses, and nothing in a browser reads, writes or calls any of it. The limits: the eleventh
--- try from one address in ten minutes, the thirty-first on one option, the fourth open hold from
--- one address and the third for one email are each refused with a word, and the attempt that was
--- refused is counted like any other. And the hand-off: an ordinary request reaches
--- begin_lot_purchase unchanged and gets its refusals back as the same words it raised.
+-- addresses, and nothing in a browser reads, writes or calls any of it. The limits: the
+-- sixty-first try from one address in ten minutes, the thirty-first on one option, the
+-- twenty-sixth open hold from one address and the third for one email are each refused with a
+-- word, and the attempt that was refused is counted like any other. The address is loose on
+-- purpose (a room at a show shares one) and the email is the key that is tight. And the
+-- hand-off: an ordinary request reaches begin_lot_purchase unchanged and gets its refusals back
+-- as the same words it raised.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 create schema if not exists tests;
-select plan(37);
+select plan(35);
 
 -- ---------------------------------------------------------------
 -- Nothing in a browser touches any of it.
@@ -37,12 +39,13 @@ select throws_ok(
 reset role;
 
 -- ---------------------------------------------------------------
--- Fixtures: ten fixed-price spots on the seed's open Gutter Hymns fundraiser, born the way
--- auctions_test.sql makes its own (grandfathered, because they carry no offer terms).
+-- Fixtures: forty fixed-price spots on the seed's open Gutter Hymns fundraiser, born the way
+-- auctions_test.sql makes its own (grandfathered, because they carry no offer terms). A room's
+-- worth, because the per-address cap is a room's worth.
 -- ---------------------------------------------------------------
 insert into lots (id, run_id, surface_key, label, price_cents, mode, status, terms_grandfathered)
 select ('a4000000-0000-0000-0000-0000000000' || lpad(i::text, 2, '0'))::uuid, '22222222-2222-2222-2222-222222222222', 'hang_tags', 'Hold test ' || i, 5000, 'fixed', 'open', true
-  from generate_series(1, 10) i;
+  from generate_series(1, 40) i;
 
 -- One try: the route's call, with the fee it would compute, answered as a word ('ok' for a hold).
 create function tests.try(ip text, email text, lot uuid, patron uuid, amount int default 5000, bid uuid default null, at_time timestamptz default now())
@@ -67,15 +70,15 @@ select is((select count(*)::int from checkout_attempts where client_ip = '203.0.
 select is((select count(*)::int from purchases where lot_id = 'a4000000-0000-0000-0000-000000000001'), 1, 'and nothing else was written');
 
 -- ---------------------------------------------------------------
--- 1. Attempts from one address: ten in ten minutes.
+-- 1. Attempts from one address: sixty in ten minutes. Loose, because a show shares an address.
 -- ---------------------------------------------------------------
 select is(
   (select count(*)::int from (select tests.try('203.0.113.2', 'other@example.com', 'a4000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002') as word
-                                from generate_series(1, 9)) s where word = 'spot_being_taken'),
-  9, 'nine more tries from the same address each reach the hold decision');
+                                from generate_series(1, 59)) s where word = 'spot_being_taken'),
+  59, 'fifty-nine more tries from the same address each reach the hold decision');
 select is(tests.try('203.0.113.2', 'other@example.com', 'a4000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002'),
-  'too_many_from_ip', 'the eleventh try from one address in ten minutes is refused');
-select is((select count(*)::int from checkout_attempts where client_ip = '203.0.113.2'), 11, 'and counted, so a client that keeps trying keeps itself out');
+  'too_many_from_ip', 'the sixty-first try from one address in ten minutes is refused');
+select is((select count(*)::int from checkout_attempts where client_ip = '203.0.113.2'), 61, 'and counted, so a client that keeps trying keeps itself out');
 select is(tests.try('203.0.113.2', 'other@example.com', 'a4000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000002'),
   'too_many_from_ip', 'whichever option it asks for');
 select is(tests.try('203.0.113.2', 'other@example.com', 'a4000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000002', at_time => now() + interval '11 minutes'),
@@ -98,25 +101,27 @@ select is(tests.try('198.51.100.99', 'fresh@example.com', 'a4000000-0000-0000-00
   'ok', 'and the same sender holds a different option, because the limit was the option''s');
 
 -- ---------------------------------------------------------------
--- 3. Open holds from one address: three at a time.
+-- 3. Open holds from one address: twenty-five at a time, a room full of buyers on one Wi-Fi.
 -- ---------------------------------------------------------------
-select is(tests.try('203.0.113.3', 'h1@example.com', 'a4000000-0000-0000-0000-000000000005', 'c1000000-0000-0000-0000-000000000004'), 'ok', 'one hold from an address');
-select is(tests.try('203.0.113.3', 'h2@example.com', 'a4000000-0000-0000-0000-000000000006', 'c1000000-0000-0000-0000-000000000004'), 'ok', 'two');
-select is(tests.try('203.0.113.3', 'h3@example.com', 'a4000000-0000-0000-0000-000000000007', 'c1000000-0000-0000-0000-000000000004'), 'ok', 'three');
-select is(tests.try('203.0.113.3', 'h4@example.com', 'a4000000-0000-0000-0000-000000000008', 'c1000000-0000-0000-0000-000000000004'),
-  'too_many_holds_ip', 'a fourth open hold from the same address is refused');
-select is((select status::text from lots where id = 'a4000000-0000-0000-0000-000000000008'), 'open', 'and that option was not held');
+select is(
+  (select count(*)::int from (select tests.try('203.0.113.3', 'h' || i || '@example.com', ('a4000000-0000-0000-0000-0000000000' || lpad((i + 4)::text, 2, '0'))::uuid, 'c1000000-0000-0000-0000-000000000004') as word
+                                from generate_series(1, 25) i) s where word = 'ok'),
+  25, 'twenty-five patrons behind one address each hold an option under their own email');
+select is(tests.try('203.0.113.3', 'h26@example.com', 'a4000000-0000-0000-0000-000000000030', 'c1000000-0000-0000-0000-000000000004'),
+  'too_many_holds_ip', 'a twenty-sixth open hold from the same address is refused');
+select is((select status::text from lots where id = 'a4000000-0000-0000-0000-000000000030'), 'open', 'and that option was not held');
 
 -- A hold that lapsed is nobody's, and stops counting on its own.
 update purchases set expires_at = now() - interval '1 minute' where lot_id = 'a4000000-0000-0000-0000-000000000005';
-select is(tests.try('203.0.113.3', 'h4@example.com', 'a4000000-0000-0000-0000-000000000008', 'c1000000-0000-0000-0000-000000000004'),
-  'ok', 'once one of the three has lapsed there is room for another');
+select is(tests.try('203.0.113.3', 'h26@example.com', 'a4000000-0000-0000-0000-000000000030', 'c1000000-0000-0000-0000-000000000004'),
+  'ok', 'once one of the twenty-five has lapsed there is room for another');
 
 -- ---------------------------------------------------------------
--- 4. Open holds for one email: two at a time, from wherever they come.
+-- 4. Open holds for one email: two at a time, from wherever they come. This is the key that is
+--    tight, because one buyer is one email whatever address they are on.
 -- ---------------------------------------------------------------
-select is(tests.try('203.0.113.4', 'two@example.com', 'a4000000-0000-0000-0000-000000000009', 'c1000000-0000-0000-0000-000000000005'), 'ok', 'one hold for an email');
-select is(tests.try('203.0.113.5', 'Two@Example.com', 'a4000000-0000-0000-0000-000000000010', 'c1000000-0000-0000-0000-000000000005'), 'ok', 'two, from another address and in other capitals');
+select is(tests.try('203.0.113.4', 'two@example.com', 'a4000000-0000-0000-0000-000000000031', 'c1000000-0000-0000-0000-000000000005'), 'ok', 'one hold for an email');
+select is(tests.try('203.0.113.5', 'Two@Example.com', 'a4000000-0000-0000-0000-000000000032', 'c1000000-0000-0000-0000-000000000005'), 'ok', 'two, from another address and in other capitals');
 select is(tests.try('203.0.113.6', 'two@example.com', 'a4000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000005'),
   'too_many_holds_email', 'a third open hold for the same email is refused');
 select is((select status::text from lots where id = 'a4000000-0000-0000-0000-000000000002'), 'open', 'and that option was not held');

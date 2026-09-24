@@ -78,10 +78,13 @@ the next. A script could hold every option on the site and hold each again as it
 hold lasted forty-five minutes against a session that died at thirty-five.
 
 The counting is now the database's, in `checkout_attempts` and `begin_lot_purchase_limited`, which
-records the attempt, applies four limits under an advisory lock per address and per email (ten
-attempts from one address in ten minutes, thirty on one option, three open holds from one
+records the attempt, applies four limits under an advisory lock per address and per email (sixty
+attempts from one address in ten minutes, thirty on one option, twenty-five open holds from one
 address, two for one email), and only then calls `begin_lot_purchase`, which is untouched and is
-still the one place a hold is decided. A refusal is a word, never an exception, so the refused
+still the one place a hold is decided. The email is the key that is tight and the address is
+loose on purpose: patrons buy at shows, where a room shares the venue's Wi-Fi or a carrier's
+address, and a per-address limit sized for one person would refuse the crowd. The per-option
+limit is the backstop against a script, whatever addresses it comes from. A refusal is a word, never an exception, so the refused
 attempt stays counted. The route asks a honeypot before it reads anything, says one sentence for
 all four limits, and asks Stripe for a session that ends when the hold does: thirty-one minutes,
 released by `checkout.session.expired` through the existing webhook path, with the database's own

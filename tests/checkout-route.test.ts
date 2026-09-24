@@ -7,8 +7,10 @@
   to B. Every test here is a way that could happen, or a way the fix could break what already works.
 
   The second half is who may hold an option at all (migration 0064): the honeypot, the four
-  limits the database answers with a word, the one sentence the route says for all of them, and
-  the hold ending with the Stripe session.
+  limits the database answers with a word (60 attempts per address and 30 per option in ten
+  minutes, 25 open holds per address, 2 per email; loose on the address because a show shares
+  one, tight on the email because one buyer is one email), the one sentence the route says for
+  all of them, and the hold ending with the Stripe session.
 
   Nothing talks to Postgres or Stripe. The database is a small in-memory stand-in that records
   every write, and the two Stripe calls record what they were asked to create. The hold decision
@@ -407,7 +409,7 @@ test("with no address header every request is one place, which is what a limit d
   assert.equal(held()[0].args.p_client_ip, "198.51.100.4", "the first forwarded address when that is all there is");
 });
 
-for (const [word, limit] of [["too_many_from_ip", "the per-address limit"], ["too_many_on_lot", "the per-option limit"], ["too_many_holds_ip", "the open-hold cap for an address"], ["too_many_holds_email", "the open-hold cap for an email"]] as const) {
+for (const [word, limit] of [["too_many_from_ip", "the per-address attempt limit (60 in ten minutes)"], ["too_many_on_lot", "the per-option attempt limit (30 in ten minutes)"], ["too_many_holds_ip", "the open-hold cap for an address (25)"], ["too_many_holds_email", "the open-hold cap for an email (2)"]] as const) {
   test(`${limit}: refused in one plain sentence, with nothing held and no session made`, async () => {
     reset();
     holdAnswer = { purchase_id: null, refusal: word };

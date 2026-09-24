@@ -21,10 +21,18 @@
 -- Four limits, all counted at the database's clock against the attempts table, so that they hold
 -- for every instance of the request handler at once:
 --
---   1. Attempts from one address:  at most 10 in 10 minutes.
+--   1. Attempts from one address:  at most 60 in 10 minutes.
 --   2. Attempts on one option:     at most 30 in 10 minutes, from anywhere.
---   3. Open holds from one address: at most 3 at a time.
+--   3. Open holds from one address: at most 25 at a time.
 --   4. Open holds for one email:   at most 2 at a time.
+--
+-- The email is the main key, and the address is deliberately loose. Patrons buy at live shows,
+-- where a whole room shares the venue's Wi-Fi or a carrier's address, so a tight per-address
+-- limit would refuse the crowd that the fundraiser is for (the owner's rule, 2026-09-24). Two
+-- open holds per email is what one buyer needs; twenty-five per address is a room full of them.
+-- The per-option limit is the backstop against a script: whatever addresses it comes from, one
+-- option cannot be asked for more than thirty times in ten minutes, and an option nobody honest
+-- asks for that often.
 --
 -- An attempt counts whether or not it was refused, so a client that keeps trying keeps itself
 -- locked out. An open hold is a purchase this route made that is still waiting for payment and
@@ -81,9 +89,9 @@ declare
   v_ip text := coalesce(nullif(trim(p_client_ip), ''), 'unknown');
   v_email text := lower(trim(p_email));
   v_window interval := interval '10 minutes';
-  v_ip_attempts int := 10;
+  v_ip_attempts int := 60;
   v_lot_attempts int := 30;
-  v_ip_holds int := 3;
+  v_ip_holds int := 25;
   v_email_holds int := 2;
   v_attempt_id uuid;
   v_purchase_id uuid;
