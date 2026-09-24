@@ -43,10 +43,10 @@ const safeNext = (next: string) => next.startsWith("/") && !next.startsWith("//"
 // The ideas
 // ---------------------------------------------------------------
 
-test("the organizer page has ideas for the five kinds of organizer, in this order", () => {
-  assert.deepEqual(EXAMPLE_GROUPS.map((g) => g.categoryKey), ["music", "sports", "film", "theater", "hospitality"]);
+test("the organizer page has ideas for its named categories, in this order", () => {
+  assert.deepEqual(EXAMPLE_GROUPS.map((g) => g.categoryKey), ["music", "sports", "film", "theater", "hospitality", "digital_workers"]);
   assert.deepEqual(EXAMPLE_GROUPS.map((g) => g.heading), [
-    "Musicians and tours", "Sports teams and tournaments", "Filmmakers and screenings", "Theater productions", "Restaurants & hospitality",
+    "Musicians and tours", "Sports teams and tournaments", "Filmmakers and screenings", "Theater productions", "Restaurants & hospitality", "Digital workers and independent projects",
   ]);
 });
 
@@ -60,6 +60,8 @@ test("the concrete examples are there, each under the kind of organizer it belon
   assert.ok(titled("hospitality", /branded table plaque/i));
   assert.ok(titled("hospitality", /chef residency/i));
   assert.ok(titled("hospitality", /sponsored dinner series/i));
+  assert.ok(titled("digital_workers", /independent project/i));
+  assert.ok(titled("digital_workers", /digital product/i));
 });
 
 test("every idea is a real starter kit in the category it is listed under, and no kit is listed twice", () => {
@@ -90,7 +92,7 @@ test("an idea is a possibility in plain words: no number, no guarantee, no music
 // ---------------------------------------------------------------
 
 test("an idea in one of Door Money's categories opens the new fundraiser form on its starter kit", () => {
-  for (const e of examples.filter((x) => x.categoryKey !== "hospitality")) {
+  for (const e of examples.filter((x) => ["music", "sports", "film", "theater"].includes(x.categoryKey))) {
     const status = exampleStatus(starterKit(e.kitKey)!, LABELS);
     assert.equal(status, "open", e.kitKey);
     assert.equal(exampleHref(e.kitKey, status, true), `/dashboard/runs/new?template=${e.kitKey}`);
@@ -150,14 +152,20 @@ test("a database that answers nothing does not relabel the four starting categor
   assert.equal(exampleStatus(starterKit("fund_tour")!, {}), "open");
   assert.equal(exampleStatus(starterKit("production")!, {}), "open");
   assert.equal(exampleStatus(starterKit("chef_residency")!, {}), "coming_soon");
+  assert.equal(exampleStatus(starterKit("start_independent_project")!, {}), "coming_soon");
 });
 
 test("with the category in the registry, its ideas link as private drafts, and are never called open", () => {
   for (const e of examples.filter((x) => x.categoryKey === "hospitality")) {
     assert.equal(exampleStatus(starterKit(e.kitKey)!, LABELS_0047), "draft_only", e.kitKey);
   }
-  for (const e of examples.filter((x) => x.categoryKey !== "hospitality")) {
+  for (const e of examples.filter((x) => ["music", "sports", "film", "theater"].includes(x.categoryKey))) {
     assert.equal(exampleStatus(starterKit(e.kitKey)!, LABELS_0047), "open", `${e.kitKey}: a fifth row changes nothing for the four`);
+  }
+  const withDigital = { ...LABELS_0047, digital_workers: "Digital workers" };
+  for (const e of examples.filter((x) => x.categoryKey === "digital_workers")) {
+    assert.equal(exampleStatus(starterKit(e.kitKey)!, withDigital), "draft_only", e.kitKey);
+    assert.equal(exampleHref(e.kitKey, "draft_only", true), `/dashboard/runs/new?template=${e.kitKey}`);
   }
   const status = exampleStatus(starterKit("sponsored_martini_cart")!, LABELS_0047);
   assert.equal(status, "draft_only");

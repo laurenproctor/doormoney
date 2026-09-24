@@ -30,6 +30,10 @@ These stable keys are the starting set, not the maximum scope of the product. Th
 
 Digital workers' two templates describe placement, not an impression count. A sender can document an eligible email signature and a worker can count eligible meetings without disclosing recipients or attendees. Sponsorships must not assume the worker controls an employer's email or a client's meeting.
 
+Digital workers have three editable project starters: an independent project, a digital product, and independent research. These point only to the two approved placement templates; the research starter suggests the email signature alone. All three remain private drafts, set no price or reach, and create no sponsorship option until the worker chooses one.
+
+Patrons can list Digital workers among the categories they support. That preference is descriptive; it does not make any Digital workers fundraiser public or available to buy.
+
 The internal key for Restaurants & hospitality is `hospitality`. There is no `restaurants` key, and there must not be one: a second key would split the category's templates, words, and future delivery policy. A restaurant is one kind of hospitality organizer, not the only one.
 
 Other is a controlled way in, not a way around the explanation. It has no templates, no suggested prices, no starter kits, and no fields of its own, so nothing describes the sponsorship except the organizer. A fundraiser in Other must still state what the funding enables, who it reaches, and what the sponsor receives, and it passes the same shared publication gate as every category when that gate is eventually opened for it. While it cannot publish, it is not offered as a sponsor preference.
