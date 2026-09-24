@@ -105,6 +105,10 @@ test("the starting kits are the ones asked for, under the registry's category ke
     "sponsored_martini_cart", "sponsored_table_plaque", "chef_residency", "dinner_series", "community_meal_program", "sponsored_restaurant_space",
   ]);
   assert.deepEqual(keysOf(starterKitsForCategory("digital_workers")), ["start_independent_project", "build_digital_product", "publish_independent_research"]);
+  for (const key of ["start_independent_project", "build_digital_product"]) {
+    assert.ok(starterKit(key)?.suggestedOpportunityKeys.includes("project_page_credit"), key);
+  }
+  assert.deepEqual(starterKit("publish_independent_research")?.suggestedOpportunityKeys, ["monthly_email_signature"]);
   assert.equal(STARTER_KITS.length, 22, "and no others");
 });
 
