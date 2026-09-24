@@ -439,9 +439,9 @@ export const STARTER_KITS: readonly StarterKit[] = [
     enabled: true, draftOnly: true,
   },
 
-  // Digital workers (migration 20260924162520) can start private projects using only the two
-  // approved placements. These kits suggest options; the worker decides what to offer and price.
-  // A client's email account, meetings or research participants are not sponsor inventory.
+  // Digital workers can start private projects using controlled placements. These kits suggest
+  // options; the worker decides what to offer and price. Client accounts, meetings and research
+  // participants are not sponsor inventory.
   {
     key: "start_independent_project", version: 1, categoryKey: "digital_workers",
     label: "Start an independent project",
@@ -449,14 +449,14 @@ export const STARTER_KITS: readonly StarterKit[] = [
     whatItFunds: "The worker's time, tools and production work on a project they control.",
     suggestedSponsorTypes: ["Tools used by the project's audience", "Professional services serving that audience", "Businesses connected to the work"],
     suggestedNeeds: ["Dedicated project time", "Tools and subscriptions", "Design and production", "Publishing the finished work"],
-    suggestedOpportunityKeys: ["monthly_email_signature", "virtual_meeting_background"],
+    suggestedOpportunityKeys: ["monthly_email_signature", "virtual_meeting_background", "project_page_credit"],
     prefill: {
       title: "Independent project",
       purpose: "Time, tools and production for an independent project.",
       audience_description: "People the project is made for, and the recipients or meeting participants the worker can actually reach through the options they choose.",
       sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
     },
-    note: "Offer only accounts and meetings you control. Do not include client communications or private meeting details.",
+    note: "Offer only accounts, meetings and public project pages you control. Do not include client communications or private meeting details.",
     enabled: true, draftOnly: true,
   },
   {
@@ -466,13 +466,13 @@ export const STARTER_KITS: readonly StarterKit[] = [
     whatItFunds: "Research, design, development and the work of making a product usable.",
     suggestedSponsorTypes: ["Software companies serving the intended users", "Professional tools relevant to the product", "Businesses serving the same field"],
     suggestedNeeds: ["User research", "Design and development", "Accessibility review", "Hosting and launch materials"],
-    suggestedOpportunityKeys: ["monthly_email_signature", "virtual_meeting_background"],
+    suggestedOpportunityKeys: ["monthly_email_signature", "virtual_meeting_background", "project_page_credit"],
     prefill: {
       purpose: "Research, design and development to bring the product to a usable first release.",
       audience_description: "The people the product aims to serve, plus the actual recipients and meeting participants reached through any selected sponsorship option.",
       sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
     },
-    note: "The product's users are not automatically the audience for an email signature or meeting background. Describe each placement's actual reach.",
+    note: "The product's users are not automatically the audience for an email signature, meeting background or project page. Describe each placement's actual reach.",
     enabled: true, draftOnly: true,
   },
   {

@@ -144,7 +144,7 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
     organizers: "digital workers",
     titleLabel: "Project or practice name",
     details: {},
-    formNote: "Describe the work you are funding and the audience you actually reach. Choose only placements on accounts and calls you control.",
+    formNote: "Describe the work you are funding and the audience you actually reach. Choose only placements on accounts, calls and public project pages you control.",
   },
   // Other, a draft-only category (migration 0049). The neutral words, written out so the choice is
   // in the file and not a fallback somebody might change. No details, on purpose: the registry

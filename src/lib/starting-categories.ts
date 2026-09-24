@@ -60,7 +60,7 @@ export const STARTING_CATEGORIES: readonly StartingCategory[] = [
     key: "digital_workers",
     label: "Digital workers",
     funds: "Independent digital projects, production, research, and the tools needed to do the work.",
-    placements: "Possible placements include a monthly email signature and a virtual meeting background on calls the worker joins.",
+    placements: "Possible placements include a monthly email signature, a virtual meeting background on eligible calls, and a credit on a project page the worker controls.",
   },
   // A controlled way in, not a way round the explanation. It has no templates, no suggested price
   // and no starter kit, so nothing here names a placement: the organizer states it.
