@@ -27,8 +27,8 @@ select results_eq($$select key from fundraiser_categories where preference_enabl
 select is((select preference_enabled from fundraiser_categories where key='other'),false,
   'the other category is not a preference: Other on the profile is a typed tag');
 select results_eq($$select key from fundraiser_categories where publish_enabled order by key$$,
-  $$values ('film'),('music'),('sports'),('theater')$$,
-  'and the same four publish as before: listing hospitality published nothing');
+  $$values ('digital_workers'),('film'),('music'),('sports'),('theater')$$,
+  'the fifth publisher is digital workers; listing hospitality published nothing');
 select is((select count(*)::int from delivery_policies where category_key in ('hospitality','other')),0,
   'nor did it give either a delivery policy');
 select lives_ok($$insert into patron_profile_categories (profile_id,category_key) values ('e5000000-0000-4000-8000-000000000001','hospitality')$$,
