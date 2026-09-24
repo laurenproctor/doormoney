@@ -326,7 +326,10 @@ credentials does not break published board links.
 ## Phase 6: production and abuse hardening
 
 - Durable rate limits on checkout, bidding, contact, newsletter, auth and expensive public actions,
-  plus bot protection where it fits.
+  plus bot protection where it fits. Checkout's is done ahead of the phase (migration 0064, the
+  `checkout_attempts` table and `begin_lot_purchase_limited`), because an unlimited hold was a way
+  to stop every sale; see `docs/SYSTEM_INVARIANTS.md`, "A hold on an option costs something to ask
+  for". Bidding, contact, newsletter and auth are still open.
 - Validate required production environment variables at startup, and remove fallbacks that let the
   app quietly run in mock mode.
 - Structured logging, error monitoring, financial alerts and request correlation ids.

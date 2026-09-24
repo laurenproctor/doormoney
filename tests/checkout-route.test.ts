@@ -6,11 +6,20 @@
   is the one the fan is looking at. Before this branch a backing made from A's widget was written
   to B. Every test here is a way that could happen, or a way the fix could break what already works.
 
+  The second half is who may hold an option at all (migration 0064): the honeypot, the four
+  limits the database answers with a word (60 attempts per address and 30 per option in ten
+  minutes, 25 open holds per address, 2 per email; loose on the address because a show shares
+  one, tight on the email because one buyer is one email), the one sentence the route says for
+  all of them, and the hold ending with the Stripe session.
+
   Nothing talks to Postgres or Stripe. The database is a small in-memory stand-in that records
-  every write, and the two Stripe calls record what they were asked to create.
+  every write, and the two Stripe calls record what they were asked to create. The hold decision
+  is the database's (begin_lot_purchase_limited), so here it is an answer the test sets:
+  supabase/tests/checkout_holds_test.sql is where the counting itself is proved.
 */
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
+import type Stripe from "stripe";
 
 const ACT = { id: "ac000000-0000-4000-8000-000000000001", slug: "gutter-hymns", name: "Gutter Hymns" };
 const OTHER_ACT = { id: "ac000000-0000-4000-8000-000000000002", slug: "second-stage", name: "Second Stage" };
@@ -45,6 +54,11 @@ const lotOn = (id: string, runId: string, act: typeof ACT) => {
 type Write = { table: string; verb: string; payload?: Record<string, unknown>; filters: Record<string, unknown> };
 let writes: Write[] = [];
 let rpcs: { fn: string; args: Record<string, unknown> }[] = [];
+/** What begin_lot_purchase_limited answers next: a hold, or one of its words. */
+let holdAnswer: { purchase_id: string | null; refusal: string | null } = { purchase_id: "purchase-1", refusal: null };
+/** The purchases the stand-in database holds, as the webhook reads them back (with the lot joined). */
+type PurchaseRow = { id: string; lot_id: string; payment_status: string; lots: { mode: string; winner_bid_id: string | null; run_id: string } };
+let purchases: PurchaseRow[] = [];
 let intents: Record<string, unknown>[] = [];
 let sessions: Record<string, unknown>[] = [];
 /** Whatever key the test run started with, put back after the tests that set one. */
@@ -63,11 +77,13 @@ function from(table: string) {
     }
     if (table === "delivery_policies") return policies === "unreadable" ? [] : policies.filter((p) => p.category_key === s.filters.category_key);
     if (table === "lots") return [lotOn(LOT_A, A, ACT), lotOn(LOT_B, B, ACT), lotOn(LOT_THEATER, THEATER, OTHER_ACT)].filter((l) => l.id === s.filters.id);
+    if (table === "purchases") return purchases.filter((r) => s.filters.id === undefined || r.id === s.filters.id);
     return [];
   };
   const settle = () => {
     if (s.verb !== "select") {
       writes.push({ table, verb: s.verb, payload: s.payload, filters: s.filters });
+      if (table === "purchases" && s.verb === "delete") purchases = purchases.filter((r) => !(r.id === s.filters.id && r.payment_status === s.filters.payment_status));
       return { data: s.verb === "insert" ? { id: `${table}-row-${writes.length}` } : null, error: null };
     }
     if (table === "delivery_policies" && policies === "unreadable") return { data: null, error: { message: "relation does not exist" } };
@@ -89,7 +105,28 @@ function from(table: string) {
   };
   return b;
 }
-const admin = { from, rpc: async (fn: string, args: Record<string, unknown>) => { rpcs.push({ fn, args }); return { data: "purchase-1", error: null }; } };
+/**
+ * begin_lot_purchase_limited, as far as the route can see it: one row, a purchase id or a word.
+ * A hold that is granted is written into the stand-in's purchases, the way the real one would be
+ * found by the webhook afterwards.
+ */
+function rpc(fn: string, args: Record<string, unknown>) {
+  rpcs.push({ fn, args });
+  const answer = () => {
+    if (fn !== "begin_lot_purchase_limited") return { data: null, error: null };
+    if (holdAnswer.purchase_id) {
+      const lotId = String(args.p_lot_id);
+      const runId = lotId === LOT_A ? A : lotId === LOT_B ? B : THEATER;
+      purchases.push({ id: holdAnswer.purchase_id, lot_id: lotId, payment_status: "requires_payment", lots: { mode: "fixed", winner_bid_id: null, run_id: runId } });
+    }
+    return { data: { ...holdAnswer }, error: null };
+  };
+  return {
+    maybeSingle: async () => answer(),
+    then(resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) { return Promise.resolve(answer()).then(resolve, reject); },
+  };
+}
+const admin = { from, rpc };
 
 mock.module("@/lib/supabase/server", { namedExports: { supabaseAdmin: () => admin, supabaseServer: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }) } });
 mock.module("@/lib/patrons", { namedExports: { patronFor: async () => "patron-1", payingProfileId: () => null } });
@@ -108,7 +145,7 @@ const post = (body: Record<string, unknown>) => POST(new Request("http://localho
 const backing = (extra: Record<string, unknown>) => post({ kind: "backing", slug: ACT.slug, tier: "thank_you", displayName: "Dana", email: "dana@example.com", ...extra });
 const lot = (lotId: string) => post({ kind: "lot", lotId, patronName: "Kettle St. Coffee", email: "owner@kettle.example" });
 const restoreKey = () => { if (secretKey === undefined) delete process.env.STRIPE_SECRET_KEY; else process.env.STRIPE_SECRET_KEY = secretKey; };
-const reset = () => { resetRuns(); resetPolicies(); writes = []; rpcs = []; intents = []; sessions = []; restoreKey(); };
+const reset = () => { resetRuns(); resetPolicies(); writes = []; rpcs = []; intents = []; sessions = []; purchases = []; holdAnswer = { purchase_id: "purchase-1", refusal: null }; restoreKey(); };
 const backingRows = () => writes.filter((w) => w.table === "backings" && w.verb === "insert").map((w) => w.payload!);
 
 
@@ -203,7 +240,7 @@ test("a backing writes a backing and a sponsorship writes a purchase, and neithe
 
   reset();
   await lot(LOT_A);
-  assert.equal(rpcs[0].fn, "begin_lot_purchase");
+  assert.equal(rpcs[0].fn, "begin_lot_purchase_limited");
   assert.equal(writes.some((w) => w.table === "backings"), false);
 });
 
@@ -310,4 +347,119 @@ test("when the policies cannot be read, music stays open and nothing else opens 
   process.env.STRIPE_SECRET_KEY = "sk_test_abc";
   assert.equal((await lot(LOT_THEATER)).status, 200, "test mode still verifies it");
   restoreKey();
+});
+
+// ---------------------------------------------------------------
+// Who may hold an option (migration 0064)
+// ---------------------------------------------------------------
+
+const { applyStripeEvent } = await import("@/lib/stripeEvents");
+const { CHECKOUT_LIMIT_REACHED } = await import("@/lib/auctions");
+const { CHECKOUT_MINUTES: FLOOR, CHECKOUT_GRACE_MINUTES } = await import("@/lib/checkout-hold");
+
+const held = () => rpcs.filter((r) => r.fn === "begin_lot_purchase_limited");
+/** A lot checkout from a given address, the way Vercel hands the address to the route. */
+const lotFrom = (ip: string, body: Record<string, unknown> = {}) =>
+  POST(new Request("http://localhost/api/checkout", { method: "POST", headers: { "x-real-ip": ip }, body: JSON.stringify({ kind: "lot", lotId: LOT_A, patronName: "Kettle St. Coffee", email: "Owner@Kettle.example", ...body }) }));
+
+test("a filled honeypot is refused before anything is read, written or held", async () => {
+  reset();
+  const res = await lotFrom("203.0.113.1", { website: "https://spam.example" });
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).error, "That did not go through.");
+  assert.deepEqual(held(), [], "nothing was held");
+  assert.deepEqual(writes, [], "nothing was written");
+  assert.deepEqual(sessions, [], "and Stripe was not asked for a session");
+});
+
+test("an empty honeypot is what every person sends, and changes nothing", async () => {
+  reset();
+  assert.equal((await lotFrom("203.0.113.1", { website: "" })).status, 200);
+  assert.equal(held().length, 1);
+});
+
+test("the normal path: the hold is asked for from this address and this email, and made", async () => {
+  reset();
+  const before = Date.now();
+  const res = await lotFrom("203.0.113.7");
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { clientSecret: "cs_secret" });
+  const [call] = held();
+  assert.equal(call.args.p_client_ip, "203.0.113.7", "the address the platform reported");
+  assert.equal(call.args.p_email, "owner@kettle.example", "the email, lower-cased, so capitals are not a second buyer");
+  assert.equal(call.args.p_lot_id, LOT_A);
+  assert.equal(call.args.p_amount_cents, 120000);
+  assert.equal(call.args.p_bid_id, null);
+  assert.equal(purchases.length, 1, "the purchase exists");
+  assert.ok(writes.some((w) => w.table === "purchases" && w.verb === "update" && w.payload?.stripe_checkout_session_id === "cs_test"), "and carries its session");
+  // The hold ends with the session: Stripe's floor plus a minute, and the database's own clearing
+  // a short grace after that, for the webhook of a payment made in the last seconds.
+  const expiresAt = (sessions[0].expiresAt as Date).getTime();
+  const holdUntil = new Date(String(call.args.p_expires_at)).getTime();
+  assert.ok(expiresAt >= before + (FLOOR + 1) * 60_000 - 5 && expiresAt <= Date.now() + (FLOOR + 1) * 60_000 + 5, "the session is asked to end thirty-one minutes out");
+  assert.equal(holdUntil - expiresAt, CHECKOUT_GRACE_MINUTES * 60_000, "and the hold outlives it by the grace alone");
+});
+
+test("with no address header every request is one place, which is what a limit does when it cannot tell callers apart", async () => {
+  reset();
+  await lot(LOT_A);
+  assert.equal(held()[0].args.p_client_ip, "unknown");
+  reset();
+  await POST(new Request("http://localhost/api/checkout", { method: "POST", headers: { "x-forwarded-for": "198.51.100.4, 10.0.0.1" }, body: JSON.stringify({ kind: "lot", lotId: LOT_A, patronName: "K", email: "k@example.com" }) }));
+  assert.equal(held()[0].args.p_client_ip, "198.51.100.4", "the first forwarded address when that is all there is");
+});
+
+for (const [word, limit] of [["too_many_from_ip", "the per-address attempt limit (60 in ten minutes)"], ["too_many_on_lot", "the per-option attempt limit (30 in ten minutes)"], ["too_many_holds_ip", "the open-hold cap for an address (25)"], ["too_many_holds_email", "the open-hold cap for an email (2)"]] as const) {
+  test(`${limit}: refused in one plain sentence, with nothing held and no session made`, async () => {
+    reset();
+    holdAnswer = { purchase_id: null, refusal: word };
+    const res = await lotFrom("203.0.113.9");
+    assert.equal(res.status, 429);
+    const body = await res.json();
+    assert.equal(body.error, CHECKOUT_LIMIT_REACHED);
+    assert.equal(body.error, "Too many tries from here. Try again in a few minutes.");
+    assert.doesNotMatch(body.error, /—/, "no em dash");
+    assert.doesNotMatch(JSON.stringify(body), /ip|lot|email|limit/i, "and never which limit it was");
+    assert.equal(purchases.length, 0, "nothing was held");
+    assert.deepEqual(sessions, [], "and Stripe was not asked for a session");
+  });
+}
+
+test("a refusal from begin_lot_purchase still comes back as its own sentence, through the same call", async () => {
+  reset();
+  holdAnswer = { purchase_id: null, refusal: "spot_being_taken" };
+  const res = await lotFrom("203.0.113.9");
+  assert.equal(res.status, 409);
+  assert.match((await res.json()).error, /Someone is taking that spot/);
+});
+
+test("an expired session releases its hold through the webhook: the purchase goes and the option is open again", async () => {
+  reset();
+  await lotFrom("203.0.113.7");
+  const asked = sessions[0];
+  assert.equal(purchases[0].payment_status, "requires_payment");
+  const session = {
+    id: "cs_test", payment_status: "unpaid",
+    metadata: { kind: "lot", purchase_id: asked.purchaseId, lot_id: asked.lotId, run_id: asked.runId, act_id: ACT.id, act_slug: ACT.slug },
+  } as unknown as Stripe.Checkout.Session;
+  const event = { id: "evt_expired_1", type: "checkout.session.expired", data: { object: session } } as unknown as Stripe.Event;
+  writes = [];
+  assert.equal(await applyStripeEvent(admin as never, event), "processed");
+  assert.equal(purchases.length, 0, "the purchase is gone");
+  const reopened = writes.find((w) => w.table === "lots" && w.verb === "update");
+  assert.ok(reopened, "the lot was written");
+  assert.deepEqual(reopened!.payload, { status: "open", funding_deadline: null });
+  assert.deepEqual(reopened!.filters, { id: LOT_A, status: "pending_funding" }, "and only out of the hold this session put on it");
+});
+
+test("and a second expiry for the same session finds nothing to release, and says so without touching the lot", async () => {
+  reset();
+  await lotFrom("203.0.113.7");
+  const asked = sessions[0];
+  const session = { id: "cs_test", metadata: { kind: "lot", purchase_id: asked.purchaseId, lot_id: asked.lotId, run_id: asked.runId } } as unknown as Stripe.Checkout.Session;
+  const event = { id: "evt_expired_2", type: "checkout.session.expired", data: { object: session } } as unknown as Stripe.Event;
+  await applyStripeEvent(admin as never, event);
+  writes = [];
+  assert.equal(await applyStripeEvent(admin as never, event), "processed");
+  assert.deepEqual(writes, []);
 });
