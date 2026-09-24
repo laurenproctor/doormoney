@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { mfaPending, mfaVerifyPath } from "@/lib/mfa";
@@ -65,22 +66,38 @@ export async function currentProfile(userId: string): Promise<Profile | null> {
   };
 }
 
+export type SignedInAccount = {
+  id: string;
+  email: string;
+  /** The account holder's name, or null for an account with none. */
+  name: string | null;
+  username: string | null;
+};
+
 /**
- * The signed-in visitor as a sponsor: the account's name and email, for the bid and checkout
- * forms on a public page. Null for a visitor with no session, and null when there is no database
- * to ask (README, "Run it") or the read fails, since a public page must render either way and a
- * visitor who is then asked to type an email loses nothing.
+ * The signed-in visitor on a public page: who they are, for the top bar, the footer and the
+ * sponsor forms. Null for a visitor with no session, and null when there is no database to ask
+ * (README, "Run it") or the read fails, since a public page must render either way and then
+ * simply offers the way in.
+ *
+ * Cached per request: the nav, the footer and the page all ask, and it is one read.
  */
-export async function signedInSponsor(): Promise<SignedInSponsor | null> {
+export const signedInAccount = cache(async (): Promise<SignedInAccount | null> => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   try {
     const user = await currentUser();
     if (!user?.email) return null;
     const profile = await currentProfile(user.id);
-    return { name: fullName(profile), email: profile?.email ?? user.email };
+    return { id: user.id, email: profile?.email ?? user.email, name: fullName(profile), username: profile?.username ?? null };
   } catch {
     return null;
   }
+});
+
+/** The signed-in visitor as a sponsor: the name and the account email the bid and checkout forms start from. */
+export async function signedInSponsor(): Promise<SignedInSponsor | null> {
+  const account = await signedInAccount();
+  return account ? { name: account.name, email: account.email } : null;
 }
 
 export type OwnedAct = {
