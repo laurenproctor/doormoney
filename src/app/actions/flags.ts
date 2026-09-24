@@ -44,7 +44,10 @@ export async function raisePatronFlag(input: z.input<typeof Raise>): Promise<Fla
   }
 }
 
-/** Door Money looked and the run is fine. Door Money staff only. */
+/**
+ * Door Money looked and the run is fine. Door Money staff only: requireAdmin is the one gate
+ * (src/lib/admin.ts) and runs before the id is read, so this refuses on its own.
+ */
 export async function clearPatronFlag(source: FlagSource, id: string): Promise<{ ok: boolean; resumed?: number; error?: string }> {
   await requireAdmin();
   if (!Id.safeParse(id).success) return { ok: false, error: "Bad id." };
