@@ -77,7 +77,10 @@ export function bidRefusalMessage(reason: string, detail?: string | null): strin
   }
 }
 
-/** What checkout answers when begin_lot_purchase refuses, and with which status. */
+/** What every checkout limit answers, whichever one it was. */
+export const CHECKOUT_LIMIT_REACHED = "Too many tries from here. Try again in a few minutes.";
+
+/** What checkout answers when begin_lot_purchase_limited refuses, and with which status. */
 export function checkoutRefusal(reason: string): { error: string; status: number } {
   switch (reason) {
     case "lot_not_found":
@@ -98,6 +101,13 @@ export function checkoutRefusal(reason: string): { error: string; status: number
     case "amount_not_the_bid":
     case "amount_not_the_price":
       return { error: "The price on that spot changed. Reload the page and try again.", status: 409 };
+    // The checkout limits (migration 0064). One sentence for all four on purpose: which limit a
+    // caller reached is not something a caller is told.
+    case "too_many_from_ip":
+    case "too_many_on_lot":
+    case "too_many_holds_ip":
+    case "too_many_holds_email":
+      return { error: CHECKOUT_LIMIT_REACHED, status: 429 };
     default:
       return { error: "Payment could not start. Try once more.", status: 500 };
   }

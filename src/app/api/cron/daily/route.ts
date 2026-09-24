@@ -20,6 +20,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  *   of cancelled fundraisers for obligations that were never written down at all.
  * - The webhook queue: every Stripe event whose handler failed, and any a worker left in flight.
  *   Stripe retries a 500 for a while and then stops; this keeps trying after it has.
+ * - The checkout attempts log (migration 0064): rows older than a day are dropped, because the
+ *   limits look back ten minutes and an address has no business being kept past that.
  *
  * Vercel Cron calls it on the schedule in vercel.json with `Authorization: Bearer $CRON_SECRET`.
  * Everything here is idempotent, so running it early or twice is safe.
@@ -67,7 +69,16 @@ export async function GET(req: Request) {
       console.error("webhook queue failed", e instanceof Error ? e.message : e);
       events = { error: "webhook queue failed" };
     }
-    return NextResponse.json({ auctions, mail, marks, refunds, events });
+    // Housekeeping, last and never able to stop anything above it.
+    let attemptsPruned: number | { error: string };
+    const pruned = await sb.rpc("prune_checkout_attempts");
+    if (pruned.error) {
+      console.error("attempt prune failed", pruned.error.message);
+      attemptsPruned = { error: "attempt prune failed" };
+    } else {
+      attemptsPruned = typeof pruned.data === "number" ? pruned.data : 0;
+    }
+    return NextResponse.json({ auctions, mail, marks, refunds, events, attemptsPruned });
   } catch (e) {
     console.error("daily job failed", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "daily job failed" }, { status: 500 });

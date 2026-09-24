@@ -3,19 +3,23 @@ import { z } from "zod";
 import { backingFee } from "@/lib/backings";
 import { patronFor, payingProfileId } from "@/lib/patrons";
 import { buyNowOpen, checkoutRefusal } from "@/lib/auctions";
+import { checkoutClock, clientAddress } from "@/lib/checkout-hold";
 import { WIDGET_TIERS, widgetTier } from "@/lib/catalog";
 import { CATEGORY_PAYMENTS_CLOSED, paymentsOpenFor } from "@/lib/payment-gate";
 import { offerTermsFingerprint, storedOfferTerms } from "@/lib/offer-terms";
 import { lotFee, lotName } from "@/lib/purchases";
 import { SITE } from "@/lib/site";
-import { CHECKOUT_MINUTES, createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
+import { createBackingIntent, createLotCheckoutSession, stripeConfigured } from "@/lib/stripe";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { runPath } from "@/lib/urls";
 
 /**
  * Starts a payment. Two kinds:
- * - `lot`: a fixed-price spot on a board. Creates the purchase, holds the lot for the patron for
- *   CHECKOUT_MINUTES, and returns the client secret for an embedded Checkout Session.
+ * - `lot`: a fixed-price spot on a board. Creates the purchase, holds the lot for the patron for as
+ *   long as the Checkout Session lives (src/lib/checkout-hold.ts), and returns the client secret
+ *   for an embedded Checkout Session. Anybody can ask, so who may hold what is limited: a honeypot
+ *   before anything is read, and the database's own count of attempts and open holds by address
+ *   and by email (begin_lot_purchase_limited, migration 0064) before anything is held.
  * - `backing`: a fan tier through the widget. Creates the backing row and a PaymentIntent for the
  *   Payment Element inside the widget's frame; fulfilment happens in the webhook.
  *
@@ -61,6 +65,8 @@ const Input = z.discriminatedUnion("kind", [
      * itself is deliberately not accepted from a browser at all, and zod drops anything else sent.
      */
     termsFingerprint: z.string().trim().max(40).optional(),
+    /** Left empty by people, filled in by robots. The same field the bid form sends to /api/bids/setup. */
+    website: z.string().max(200).optional(),
   }),
 ]);
 
@@ -91,6 +97,9 @@ export async function POST(req: Request) {
   if (!stripeConfigured()) return fail("Payments are unavailable right now. Try again shortly.", 503);
 
   const input = parsed.data;
+  // Checked before anything is read or written. A filled honeypot is a script, and it is told
+  // nothing it can learn from.
+  if (input.kind === "lot" && input.website) return fail("That did not go through.", 400);
   const sb = supabaseAdmin();
 
   // A patron who is signed in and paying under their own verified address has the patron row tied
@@ -154,27 +163,35 @@ export async function POST(req: Request) {
   if (!patronId) return fail("That did not save. Try once more.", 500);
 
   // The purchase and the hold on the lot, in one transaction under the lot's lock
-  // (begin_lot_purchase, migration 0035). It clears any checkout on the lot that has expired,
-  // refuses one that is still live, and binds this purchase to the offer it pays for: the winning
-  // bid for a won auction, the take-it-now number or the price for anything taken outright. The
-  // purchase stops counting as an attempt to pay a little after Stripe's own session expiry, so a
-  // session Stripe could still complete is never cleared from under it.
+  // (begin_lot_purchase, migration 0035, reached through begin_lot_purchase_limited, 0064). The
+  // wrapper counts this attempt against the address and the option, and the holds already open
+  // from this address and for this email, and refuses with a word when a limit is reached.
+  // begin_lot_purchase then clears any checkout on the lot that has expired, refuses one that is
+  // still live, and binds this purchase to the offer it pays for: the winning bid for a won
+  // auction, the take-it-now number or the price for anything taken outright. The hold ends when
+  // the Stripe session does; the purchase stops counting as an attempt to pay a little after, so
+  // a payment made in the session's last seconds is never cleared from under its webhook.
   const wonBidId = lot.mode === "auction" && !input.buyNow ? lot.winner_bid_id : null;
-  const expiresAt = new Date(Date.now() + (CHECKOUT_MINUTES + 15) * 60_000).toISOString();
-  const { data: purchaseId, error: purchaseError } = await sb.rpc("begin_lot_purchase", {
-    p_lot_id: lot.id,
-    p_patron_id: patronId,
-    p_amount_cents: amount,
-    p_fee_cents: lotFee(amount),
-    p_bid_id: wonBidId,
-    p_expires_at: expiresAt,
-  });
-  if (purchaseError || typeof purchaseId !== "string") {
-    if (purchaseError && !["23514", "23505", "P0002"].includes(purchaseError.code)) console.error("begin_lot_purchase failed", lot.id, purchaseError.code, purchaseError.message);
-    const refusal = checkoutRefusal(purchaseError?.message ?? "");
+  const clock = checkoutClock();
+  const { data: decision, error: purchaseError } = await sb
+    .rpc("begin_lot_purchase_limited", {
+      p_client_ip: clientAddress(req.headers),
+      p_email: email,
+      p_lot_id: lot.id,
+      p_patron_id: patronId,
+      p_amount_cents: amount,
+      p_fee_cents: lotFee(amount),
+      p_bid_id: wonBidId,
+      p_expires_at: clock.holdUntil.toISOString(),
+    })
+    .maybeSingle();
+  const outcome = (decision ?? null) as { purchase_id: string | null; refusal: string | null } | null;
+  if (purchaseError || !outcome?.purchase_id) {
+    const refusal = checkoutRefusal(outcome?.refusal ?? "");
+    if (purchaseError || refusal.status === 500) console.error("begin_lot_purchase_limited failed", lot.id, purchaseError?.code ?? outcome?.refusal, purchaseError?.message ?? "");
     return fail(refusal.error, refusal.status);
   }
-  const purchase = { id: purchaseId };
+  const purchase = { id: outcome.purchase_id };
 
   const act = lot.runs.acts;
   const origin = process.env.NODE_ENV === "production" ? SITE.url : new URL(req.url).origin;
@@ -191,6 +208,7 @@ export async function POST(req: Request) {
       description: `${lotName(lot)}, ${act.name}, ${lot.runs.title}`,
       patronEmail: email,
       returnUrl: `${origin}${runPath(act.slug, lot.runs.slug)}?paid={CHECKOUT_SESSION_ID}`,
+      expiresAt: clock.sessionExpiresAt,
     });
     await sb.from("purchases").update({ stripe_checkout_session_id: session.id }).eq("id", purchase.id);
     return NextResponse.json({ clientSecret: session.client_secret });

@@ -56,6 +56,8 @@ export function LotCheckout({
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  /** Left empty by people, filled in by robots. Same field as the bid form. */
+  const [website, setWebsite] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -73,7 +75,7 @@ export function LotCheckout({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          kind: "lot", lotId, patronName: name, email,
+          kind: "lot", lotId, patronName: name, email, website,
           ...(token ? { token } : {}),
           ...(buyNow ? { buyNow: true } : {}),
           ...(termsFingerprint ? { termsFingerprint } : {}),
@@ -133,6 +135,7 @@ export function LotCheckout({
             <span className="caps mb-2 block text-[14px] text-muted">Email for the record</span>
             <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
+          <input value={website} onChange={(e) => setWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           <Button type="submit" disabled={pending} arrow>
             {pending ? "One second" : "Continue to payment"}
           </Button>
