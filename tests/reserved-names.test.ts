@@ -96,7 +96,7 @@ test("no two migrations share a number", () => {
   // silently never runs; this repo has done it three times now.
   const seen = new Set<string>();
   for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql"))) {
-    const n = file.slice(0, 4);
+    const n = file.split("_", 1)[0];
     assert.ok(!seen.has(n), `two migrations are numbered ${n}`);
     seen.add(n);
   }
