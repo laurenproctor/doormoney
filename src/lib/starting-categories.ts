@@ -106,4 +106,4 @@ export const CATEGORY_TEST: readonly string[] = [
  * one of them opens; never imply on a marketing page that every category can be sponsored already.
  */
 export const AVAILABILITY_NOTE =
-  "Music fundraisers are open to sponsors today. Some categories can publish in test mode; the remaining categories can prepare private drafts while delivery terms are finished.";
+  "Music fundraisers are open to sponsors today. Depending on the category, organizers can publish fundraisers or prepare private drafts; sponsorship payments open when delivery terms are ready.";
