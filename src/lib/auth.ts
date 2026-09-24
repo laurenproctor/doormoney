@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { mfaPending, mfaVerifyPath } from "@/lib/mfa";
+import { fullName } from "@/lib/names";
+import type { SignedInSponsor } from "@/lib/sponsor-identity";
 
 /** The signed-in auth user, or null. Server only. */
 export async function currentUser() {
@@ -61,6 +63,24 @@ export async function currentProfile(userId: string): Promise<Profile | null> {
     roles: row.roles ?? [],
     username_set_at: row.username_set_at ?? null,
   };
+}
+
+/**
+ * The signed-in visitor as a sponsor: the account's name and email, for the bid and checkout
+ * forms on a public page. Null for a visitor with no session, and null when there is no database
+ * to ask (README, "Run it") or the read fails, since a public page must render either way and a
+ * visitor who is then asked to type an email loses nothing.
+ */
+export async function signedInSponsor(): Promise<SignedInSponsor | null> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+  try {
+    const user = await currentUser();
+    if (!user?.email) return null;
+    const profile = await currentProfile(user.id);
+    return { name: fullName(profile), email: profile?.email ?? user.email };
+  } catch {
+    return null;
+  }
 }
 
 export type OwnedAct = {

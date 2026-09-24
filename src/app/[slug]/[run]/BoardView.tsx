@@ -19,6 +19,7 @@ import { buyNowOpen, minimumBidCents } from "@/lib/auctions";
 import type { Board } from "@/lib/sample";
 import { offerTermsFingerprint, offerTermsView, storedOfferTerms } from "@/lib/offer-terms";
 import { BoardLots, type LotView } from "./BoardLots";
+import type { SignedInSponsor } from "@/lib/sponsor-identity";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
 
 /** "an 18-show fall tour", "a 32-gig season". */
@@ -41,7 +42,10 @@ export function BoardView({
   paid = null,
   draft = null,
   categoryName,
+  viewer = null,
 }: {
+  /** The signed-in visitor, so the sponsor forms use the account's email rather than asking for one. */
+  viewer?: SignedInSponsor | null;
   board: Board;
   slug: string;
   /** The category's public name, from the registry. With none, the badge tidies the key. */
@@ -218,6 +222,7 @@ export function BoardView({
             heading={music ? `Back the ${period.noun}` : "Sponsorship options"}
             terms={checkoutTerms(recordWords(run.categoryKey, run.kind), act.name)}
             deliveryTerms={run.deliveryTerms ?? []}
+            viewer={viewer}
           />
         </div>
 

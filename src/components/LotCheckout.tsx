@@ -5,13 +5,14 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe
 import { Button } from "@/components/Button";
 import { OfferSummary } from "@/components/OfferSummary";
 import { isEmptyOfferTerms, type OfferTermsView } from "@/lib/offer-terms";
+import { sponsorFields, type SignedInSponsor } from "@/lib/sponsor-identity";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 /**
  * Taking a fixed-price spot. Two steps: who the patron is, then Stripe's embedded checkout on this
- * page. The card never touches Door Money's servers; the money lands with Door Money and moves to the
+ * page. A signed-in visitor pays under the account's email and is not asked for one. The card never touches Door Money's servers; the money lands with Door Money and moves to the
  * act on Fridays. Fulfilment happens in the webhook, not here.
  */
 export function LotCheckout({
@@ -25,8 +26,11 @@ export function LotCheckout({
   offerTerms = {},
   offerPolicy = [],
   termsFingerprint = null,
+  viewer = null,
   onClose,
 }: {
+  /** The signed-in visitor, whose account email the record goes to. */
+  viewer?: SignedInSponsor | null;
   lotId: string;
   lotName: string;
   priceLabel: string;
@@ -54,8 +58,9 @@ export function LotCheckout({
   /** Null on the claim page, where there is nothing to go back to. */
   onClose: (() => void) | null;
 }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const start = sponsorFields(viewer);
+  const [name, setName] = useState(start.name);
+  const [email, setEmail] = useState(start.email);
   /** Left empty by people, filled in by robots. Same field as the bid form. */
   const [website, setWebsite] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -66,7 +71,7 @@ export function LotCheckout({
     return <p className="mt-4 max-w-none text-[14.5px] text-muted">Payments are unavailable right now. The spot stays open; try again shortly.</p>;
   }
 
-  const start = async (e: React.FormEvent) => {
+  const begin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
     setError(null);
@@ -126,25 +131,28 @@ export function LotCheckout({
           </EmbeddedCheckoutProvider>
         </div>
       ) : (
-        <form onSubmit={start} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <form onSubmit={begin} className={`mt-5 grid gap-4 md:items-end ${start.emailIsAccount ? "md:grid-cols-[1fr_auto]" : "md:grid-cols-[1fr_1fr_auto]"}`}>
           <label className="block">
             <span className="caps mb-2 block text-[14px] text-muted">Name, as it should appear</span>
             <input name="patronName" value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="organization" className="field w-full px-3.5 py-3 text-[15px]" />
           </label>
-          <label className="block">
-            <span className="caps mb-2 block text-[14px] text-muted">Email for the record</span>
-            <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
-          </label>
+          {!start.emailIsAccount && (
+            <label className="block">
+              <span className="caps mb-2 block text-[14px] text-muted">Email for the record</span>
+              <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className="field w-full px-3.5 py-3 text-[15px]" />
+            </label>
+          )}
           <input value={website} onChange={(e) => setWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           <Button type="submit" disabled={pending} arrow>
             {pending ? "One second" : "Continue to payment"}
           </Button>
-          <p className="max-w-none text-[14px] leading-[1.6] text-muted md:col-span-3">
+          <p className="col-span-full max-w-none text-[14px] leading-[1.6] text-muted">
+            {start.emailIsAccount ? `The record goes to ${email}. ` : ""}
             {terms}
             {!token && " The sponsorship is held for thirty minutes while payment goes through."}
           </p>
           {error && (
-            <p role="alert" className="text-[14.5px] text-accent-ink md:col-span-3">
+            <p role="alert" className="text-[14.5px] text-accent-ink col-span-full">
               {error}
             </p>
           )}
