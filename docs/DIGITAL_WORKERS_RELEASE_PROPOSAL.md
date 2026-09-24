@@ -1,6 +1,6 @@
 # Digital workers: project-page placement and release path
 
-**Status:** Placement scope approved; evidence policy recorded as proposed. The category still saves private drafts only. This document does not open publication or payments.
+**Status:** Placement scope approved; evidence policy proposed. Migration 20260924172831 opens publication and Stripe test-mode purchases. The policy remains closed for live money.
 
 ## Inventory
 
@@ -22,9 +22,9 @@ Use the existing evidence release rule: accept the sponsor's materials first, th
 
 ## Steps before launch
 
-1. Record the proposed evidence policy without enabling publication. That row exists in migration 20260924171215; it cannot accept live money.
-2. In a separate change, enable publishing and remove the three kits' `draftOnly` flags after reviewing the offer and public screens with all three placements. This is required before a test purchase is possible.
-3. With Stripe test keys, run a purchase, materials approval, evidence release and refund, including a page credit whose URL changes or disappears. Check the purchased snapshot and sponsor's record.
-4. Activate the policy for live payments only after those flows and sponsor-facing terms have been reviewed and the wider money-path safety gate is met. Patron preference is already enabled and does not affect any of these gates.
+1. The proposed evidence policy is recorded in migration 20260924171215. Migration 20260924172818 corrects its sponsor cancellation sentence before any purchase: sponsors may flag a placement, but the current app does not offer self-service cancellation. Organizer cancellation and declined materials use the existing refund path.
+2. The separate publication change in 20260924172831 enables public fundraisers and removes the kits' `draftOnly` flags. The policy remains proposed, so live payment stays closed.
+3. With Stripe test keys, run a purchase, materials approval, evidence release and organizer cancellation/refund, including a page credit whose URL changes or disappears. Check the purchased snapshot and sponsor's record.
+4. Activate the policy for live payments only after those flows and sponsor-facing terms have been reviewed and the wider money-path safety gate is met. Patron preference does not affect any of these gates.
 
 No laptop sticker is offered.

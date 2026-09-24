@@ -30,6 +30,26 @@ test("a finished draft publishes", () => {
   assert.deepEqual(publishBlockers(ready()), []);
 });
 
+test("a digital worker project publishes with an actual offer and evidence method", () => {
+  const input = ready();
+  input.act.city = null;
+  input.run = {
+    category_key: "digital_workers", title: "Independent project", status: "draft",
+    starts_on: null, ends_on: null, show_count: null, bidding_closes_at: null,
+    purpose: "Time to finish a digital tool.", audience_description: "Visitors to the project page.",
+    sponsor_promise: "A named credit on the project page for one month.",
+    methods: ["selected_show_photos"], other: null,
+  };
+  input.auctionCount = 0;
+  input.lotCount = 1;
+  assert.deepEqual(publishBlockers(input), []);
+  input.incompleteOffers = [{ key: "project_page_credit", name: "Project page credit", missing: ["Delivery window"] }];
+  assert.match(publishBlockers(input).join(" "), /Finish the offer for Project page credit/);
+  input.incompleteOffers = [];
+  input.categoryPublishable = false;
+  assert.match(publishBlockers(input).join(" "), /Publishing is not open/);
+});
+
 test("a draft with no verification method cannot publish", () => {
   const input = ready();
   input.run.methods = [];

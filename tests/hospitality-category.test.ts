@@ -236,6 +236,8 @@ test("the payment gate answers no for hospitality in test mode and in live mode"
   // The same read, for the categories that do have one, to show the mock is asking a real question.
   assert.equal(await paymentsOpenFor(policies([{ version: 1, status: "proposed" }]), "theater", false), true);
   assert.equal(await paymentsOpenFor(policies([{ version: 1, status: "proposed" }]), "theater", true), false);
+  assert.equal(await paymentsOpenFor(policies([{ version: 1, status: "proposed" }]), "digital_workers", false), true, "a digital worker purchase can run in test mode");
+  assert.equal(await paymentsOpenFor(policies([{ version: 1, status: "proposed" }]), "digital_workers", true), false, "live money stays closed");
   assert.equal(await paymentsOpenFor(policies([{ version: 1, status: "active" }]), "music", true), true);
   // A retired policy is no policy.
   assert.equal(await paymentsOpenFor(policies([{ version: 1, status: "retired" }]), "hospitality", false), false);

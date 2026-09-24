@@ -155,7 +155,7 @@ test("a database that answers nothing does not relabel the four starting categor
   assert.equal(exampleStatus(starterKit("start_independent_project")!, {}), "coming_soon");
 });
 
-test("with the category in the registry, its ideas link as private drafts, and are never called open", () => {
+test("the registry marks hospitality private and digital workers open", () => {
   for (const e of examples.filter((x) => x.categoryKey === "hospitality")) {
     assert.equal(exampleStatus(starterKit(e.kitKey)!, LABELS_0047), "draft_only", e.kitKey);
   }
@@ -164,8 +164,8 @@ test("with the category in the registry, its ideas link as private drafts, and a
   }
   const withDigital = { ...LABELS_0047, digital_workers: "Digital workers" };
   for (const e of examples.filter((x) => x.categoryKey === "digital_workers")) {
-    assert.equal(exampleStatus(starterKit(e.kitKey)!, withDigital), "draft_only", e.kitKey);
-    assert.equal(exampleHref(e.kitKey, "draft_only", true), `/dashboard/runs/new?template=${e.kitKey}`);
+    assert.equal(exampleStatus(starterKit(e.kitKey)!, withDigital), "open", e.kitKey);
+    assert.equal(exampleHref(e.kitKey, "open", true), `/dashboard/runs/new?template=${e.kitKey}`);
   }
   const status = exampleStatus(starterKit("sponsored_martini_cart")!, LABELS_0047);
   assert.equal(status, "draft_only");

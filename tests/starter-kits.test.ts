@@ -92,7 +92,7 @@ test("the test reads the real category registry", () => {
   assert.ok(REGISTRY.filter((c) => LAUNCH.includes(c.key)).every((c) => c.publish_enabled), "0041 turned publishing on for the four");
   assert.deepEqual(REGISTRY.find((c) => c.key === "hospitality"), { key: "hospitality", label: "Restaurants & hospitality", detail_keys: ["venue_kind", "format"], draft_enabled: true, publish_enabled: false }, "0047 adds hospitality for drafts only, and 0049 gives it its public name");
   assert.deepEqual(REGISTRY.find((c) => c.key === "other"), { key: "other", label: "Other", detail_keys: [], draft_enabled: true, publish_enabled: false }, "0049 adds Other for drafts only, with no details of its own");
-  assert.deepEqual(REGISTRY.find((c) => c.key === "digital_workers"), { key: "digital_workers", label: "Digital workers", detail_keys: [], draft_enabled: true, publish_enabled: false });
+  assert.deepEqual(REGISTRY.find((c) => c.key === "digital_workers"), { key: "digital_workers", label: "Digital workers", detail_keys: [], draft_enabled: true, publish_enabled: true });
   assert.equal(REGISTRY.some((c) => c.key === "restaurants"), false, "there is one hospitality key");
 });
 
@@ -160,12 +160,12 @@ test("enabled kits and draft-only kits are separate lists", () => {
   assert.ok(enabled.every((k) => k.enabled && !k.draftOnly));
   assert.ok(draftOnly.every((k) => k.enabled && k.draftOnly));
   assert.deepEqual(keysOf(enabled).filter((k) => keysOf(draftOnly).includes(k)), [], "no kit is in both");
-  assert.deepEqual(new Set(enabled.map((k) => k.categoryKey)), new Set(LAUNCH));
+  assert.deepEqual(new Set(enabled.map((k) => k.categoryKey)), new Set([...LAUNCH, "digital_workers"]));
   assert.deepEqual(keysOf(enabledStarterKits("film")), ["short_film", "documentary", "screening_series"]);
   assert.deepEqual(enabledStarterKits("hospitality"), []);
   assert.deepEqual(keysOf(draftOnlyStarterKits("hospitality")), keysOf(starterKitsForCategory("hospitality")));
-  assert.deepEqual(enabledStarterKits("digital_workers"), []);
-  assert.deepEqual(keysOf(draftOnlyStarterKits("digital_workers")), keysOf(starterKitsForCategory("digital_workers")));
+  assert.deepEqual(keysOf(enabledStarterKits("digital_workers")), keysOf(starterKitsForCategory("digital_workers")));
+  assert.deepEqual(draftOnlyStarterKits("digital_workers"), []);
   assert.deepEqual(draftOnlyStarterKits("music"), []);
 });
 
@@ -215,13 +215,13 @@ test("the registry decides availability, and this file can only be stricter", ()
   assert.equal(starterKitAvailability(season, []), "unavailable");
 });
 
-test("a picker shows the registry's categories, with new categories marked draft only", () => {
+test("a picker shows the registry's categories, with hospitality marked draft only", () => {
   const groups = starterKitGroups(REGISTRY);
   assert.deepEqual(groups.map((g) => g.category.key), [...LAUNCH, "hospitality", "digital_workers"]);
   assert.deepEqual(groups.map((g) => g.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Digital workers"]);
   assert.equal(groups.some((g) => g.category.key === "other"), false, "Other has no kits, so it draws no group: an example there would be an invented promise");
   assert.deepEqual(starterKitsForCategory("other"), []);
-  for (const g of groups) assert.ok(g.kits.every((k) => k.availability === (LAUNCH.includes(g.category.key) ? "publishable" : "draft_only")), g.category.key);
+  for (const g of groups) assert.ok(g.kits.every((k) => k.availability === (g.category.key === "hospitality" ? "draft_only" : "publishable")), g.category.key);
   assert.equal(groups.flatMap((g) => g.kits).length, 22);
 
   const withDance = starterKitGroups([...REGISTRY, { key: "dance", label: "Dance", detail_keys: [], draft_enabled: true, publish_enabled: false }]);
