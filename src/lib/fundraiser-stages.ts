@@ -3,9 +3,9 @@
  *
  * One journey for every category the registry lets save a draft. A stage is a page of the same
  * form, not a second form, and the stage is in the address (`?stage=funding`) so a reload lands
- * where the organizer was. The first two stages are drawn by FundraiserDraftForm. The last two are
- * the fundraiser's workspace for now: sponsorship options are priced there and the readiness
- * checklist is the review, until each gets a stage of its own.
+ * where the organizer was. The first two stages are drawn by FundraiserDraftForm, the third by
+ * SponsorshipBuilder and the fourth by FundraiserReview, which is where a draft is published. The
+ * fundraiser's workspace is still reachable for a draft by asking for one of its tabs.
  *
  * What "complete" means here is only which stage to open when somebody comes back to a draft. It is
  * never the publish gate. That stays in src/lib/readiness.ts and in the database (migration 0041),

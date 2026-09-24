@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { publishRun } from "@/app/actions/run";
-import { Button } from "@/components/Button";
+import { Button, ButtonLink } from "@/components/Button";
 import { Locked } from "@/components/dashboard/icons";
 
 /*
@@ -42,9 +42,9 @@ export function PublishDecision({ runId, publishable, blockers, becomesPublic, k
           Door Money has not opened this category for publishing or payments. Nobody else can see this fundraiser, nothing on it can be bought, and everything you wrote is saved as a private draft for when it opens.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <Link href={keepHref} className="inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-control border border-accent-line bg-accent px-3.5 text-[14px] font-medium text-on-accent no-underline hover:bg-accent-ink">
+          <ButtonLink href={keepHref} register="desk">
             Save private draft
-          </Link>
+          </ButtonLink>
           <span className="text-[14px] text-muted">It is already saved. This takes you back to your fundraisers.</span>
         </div>
       </div>

@@ -1,5 +1,11 @@
 # The Desk register
 
+**Done, 2026-09-23.** All five PRs shipped. The workspace is on the register end to end: the shell and
+the rail, Today, the fundraiser page, Money, `/patron`, `/dashboard/profile`, `/dashboard/account` and
+`/admin`. What is written below is the plan as it was worked, kept because it says why each piece is the
+shape it is; the rules it settled now live in CLAUDE.md, under "Two registers: Stage and Desk", which is
+what to read first. Two things in it were not built and are named at the end.
+
 How the signed-in workspace gets the blended design (degrees 2, 3 and 4 on the canvas): Door Money's room and light, product-dashboard structure, and the small conventions people already know. This file is the build plan. Drop it at `docs/DESK_REGISTER.md`, read CLAUDE.md first, and work the PRs in order.
 
 Reference: the "Blend of 2, 3 and 4" row on the Design canvas (Today and the fundraiser page, dark and light).
@@ -147,6 +153,28 @@ Remove the two "Create / Discover" cards, the "Complete your profile" card and t
 ## PR 0, before any inline action ships from Today
 
 `src/app/actions/shows.ts` checks ownership by reading `shows`, which is publicly readable, so the check proves nothing; it passes the client's `patch` object straight to `.update()`; and `uploadShowPhoto` writes to the public bucket with the service role before ownership is proven. Fix all three (resolve the run's owner through `runs` and the caller's account, allow-list the patch keys, check ownership before the upload). This is a one-hour PR that should merge before PR 3, because Today makes these actions one click away. The audit's other items (admin email confirmation, `placeBid` without the payment gate, anonymous checkout holds) are unrelated to this branch and should be their own PRs.
+
+## What shipped, and what did not
+
+PR 1 (tokens, register CSS, primitives), PR 2 (the shell), PR 3 (Today), PR 4 (the fundraiser page) and
+PR 5 (the rest of the workspace) are all in. PR 0's three fixes to `src/app/actions/shows.ts` went in
+before Today's inline actions, as planned.
+
+Two items in PR 5 were deliberately left, and one of them has since closed:
+
+- **`/dashboard/widget` redirects now (2026-09-23).** It stopped being a nav destination in PR 2, which
+  is the half of the item that mattered. The redirect waited for the fundraiser page's Share panel to
+  hold everything the old page drew, because until then it would have taken the embed code out of the
+  product rather than moved it. The panel holds all of it now (the snippet, the button and its address,
+  the two badges and the downloads), so the route answers with a redirect and nothing else: the newest
+  published fundraiser with its Share panel open, a running one before a closed one, or Today with a
+  one-line notice when nothing is published. `widgetDestination` in `src/lib/dashboardModel.ts`
+  decides. The address stays, for the links already sent.
+- **The six unused `Field` components were not deleted, because there are none.** Eight files declare a
+  `Field` of their own and every one of them is used where it is declared; `ActForm`'s and
+  `ProfileForms`' are imported by `RunForm` and `AccountForms` besides. `inputClass` already has one home
+  in `DashboardShell` and every form reads it from there. `dashboard-home.ts`'s one dead export,
+  `profileGaps`, went with PR 3's profile card and is gone.
 
 ## Definition of done
 

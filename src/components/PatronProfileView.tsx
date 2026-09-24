@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Eyebrow } from "@/components/Brand";
-import { ButtonLink } from "@/components/Button";
 import { HeroArt } from "@/components/HeroArt";
 import { PatronActivityItem } from "@/components/domain";
 import { linkText, websiteLabel } from "@/lib/links";
@@ -23,6 +22,13 @@ import { impactTotals, initialsFor, patronKindLabel, profileLink, yearOf } from 
   What is not known is not drawn. Every optional field is skipped when it is empty rather than
   filled with a placeholder, and nothing on this page is invented: the totals are counted from the
   activity the patron put here themselves, and no amount is counted at all, because none is read.
+
+  The page ends with the patron. It used to close with a band selling the fundraiser index and the
+  explainer, and the footer added its own two ways in underneath, so a page about one person ended
+  in two invitations to go somewhere else. Both are gone here: the page's own band is deleted, and
+  the public page tells the footer to leave its band out (`ways={false}`). The nav and the footer's
+  links are still the way on. Do not add a call to action back to this component: it draws the
+  owner's preview too, and whatever goes in here they are shown as part of their own page.
 */
 
 export type PatronProfileViewProps = {
@@ -144,21 +150,6 @@ export function PatronProfileView({ profile, photo, header, activity, labels, de
             </ul>
           </>
         )}
-      </Band>
-
-      <Band dense={dense} eyebrow="Open fundraisers" heading="Find a fundraiser">
-        <p className={`${dense ? "mb-6" : "mb-8"} max-w-[56ch] text-[15px] text-muted`}>
-          Every open fundraiser says what the money enables, who it reaches and what a sponsor receives.
-          Organizers set their own prices.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <ButtonLink href="/fundraisers" arrow>
-            See the fundraisers
-          </ButtonLink>
-          <ButtonLink href="/how-sponsorship-works" variant="ghost">
-            How sponsorship works
-          </ButtonLink>
-        </div>
       </Band>
     </>
   );

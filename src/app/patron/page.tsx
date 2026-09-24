@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DashboardShell, Card, CardHead } from "@/components/DashboardShell";
+import { DashboardShell } from "@/components/DashboardShell";
 import { ButtonLink } from "@/components/Button";
+import { Card } from "@/components/desk";
 import { requireUser, currentProfile, ownedAct } from "@/lib/auth";
 import { fullName } from "@/lib/names";
 import { backedBy, type PlacedBid } from "@/lib/backed";
+import { loadFundraiserJumps } from "@/lib/dashboard-home";
 import { dashboardNav } from "@/lib/dashboardModel";
 import { formatMoney } from "@/lib/money";
+import { ownProfile } from "@/lib/patronprofile";
+import { profileTheme } from "@/lib/profile";
 import { actPath } from "@/lib/urls";
 
 export const metadata: Metadata = { title: "What you have backed", robots: { index: false, follow: false } };
@@ -45,8 +49,8 @@ const TIER: Record<string, string> = { thank_you: "Tour thank-you", merch_card: 
  */
 export default async function PatronPage() {
   const user = await requireUser("/patron");
-  const [profile, act] = await Promise.all([currentProfile(user.id), ownedAct(user.id)]);
-  const backed = await backedBy(user.id, profile?.email ?? user.email);
+  const [profile, act, own] = await Promise.all([currentProfile(user.id), ownedAct(user.id), ownProfile(user.id)]);
+  const [backed, jumps] = await Promise.all([backedBy(user.id, profile?.email ?? user.email), loadFundraiserJumps(act?.id ?? null)]);
   const name = fullName(profile) ?? "Patron";
   const nothing = backed.placements.length === 0 && backed.runs.length === 0 && backed.bids.length === 0;
 
@@ -56,37 +60,35 @@ export default async function PatronPage() {
       nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? ["patron"] })}
       actName={act?.name}
       identity={fullName(profile)}
+      theme={profileTheme(own?.theme)}
       eyebrow="Backed by this account"
       title={name}
       accent=""
       intro={
-        <p className="caps">
+        <p className="max-w-[52ch] text-[19px] leading-[1.35] text-ink">
           {nothing ? "Nothing backed yet." : `${formatMoney(backed.totalCents)} behind ${countActs(backed)} so far.`}
         </p>
       }
+      search={jumps}
     >
       {nothing ? (
-        <Card className="max-w-[720px]">
-          <CardHead eyebrow="Nothing here yet">Pick a fundraiser</CardHead>
-          <p className="mb-6 max-w-none text-[15px] text-muted">
+        <Card title="Pick a fundraiser" subtitle="Nothing here yet" className="max-w-[720px]">
+          <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
             Every sponsorship and backing shows up here: what you paid, what the organizer did with it, and the
             record at the end of the fundraiser. Bids sit here too, from the moment you place one.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/fundraisers">See the fundraisers</ButtonLink>
-            <ButtonLink href="/how-sponsorship-works" variant="ghost">How sponsorship works</ButtonLink>
+          <div className="flex flex-wrap items-center gap-3">
+            <ButtonLink href="/fundraisers" register="desk" variant="solid">Browse projects to sponsor</ButtonLink>
+            <ButtonLink href="/how-sponsorship-works" register="desk" variant="outline">How sponsorship works</ButtonLink>
           </div>
         </Card>
       ) : (
-        <div className="grid gap-[30px]">
+        <div className="grid gap-3.5">
           {backed.placements.length > 0 && (
-            <Card>
-              <CardHead eyebrow="Sponsorships">
-                {backed.placements.length} {backed.placements.length === 1 ? "spot taken" : "spots taken"}
-              </CardHead>
-              <ul className="divide-y divide-line border-y border-line">
+            <Card searchable title={`${backed.placements.length} ${backed.placements.length === 1 ? "spot taken" : "spots taken"}`} subtitle="Sponsorships">
+              <ul className="m-0 flex list-none flex-col p-0">
                 {backed.placements.map((p) => (
-                  <li key={p.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto] sm:items-baseline">
+                  <li key={p.id} data-search={`${p.lotName} ${p.actName} ${p.runTitle}`} className="grid gap-2 border-t border-line py-3 sm:grid-cols-[1fr_auto] sm:items-baseline">
                     <div className="min-w-0">
                       <b className="block text-[15px]">
                         {p.lotName} on{" "}
@@ -94,14 +96,14 @@ export default async function PatronPage() {
                           {p.actName}
                         </Link>
                       </b>
-                      <span className="caps block text-[14px] text-muted">
+                      <span className="block text-[14px] leading-[1.6] text-muted">
                         {p.runTitle}. {p.wonAtAuction ? "Won at auction. " : ""}
                         {PAYMENT[p.paymentStatus] ?? p.paymentStatus}. {MARK[p.markStatus] ?? p.markStatus}.
                       </span>
                     </div>
                     <div className="flex items-baseline gap-5 sm:justify-end">
-                      <span className="heading text-[20px]">{formatMoney(p.amountCents)}</span>
-                      <Link href={`/record/${p.id}`} className="caps text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
+                      <span className="heading text-[18px] tabular-nums">{formatMoney(p.amountCents)}</span>
+                      <Link href={`/record/${p.id}`} className="text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
                         The record
                       </Link>
                     </div>
@@ -112,13 +114,10 @@ export default async function PatronPage() {
           )}
 
           {backed.runs.length > 0 && (
-            <Card>
-              <CardHead eyebrow="Backings">
-                {backed.runs.length} {backed.runs.length === 1 ? "fundraiser backed" : "fundraisers backed"}
-              </CardHead>
-              <ul className="divide-y divide-line border-y border-line">
+            <Card searchable title={`${backed.runs.length} ${backed.runs.length === 1 ? "fundraiser backed" : "fundraisers backed"}`} subtitle="Backings">
+              <ul className="m-0 flex list-none flex-col p-0">
                 {backed.runs.map((r) => (
-                  <li key={r.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto] sm:items-baseline">
+                  <li key={r.id} data-search={`${r.actName} ${r.runTitle}`} className="grid gap-2 border-t border-line py-3 sm:grid-cols-[1fr_auto] sm:items-baseline">
                     <div className="min-w-0">
                       <b className="block text-[15px]">
                         <Link href={actPath(r.actSlug)} className="text-accent-ink underline decoration-1 underline-offset-4">
@@ -126,11 +125,11 @@ export default async function PatronPage() {
                         </Link>
                         , {r.runTitle}
                       </b>
-                      <span className="caps block text-[14px] text-muted">
+                      <span className="block text-[14px] leading-[1.6] text-muted">
                         {TIER[r.tier] ?? r.tier}, as {r.displayName}. {PAYMENT[r.paymentStatus] ?? r.paymentStatus}.
                       </span>
                     </div>
-                    <span className="heading text-[20px] sm:justify-self-end">{formatMoney(r.amountCents)}</span>
+                    <span className="heading text-[18px] tabular-nums sm:justify-self-end">{formatMoney(r.amountCents)}</span>
                   </li>
                 ))}
               </ul>
@@ -138,13 +137,10 @@ export default async function PatronPage() {
           )}
 
           {backed.bids.length > 0 && (
-            <Card>
-              <CardHead eyebrow="Bids">
-                {backed.bids.length} {backed.bids.length === 1 ? "bid placed" : "bids placed"}
-              </CardHead>
-              <ul className="divide-y divide-line border-y border-line">
+            <Card searchable title={`${backed.bids.length} ${backed.bids.length === 1 ? "bid placed" : "bids placed"}`} subtitle="Bids">
+              <ul className="m-0 flex list-none flex-col p-0">
                 {backed.bids.map((b) => (
-                  <li key={b.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto] sm:items-baseline">
+                  <li key={b.id} data-search={`${b.lotName} ${b.actName}`} className="grid gap-2 border-t border-line py-3 sm:grid-cols-[1fr_auto] sm:items-baseline">
                     <div className="min-w-0">
                       <b className="block text-[15px]">
                         {b.lotName} on{" "}
@@ -152,13 +148,13 @@ export default async function PatronPage() {
                           {b.actName}
                         </Link>
                       </b>
-                      <span className="caps block text-[14px] text-muted">
+                      <span className="block text-[14px] leading-[1.6] text-muted">
                         {OUTCOME[b.outcome]}
                         {b.outcome === "outbid" ? `, the top bid is ${formatMoney(b.topCents)}` : ""}
                         {b.anonymous ? ". Shown as an anonymous patron" : ""}.
                       </span>
                     </div>
-                    <span className="heading text-[20px] sm:justify-self-end">{formatMoney(b.amountCents)}</span>
+                    <span className="heading text-[18px] tabular-nums sm:justify-self-end">{formatMoney(b.amountCents)}</span>
                   </li>
                 ))}
               </ul>
@@ -167,15 +163,16 @@ export default async function PatronPage() {
         </div>
       )}
 
-      <Card className="mt-[30px] max-w-[720px]">
-        <CardHead eyebrow="The public profile">A page of their own</CardHead>
-        <p className="mb-6 max-w-none text-[15px] text-muted">
+      <Card title="A page of your own" subtitle="The public profile" className="mt-3.5 max-w-[720px]">
+        <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
           You can keep a public page: a name, a few words, the categories you support, and whichever fundraisers
           you choose to name. It starts private and stays private until you publish it. No amount ever appears on it.
         </p>
-        <ButtonLink href="/dashboard/profile" variant="ghost" arrow>
-          The patron profile
-        </ButtonLink>
+        <div>
+          <ButtonLink href="/dashboard/profile" register="desk" variant="outline">
+            The patron profile
+          </ButtonLink>
+        </div>
       </Card>
     </DashboardShell>
   );

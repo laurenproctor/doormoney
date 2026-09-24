@@ -118,7 +118,7 @@ function Fields({
 
       {otherOn && (
         <div className="mt-6 max-w-[62ch]">
-          <label className="caps mb-2 block text-[14px] text-muted" htmlFor="verification-other">
+          <label className="mb-2 block text-[14px] text-muted" htmlFor="verification-other">
             Describe the verification method
           </label>
           <textarea
@@ -141,7 +141,7 @@ function Fields({
       )}
 
       <div className="mt-7 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : "Save the verification"}</Button>
+        <Button register="desk" type="submit" disabled={pending}>{pending ? "Saving" : "Save the verification"}</Button>
         {ok && (
           <span className="text-[14.5px] text-muted">
             Saved. {saved} {saved === 1 ? "method" : "methods"} on the fundraiser.

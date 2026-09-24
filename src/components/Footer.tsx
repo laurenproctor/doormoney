@@ -11,34 +11,51 @@ import { ButtonLink } from "@/components/Button";
   carry a paragraph each and the block below the wordmark restated the product; both were the
   homepage again, at the bottom of every page, including the pages that had just said it.
 */
+/*
+  The two ways in. The first is the one most readers want, so it is the filled control and the
+  second is the outline beside it; two ghosts side by side made the reader pick between two
+  equals at the end of every page.
+*/
 const WAYS = [
-  { href: "/fundraisers", label: "Find a sponsorship" },
-  { href: "/list", label: "Create a fundraiser" },
+  { href: "/fundraisers", label: "Find a sponsorship", line: "Browse what organizers are offering." },
+  { href: "/list", label: "Create a fundraiser", line: "Raise money for work of your own." },
 ] as const;
 
-export function Footer({ note }: { note?: string }) {
+/**
+ * @param note  A line under the wordmark, for a page that owes the reader one.
+ * @param ways  False leaves the two ways in out. A page whose whole subject is one person closes
+ *   on that person, not on two links somewhere else; the patron profile is the one that asks for
+ *   it. Everything below, the email ask, the links and the fine print, stays exactly as it is.
+ */
+export function Footer({ note, ways = true }: { note?: string; ways?: boolean }) {
   return (
     <footer className="border-t border-line pb-12 pt-16">
       <div className="mx-auto max-w-[1120px] px-7">
-        {/* The two ways in, on one line. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 pb-12">
-          <p className="heading max-w-[20ch] text-[clamp(22px,2.8vw,30px)] leading-[1.15]">
-            Find a sponsorship, or create a fundraiser.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            {WAYS.map((w) => (
-              <ButtonLink key={w.href} href={w.href} variant="ghost" arrow>
-                {w.label}
-              </ButtonLink>
-            ))}
+        {ways && (
+          <div className="grid gap-8 pb-14 lg:grid-cols-[minmax(0,22ch)_1fr] lg:items-start lg:gap-16">
+            <p className="heading text-[clamp(22px,2.8vw,30px)] leading-[1.15]">
+              Find a sponsorship, or create a fundraiser.
+            </p>
+            {/* One card each, so the two ways read as two choices rather than two buttons. */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {WAYS.map((w, i) => (
+                <div key={w.href} className="edge flex flex-col items-start gap-4 bg-panel p-6 max-sm:p-5">
+                  <p className="text-[15px] leading-[1.6] text-muted">{w.line}</p>
+                  <ButtonLink href={w.href} variant={i === 0 ? "solid" : "ghost"} arrow className="mt-auto max-sm:w-full">
+                    {w.label}
+                  </ButtonLink>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="border-t border-line pt-10">
+        {/* The rule belongs to the block above it, so with no block above there is no rule. */}
+        <div className={ways ? "border-t border-line pt-14" : ""}>
           <NewsletterStrip source="footer" />
         </div>
 
-        <div className="grid gap-12 border-t border-line pt-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-14">
+        <div className="mt-14 grid gap-12 border-t border-line pt-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-14">
           <div>
             <Logo className="h-[64px] w-auto text-ink max-lg:max-w-full max-md:h-[52px]" />
             <p className="mt-5 max-w-[40ch] text-[15px] leading-[1.7]">{SITE.tagline}</p>

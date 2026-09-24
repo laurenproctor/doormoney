@@ -31,6 +31,7 @@ import {
   selectableRuns,
   upcomingShow,
   waitingCount,
+  widgetDestination,
   workAction,
   workCounts,
   type ShowRow,
@@ -351,6 +352,17 @@ test("what is waiting is the whole of it, added up across the lines", () => {
 });
 
 /* ------------------------------------------------------------------ navigation */
+
+test("the widget's old address goes to the newest fundraiser with a Share panel, or to Today with a notice", () => {
+  // Rows arrive newest first. A running fundraiser wins over a newer closed one, because it is the
+  // one still taking backings; a closed one still has a panel, with the button and the badges in
+  // it; a draft has no public address and no panel, so it is never the answer.
+  assert.equal(widgetDestination([{ id: "d", status: "draft" }, { id: "c", status: "closed" }, { id: "o", status: "open" }]), "/dashboard/runs/o?share=1");
+  assert.equal(widgetDestination([{ id: "c", status: "closed" }, { id: "l", status: "live" }]), "/dashboard/runs/l?share=1");
+  assert.equal(widgetDestination([{ id: "d", status: "draft" }, { id: "c", status: "closed" }]), "/dashboard/runs/c?share=1");
+  assert.equal(widgetDestination([{ id: "d", status: "draft" }, { id: "x", status: "cancelled" }]), "/dashboard?from=widget");
+  assert.equal(widgetDestination([]), "/dashboard?from=widget");
+});
 
 test("an organizer gets six destinations, named for where they go", () => {
   // /dashboard/act left the rail when the profile became one page: the organizer's own record is

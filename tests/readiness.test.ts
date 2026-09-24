@@ -23,6 +23,7 @@ const ready = (): ReadinessInput => ({
   lotCount: 4,
   auctionCount: 2,
   categoryPublishable: true,
+  incompleteOffers: [],
 });
 
 test("a finished draft publishes", () => {
@@ -65,6 +66,7 @@ test("no spots, no bio, no dates: every missing thing is named at once", () => {
     lotCount: 0,
     auctionCount: 0,
     categoryPublishable: true,
+    incompleteOffers: [],
   });
   assert.equal(blockers.length, 4);
   assert.match(blockers.join(" "), /short bio/);
@@ -149,6 +151,7 @@ const theater = (): ReadinessInput => ({
   lotCount: 2,
   auctionCount: 0,
   categoryPublishable: true,
+  incompleteOffers: [],
 });
 
 test("a theater fundraiser publishes on the contract's three questions, with no dates and no city", () => {
@@ -223,4 +226,17 @@ test("payout setup is never one of the steps, because it never holds a publish u
   input.act.stripe_account_id = null;
   const progress = draftProgress(readiness(input));
   assert.deepEqual([progress.done, progress.total], [4, 4]);
+});
+
+test("an option whose offer is unfinished is not a step done, and is the next one", () => {
+  const input = ready();
+  input.lotCount = 1;
+  input.auctionCount = 0;
+  input.incompleteOffers = [{ key: "banner", name: "Stage banner", missing: ["Where it appears, and in what form", "At least one deliverable"] }];
+
+  const progress = draftProgress(readiness(input));
+  assert.deepEqual([progress.done, progress.total], [3, 4], "the options step is not done while an offer is unfinished");
+  assert.equal(progress.next?.key, "lots");
+  assert.match(progress.next?.note ?? "", /Stage banner still needs/);
+  assert.match(publishBlockers(input).join(" "), /Finish the offer for Stage banner/, "and publishing is refused for the same reason");
 });

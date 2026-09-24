@@ -6,6 +6,10 @@ import type { ReactNode } from "react";
  * at this"; a workspace made of them would say it nine times on one screen.
  *
  * `right` is the slot on the head's far side: a count, a link, or one small control.
+ *
+ * `searchable` marks a card whose whole point is the rows in it. The top bar's search then takes
+ * the card away when its last row is filtered out, rather than leaving a heading and a count over
+ * an empty frame (src/components/dashboard/WorkspaceSearch.tsx). Nothing here reads the attribute.
  */
 export function Card({
   title,
@@ -13,6 +17,7 @@ export function Card({
   right,
   id,
   className = "",
+  searchable = false,
   children,
 }: {
   title?: ReactNode;
@@ -20,11 +25,13 @@ export function Card({
   right?: ReactNode;
   id?: string;
   className?: string;
+  /** True where the card is its rows: the search hides the whole card once none of them is left. */
+  searchable?: boolean;
   children?: ReactNode;
 }) {
   const head = title || subtitle || right;
   return (
-    <section id={id} className={`flex min-w-0 flex-col gap-3 rounded-card border border-line bg-surface p-5 shadow-1 ${className}`}>
+    <section id={id} data-search-group={searchable ? "" : undefined} className={`flex min-w-0 flex-col gap-3 rounded-card border border-line bg-surface p-5 shadow-1 ${className}`}>
       {head && (
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-0.5">

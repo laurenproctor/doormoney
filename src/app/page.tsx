@@ -6,7 +6,6 @@ import { Eyebrow, Section, SectionHead } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
 import { HeroArt } from "@/components/HeroArt";
 import { Theme } from "@/components/Theme";
-import { NewsletterCTA } from "@/components/Newsletter";
 import { StartingCategories } from "@/components/StartingCategories";
 import { CategoryBadge } from "@/components/domain";
 import { boardWorth, listOpenBoards, openSpots } from "@/lib/boards";
@@ -166,21 +165,11 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      {/* New fundraisers by email */}
-      <NewsletterCTA source="home" />
-
-      {/* Two ways in */}
-      <Section id="list">
-        <SectionHead eyebrow="Two ways in">Find a sponsorship, or create a fundraiser</SectionHead>
-        <p className="text-muted">
-          Sponsors put money behind work they want to see happen. Organizers say what the funding enables and what a
-          sponsor receives.
-        </p>
-        <div className="mt-9 flex flex-wrap gap-4">
-          <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
-          <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
-        </div>
-      </Section>
+      {/*
+        The two ways in, and the email ask, both used to end this page and both are in the footer of
+        every page including this one. A reader who got this far met each of them twice in a row.
+        The footer keeps them, so they are still one scroll away here and on every other page.
+      */}
 
       </main>
       <Footer />

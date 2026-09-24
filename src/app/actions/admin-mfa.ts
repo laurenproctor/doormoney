@@ -14,9 +14,10 @@ import { normalizeEmail } from "@/lib/newsletter";
 
   Three things hold it shut:
 
-  - **requireAdmin**, which is requireUser plus the ADMIN_EMAILS list. requireUser now carries the
-    two-factor gate itself, so an owner with a factor has answered their own code before they can
-    take anybody else's off.
+  - **requireAdmin**, the one staff gate (src/lib/admin.ts): requireUser plus a confirmed address
+    on the ADMIN_EMAILS list. It runs before the form is read, so this action refuses on its own
+    whether or not /admin was reachable. requireUser carries the two-factor gate itself, so an
+    owner with a factor has answered their own code before they can take anybody else's off.
   - **The whole address, typed.** The form matches one profile by exact normalized email. No id, no
     partial match, no picking from a list, so a slip cannot land on the wrong account.
   - **Deleting logs the account out.** Supabase ends every session on a verified factor it removes,

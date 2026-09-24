@@ -3,20 +3,25 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Warning } from "@/components/dashboard/icons";
+import { MaterialsThumb, materialsDetail } from "@/components/dashboard/MaterialsThumb";
+import { RowMenu } from "@/components/dashboard/RowMenu";
 import { TaskDecision } from "@/components/dashboard/TaskDecision";
 import { Badge, Card, Kpi, KpiUnit, MoneyBar, Table, TaskDate, TaskRow, type BadgeKind, type DeskRow } from "@/components/desk";
 import { themeFor } from "@/components/Theme";
 import { requireUser, ownedAct, currentProfile } from "@/lib/auth";
 import { categoryWords } from "@/lib/category-words";
 import { loadDashboard, withToday } from "@/lib/dashboard";
-import { loadHomeSponsorships, type HomeSponsorship } from "@/lib/dashboard-home";
+import { jumpTo, loadHomeSponsorships, type HomeSponsorship } from "@/lib/dashboard-home";
 import {
   dashboardNav,
   lifecycleLabel,
   organizerShareCents,
   plural,
+  previewTarget,
+  isShareable,
   waitingCount,
-  type WorkRow,
+  WIDGET_NOTICE_PARAM,
+  WIDGET_NOTICE_VALUE,
 } from "@/lib/dashboardModel";
 import { dayAndMonth, formatDay, formatWeekdayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -44,12 +49,17 @@ export const metadata: Metadata = { title: "Today" };
   has come instead of what it has raised, because a draft cannot hold a sponsorship at all.
 */
 
-export default async function DashboardPage() {
-  const user = await requireUser("/dashboard");
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+export default async function DashboardPage({ searchParams }: Props) {
+  const [user, sp] = await Promise.all([requireUser("/dashboard"), searchParams]);
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   const identity = fullName(profile);
   const nav = dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] });
   const today = new Date();
+  // Sent here from the widget's old address because nothing is published yet. A stale bookmark
+  // with the same address is answered the same way, or with a link when there is a panel by now.
+  const fromWidget = (Array.isArray(sp[WIDGET_NOTICE_PARAM]) ? sp[WIDGET_NOTICE_PARAM][0] : sp[WIDGET_NOTICE_PARAM]) === WIDGET_NOTICE_VALUE;
 
   /*
     No organizer profile yet, so there is nothing to run and nothing to count. Four zeroes would
@@ -72,6 +82,7 @@ export default async function DashboardPage() {
           </ButtonLink>
         }
       >
+        {fromWidget && <WidgetNotice shareHref={null} />}
         <Card title="Your first fundraiser" subtitle="What the money is for, who it reaches, and what a sponsor receives" className="max-w-[720px]">
           <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
             Door Money asks for those three answers, then you price what a sponsor can have. Nothing is public until you publish it.
@@ -149,7 +160,13 @@ export default async function DashboardPage() {
           Create fundraiser
         </ButtonLink>
       }
+      search={sponsorships.rows.map((run) => jumpTo(run))}
     >
+      {fromWidget && (() => {
+        const shareable = sponsorships.rows.find((r) => isShareable(r.status));
+        return <WidgetNotice shareHref={shareable ? `/dashboard/runs/${shareable.id}?share=1` : null} />;
+      })()}
+
       {(view.failed || sponsorships.failed) && (
         <Card className="mb-5">
           <p className="flex items-start gap-2.5 text-[15px] leading-[1.6] text-ink">
@@ -202,6 +219,7 @@ export default async function DashboardPage() {
       {/* Two columns while there is money to talk about. A draft has none, so the work takes the width. */}
       <div className={`mb-5 grid items-start gap-3.5 ${metrics ? "lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]" : ""}`}>
         <Card
+          searchable
           title="Needs you"
           subtitle={waiting > 0 ? "Ordered by what is due first" : draftStep?.label ? "Before this draft can be published" : undefined}
           right={waiting > 0 ? <Badge kind="attention">{waiting}</Badge> : undefined}
@@ -230,6 +248,7 @@ export default async function DashboardPage() {
               lead={<MaterialsThumb row={row} word={words.materials} />}
               title={`${words.materials === "logo" ? "Approve" : "Accept"} the ${words.materials} for ${row.option}`}
               detail={materialsDetail(row)}
+              search={`${row.sponsor} ${row.option}`}
               actions={<TaskDecision purchaseId={row.id} categoryKey={categoryKey} what={row.option} />}
             />
           ))}
@@ -240,6 +259,7 @@ export default async function DashboardPage() {
               lead={item.date ? <TaskDate {...dayAndMonth(item.date)} /> : undefined}
               title={sentenceCase(item.label)}
               detail={item.date ? `The first is ${formatWeekdayDay(item.date)}` : undefined}
+              search={item.label}
               actions={
                 <ButtonLink href={item.href} register="desk" variant="outline" size="sm">
                   {DATED_ACTION[item.key] ?? "Open the dates"}
@@ -291,6 +311,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card
+        searchable
         title="Fundraisers"
         right={
           <Link href="/dashboard/runs" className="text-accent-ink underline decoration-1 underline-offset-4">
@@ -312,7 +333,7 @@ export default async function DashboardPage() {
                   { key: "next", label: "Next date", width: "minmax(0,1.4fr)" },
                   { key: "waiting", label: "Waiting on you", width: "minmax(0,1.1fr)" },
                 ]}
-                rows={sponsorships.rows.map(fundraiserRow)}
+                rows={sponsorships.rows.map((row) => fundraiserRow(row, act.slug))}
               />
             </div>
           </div>
@@ -361,31 +382,6 @@ const STATUS_KIND: Record<string, BadgeKind> = { open: "ok", live: "ok" };
 
 const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-/** What one sponsor sent, as it was sent, or the shape of what is missing. */
-function MaterialsThumb({ row, word }: { row: WorkRow; word: string }) {
-  if (row.markUrl) {
-    /* A plain image: the address is whatever the marks bucket holds, and the optimizer only fetches
-       what it has been told about. It is decoration, and the row says whose it is in words. */
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={row.markUrl} alt="" className="h-10 w-16 rounded-[4px] border border-line bg-neutral-wash object-contain p-0.5" />;
-  }
-  return (
-    <span className="flex h-10 w-16 items-center justify-center rounded-[4px] border border-dashed border-field-line text-[14px] text-muted">{row.markText ? "Name" : word}</span>
-  );
-}
-
-/** Who sent it, what they paid, when it arrived, and where the offer says it goes. */
-function materialsDetail(row: WorkRow): string {
-  return [
-    row.sponsor,
-    formatMoney(row.amountCents),
-    row.submittedAt ? `sent ${formatDay(row.submittedAt.slice(0, 10))}` : null,
-    row.placement,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
-
 function MoneyRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4 border-t border-line py-2">
@@ -406,13 +402,31 @@ function releaseLine(music: boolean, periodNoun: string): string {
     : "Door Money holds it and releases your share one deliverable at a time, as you document each one.";
 }
 
-/** One fundraiser, as a row. A draft says how far it has come; everything else says what it holds. */
-function fundraiserRow(run: HomeSponsorship): DeskRow {
+/**
+ * One fundraiser, as a row. A draft says how far it has come; everything else says what it holds.
+ *
+ * The kebab holds the three things somebody does to a fundraiser from a list: hand it to
+ * somebody, look at it the way a sponsor would, and open it to change it. Share is left off a
+ * draft, which has no public address yet: a menu item that hands over a 404 is worse than none.
+ */
+function fundraiserRow(run: HomeSponsorship, actSlug: string): DeskRow {
   const draft = run.draftStep;
+  const target = previewTarget({ id: run.id, slug: run.slug ?? "", status: run.status }, actSlug);
   return {
     key: run.id,
     href: `/dashboard/runs/${run.id}`,
     label: run.title,
+    search: [run.title, run.period, lifecycleLabel(run.status)].filter(Boolean).join(" "),
+    menu: (
+      <RowMenu
+        label={`More for ${run.title}`}
+        items={[
+          ...(isShareable(run.status) ? [{ label: "Share", href: `/dashboard/runs/${run.id}?share=1` }] : []),
+          { label: target.kind === "preview" ? "Preview" : "Preview the public page", href: target.path },
+          { label: "Edit", href: draft ? `/dashboard/runs/${run.id}` : `/dashboard/runs/${run.id}?tab=details` },
+        ]}
+      />
+    ),
     cells: [
       <>
         <span className="font-medium">{run.title}</span>
@@ -448,4 +462,32 @@ function fundraiserRow(run: HomeSponsorship): DeskRow {
       ) : null,
     ],
   };
+}
+
+/* ------------------------------------------------------------------ the widget's old address */
+
+/**
+ * One line for somebody who followed an older link to /dashboard/widget. The widget's snippet sits
+ * under Share on a published fundraiser's page now; with nothing published there is no panel to
+ * send them to, so this says where it will be. A stale bookmark can arrive after something has
+ * been published since, and then the line links at the panel instead.
+ */
+function WidgetNotice({ shareHref }: { shareHref: string | null }) {
+  return (
+    <Card className="mb-5">
+      <p className="max-w-[62ch] text-[15px] leading-[1.6] text-ink">
+        {shareHref ? (
+          <>
+            The line for your own site, the button and the badges are under{" "}
+            <Link href={shareHref} className="text-accent-ink underline decoration-1 underline-offset-4">
+              Share on your fundraiser&apos;s page
+            </Link>
+            .
+          </>
+        ) : (
+          <>The widget goes with a published fundraiser. Publish one, and the line for your own site, the button and the badges are under Share on its page.</>
+        )}
+      </p>
+    </Card>
+  );
 }
