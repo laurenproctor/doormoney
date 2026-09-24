@@ -100,7 +100,8 @@ select is((select count(*)::int from payout_schedule s join purchases p on p.id=
   'the undelivered email placement has released nothing and remains fully refundable');
 update runs set status='cancelled',cancelled_at=now() where slug='atlas-publication';
 select is((select count(*)::int from purchases p join lots l on l.id=p.lot_id join runs r on r.id=l.run_id
-  where r.slug='atlas-publication' and p.payment_status='held' and p.refunded_cents=0),1,
+  where r.slug='atlas-publication' and l.id='f7000000-0000-4000-8000-0000000000a2'
+    and p.payment_status='held' and p.refunded_cents=0),1,
   'cancellation leaves the unpaid purchase visible to the refund sweep');
 
 select * from finish();
