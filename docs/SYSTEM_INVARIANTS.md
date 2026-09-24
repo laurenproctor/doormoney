@@ -61,11 +61,11 @@ the patron row is written. The cardless path is only for a Door Money with no St
 `cardlessBidsAllowed` closes it on every production build and every Vercel deployment. Proved by
 `tests/bids-action.test.ts`.
 
-What the database does not hold: `place_bid` accepts a null card, because Postgres cannot see
-whether Stripe is configured, and "one SetupIntent, one bid" is a read before the insert rather
-than a constraint. A partial unique index on `bids.stripe_setup_intent_id` would make the second
-rule the database's; it is proposed, not added, because the race it closes is one patron reusing
-their own card on the same spot, and the close charges one bid whichever wins.
+What the database holds, and what it does not. "One SetupIntent, one bid" is the database's since
+migration `0063`: a partial unique index on `bids.stripe_setup_intent_id`, so two requests carrying
+the same SetupIntent cannot both land, whatever the action read first (`auctions_test.sql`, two
+assertions). `place_bid` still accepts a null card, because Postgres cannot see whether Stripe is
+configured; that half of the rule is the action's.
 
 ### A declined mark receives the refund promised by the product
 

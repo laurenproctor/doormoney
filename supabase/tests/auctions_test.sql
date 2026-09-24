@@ -14,7 +14,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 create schema if not exists tests;
-select plan(81);
+select plan(83);
 
 -- ---------------------------------------------------------------
 -- Fixtures. The seed's Gutter Hymns fundraiser, put on a clock we control.
@@ -248,8 +248,16 @@ select is((select outcome from roll_offer('a1000000-0000-0000-0000-000000000006'
 -- Take it now, and the hold it puts on a lot.
 -- ---------------------------------------------------------------
 select lives_ok(
-  $$select * from place_bid('a3000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 40000)$$,
-  'a bid at the reserve on the rig rundown');
+  $$select * from place_bid('a3000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 40000, false, 'pm_rig', 'seti_rig')$$,
+  'a bid at the reserve on the rig rundown, with the card that stored it');
+-- One stored card, one bid (migration 0063): the SetupIntent that backs a bid backs no other.
+select throws_ok(
+  $$select * from place_bid('a3000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000003', 42000, false, 'pm_rig', 'seti_rig')$$,
+  '23505', null, 'a second bid carrying the same SetupIntent is refused');
+select throws_ok(
+  $$insert into bids (lot_id, patron_id, amount_cents, stripe_payment_method_id, stripe_setup_intent_id)
+    values ('a3000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000003', 42000, 'pm_rig', 'seti_rig')$$,
+  '23505', null, 'and so is one inserted around the function');
 select lives_ok(
   $$select begin_lot_purchase('a3000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000003', 60000, 9000)$$,
   'a patron takes it at the take-it-now price while the bidding is below it');

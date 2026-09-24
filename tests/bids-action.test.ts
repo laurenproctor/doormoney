@@ -46,6 +46,8 @@ let rpcs: { fn: string; args: Record<string, unknown> }[] = [];
 let retrieved: string[] = [];
 let patronCalls = 0;
 let stripeOn = true;
+/** What place_bid answers: a row, or the error the database raised. */
+let rpcError: { code: string; message: string; details?: string } | null = null;
 
 function from(table: string) {
   const s: { verb: string; payload?: Record<string, unknown>; filters: Record<string, unknown> } = { verb: "select", filters: {} };
@@ -79,6 +81,7 @@ const admin = {
   from,
   rpc: async (fn: string, args: Record<string, unknown>) => {
     rpcs.push({ fn, args });
+    if (rpcError) return { data: null, error: rpcError };
     return { data: [{ bid_id: "bid-new", next_minimum_cents: 50000 }], error: null };
   },
 };
@@ -101,7 +104,7 @@ const env = { NODE_ENV: processEnv.NODE_ENV, VERCEL_ENV: processEnv.VERCEL_ENV }
 const restoreEnv = () => {
   for (const [k, v] of Object.entries(env)) { if (v === undefined) delete processEnv[k]; else processEnv[k] = v; }
 };
-const reset = () => { writes = []; rpcs = []; retrieved = []; patronCalls = 0; stripeOn = true; usedIntents = ["seti_used"]; restoreEnv(); delete processEnv.VERCEL_ENV; processEnv.NODE_ENV = "test"; };
+const reset = () => { writes = []; rpcs = []; retrieved = []; patronCalls = 0; stripeOn = true; usedIntents = ["seti_used"]; rpcError = null; restoreEnv(); delete processEnv.VERCEL_ENV; processEnv.NODE_ENV = "test"; };
 const bid = (extra: Record<string, unknown> = {}) => placeBid({ lotId: LOT, amountCents: 45000, patronName: "Kettle St. Coffee", email: "owner@kettle.example", ...extra });
 const refused = (r: Awaited<ReturnType<typeof placeBid>>) => { assert.equal(r.ok, false); return r.ok ? "" : r.error; };
 const nothingPlaced = () => assert.equal(rpcs.length, 0, "place_bid was not called");
@@ -161,6 +164,13 @@ test("a SetupIntent that already backs a bid is refused", async () => {
   nothingPlaced();
 });
 
+test("a SetupIntent the database refuses as already used (migration 0063, two bids arriving together) is told the same thing", async () => {
+  reset();
+  rpcError = { code: "23505", message: "duplicate key value violates unique constraint \"bids_setup_intent_idx\"" };
+  const error = refused(await bid({ setupIntentId: "seti_ok" }));
+  assert.match(error, /already backs a bid/);
+  assert.equal(rpcs.length, 1, "the read let it through; the index did not");
+});
 
 // ---------------------------------------------------------------
 // The payment gate, on this door as well as the setup route's

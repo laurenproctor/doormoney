@@ -51,6 +51,8 @@ export type BidResult = { ok: true; amountCents: number; nextMinimumCents: numbe
 
 type LotRow = { id: string; price_cents: number; runs: { slug: string; category_key: string | null; acts: { slug: string } } };
 
+const SETUP_INTENT_USED = "That card already backs a bid. Start the bid again.";
+
 /** The saved card behind a bid, as Stripe confirmed it. */
 type Card = { paymentMethodId: string; setupIntentId: string };
 
@@ -101,6 +103,9 @@ export async function placeBid(input: z.input<typeof Input>): Promise<BidResult>
     p_setup_intent_id: card?.setupIntentId ?? null,
   });
   if (bidError) {
+    // Two bids carrying the same SetupIntent, arriving together: the read above let both through
+    // and the index from migration 0063 let one land.
+    if (bidError.code === "23505") return { ok: false, error: SETUP_INTENT_USED };
     // The database raises the reason as the message. Anything it did not mean to say is logged.
     if (bidError.code !== "23514" && bidError.code !== "P0002") console.error("place_bid failed", lot.id, bidError.code, bidError.message);
     return { ok: false, error: bidRefusalMessage(bidError.message, bidError.details) };
@@ -146,10 +151,11 @@ async function confirmedCard(sb: ReturnType<typeof supabaseAdmin>, setupIntentId
   }
 
   // One stored card, one bid. A second bid wants a second SetupIntent, so that what the close
-  // charges is always the card the patron confirmed for that exact bid.
+  // charges is always the card the patron confirmed for that exact bid. Migration 0063 holds the
+  // same rule as a unique index, for two requests that get past this read together.
   const { data: used, error } = await sb.from("bids").select("id").eq("stripe_setup_intent_id", setupIntentId).limit(1).maybeSingle();
   if (error) return { error: "That did not load. Try once more." };
-  if (used) return { error: "That card already backs a bid. Start the bid again." };
+  if (used) return { error: SETUP_INTENT_USED };
 
   return { paymentMethodId, setupIntentId };
 }
