@@ -31,8 +31,8 @@ select is((select count(*)::int from delivery_policies where category_key='other
   'it has no delivery policy, proposed or active');
 select ok((public.current_delivery_policy('other')).category_key is null,
   'so the policy a purchase would be sold under does not exist');
-select is((select count(*)::int from fundraiser_categories where publish_enabled),4,
-  'the four launch categories are still the only ones that publish');
+select is((select count(*)::int from fundraiser_categories where publish_enabled),5,
+  'the four launch categories and digital workers may publish; Other remains draft-only');
 
 -- ---------------------------------------------------------------
 -- A private draft, written as the organizer, in the shared fields
