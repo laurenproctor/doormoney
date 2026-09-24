@@ -43,6 +43,30 @@ way, so two bids that arrive together queue: the second sees the first. The clos
 in the same place at the database's clock. Proved by `auctions_test.sql` (a bid under the minimum,
 a bid after the close, a plain insert of either) and `concurrency_test.sh` scenarios 1 and 3.
 
+### A bid carries a card that was confirmed for it
+
+**Held** as of 2026-09-23, in the action. Migration `0028` gave a bid a saved card so the close
+could charge it with nobody present, and `/api/bids/setup` was where the card was stored and the
+payment gate asked. The action that placed the bid trusted that the route had run: `setupIntentId`
+was optional with Stripe configured, and `placeBid` never asked `paymentsOpenFor` itself. A caller
+of the action could place a bid with no card behind it, on a category whose payments were not
+open, and the close would fall back to the claim link, which is the 48 hours 0028 was meant to
+stop costing the organizer.
+
+`placeBid` (`src/app/actions/bids.ts`) now refuses a bid without a SetupIntent whenever Stripe is
+configured, reads the SetupIntent back from Stripe and requires that it succeeded, holds a payment
+method, belongs to the patron's own customer and carries the metadata the setup route wrote for
+this lot and this patron, refuses one that already sits on a bid, and asks the payment gate before
+the patron row is written. The cardless path is only for a Door Money with no Stripe key, and
+`cardlessBidsAllowed` closes it on every production build and every Vercel deployment. Proved by
+`tests/bids-action.test.ts`.
+
+What the database does not hold: `place_bid` accepts a null card, because Postgres cannot see
+whether Stripe is configured, and "one SetupIntent, one bid" is a read before the insert rather
+than a constraint. A partial unique index on `bids.stripe_setup_intent_id` would make the second
+rule the database's; it is proposed, not added, because the race it closes is one patron reusing
+their own card on the same spot, and the close charges one bid whichever wins.
+
 ### A declined mark receives the refund promised by the product
 
 **Held**, since migration 0031.
