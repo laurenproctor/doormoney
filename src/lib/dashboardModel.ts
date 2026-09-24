@@ -496,6 +496,22 @@ export function isShareable(status: string): boolean {
   return status === "open" || status === "live" || status === "closed";
 }
 
+/**
+ * Where the widget's old address sends somebody. The snippet lives under Share on a fundraiser's
+ * own page now, so the answer is the newest fundraiser that has a Share panel: one that is open or
+ * live first, because that is the one still taking backings, and only then a closed one, whose
+ * panel still holds the badge and the button. `rows` arrive newest first. With nothing published
+ * there is no panel to open, so Today draws a one-line notice instead.
+ */
+export const WIDGET_NOTICE_PARAM = "from";
+export const WIDGET_NOTICE_VALUE = "widget";
+
+export function widgetDestination(rows: readonly { id: string; status: string }[]): string {
+  const running = rows.find((r) => r.status === "open" || r.status === "live");
+  const target = running ?? rows.find((r) => isShareable(r.status));
+  return target ? `/dashboard/runs/${target.id}?share=1` : `/dashboard?${WIDGET_NOTICE_PARAM}=${WIDGET_NOTICE_VALUE}`;
+}
+
 /** Newest first, and never a cancelled one: the selector offers what can still be worked on. */
 export function selectableRuns<T extends { status: string; starts_on: string }>(runs: T[]): T[] {
   return runs

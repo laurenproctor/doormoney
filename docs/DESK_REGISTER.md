@@ -160,12 +160,16 @@ PR 1 (tokens, register CSS, primitives), PR 2 (the shell), PR 3 (Today), PR 4 (t
 PR 5 (the rest of the workspace) are all in. PR 0's three fixes to `src/app/actions/shows.ts` went in
 before Today's inline actions, as planned.
 
-Two items in PR 5 were deliberately left:
+Two items in PR 5 were deliberately left, and one of them has since closed:
 
-- **`/dashboard/widget` still draws the snippets.** It stopped being a nav destination in PR 2, which is
-  the half of the item that mattered. Redirecting it at the fundraiser page's Share panel waits for that
-  panel to hold the snippet, which is PR 4's move; until then a redirect would take the embed code out of
-  the product rather than move it.
+- **`/dashboard/widget` redirects now (2026-09-23).** It stopped being a nav destination in PR 2, which
+  is the half of the item that mattered. The redirect waited for the fundraiser page's Share panel to
+  hold everything the old page drew, because until then it would have taken the embed code out of the
+  product rather than moved it. The panel holds all of it now (the snippet, the button and its address,
+  the two badges and the downloads), so the route answers with a redirect and nothing else: the newest
+  published fundraiser with its Share panel open, a running one before a closed one, or Today with a
+  one-line notice when nothing is published. `widgetDestination` in `src/lib/dashboardModel.ts`
+  decides. The address stays, for the links already sent.
 - **The six unused `Field` components were not deleted, because there are none.** Eight files declare a
   `Field` of their own and every one of them is used where it is declared; `ActForm`'s and
   `ProfileForms`' are imported by `RunForm` and `AccountForms` besides. `inputClass` already has one home

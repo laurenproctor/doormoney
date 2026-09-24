@@ -20,6 +20,8 @@ import {
   previewTarget,
   isShareable,
   waitingCount,
+  WIDGET_NOTICE_PARAM,
+  WIDGET_NOTICE_VALUE,
 } from "@/lib/dashboardModel";
 import { dayAndMonth, formatDay, formatWeekdayDay } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -47,12 +49,17 @@ export const metadata: Metadata = { title: "Today" };
   has come instead of what it has raised, because a draft cannot hold a sponsorship at all.
 */
 
-export default async function DashboardPage() {
-  const user = await requireUser("/dashboard");
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+export default async function DashboardPage({ searchParams }: Props) {
+  const [user, sp] = await Promise.all([requireUser("/dashboard"), searchParams]);
   const [act, profile] = await Promise.all([ownedAct(user.id), currentProfile(user.id)]);
   const identity = fullName(profile);
   const nav = dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] });
   const today = new Date();
+  // Sent here from the widget's old address because nothing is published yet. A stale bookmark
+  // with the same address is answered the same way, or with a link when there is a panel by now.
+  const fromWidget = (Array.isArray(sp[WIDGET_NOTICE_PARAM]) ? sp[WIDGET_NOTICE_PARAM][0] : sp[WIDGET_NOTICE_PARAM]) === WIDGET_NOTICE_VALUE;
 
   /*
     No organizer profile yet, so there is nothing to run and nothing to count. Four zeroes would
@@ -75,6 +82,7 @@ export default async function DashboardPage() {
           </ButtonLink>
         }
       >
+        {fromWidget && <WidgetNotice shareHref={null} />}
         <Card title="Your first fundraiser" subtitle="What the money is for, who it reaches, and what a sponsor receives" className="max-w-[720px]">
           <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
             Door Money asks for those three answers, then you price what a sponsor can have. Nothing is public until you publish it.
@@ -154,6 +162,11 @@ export default async function DashboardPage() {
       }
       search={sponsorships.rows.map((run) => jumpTo(run))}
     >
+      {fromWidget && (() => {
+        const shareable = sponsorships.rows.find((r) => isShareable(r.status));
+        return <WidgetNotice shareHref={shareable ? `/dashboard/runs/${shareable.id}?share=1` : null} />;
+      })()}
+
       {(view.failed || sponsorships.failed) && (
         <Card className="mb-5">
           <p className="flex items-start gap-2.5 text-[15px] leading-[1.6] text-ink">
@@ -449,4 +462,32 @@ function fundraiserRow(run: HomeSponsorship, actSlug: string): DeskRow {
       ) : null,
     ],
   };
+}
+
+/* ------------------------------------------------------------------ the widget's old address */
+
+/**
+ * One line for somebody who followed an older link to /dashboard/widget. The widget's snippet sits
+ * under Share on a published fundraiser's page now; with nothing published there is no panel to
+ * send them to, so this says where it will be. A stale bookmark can arrive after something has
+ * been published since, and then the line links at the panel instead.
+ */
+function WidgetNotice({ shareHref }: { shareHref: string | null }) {
+  return (
+    <Card className="mb-5">
+      <p className="max-w-[62ch] text-[15px] leading-[1.6] text-ink">
+        {shareHref ? (
+          <>
+            The line for your own site, the button and the badges are under{" "}
+            <Link href={shareHref} className="text-accent-ink underline decoration-1 underline-offset-4">
+              Share on your fundraiser&apos;s page
+            </Link>
+            .
+          </>
+        ) : (
+          <>The widget goes with a published fundraiser. Publish one, and the line for your own site, the button and the badges are under Share on its page.</>
+        )}
+      </p>
+    </Card>
+  );
 }

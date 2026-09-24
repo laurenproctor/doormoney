@@ -962,12 +962,12 @@ function DraftOptionsSummary({ lots, templates, href }: { lots: BuilderLot[]; te
 /* ------------------------------------------------------------------ sharing */
 
 /**
- * Everywhere this fundraiser can be put: its own address, the line for the organizer's site, and
- * the images for places that only take a link.
+ * Everywhere this fundraiser can be put: its own address, the line for the organizer's site, the
+ * button for places that only take a link, and the badges for a footer or a poster.
  *
  * The widget used to have a page of its own in the sidebar, which meant it sat one level away from
- * the fundraiser it embeds. /dashboard/widget still answers, for the links already sent, and sends
- * people here.
+ * the fundraiser it embeds. Everything that page showed is here now, so /dashboard/widget draws
+ * nothing of its own: it still answers, for the links already sent, and sends people here.
  */
 function SharePanel({
   address,
@@ -1007,8 +1007,8 @@ function SharePanel({
       <div className="border-t border-line pt-4">
         <p className="mb-2 text-[15px] font-medium text-ink">For a link in a bio</p>
         <p className="mb-3 max-w-[62ch] text-[14px] leading-[1.6] text-muted">
-          For places that only allow a link: a link-in-bio page, Bandcamp, a newsletter footer. It sends a patron to this
-          page, where the same payment happens.
+          For places that only allow a link: a link-in-bio page, Bandcamp, a newsletter footer, an Instagram bio. It sends
+          a patron to this page, where the same payment happens.
         </p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={buttonSrc} alt={`Back ${actName} on Door Money`} height={44} className="mb-3 block h-11 w-auto max-w-full" />
@@ -1016,10 +1016,27 @@ function SharePanel({
           <code>{buttonSnippet}</code>
         </pre>
         <p className="mt-3 text-[14px] leading-[1.6] text-muted">
-          The badge for a footer or a poster:{" "}
+          Or the address alone. Your own page keeps working between fundraisers:{" "}
+          <span className="break-all text-ink">{SITE.url}{organizerPath}</span>
+        </p>
+      </div>
+
+      <div className="border-t border-line pt-4">
+        <p className="mb-2 text-[15px] font-medium text-ink">For a footer or a poster</p>
+        <p className="mb-3 max-w-[62ch] text-[14px] leading-[1.6] text-muted">
+          &quot;Backed on Door Money&quot;, for a website footer, a poster credit or a merch table card. Dark and light.
+        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/badge/dark.svg" alt="Backed on Door Money, dark badge" width={236} height={48} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/badge/light.svg" alt="Backed on Door Money, light badge" width={236} height={48} />
+        </div>
+        <p className="mt-3 text-[14px] leading-[1.6] text-muted">
+          Download:{" "}
           <a href="/badge/dark.svg" download="backed-on-door-money-dark.svg" className="text-accent-ink underline decoration-1 underline-offset-4">dark</a>,{" "}
-          <a href="/badge/light.svg" download="backed-on-door-money-light.svg" className="text-accent-ink underline decoration-1 underline-offset-4">light</a>.
-          Your own page, which keeps working between fundraisers: <span className="break-all text-ink">{SITE.url}{organizerPath}</span>
+          <a href="/badge/light.svg" download="backed-on-door-money-light.svg" className="text-accent-ink underline decoration-1 underline-offset-4">light</a>,{" "}
+          <a href={`/badge/button.svg?act=${encodeURIComponent(actName)}`} download="back-on-door-money-button.svg" className="text-accent-ink underline decoration-1 underline-offset-4">the button</a>.
         </p>
       </div>
     </Card>
