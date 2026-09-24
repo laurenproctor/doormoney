@@ -72,10 +72,13 @@ select is((select count(*)::int from purchases where lot_id = 'a4000000-0000-000
 -- ---------------------------------------------------------------
 -- 1. Attempts from one address: sixty in ten minutes. Loose, because a show shares an address.
 -- ---------------------------------------------------------------
+-- All fifty-nine land on the one held option, so the per-option backstop (thirty) answers the
+-- later ones before the hold decision does. What matters here is that none of the sixty is
+-- refused for the address.
 select is(
   (select count(*)::int from (select tests.try('203.0.113.2', 'other@example.com', 'a4000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002') as word
-                                from generate_series(1, 59)) s where word = 'spot_being_taken'),
-  59, 'fifty-nine more tries from the same address each reach the hold decision');
+                                from generate_series(1, 59)) s where word in ('spot_being_taken', 'too_many_on_lot')),
+  59, 'fifty-nine more tries from the same address are each answered by something other than the address limit');
 select is(tests.try('203.0.113.2', 'other@example.com', 'a4000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002'),
   'too_many_from_ip', 'the sixty-first try from one address in ten minutes is refused');
 select is((select count(*)::int from checkout_attempts where client_ip = '203.0.113.2'), 61, 'and counted, so a client that keeps trying keeps itself out');
