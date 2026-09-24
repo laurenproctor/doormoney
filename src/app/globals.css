@@ -291,6 +291,17 @@
   background-image: radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
 }
 
+/*
+  A row the top bar's search filtered out.
+
+  The filter sets `hidden` on the row (src/components/dashboard/WorkspaceSearch.tsx), and the one
+  thing standing between that and a row that is still drawn is this rule: a table row carries
+  `display: grid` from a class of its own, and an author declaration beats the `[hidden]` the
+  browser's own stylesheet ships. So it is said here, where the register is.
+*/
+[data-register="desk"] [data-search][hidden],
+[data-register="desk"] [data-search-group][hidden] { display: none; }
+
 
 @theme inline {
   --color-ground: var(--ground);

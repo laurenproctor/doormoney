@@ -12,6 +12,7 @@ import {
   daysRemaining,
   raisedCents,
   selectableRuns,
+  topBidByLot,
   upcomingShow,
   type BidRow,
   type PayoutTotals,
@@ -74,6 +75,8 @@ export type DashboardView = {
   preparation: PrepItem[];
   payouts: PayoutTotals;
   payoutRows: number;
+  /** The top live bid on each option still open, by option id. Absent where nobody has bid. */
+  topBids: Record<string, number>;
   /** A query failed. The screen says so rather than drawing zeroes that look like facts. */
   failed: boolean;
 };
@@ -115,7 +118,7 @@ type PurchaseRow = {
   mark_note: string | null;
   mark_submitted_at: string | null;
   patron_id: string;
-  lots: { label: string | null; surface_key: string; run_id: string; offer_terms: unknown } | null;
+  lots: { id: string; label: string | null; surface_key: string; run_id: string; offer_terms: unknown } | null;
   patron_names: { name: string } | null;
 };
 
@@ -138,6 +141,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     preparation: [],
     payouts: { paidCents: 0, scheduledCents: 0, pausedCents: 0 },
     payoutRows: 0,
+    topBids: {},
     failed: false,
   };
 
@@ -190,7 +194,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     supabaseAdmin()
       .from("purchases")
       .select(
-        "id,amount_cents,refunded_cents,payment_status,mark_status,mark_text,mark_url,mark_note,mark_submitted_at,patron_id,lots!inner(label,surface_key,run_id,offer_terms),patron_names(name)",
+        "id,amount_cents,refunded_cents,payment_status,mark_status,mark_text,mark_url,mark_note,mark_submitted_at,patron_id,lots!inner(id,label,surface_key,run_id,offer_terms),patron_names(name)",
       )
       .eq("lots.run_id", chosen.id)
       .order("created_at"),
@@ -214,6 +218,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
 
   const work: WorkRow[] = purchases.map((p) => ({
     id: p.id,
+    lotId: p.lots?.id ?? null,
     sponsor: p.patron_names?.name ?? "A patron",
     option: p.lots ? lotName(p.lots) : "Sponsorship",
     amountCents: Math.max(0, p.amount_cents - p.refunded_cents),
@@ -245,6 +250,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     }
     bids = (bidResult.data ?? []) as BidRow[];
   }
+  const topBids = topBidByLot(bids, openLotIds);
   const held = openBids(bids, openLotIds);
 
   // Both sides of the money, netted the same way.
@@ -288,6 +294,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
     }),
     payouts,
     payoutRows: payoutRows.length,
+    topBids,
     failed,
   };
 }

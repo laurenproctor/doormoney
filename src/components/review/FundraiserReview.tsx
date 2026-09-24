@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Card, CardHead } from "@/components/DashboardShell";
-import { Badge } from "@/components/desk/Badge";
+import { ButtonLink } from "@/components/Button";
+import { Badge, Card } from "@/components/desk";
 import { Launch } from "@/components/dashboard/icons";
 import { OfferSummary } from "@/components/OfferSummary";
 import { VerificationEditor } from "@/components/VerificationEditor";
@@ -93,13 +93,13 @@ export function FundraiserReview({
   const policyStatus: "active" | "proposed" | null = policy?.status === "active" ? "active" : policy?.status === "proposed" ? "proposed" : null;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-3.5">
       {/* ------------------------------------------------------------ the way to the real page */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         {"href" in preview ? (
-          <Link href={preview.href} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-control border border-accent-line bg-accent px-3.5 text-[14px] font-medium text-on-accent no-underline transition-colors hover:bg-accent-ink">
+          <ButtonLink href={preview.href} register="desk" variant="outline">
             Preview the real page <Launch size={14} aria-hidden="true" />
-          </Link>
+          </ButtonLink>
         ) : (
           <span className="text-[14.5px] text-muted">{preview.why}</span>
         )}
@@ -109,8 +109,7 @@ export function FundraiserReview({
 
       {/* ------------------------------------------------------------ what is unfinished */}
       {publishable && (
-        <Card>
-          <CardHead eyebrow="Before it goes up">{unfinished.length === 0 ? "Everything a sponsor needs is here" : `${unfinished.length} ${unfinished.length === 1 ? "thing" : "things"} still to do`}</CardHead>
+        <Card title={unfinished.length === 0 ? "Everything a sponsor needs is here" : `${unfinished.length} ${unfinished.length === 1 ? "thing" : "things"} still to do`} subtitle="Before it goes up">
           {unfinished.length === 0 ? (
             <p className="text-[15px] text-muted">The organizer, the fundraiser, at least one complete option and how delivery is documented are all in place. Read it through below, then decide.</p>
           ) : (
@@ -134,8 +133,7 @@ export function FundraiserReview({
       )}
 
       {/* ------------------------------------------------------------ who */}
-      <Card>
-        <CardHead eyebrow="Who is raising the money">{organizer.name}</CardHead>
+      <Card title={organizer.name} subtitle="Who is raising the money">
         <div className="flex items-start gap-4">
           {organizer.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -152,11 +150,11 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ the project and the funding */}
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <CardHead eyebrow={categoryLabel}>{draft.title || "No name yet"}</CardHead>
-          <Link href={stagePath(draft.id, "project", kit)} className="text-[14px] text-accent-ink underline decoration-1 underline-offset-4">Edit the project</Link>
-        </div>
+      <Card
+        title={draft.title || "No name yet"}
+        subtitle={categoryLabel}
+        right={<Link href={stagePath(draft.id, "project", kit)} className="text-accent-ink underline decoration-1 underline-offset-4">Edit the project</Link>}
+      >
         <dl className="grid gap-4 text-[15px] leading-[1.6]">
           <Row label="The story">{draft.description || <Missing>Not yet said. Sponsors read this first.</Missing>}</Row>
           <Row label="What the funding enables" example={examples.has("purpose")}>{draft.purpose || <Missing>Not yet said.</Missing>}</Row>
@@ -179,11 +177,11 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ what a sponsor receives */}
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <CardHead eyebrow="In return">{optionKeys.length === 0 ? "No sponsorship option yet" : optionKeys.length === 1 ? "One sponsorship option" : `${optionKeys.length} sponsorship options`}</CardHead>
-          <Link href={sponsorshipsHref} className="text-[14px] text-accent-ink underline decoration-1 underline-offset-4">{optionKeys.length === 0 ? "Build the first option" : "Edit the options"}</Link>
-        </div>
+      <Card
+        title={optionKeys.length === 0 ? "No sponsorship option yet" : optionKeys.length === 1 ? "One sponsorship option" : `${optionKeys.length} sponsorship options`}
+        subtitle="In return"
+        right={<Link href={sponsorshipsHref} className="text-accent-ink underline decoration-1 underline-offset-4">{optionKeys.length === 0 ? "Build the first option" : "Edit the options"}</Link>}
+      >
         <Row label="What sponsors can count on" example={examples.has("sponsor_promise")}>{draft.sponsor_promise || <Missing>Not yet said.</Missing>}</Row>
         {optionKeys.length === 0 && templates.length === 0 && (
           <p className="text-[15px] text-muted">{categoryLabel} has no sponsorship option templates yet, so no priced option can be saved and nothing can be bought. The line above is the whole offer for now.</p>
@@ -221,8 +219,7 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ how delivery is documented */}
-      <Card id="verification">
-        <CardHead eyebrow="What you commit to document">{chosenMethods.length === 0 ? "Nothing chosen yet" : chosenMethods.length === 1 ? "One way of documenting delivery" : `${chosenMethods.length} ways of documenting delivery`}</CardHead>
+      <Card id="verification" title={chosenMethods.length === 0 ? "Nothing chosen yet" : chosenMethods.length === 1 ? "One way of documenting delivery" : `${chosenMethods.length} ways of documenting delivery`} subtitle="What you commit to document">
         <p className="max-w-[62ch] text-[15px] text-muted">
           Only what you choose here goes on the public page, and it never claims more than that. Documentation comes from you; Door Money passes it on and inspects nothing.
         </p>
@@ -230,8 +227,7 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ what Door Money's policy decides */}
-      <Card>
-        <CardHead eyebrow="Saved policy terms">What happens to the money</CardHead>
+      <Card title="What happens to the money" subtitle="Saved policy terms">
         <dl className="grid gap-2 text-[15px] leading-[1.6]">
           {release && <Row label="Release">{release}</Row>}
           {statements.map((s) => <Row key={s.key} label={s.label}>{s.sentence}</Row>)}
@@ -240,8 +236,7 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ the decision */}
-      <Card>
-        <CardHead eyebrow="The decision">{publishable ? (blockers.length === 0 ? "Ready to publish" : "Not yet") : "A private draft, for now"}</CardHead>
+      <Card title={publishable ? (blockers.length === 0 ? "Ready to publish" : "Not yet") : "A private draft, for now"} subtitle="The decision">
         <PublishDecision
           runId={draft.id}
           publishable={publishable}

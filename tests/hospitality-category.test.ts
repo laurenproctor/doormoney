@@ -213,7 +213,7 @@ test("the readiness checklist tells a hospitality organizer publishing is not op
   const complete = {
     act: { name: "The Copper Room", city: null, bio: "A dining room on the harbor.", type: null, stripe_payouts_enabled: true },
     run: { category_key: "hospitality", title: "Martini cart", purpose: "The cart.", audience_description: "Guests.", sponsor_promise: "A name on the cart.", kind: null, starts_on: null, ends_on: null, show_count: null, bidding_closes_at: null, methods: ["photos"], other: null },
-    lotCount: 1, auctionCount: 0,
+    lotCount: 1, auctionCount: 0, incompleteOffers: [],
   };
   const blockers = publishBlockers({ ...complete, categoryPublishable: false } as never);
   assert.ok(blockers.includes("This category can hold drafts. Publishing is not open for it yet."));

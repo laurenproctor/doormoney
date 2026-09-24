@@ -47,7 +47,7 @@ export function AccountNameForm({ firstName, lastName }: { firstName: string | n
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
+        <Button type="submit" register="desk" variant="solid" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
         <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
           {state.ok ? state.message : ""}
         </span>
@@ -93,7 +93,7 @@ export function AccountPhotoForm({ photo }: { photo: string | null }) {
         </Field>
 
         <div className="mt-2 flex flex-wrap items-center gap-4">
-          <Button type="submit" disabled={pending || removing}>{pending ? "Saving…" : "Save changes"}</Button>
+          <Button type="submit" register="desk" variant="solid" disabled={pending || removing}>{pending ? "Saving…" : "Save changes"}</Button>
           <span role="status" aria-live="polite" className="text-[14.5px] text-muted">
             {/* Both results outlive their click, so the photo itself says which one is current. */}
             {photo ? (state.ok ? state.message : "") : removed.ok ? removed.message : ""}
@@ -191,7 +191,7 @@ export function NewsletterPreferenceForm({
         </p>
       ) : (
         <form action={subscribed ? unsubscribe : subscribe}>
-          <Button type="submit" variant={subscribed ? "ghost" : "solid"} disabled={pending}>
+          <Button type="submit" register="desk" variant={subscribed ? "outline" : "solid"} disabled={pending}>
             {pending ? "Saving…" : subscribed ? "Unsubscribe" : "Subscribe"}
           </Button>
         </form>

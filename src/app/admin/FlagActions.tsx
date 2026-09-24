@@ -9,11 +9,13 @@ import { Button } from "@/components/Button";
 export function ClearFlag({ source, id }: { source: FlagSource; id: string }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<string | null>(null);
-  if (state) return <span className="caps text-[14px] text-muted">{state}</span>;
+  if (state) return <span className="text-[14px] text-muted">{state}</span>;
   return (
     <Button
       type="button"
-      variant="ghost"
+      register="desk"
+      variant="outline"
+      size="sm"
       disabled={pending}
       onClick={() =>
         start(async () => {
@@ -40,7 +42,7 @@ export function RemoveAccountTotp() {
 
   return (
     <form action={action} noValidate className="grid max-w-[520px] gap-3">
-      <label htmlFor={`${uid}-email`} className="caps text-[14px] text-muted">
+      <label htmlFor={`${uid}-email`} className="text-[14px] text-muted">
         The whole email address on the account
       </label>
       <input
@@ -58,7 +60,7 @@ export function RemoveAccountTotp() {
         is asking before using this.
       </p>
       <div>
-        <Button type="submit" variant="ghost" disabled={pending}>
+        <Button type="submit" register="desk" variant="outline" disabled={pending}>
           {pending ? "Removing" : "Remove two-factor from this account"}
         </Button>
       </div>

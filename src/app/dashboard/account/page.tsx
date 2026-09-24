@@ -10,6 +10,7 @@ import { fullName } from "@/lib/names";
 import { usernameFor } from "@/lib/username";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { dashboardNav } from "@/lib/dashboardModel";
+import { loadFundraiserJumps } from "@/lib/dashboard-home";
 import { newsletterStanding, normalizeEmail } from "@/lib/newsletter";
 import { MAX_TOTP_FACTORS, recoveryCodesStanding, verifiedTotpFactors } from "@/lib/mfa";
 import { formatDay } from "@/lib/profile";
@@ -47,6 +48,7 @@ export default async function AccountPage() {
   const sb = await supabaseServer();
   const totp = verifiedTotpFactors(user);
   const recovery = totp.length > 0 ? await recoveryCodesStanding(sb) : { known: false, total: 0, remaining: 0 };
+  const jumps = await loadFundraiserJumps(act?.id ?? null);
 
   return (
     <DashboardShell
@@ -57,6 +59,7 @@ export default async function AccountPage() {
       eyebrow="Your account"
       title="Account"
       accent="settings"
+      search={jumps}
       intro={
         <p>
           Your name, photo and public pages are on{" "}

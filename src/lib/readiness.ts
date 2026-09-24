@@ -59,8 +59,13 @@ export type ReadinessInput = {
    * Sponsorship options still missing terms the product contract asks for before a purchase
    * (src/lib/offer-readiness.ts). Computed by the caller from the lots, and empty for a fundraiser
    * that has been published before, so nothing already sold is held to a rule written later.
+   *
+   * Required, with no default. It was optional until 2026-09-23, and the dashboard home simply
+   * never passed it: Today counted the options step done the moment a lot existed, so a draft
+   * publishRun refuses read "4 of 4 steps done". A field a caller can forget is a field that will
+   * be forgotten, so the type asks every caller for it and an empty list has to be written out.
    */
-  incompleteOffers?: readonly IncompleteOffer[];
+  incompleteOffers: readonly IncompleteOffer[];
 };
 
 export type ReadinessRow = {
@@ -119,7 +124,7 @@ function runMissing(run: ReadinessRun): string {
  * Everything between this draft and a public fundraiser, in the order an organizer would fix it.
  * Empty means publishing will go through. Each line names the thing and where it lives.
  */
-export function publishBlockers({ act, run, lotCount, auctionCount, categoryPublishable, incompleteOffers = [] }: ReadinessInput): string[] {
+export function publishBlockers({ act, run, lotCount, auctionCount, categoryPublishable, incompleteOffers }: ReadinessInput): string[] {
   const out: string[] = [];
   const noun = organizerNoun(run.category_key ?? "music");
   if (!categoryPublishable) out.push("This category can hold drafts. Publishing is not open for it yet.");
@@ -147,7 +152,7 @@ export function publishBlockers({ act, run, lotCount, auctionCount, categoryPubl
 
 /** The six rows on the fundraiser dashboard, in order. */
 export function readiness(input: ReadinessInput): ReadinessRow[] {
-  const { act, run, lotCount, auctionCount, incompleteOffers = [] } = input;
+  const { act, run, lotCount, auctionCount, incompleteOffers } = input;
   const published = run.status === "open" || run.status === "live";
   const blockers = publishBlockers(input);
   const auctionsNeedClose = auctionCount > 0 && !filled(run.bidding_closes_at);

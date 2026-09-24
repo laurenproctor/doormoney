@@ -177,15 +177,31 @@ export type OpenBids = { cents: number; options: number };
  * raised total counts. Counting either again would tell an organizer the same money twice.
  */
 export function openBids(bids: BidRow[], openLotIds: readonly string[]): OpenBids {
+  const tops = topBidByLot(bids, openLotIds);
+  let cents = 0;
+  let options = 0;
+  for (const top of Object.values(tops)) {
+    cents += top;
+    options += 1;
+  }
+  return { cents, options };
+}
+
+/**
+ * The same tops, kept per option, so a table can say what one option is being bid.
+ *
+ * The rule is the one above: a passed bid is not held and an option that already closed is not
+ * open, so neither appears here. An option nobody has bid on is absent rather than zero, because
+ * zero would read as an offer of nothing.
+ */
+export function topBidByLot(bids: readonly BidRow[], openLotIds: readonly string[]): Record<string, number> {
   const open = new Set(openLotIds);
-  const tops = new Map<string, number>();
+  const tops: Record<string, number> = {};
   for (const bid of bids) {
     if (bid.passed_at || !open.has(bid.lot_id)) continue;
-    tops.set(bid.lot_id, Math.max(tops.get(bid.lot_id) ?? 0, bid.amount_cents));
+    tops[bid.lot_id] = Math.max(tops[bid.lot_id] ?? 0, bid.amount_cents);
   }
-  let cents = 0;
-  for (const top of tops.values()) cents += top;
-  return { cents, options: tops.size };
+  return tops;
 }
 
 /* ---------------------------------------------------------------------------------------------
@@ -236,6 +252,8 @@ export function paymentLabel(paymentStatus: string): string {
 
 export type WorkRow = {
   id: string;
+  /** The sponsorship option this purchase is against. Absent where the caller did not read it. */
+  lotId?: string | null;
   sponsor: string;
   option: string;
   amountCents: number;
@@ -413,6 +431,20 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 }
 
 /**
+ * Door Money staff's own rail.
+ *
+ * Its own list, because /admin is not a page about one organizer and the organizer's rail is a
+ * list of an organizer's things: staff opening it used to be offered Today, Fundraisers and Money
+ * about an account that may own none of them. Two destinations, both real.
+ */
+export function adminNav(): NavSection[] {
+  return [
+    { title: "Staff", items: [{ href: "/admin", label: "Overview" }] },
+    { title: "Account", items: [{ href: "/dashboard/account", label: "Settings" }] },
+  ];
+}
+
+/**
  * Pages that belong to a nav item without living under its address.
  *
  * The organizer's own record is edited at /dashboard/act, which is older than the one Profile it
@@ -462,6 +494,22 @@ export function previewTarget(run: { id: string; slug: string; status: string },
 
 export function isShareable(status: string): boolean {
   return status === "open" || status === "live" || status === "closed";
+}
+
+/**
+ * Where the widget's old address sends somebody. The snippet lives under Share on a fundraiser's
+ * own page now, so the answer is the newest fundraiser that has a Share panel: one that is open or
+ * live first, because that is the one still taking backings, and only then a closed one, whose
+ * panel still holds the badge and the button. `rows` arrive newest first. With nothing published
+ * there is no panel to open, so Today draws a one-line notice instead.
+ */
+export const WIDGET_NOTICE_PARAM = "from";
+export const WIDGET_NOTICE_VALUE = "widget";
+
+export function widgetDestination(rows: readonly { id: string; status: string }[]): string {
+  const running = rows.find((r) => r.status === "open" || r.status === "live");
+  const target = running ?? rows.find((r) => isShareable(r.status));
+  return target ? `/dashboard/runs/${target.id}?share=1` : `/dashboard?${WIDGET_NOTICE_PARAM}=${WIDGET_NOTICE_VALUE}`;
 }
 
 /** Newest first, and never a cancelled one: the selector offers what can still be worked on. */

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import { Card, CardHead, DashboardShell } from "@/components/DashboardShell";
+import { Badge } from "@/components/desk";
 import { ButtonLink } from "@/components/Button";
-import { Eyebrow } from "@/components/Brand";
 import { AccountNameForm } from "@/components/AccountForms";
 import { UsernameForm } from "@/components/ProfileForms";
 import { currentProfile, ownedAct, requireUser, type OwnedAct } from "@/lib/auth";
@@ -24,6 +24,7 @@ import {
 import { SITE } from "@/lib/site";
 import { formatDay, interestsText, nextUsernameChange, usernameChangeAllowed } from "@/lib/profile";
 import { eligibleActivity, linkPatronRows, ownProfile, type OwnProfile } from "@/lib/patronprofile";
+import { loadFundraiserJumps } from "@/lib/dashboard-home";
 
 /*
   One profile, in three parts.
@@ -62,9 +63,10 @@ export default async function ProfilePage() {
     ownProfile(user.id),
     getCategoryLabels(),
   ]);
-  const [activity, publicFundraisers] = await Promise.all([
+  const [activity, publicFundraisers, jumps] = await Promise.all([
     eligibleActivity(user.id, verified),
     countPublicFundraisers(act?.id ?? null),
+    loadFundraiserJumps(act?.id ?? null),
   ]);
 
   const personName = fullName(profile);
@@ -88,6 +90,7 @@ export default async function ProfilePage() {
       title="Your"
       accent="profile"
       intro={<p>Each part below saves on its own.</p>}
+      search={jumps}
     >
       <div className="grid gap-12">
         {/* ---------------------------------------------------------------- Identity */}
@@ -147,7 +150,7 @@ export default async function ProfilePage() {
               />
 
               <div className="mt-7 max-w-[520px]">
-                <Eyebrow className="mb-3">Username</Eyebrow>
+                <p className="mb-2 text-[14px] text-muted">Username</p>
                 <p className="mb-5 max-w-[62ch] text-[15px] leading-[1.6] text-muted">
                   One word is the address of your patron page{act ? " and your organizer page" : ""}, and the username
                   you sign in with. It can move once every twelve months, and the old address keeps pointing here.
@@ -195,11 +198,11 @@ export default async function ProfilePage() {
             )}
 
             <div className="mt-7 flex flex-wrap items-center gap-4">
-              <ButtonLink href={act ? "/dashboard/act" : "/dashboard/act/new"}>
+              <ButtonLink href={act ? "/dashboard/act" : "/dashboard/act/new"} register="desk" variant="solid">
                 {act ? "Edit organizer profile" : "Create organizer profile"}
               </ButtonLink>
               {act ? (
-                <Link href="/dashboard/runs/new" className="caps text-[14px] text-accent-ink underline underline-offset-4">
+                <Link href="/dashboard/runs/new" className="text-[14px] text-accent-ink underline underline-offset-4">
                   Create a fundraiser
                 </Link>
               ) : (
@@ -244,9 +247,9 @@ export default async function ProfilePage() {
               the account home still answers "what do I support" without scrolling.
             */}
             <div className="mt-7 flex flex-wrap items-center gap-4">
-              <ButtonLink href="/dashboard/profile/patron">{own ? "Edit patron profile" : "Create patron profile"}</ButtonLink>
+              <ButtonLink href="/dashboard/profile/patron" register="desk" variant="solid">{own ? "Edit patron profile" : "Create patron profile"}</ButtonLink>
               {own && published && username && (
-                <Link href={`/patron/${username}`} className="caps text-[14px] text-accent-ink underline underline-offset-4">
+                <Link href={`/patron/${username}`} className="text-[14px] text-accent-ink underline underline-offset-4">
                   View the public page
                 </Link>
               )}
@@ -270,7 +273,7 @@ function Part({ id, eyebrow, title, children }: { id: string; eyebrow: string; t
   return (
     <section id={id} aria-labelledby={`${id}-head`} className="scroll-mt-20">
       <div className="mb-6 border-b border-line pb-5">
-        <Eyebrow className="mb-3">{eyebrow}</Eyebrow>
+        <p className="mb-2 text-[14px] text-muted">{eyebrow}</p>
         <h2 id={`${id}-head`} className="heading text-[clamp(22px,3vw,30px)] leading-tight text-ink">
           {title}
         </h2>
@@ -286,7 +289,7 @@ function Details({ rows }: { rows: [string, ReactNode][] }) {
     <dl className="grid gap-x-6 gap-y-3 border-y border-line py-5 sm:grid-cols-[minmax(150px,auto)_1fr]">
       {rows.map(([term, value]) => (
         <Fragment key={term}>
-          <dt className="caps text-[14px] text-muted">{term}</dt>
+          <dt className="text-[14px] text-muted">{term}</dt>
           <dd className="min-w-0 break-words text-[15px] leading-[1.6] text-ink">{value}</dd>
         </Fragment>
       ))}
@@ -298,8 +301,9 @@ function Unset({ children }: { children: ReactNode }) {
   return <span className="text-muted">{children}</span>;
 }
 
+/* The one place caps belong on this register: a status word, inside the badge that carries it. */
 function Status({ children }: { children: ReactNode }) {
-  return <span className="caps border border-accent-line px-3 py-1.5 text-[14px] text-accent-ink">{children}</span>;
+  return <Badge kind="ok">{children}</Badge>;
 }
 
 /* ------------------------------------------------------------------ the rows */
