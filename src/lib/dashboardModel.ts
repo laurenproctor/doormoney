@@ -416,7 +416,7 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 
   // Always there. Somebody who raises money and backs the band down the street should not have to
   // change a setting to see it, and for anyone who has backed nothing it reads as an invitation.
-  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed by you" }] });
+  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed by you" }, { href: "/inbox", label: "Inbox" }] });
 
   // One profile, one account. The profile comes first: it is the identity, and the account page
   // behind it is the email address, the password and what Door Money sends.
@@ -439,7 +439,7 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
  */
 export function adminNav(): NavSection[] {
   return [
-    { title: "Staff", items: [{ href: "/admin", label: "Overview" }] },
+    { title: "Staff", items: [{ href: "/admin", label: "Overview" }, { href: "/admin/inbox", label: "Inbox reports" }] },
     { title: "Account", items: [{ href: "/dashboard/account", label: "Settings" }] },
   ];
 }
