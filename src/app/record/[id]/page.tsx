@@ -18,6 +18,8 @@ import { OfferSummary } from "@/components/OfferSummary";
 import { policyStatementsFromSnapshot } from "@/lib/offer-policy";
 import { isEmptyOfferTerms, offerTermsOfSnapshot, promisedEvidence, type OfferTerms } from "@/lib/offer-terms";
 import { STATE_LABEL, deliveryStanding } from "@/lib/delivery-state";
+import { currentUser } from "@/lib/auth";
+import { ownedPurchase } from "@/lib/inbox";
 import { materialsPrompt, recordStrap, recordWords, releaseSentence } from "@/lib/record-words";
 
 /*
@@ -180,6 +182,8 @@ export default async function RecordPage({ params }: Props) {
   if (!r) notFound();
   const { p, shows, slices, delivery } = r;
   const run = p.runs;
+  const viewer = p.kind === "purchase" ? await currentUser() : null;
+  const canMessage = Boolean(viewer && p.kind === "purchase" && await ownedPurchase(p.id, viewer.id, run.id));
   const act = run.acts;
   const backing = p.kind === "backing";
   // The period by name, never "the run": docs/DECISIONS.md, decision 14.
@@ -239,6 +243,10 @@ export default async function RecordPage({ params }: Props) {
         </>
       }
     >
+      {canMessage && <Section><SectionHead eyebrow="Private conversation">Contact the organizer</SectionHead>
+        <p className="mb-4 text-muted">Ask a question about this sponsorship. The purchased terms, delivery record and refund process stay here.</p>
+        <ButtonLink href={`/inbox/new?run=${run.id}&purchase=${p.id}`} variant="ghost">Message the organizer</ButtonLink>
+      </Section>}
       {/* The one thing the sponsor may still owe: their materials, which for music is a logo. Stays up until the organizer decides. */}
       {!backing && run.status !== "cancelled" && (p.markStatus === "none" || p.markStatus === "submitted") && (
         <Section className="pool">

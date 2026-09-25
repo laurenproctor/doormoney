@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { Eyebrow, Lines } from "@/components/Brand";
@@ -221,6 +222,9 @@ export function BoardView({
           />
         </div>
 
+        {!draft && run.id && (run.status === "open" || run.status === "live") && <div className="mx-auto max-w-[1120px] px-7 pb-10">
+          <Link href={`/inbox/new?run=${encodeURIComponent(run.id)}`} className="inline-flex rounded-control border border-line px-5 py-3 text-sm font-medium text-ink no-underline hover:border-accent-ink">Ask the organizer a question</Link>
+        </div>}
         <PlacementVerification
           actName={act.name}
           runTitle={run.title}

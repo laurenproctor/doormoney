@@ -364,7 +364,7 @@ test("the widget's old address goes to the newest fundraiser with a Share panel,
   assert.equal(widgetDestination([]), "/dashboard?from=widget");
 });
 
-test("an organizer gets six destinations, named for where they go", () => {
+test("an organizer gets seven destinations, named for where they go", () => {
   // /dashboard/act left the rail when the profile became one page: the organizer's own record is
   // part of /dashboard/profile now and is reached from there. The widget left it on the Desk
   // register: it is one fundraiser's embed snippet, so it belongs beside that fundraiser under
@@ -375,6 +375,7 @@ test("an organizer gets six destinations, named for where they go", () => {
     { href: "/dashboard/runs", label: "Fundraisers" },
     { href: "/dashboard/payouts", label: "Money" },
     { href: "/patron", label: "Backed by you" },
+    { href: "/inbox", label: "Inbox" },
     { href: "/dashboard/profile", label: "Profile" },
     { href: "/dashboard/account", label: "Settings" },
   ]);
@@ -390,7 +391,7 @@ test("an account made before the organizer role still gets them", () => {
 test("somebody who only backs musicians gets no fundraising pages", () => {
   const nav = dashboardNav({ hasAct: false, roles: ["patron"] });
   const hrefs = nav.flatMap((s) => s.items.map((i) => i.href));
-  assert.deepEqual(hrefs, ["/patron", "/dashboard/profile", "/dashboard/account"]);
+  assert.deepEqual(hrefs, ["/patron", "/inbox", "/dashboard/profile", "/dashboard/account"]);
   assert.ok(!hrefs.includes("/dashboard/act"));
 });
 
