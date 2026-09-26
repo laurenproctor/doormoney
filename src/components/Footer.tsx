@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { signOut } from "@/app/actions/auth";
+import { signedInAccount } from "@/lib/auth";
 import { LEGAL, NAV, SITE } from "@/lib/site";
 import { Logo } from "@/components/Logo";
 import { NewsletterStrip } from "@/components/Newsletter";
@@ -27,7 +29,9 @@ const WAYS = [
  *   on that person, not on two links somewhere else; the patron profile is the one that asks for
  *   it. Everything below, the email ask, the links and the fine print, stays exactly as it is.
  */
-export function Footer({ note, ways = true }: { note?: string; ways?: boolean }) {
+export async function Footer({ note, ways = true }: { note?: string; ways?: boolean }) {
+  // Who is signed in, if anybody, so the foot of the page offers the dashboard rather than the way in.
+  const account = await signedInAccount();
   return (
     <footer className="border-t border-line pb-12 pt-16">
       <div className="mx-auto max-w-[1120px] px-7">
@@ -69,12 +73,27 @@ export function Footer({ note, ways = true }: { note?: string; ways?: boolean })
                   {n.label}
                 </Link>
               ))}
-              <Link href="/login" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
-                Sign in
-              </Link>
-              <Link href="/signup" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
-                Create an account
-              </Link>
+              {account ? (
+                <>
+                  <Link href="/dashboard" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
+                    Dashboard
+                  </Link>
+                  <form action={signOut}>
+                    <button type="submit" className="caps cursor-pointer text-[14px] text-ink hover:text-accent-ink">
+                      Sign out
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
+                    Sign in
+                  </Link>
+                  <Link href="/signup" className="caps text-[14px] text-ink no-underline hover:text-accent-ink">
+                    Create an account
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
           <div>
