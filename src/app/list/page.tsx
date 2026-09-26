@@ -16,25 +16,27 @@ import { EXAMPLE_GROUPS, EXAMPLE_STATUS_LABEL, exampleHref, exampleStatus, newFu
 import { starterKit } from "@/lib/starter-kits";
 
 export const metadata: Metadata = {
-  title: "Create a fundraiser",
-  description: "Turn the audience around your work into sponsorships. Choose what to offer, set your own prices, and keep the final say. Door Money keeps 15% of completed sponsorships and charges nothing before something sells.",
+  title: "Make your work sponsor-ready",
+  description: "Start with what you want to make happen. Door Money helps you shape the purpose, the audience, the sponsorship offer and the delivery promise so the right sponsor can understand the opportunity. Door Money keeps 15% of completed sponsorships and charges nothing before something sells.",
 };
 
-// The address stays /list: it is in sent email. The page is "Create a fundraiser", for any organizer.
-// It speaks to the organizer directly. The second person here is deliberate; see CLAUDE.md, voice rule 1.
+// The address stays /list: it is in sent email. The page is the organizer's invitation, for any
+// organizer: an invitation to develop an idea into a sponsor-ready project, not only a place to ask
+// for money (decision 21). It speaks to the organizer directly. The second person here is
+// deliberate; see CLAUDE.md, voice rule 1.
 
 const STEPS: [string, string][] = [
-  ["Define what the funding enables", "Travel, equipment, a production, a season. One fundraiser, one named purpose, so a sponsor knows what the money makes possible."],
-  ["Describe the audience", "Who the work reaches, and where: in a room, across a season, online. Leave out what you do not know."],
-  ["Choose sponsorship options", "Pick the placements you have the authority to deliver. Anything not on offer stays off, and no sponsor's materials appear without your approval."],
-  ["Set prices", "Your price is the price, fixed or open to bids. Door Money suggests one only where it has a sales history to suggest from."],
-  ["State what sponsors receive", "What appears, where, and how you will document it. That statement is the promise a sponsor buys, so keep it the size you can deliver."],
-  ["Publish when the fundraiser is ready", "A draft holds what is known so far. Publishing asks for the answers a sponsor needs, and nothing is public before then."],
+  ["Name the ambition", "A tour, a season, a production, a series, a practice. Say what you want to make happen and why it matters. One fundraiser, one named project."],
+  ["Explain what the funding enables", "Travel, equipment, a venue, the time to do the work. A sponsor should be able to see what their money makes possible."],
+  ["Describe who the project reaches", "The audience, and where the work meets it: in a room, across a season, online. Leave out what you do not know."],
+  ["Define the sponsorship", "What appears, where, and what the sponsor can count on. Offer only the placements you have the authority to deliver, and no sponsor's materials appear without your approval."],
+  ["Set the terms and the price", "Your price is the price, fixed or open to bids. Door Money suggests one only where it has a sales history to suggest from. The terms say how you will document delivery."],
+  ["Publish when the promise is clear", "A draft holds what is known so far. Publishing asks for the answers a sponsor needs, and nothing is public before then."],
 ];
 
 // The fee is stated once, in the intro. These are the three things an organizer asks next.
 const MONEY: [string, string][] = [
-  ["When the money reaches you", "Door Money holds what a sponsor pays and releases your share under your fundraiser's terms. A music fundraiser pays out weekly across its dates."],
+  ["When the money reaches you", "Door Money holds what a sponsor pays and releases your share under your fundraiser's terms, as you deliver and document the promise. A music fundraiser pays out weekly across its dates."],
   ["Your call on every sponsor", "Every sponsor's materials need your approval before anything appears."],
   ["Your other income stays yours", `Tickets, sales, fees and grants are yours. ${SITE.name} only ever touches the sponsorship money it brings in.`],
 ];
@@ -63,15 +65,16 @@ export default async function ListPage() {
       theme="amber"
       current="/list"
       eyebrow="For organizers"
-      title="Find sponsors for"
-      accent="your work."
+      title="Make your work"
+      accent="sponsor-ready."
       headline="md"
       strap="For organizers"
       intro={
         <>
           <p className="max-w-[55ch]">
-            Turn the audience around your work into sponsorships. You choose what to offer, what it costs and who
-            appears beside your name.
+            Start with what you want to make happen. Door Money helps you shape the purpose, the audience, the
+            sponsorship offer and the delivery promise, so the right sponsor can understand the opportunity. You
+            choose what to offer, what it costs and who appears beside your name.
           </p>
           <p className="caps mt-6 text-[14.5px] leading-[2] text-accent-ink">
             {SITE.name} keeps {SITE.feePercent}% of completed sponsorships. There is no fee before something sells.
@@ -85,8 +88,9 @@ export default async function ListPage() {
       <Section id="ideas">
         <SectionHead eyebrow="Start with a sponsorship idea">Choose a starter kit</SectionHead>
         <p className="max-w-[62ch]">
-          A starter kit fills the new fundraiser form with examples. Change any of them. Choosing one offers nothing,
-          sets no price and publishes nothing: your price is the price.
+          A starter kit is a way to begin describing your project. It fills the new fundraiser form with examples.
+          Change any of them. Choosing one offers nothing, sets no price and publishes nothing: your price is the
+          price.
         </p>
         <div className="mt-9 grid gap-10">
           {EXAMPLE_GROUPS.map((group) => {
@@ -148,12 +152,12 @@ export default async function ListPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="Six steps">From a purpose to a published fundraiser</SectionHead>
+        <SectionHead eyebrow="Six steps">From an ambition to a sponsor-ready project</SectionHead>
         <Steps steps={STEPS} size="lg" ruleFirst={false} className="mt-[34px] max-w-[720px]" />
       </Section>
 
       <Section>
-        <SectionHead eyebrow="Who organizes">Any organizer with a clear promise</SectionHead>
+        <SectionHead eyebrow="Who organizes">Any organizer with an ambition and an audience</SectionHead>
         <dl className="mt-9 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
           {WHO_ORGANIZES.map(([who, what]) => (
             <div key={who} className="bg-ground p-6">
@@ -228,8 +232,8 @@ export default async function ListPage() {
       <Section id="list">
         <SectionHead eyebrow="Create a fundraiser">Claim an address and publish</SectionHead>
         <p>
-          Your username is your address, so the fundraiser goes up at an address of its own and on the fundraisers
-          page.
+          Your project gets an address of its own and a place among the projects sponsors browse. Nothing is public
+          until you publish it.
         </p>
         <div className="mt-[34px] flex flex-wrap gap-4">
           <ButtonLink href={startHref} arrow>Create a fundraiser</ButtonLink>

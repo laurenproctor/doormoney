@@ -23,7 +23,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const runSlug = runSlugFromSegment(segment);
   const board = runSlug ? await getBoard(slug, runSlug) : null;
   if (!board || !board.run) return { title: "Fundraiser" };
-  const description = `${board.act.name}, ${board.run.title}. ${board.run.showCount} ${periodOf(board.run.kind).units} in ${board.act.city}. Patrons put money behind the ${periodOf(board.run.kind).noun} on Door Money.`;
+  // Music keeps its line, count and city included, because a music fundraiser always has both.
+  // Everybody else is described by what the organizer wrote, and nothing is printed for a count or
+  // a city nobody entered.
+  const music = board.run.categoryKey === "music";
+  const period = periodOf(board.run.kind);
+  const description = music
+    ? `${board.act.name}, ${board.run.title}. ${board.run.showCount} ${period.units} in ${board.act.city}. Patrons put money behind the ${period.noun} on Door Money.`
+    : `${board.act.name}, ${board.run.title}. ${board.run.purpose ?? "Sponsors put money behind the work on Door Money."}`;
   return {
     title: `${board.act.name}, ${board.run.title}`,
     description,

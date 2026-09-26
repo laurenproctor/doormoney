@@ -29,12 +29,16 @@ const firstSentence = (s: string) => s.split(/(?<=\.)\s/)[0];
 export type PaidNotice = { kind: "paid" | "processing"; amount: number; email: string | null };
 
 /**
- * The fundraiser's page: everything a patron reads, from the hero to the newsletter.
+ * The fundraiser's page: everything a sponsor reads, from the hero to the newsletter.
  *
  * One component for two routes. /[slug]/[run] renders it for the public once a fundraiser is open,
- * and the musician's own /dashboard/runs/[id]/preview renders the same thing for a draft with
+ * and the organizer's own /dashboard/runs/[id]/preview renders the same thing for a draft with
  * `draft` set, so a preview is the page rather than a picture of one. The route decides who may
  * see it; this decides what it looks like.
+ *
+ * The page reads in the order a sponsor decides: the project and who is behind it, what the
+ * funding makes possible, who it reaches, what sponsors receive, the sponsorship options, how
+ * delivery will be documented, and what happens after a sponsorship sells.
  */
 export function BoardView({
   board,
@@ -68,8 +72,8 @@ export function BoardView({
   const closesLabel = closesAt ? `${auction ? "bidding" : "listing"} closes ${closeDay}, ${clockOf(closesAt)}` : "no close time set";
   // The commercial context first, from the fundraiser itself; the bio's personality follows it.
   const plural = act.type !== "soloist";
-  // Music's gate requires a show count before a board can go public, so this is never the fallback
-  // on a page a reader can reach; it is here because the column is nullable for everybody else.
+  // Music's gate requires a show count before a music fundraiser can go public, so this is never the
+  // fallback on a page a reader can reach; it is here because the column is nullable for everybody else.
   const shows = run.showCount ?? 0;
   const lead = !music
     ? (run.purpose ?? "")
@@ -81,7 +85,7 @@ export function BoardView({
   const showBackers = slug === "rosie-bassoon";
   const backers = board.backers ?? [];
 
-  // Both come from the musician's own typing, so both are checked before they reach an href.
+  // Both come from the organizer's own typing, so both are checked before they reach an href.
   const website = safeWebsite(act.website);
   const handle = instagramHandle(act.instagram);
 
@@ -92,7 +96,7 @@ export function BoardView({
     return {
       id: l.id,
       name: l.label ?? s?.name ?? l.surfaceKey,
-      note: s ? `${firstSentence(s.blurb)} Shows up: ${s.seenBy}.` : "",
+      note: s ? `${firstSentence(s.blurb)} Seen by ${s.seenBy}.` : "",
       mode: l.mode,
       sold: l.status === "sold",
       soldCents: l.soldCents ?? null,
@@ -102,8 +106,8 @@ export function BoardView({
       closed: l.mode === "auction" && (l.status !== "open" || Boolean(lotCloses && lotCloses <= nowIso)),
       priceCents: l.priceCents,
       bidCents: l.topBid?.amountCents ?? null,
-      // A patron who bid anonymously stays anonymous here after they win. The musician sees the
-      // name on the dashboard, and the logo itself is not anonymous by definition.
+      // A bidder who bid anonymously stays anonymous here after they win. The organizer sees the
+      // name on the dashboard, and the placement itself is not anonymous by definition.
       bidder: l.status === "sold" ? (l.topBid?.anonymous ? "Anonymous patron" : (l.soldTo ?? "a patron")) : (l.topBid?.patronName ?? null),
       anonymous: l.topBid?.anonymous ?? false,
       minimumCents: minimumBidCents(l.priceCents, l.topBid?.amountCents ?? null),
@@ -151,8 +155,9 @@ export function BoardView({
             <p className="caps mt-6 text-[14.5px] leading-[2]">
               {fundraiserLine(run)}{act.city ? ` ${act.city}.` : ""}
             </p>
-            {lead && <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>}
+            {/* Who is behind the work comes first, then what the funding makes possible. */}
             {act.bio && <p className="mt-5 max-w-[58ch] border-l border-accent/60 pl-5 text-[16px] text-muted">{act.bio}</p>}
+            {lead && <p className="mt-6 max-w-[60ch] text-[clamp(16px,1.9vw,18px)] leading-[1.55]">{lead}</p>}
             {/* The three answers, whenever the organizer gave them. Outside music the purpose is already the lead above. */}
             {((music && run.purpose) || run.audienceDescription || run.sponsorPromise) && (
               <p className="mt-5 max-w-[58ch] text-[16px] leading-[1.55] text-muted">
@@ -216,7 +221,7 @@ export function BoardView({
             lots={lots}
             closesAt={closesAt}
             closesLabel={closesLabel}
-            heading={music ? `Back the ${period.noun}` : "Sponsorship options"}
+            heading={music ? `Back the ${period.noun}` : "Ways to sponsor this project"}
             terms={checkoutTerms(recordWords(run.categoryKey, run.kind), act.name)}
             deliveryTerms={run.deliveryTerms ?? []}
           />
@@ -258,8 +263,8 @@ export function BoardView({
 
         <div className="border-t border-line py-16">
           <div className="mx-auto max-w-[1120px] px-7">
-            <Eyebrow className="mb-5">{auction ? "If a bid wins" : "After a sponsorship sells"}</Eyebrow>
-            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">{auction ? `What happens after ${closeFull ?? "the close"}` : "What happens next"}</h2>
+            <Eyebrow className="mb-5">{auction ? "If a bid wins" : "After the sale"}</Eyebrow>
+            <h2 className="heading mb-8 text-[clamp(28px,4vw,46px)] leading-[1.02]">{auction ? `What happens after ${closeFull ?? "the close"}` : "What happens after a sponsorship sells"}</h2>
             <Lines
               marked
               lines={[

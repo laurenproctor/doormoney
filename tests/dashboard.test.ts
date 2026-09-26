@@ -1,9 +1,9 @@
 /*
-  The musician's dashboard, the part with no database in it.
+  The organizer's dashboard, the part with no database in it.
 
   Everything the overview claims is derived here, so this is where the claims are checked: that a
   refund comes off the total, that an asking price is not money, that a cancelled fundraiser is not
-  a stage, and that nothing offers a musician a button the schema cannot honour.
+  a stage, and that nothing offers an organizer a button the schema cannot honour.
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -40,7 +40,7 @@ import {
 
 /* ------------------------------------------------------------------ lifecycle */
 
-test("the database word becomes the musician's word, and closed reads as finished", () => {
+test("the database word becomes the organizer's word, and closed reads as finished", () => {
   assert.equal(lifecycleLabel("draft"), "Draft");
   assert.equal(lifecycleLabel("open"), "Open");
   assert.equal(lifecycleLabel("live"), "Live");
@@ -204,7 +204,7 @@ const work = (id: string, over: Partial<WorkRow> = {}): WorkRow => ({
   ...over,
 });
 
-test("mark_status becomes the logo state a musician reads", () => {
+test("mark_status becomes the materials state an organizer reads", () => {
   assert.equal(logoState("none"), "waiting");
   assert.equal(logoState("submitted"), "review");
   assert.equal(logoState("approved"), "approved");
@@ -278,7 +278,7 @@ test("a count of one reads as one, not as one of something plural", () => {
     promisedAttendance: false,
     promisedShowPhotos: false,
   });
-  assert.equal(one[0].label, "logo waiting for your review");
+  assert.equal(one[0].label, "sponsorship with materials waiting for your review");
   const two = preparationItems({
     work: [work("1", { logo: "review" }), work("2", { logo: "review" })],
     shows: [],
@@ -286,10 +286,10 @@ test("a count of one reads as one, not as one of something plural", () => {
     promisedAttendance: false,
     promisedShowPhotos: false,
   });
-  assert.equal(two[0].label, "logos waiting for your review");
+  assert.equal(two[0].label, "sponsorships with materials waiting for your review");
 });
 
-test("logos to review and paid sponsorships with no logo are each their own line", () => {
+test("materials to review and paid sponsorships with no materials are each their own line", () => {
   const items = preparationItems({
     work: [work("1", { logo: "review" }), work("2", { logo: "waiting", paymentStatus: "held" })],
     shows: [],
@@ -300,7 +300,7 @@ test("logos to review and paid sponsorships with no logo are each their own line
   assert.deepEqual(items.map((i) => [i.key, i.count]), [["review", 1], ["no-logo", 1]]);
 });
 
-test("a sponsorship that was never charged is not chased for a logo", () => {
+test("a sponsorship that was never charged is not chased for materials", () => {
   const items = preparationItems({
     work: [work("1", { logo: "waiting", paymentStatus: "requires_payment" })],
     shows: [],

@@ -101,7 +101,7 @@ test("documenting your own deliverable stores it private, whatever the form says
   reset();
   const r = await submitEvidenceAction({ ok: false }, form({ deliverable_id: MINE, kind: "photo", url: "https://secondstage.example/program.jpg", note: "Page 3.", visibility: "public" }));
   assert.equal(r.ok, true);
-  assert.match(r.message ?? "", /next Friday/);
+  assert.match(r.message ?? "", /next release/);
   assert.equal(submitted.length, 1);
   const sent = submitted[0] as { deliverableId: string; submittedBy: string; evidence: Record<string, unknown> };
   assert.equal(sent.deliverableId, MINE);

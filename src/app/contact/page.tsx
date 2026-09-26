@@ -6,7 +6,7 @@ import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Door Money about creating a fundraiser, sponsoring one, partnerships, press, or another question.",
+  description: "Contact Door Money about a project you want to make sponsor-ready, a project you want to sponsor, a partnership, a venue, press, or another question.",
 };
 
 const WHAT_HELPS = [
@@ -28,8 +28,10 @@ export default function ContactPage() {
         <>
           <p className="text-[15px] text-accent-ink">Questions, introductions, and useful propositions start here.</p>
           <p className="mt-4">
-            Organizers can ask about creating a fundraiser. Sponsors can ask about a sponsorship. Venues, press, and
-            potential partners can introduce themselves. A person reads every note and answers plainly.
+            Anyone with an ambition or a project can ask how to make it sponsor-ready. Sponsors can ask about a
+            project or a sponsorship. Businesses and organizations looking for work that fits their audience, and
+            venues, press and other collaborators, can introduce themselves. A person reads every note and answers
+            plainly.
           </p>
         </>
       }
@@ -43,7 +45,7 @@ export default function ContactPage() {
         <SectionHead eyebrow={`Contact ${SITE.name}`}>Put a name to the question</SectionHead>
         <p>
           Pick the closest reason, add the details, and send it through. Messages about an active payment or placement
-          should include the organizer or fundraiser name.
+          should include the organizer or project name.
         </p>
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_280px] md:gap-12">
           <ContactForm />

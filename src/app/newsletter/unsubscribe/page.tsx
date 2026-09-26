@@ -17,7 +17,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 const Token = z.string().uuid();
 
 /**
- * The link at the foot of every new-boards email. One visit turns the address off; the row stays,
+ * The link at the foot of every new-fundraisers email. One visit turns the address off; the row stays,
  * so a later signup flips it back on. The token is the only way in and it is never shown.
  */
 export default async function UnsubscribePage({ searchParams }: Props) {
@@ -53,7 +53,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
     >
       <Section>
         <div className="flex flex-wrap gap-4">
-          <ButtonLink href="/fundraisers" arrow>See the fundraisers</ButtonLink>
+          <ButtonLink href="/fundraisers" arrow>Browse projects</ButtonLink>
           <ButtonLink href="/" variant="ghost">Back to Door Money</ButtonLink>
         </div>
       </Section>

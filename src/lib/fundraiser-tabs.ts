@@ -43,7 +43,7 @@ export type TabCounts = {
 export function fundraiserTabs(counts: TabCounts, href: (tab: FundraiserTab) => string): DeskTab[] {
   const tabs: DeskTab[] = [
     { key: "overview", href: href("overview"), label: "Overview" },
-    { key: "options", href: href("options"), label: "Options", count: counts.options || null },
+    { key: "options", href: href("options"), label: "Sponsorship options", count: counts.options || null },
   ];
   if (counts.hasDelivery) {
     tabs.push({

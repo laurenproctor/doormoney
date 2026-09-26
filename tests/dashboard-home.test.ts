@@ -73,7 +73,7 @@ const spot = (over: Record<string, unknown> = {}) => ({
 test("a draft whose only option has an unfinished offer is not four of four", () => {
   const step = draftStep(ACT, RUN, [spot({ offer_terms: {} })], TEMPLATES, true);
   assert.deepEqual([step.done, step.total], [3, 4]);
-  assert.equal(step.label, "Sponsorships");
+  assert.equal(step.label, "Add the terms that make the offer clear.");
   assert.match(step.note ?? "", /Kick drum head still needs/);
   assert.equal(step.href, `/dashboard/runs/${RUN.id}?tab=options`);
 });
@@ -86,7 +86,7 @@ test("the same draft is four of four once the offer states what a sponsor reads"
 test("a draft with no option at all is still three of four, and says so plainly", () => {
   const step = draftStep(ACT, RUN, [], TEMPLATES, true);
   assert.deepEqual([step.done, step.total], [3, 4]);
-  assert.equal(step.note, "Nothing priced yet.");
+  assert.equal(step.note, "No sponsorship option defined yet.");
 });
 
 test("a spot that is already sold is not asked to finish its offer again", () => {

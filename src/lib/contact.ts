@@ -2,9 +2,9 @@
 // and never change; only the label a reader sees moved to the shared vocabulary.
 export const CONTACT_REASONS = [
   ["list_an_act", "Create a fundraiser"],
-  ["back_a_run", "Sponsor a fundraiser"],
+  ["back_a_run", "Sponsor a project"],
   ["partnership", "Brand or business partnership"],
-  ["venue", "Venue"],
+  ["venue", "Venue or collaborator"],
   ["press", "Press"],
   ["payment_or_placement", "Payment or placement question"],
   ["something_else", "Something else"],

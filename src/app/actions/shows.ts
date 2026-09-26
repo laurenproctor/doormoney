@@ -31,12 +31,13 @@ async function ownRun(runId: string) {
 }
 
 /**
- * The show's owner, proven the way src/app/actions/run.ts proves a run's owner.
+ * The show's owner, proven the way src/app/actions/run.ts proves a fundraiser's owner.
  *
  * shows is readable by anybody (0001, "public read shows"), so finding the row says nothing about
- * who is asking: every show on the site comes back. The row is read for one thing, the run it
- * belongs to, and the answer comes from the run instead, filtered on the act this account owns.
- * No act id ever comes from the client, and a run belonging to somebody else matches no row.
+ * who is asking: every show on the site comes back. The row is read for one thing, the fundraiser
+ * it belongs to, and the answer comes from the fundraiser instead, filtered on the organizer this
+ * account owns. No organizer id ever comes from the client, and a fundraiser belonging to somebody
+ * else matches no row.
  */
 async function ownShow(showId: string) {
   if (!Uuid.safeParse(showId).success) return null;
@@ -61,12 +62,12 @@ const touch = (runId: string, slug: string, runSlug: string) => {
   revalidatePath(runPath(slug, runSlug));
 };
 
-/** One more date on the run. */
+/** One more date on the tour. Shows are music's. */
 export async function addShow(_prev: ShowState, form: FormData): Promise<ShowState> {
   const parsed = AddInput.safeParse({ run_id: str(form, "run_id"), played_on: str(form, "played_on"), venue: str(form, "venue"), city: str(form, "city") });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the date." };
   const own = await ownRun(parsed.data.run_id);
-  if (!own) return { ok: false, error: "That run is not on this account." };
+  if (!own) return { ok: false, error: "That fundraiser is not on this account." };
   const { error } = await own.sb.from("shows").insert(parsed.data);
   if (error) return { ok: false, error: "That show did not save. Try once more." };
   touch(own.runId, own.act.slug, own.runSlug);
@@ -77,7 +78,7 @@ export async function addShow(_prev: ShowState, form: FormData): Promise<ShowSta
  * What one tap on a show may change, and the whole of it.
  *
  * The patch is an argument from the browser, so it went to .update() as it arrived: any column the
- * row has could be written by hand, the run it belongs to included. These two keys are the offer,
+ * row has could be written by hand, the fundraiser it belongs to included. These two keys are the offer,
  * and z.strictObject refuses the rest rather than quietly dropping it.
  */
 export type ShowPatch = { played?: boolean; attendance?: number | null };
@@ -93,7 +94,7 @@ const MarkInput = z.strictObject({
     .optional(),
 });
 
-/** The one-tap "played" toggle, and attendance when the act has a number. */
+/** The one-tap "played" toggle, and attendance when the musician has a number. */
 export async function markShow(showId: string, patch: ShowPatch): Promise<ShowState> {
   const parsed = MarkInput.safeParse(patch);
   if (!parsed.success) {

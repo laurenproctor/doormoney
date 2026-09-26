@@ -42,7 +42,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
       {run && <input type="hidden" name="id" value={run.id} />}
 
       <fieldset className="mb-[18px]">
-        <legend className={labelClass}>Kind of run</legend>
+        <legend className={labelClass}>Tour, season or residency</legend>
         <div className="grid gap-3.5 md:grid-cols-3">
           {KINDS.map(([value, label, blurb]) => (
             <label key={value} className="edge cursor-pointer bg-panel p-3.5 has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:checked]:border-accent">
@@ -55,7 +55,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
         {err.kind && <p className="mt-1.5 text-[14.5px] text-accent-ink">{err.kind}</p>}
       </fieldset>
 
-      <Field label="Run name" error={err.title} hint='Shows on the public page. "Fall tour", "Winter season", "October at Barbès".'>
+      <Field label="Tour or season name" error={err.title} hint='Shows on the public page. "Fall tour", "Winter season", "October at Barbès".'>
         <input name="title" defaultValue={run?.title ?? ""} className={inputClass} />
       </Field>
 
@@ -72,7 +72,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
         <Field label="Shows in it" error={err.show_count}>
           <input name="show_count" type="number" min={1} max={400} defaultValue={run?.show_count ?? ""} className={inputClass} />
         </Field>
-        <Field label="Expected attendance" error={err.expected_attendance} hint="Across the whole run, a rough number. Optional.">
+        <Field label="Expected attendance" error={err.expected_attendance} hint="Across every date, a rough number. Optional.">
           <input name="expected_attendance" inputMode="numeric" defaultValue={run?.expected_attendance ?? ""} className={inputClass} />
         </Field>
       </div>
@@ -82,7 +82,7 @@ export function RunForm({ run, actType }: { run: RunInput | null; actType: "tour
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving" : run ? "Save the fundraiser" : "Save and price the spots"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving" : run ? "Save the dates" : "Save and define sponsorship options"}</Button>
         {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
         {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>

@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   const patronId = await patronFor(sb, parsed.data.patronName, email, payingProfileId(session.user, email));
   if (!patronId) return fail("That did not save. Try once more.", 500);
 
-  // One Stripe customer per patron, so somebody bidding on a second board reuses the card they
+  // One Stripe customer per patron, so somebody bidding on a second fundraiser reuses the card they
   // already gave rather than typing it again.
   const { data: patron } = await sb.from("patrons").select("stripe_customer_id").eq("id", patronId).maybeSingle();
   let customerId: string;

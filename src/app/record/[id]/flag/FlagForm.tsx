@@ -3,7 +3,7 @@ import { useState } from "react";
 import { raisePatronFlag } from "@/app/actions/flags";
 import { Button } from "@/components/Button";
 
-/** The patron says the run is not happening. One note, one button, and the money stops. */
+/** The sponsor says the project is not happening, or the promise is not being kept. One note, one button, and the money stops. */
 export function FlagForm({ id, what }: { id: string; what: string }) {
   const [note, setNote] = useState("");
   const [website, setWebsite] = useState("");

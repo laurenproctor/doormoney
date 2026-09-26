@@ -30,25 +30,25 @@ export type VerificationState = {
 export async function saveVerification(_prev: VerificationState, form: FormData): Promise<VerificationState> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
-  if (!act) return { ok: false, errors: { form: "No act on this account." } };
+  if (!act) return { ok: false, errors: { form: "No organizer profile on this account." } };
 
   const runId = form.get("run_id");
   const sent = {
     methods: form.getAll("methods").filter((v): v is string => typeof v === "string"),
     other: typeof form.get("other") === "string" ? (form.get("other") as string) : "",
   };
-  if (typeof runId !== "string" || !runId) return { ok: false, errors: { form: "That run is not on this account." }, submitted: sent };
+  if (typeof runId !== "string" || !runId) return { ok: false, errors: { form: "That fundraiser is not on this account." }, submitted: sent };
 
   const sb = await supabaseServer();
   const { data: run } = await sb.from("runs").select("id,slug,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
-  if (!run) return { ok: false, errors: { form: "That run is not on this account." }, submitted: sent };
+  if (!run) return { ok: false, errors: { form: "That fundraiser is not on this account." }, submitted: sent };
 
   const parsed = parseVerification(sent);
   if (!parsed.ok) return { ok: false, errors: parsed.errors, submitted: sent };
 
-  // A draft may sit with nothing chosen; a board already on the internet may not go back to nothing.
+  // A draft may sit with nothing chosen; a fundraiser already public may not go back to nothing.
   if (parsed.value.methods.length === 0 && run.status !== "draft") {
-    return { ok: false, errors: { methods: "This fundraiser is public, so it needs at least one method. Pick one before saving." }, submitted: sent };
+    return { ok: false, errors: { methods: "This fundraiser is public, so sponsors need at least one way delivery will be documented. Pick one before saving." }, submitted: sent };
   }
 
   const { error } = await sb

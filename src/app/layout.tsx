@@ -13,7 +13,7 @@ const bodoni = Bodoni_Moda({ subsets: ["latin"], style: ["normal", "italic"], ax
 const archivo = Archivo({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-archivo" });
 
 export const metadata: Metadata = {
-  title: { default: `${SITE.name}. ${SITE.strap}.`, template: `%s. ${SITE.name}.` },
+  title: { default: `${SITE.name}. ${SITE.tagline}`, template: `%s. ${SITE.name}.` },
   description: `${SITE.taglineSecond} Starting with ${STARTING_CATEGORIES_LIST}, and growing.`,
   metadataBase: new URL(SITE.url),
 };

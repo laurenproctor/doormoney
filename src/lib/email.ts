@@ -110,7 +110,10 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
   const music = isMusic(params.categoryKey);
   const recordFills = music
     ? "the shows, the rooms, the attendance where it is known, and where the money went"
-    : `what was delivered, the documentation ${params.actName} attaches, and where the money went`;
+    : `each deliverable as ${params.actName} documents it, the documentation they attach, and where the money went`;
+  const stops = music
+    ? "If it stops happening"
+    : `If the ${params.lotName.toLowerCase()} is not delivered, or the ${params.runTitle.toLowerCase()} stops happening`;
   const lines = [
     `${params.patronName} holds the ${params.lotName.toLowerCase()} on ${params.actName}'s ${params.runTitle.toLowerCase()}. ${money(params.amountCents)}, paid.`,
     music
@@ -120,7 +123,7 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
       ? `${params.actName} approves the logo before it goes on anything. Door Money emails when it is time to send one.`
       : `${params.actName} accepts the sponsor's materials before anything goes up: a name as it should read, a credit line, artwork. Door Money emails when it is time to send them.`,
     `The record lives at ${params.recordUrl} and fills in as the fundraiser goes on: ${recordFills}.`,
-    `If it stops happening, saying so at ${params.recordUrl}/flag holds the rest of the money until Door Money looks.`,
+    `${stops}, saying so at ${params.recordUrl}/flag holds the money not yet released until Door Money looks.`,
     `The fundraiser: ${params.boardUrl}`,
   ];
   const html = shell([
@@ -128,13 +131,13 @@ export function purchaseReceipt(params: { to: string; patronName: string; lotNam
     escape(lines[1]),
     escape(lines[2]),
     `The <a href="${escape(params.recordUrl)}" style="color:${BLUE}">record</a> fills in as the fundraiser goes on: ${escape(recordFills)}.`,
-    `If it stops happening, <a href="${escape(params.recordUrl)}/flag" style="color:${BLUE}">saying so</a> holds the rest of the money until Door Money looks.`,
+    `${escape(stops)}, <a href="${escape(params.recordUrl)}/flag" style="color:${BLUE}">saying so</a> holds the money not yet released until Door Money looks.`,
     `The fundraiser: <a href="${escape(params.boardUrl)}" style="color:${BLUE}">${escape(params.boardUrl)}</a>`,
   ]);
   return { to: params.to, subject: `${params.lotName} on ${params.actName}'s ${params.runTitle.toLowerCase()}: paid`, text: lines.join("\n\n"), html };
 }
 
-/** To the musician, the moment one of their spots sells. */
+/** To the organizer, the moment one of their sponsorship options sells. */
 export function saleNotice(params: { to: string; actName: string; lotName: string; patronName: string; amountCents: number; netCents: number; boardUrl: string; dashboardUrl: string; categoryKey?: string | null }): Mail {
   const music = isMusic(params.categoryKey);
   const needsYes = music ? "The patron's logo needs a yes on the dashboard before it goes on anything" : "The sponsor's materials need a yes on the dashboard before anything goes up";
@@ -142,7 +145,7 @@ export function saleNotice(params: { to: string; actName: string; lotName: strin
     `${params.patronName} took the ${params.lotName.toLowerCase()} on ${params.actName}'s fundraiser for ${money(params.amountCents)}.`,
     music
       ? `${money(params.netCents)} reaches ${params.actName} in weekly slices, every Friday through the fundraiser. Door Money keeps ${SITE.feePercent}%.`
-      : `${money(params.netCents)} reaches ${params.actName} as each deliverable is documented on the dashboard, on the Friday after. Door Money keeps ${SITE.feePercent}%.`,
+      : `${money(params.netCents)} reaches ${params.actName} as each deliverable is documented on the dashboard, at the next scheduled release. Door Money keeps ${SITE.feePercent}%.`,
     `${needsYes}: ${params.dashboardUrl}`,
     `The fundraiser: ${params.boardUrl}`,
   ];
@@ -155,30 +158,30 @@ export function saleNotice(params: { to: string; actName: string; lotName: strin
   return { to: params.to, subject: `Sold: ${params.lotName} to ${params.patronName}`, text: lines.join("\n\n"), html };
 }
 
-/** To the musician, each Friday something moves. */
+/** To the organizer, each time the payout job moves something. One template for every category, so it names no payout day and no slice. */
 export function payoutNotice(params: { to: string; actName: string; amountCents: number; sliceCount: number; dashboardUrl: string }): Mail {
-  const slices = params.sliceCount === 1 ? "one payment" : `${params.sliceCount} payments`;
+  const slices = params.sliceCount === 1 ? "in one payment" : `across ${params.sliceCount} payments`;
   const lines = [
-    `Door Money sent ${money(params.amountCents)} to ${params.actName} today, this week's slice across ${slices}.`,
-    `It lands in the bank on Stripe's schedule, usually within two business days.`,
+    `Door Money sent ${money(params.amountCents)} to ${params.actName} today, ${slices}.`,
+    `Each payment is a share of a sponsorship, released under the fundraiser's terms. It lands in the bank on Stripe's schedule, usually within two business days.`,
     `Payout details: ${params.dashboardUrl}`,
   ];
   const html = shell([
-    `Door Money sent <b style="color:${BLUE}">${money(params.amountCents)}</b> to ${escape(params.actName)} today, this week's slice across ${escape(slices)}.`,
+    `Door Money sent <b style="color:${BLUE}">${money(params.amountCents)}</b> to ${escape(params.actName)} today, ${escape(slices)}.`,
     escape(lines[1]),
     `Payout details: <a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">${escape(params.dashboardUrl)}</a>`,
   ]);
   return { to: params.to, subject: `${money(params.amountCents)} on its way to ${params.actName}`, text: lines.join("\n\n"), html };
 }
 
-/** To the patron when the musician cancels. Says exactly what went back and what stayed. */
+/** To the sponsor when the organizer cancels. Says exactly what went back and what stayed. One template for every category. */
 export function cancellationNotice(params: { to: string; patronName: string; actName: string; runTitle: string; lotName: string; refundedCents: number; amountCents: number; recordUrl: string }): Mail {
   const all = params.refundedCents >= params.amountCents;
   const back = all
     ? `${money(params.refundedCents)}, the whole amount, goes back to the card it was paid with.`
     : params.refundedCents > 0
-      ? `${money(params.refundedCents)} of the ${money(params.amountCents)} goes back to the card it was paid with. The rest paid for the weeks that did happen and stays with ${params.actName}.`
-      : `Every slice had already been released for weeks that did happen, so nothing is owed back.`;
+      ? `${money(params.refundedCents)} of the ${money(params.amountCents)} goes back to the card it was paid with. The rest was released for what did happen before the cancellation and stays with ${params.actName}.`
+      : `Everything had already been released for what did happen, so nothing is owed back.`;
   const lines = [
     `${params.actName} cancelled the ${params.runTitle.toLowerCase()}. ${params.patronName}'s ${params.lotName.toLowerCase()} comes off with it.`,
     back,
@@ -194,19 +197,34 @@ export function cancellationNotice(params: { to: string; patronName: string; act
   return { to: params.to, subject: `${params.actName} cancelled the ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
 }
 
-/** To the patron when the fundraiser closes: the record is complete. */
-export function recordReady(params: { to: string; patronName: string; actName: string; runTitle: string; lotName: string; playedCount: number; showCount: number; recordUrl: string }): Mail {
+/** To the sponsor when the fundraiser closes: the record is complete. Music counts shows; no other category is told it played none of them. */
+export function recordReady(params: { to: string; patronName: string; actName: string; runTitle: string; lotName: string; playedCount: number; showCount: number; recordUrl: string; categoryKey?: string | null }): Mail {
+  const music = isMusic(params.categoryKey);
   const unit = params.showCount === 1 ? "show" : "shows";
-  const lines = [
-    `${params.actName}'s ${params.runTitle.toLowerCase()} is over. ${params.patronName}'s ${params.lotName.toLowerCase()} was in the room for ${params.playedCount} of ${params.showCount} ${unit}.`,
-    `The record has every date, the rooms, the attendance where ${params.actName} counted it, and where the money went: ${params.recordUrl}`,
-    `Support a patron can point at. Thank you for putting money behind the music.`,
-  ];
-  const html = shell([
-    `<b>${escape(params.actName)}</b>'s ${escape(params.runTitle.toLowerCase())} is over. ${escape(params.patronName)}'s ${escape(params.lotName.toLowerCase())} was in the room for <b style="color:${BLUE}">${params.playedCount} of ${params.showCount} ${unit}</b>.`,
-    `The record has every date, the rooms, the attendance where ${escape(params.actName)} counted it, and where the money went: <a href="${escape(params.recordUrl)}" style="color:${BLUE}">${escape(params.recordUrl)}</a>`,
-    escape(lines[2]),
-  ]);
+  const lines = music
+    ? [
+        `${params.actName}'s ${params.runTitle.toLowerCase()} is over. ${params.patronName}'s ${params.lotName.toLowerCase()} was in the room for ${params.playedCount} of ${params.showCount} ${unit}.`,
+        `The record has every date, the rooms, the attendance where ${params.actName} counted it, and where the money went: ${params.recordUrl}`,
+        `Support a patron can point at. Thank you for putting money behind the music.`,
+      ]
+    : [
+        `${params.actName}'s ${params.runTitle.toLowerCase()} is over, and ${params.patronName}'s ${params.lotName.toLowerCase()} has its record.`,
+        `The record has each deliverable, the documentation ${params.actName} attached, and where the money went: ${params.recordUrl}`,
+        `Support a sponsor can point at. Thank you for putting money behind the work.`,
+      ];
+  const html = shell(
+    music
+      ? [
+          `<b>${escape(params.actName)}</b>'s ${escape(params.runTitle.toLowerCase())} is over. ${escape(params.patronName)}'s ${escape(params.lotName.toLowerCase())} was in the room for <b style="color:${BLUE}">${params.playedCount} of ${params.showCount} ${unit}</b>.`,
+          `The record has every date, the rooms, the attendance where ${escape(params.actName)} counted it, and where the money went: <a href="${escape(params.recordUrl)}" style="color:${BLUE}">${escape(params.recordUrl)}</a>`,
+          escape(lines[2]),
+        ]
+      : [
+          `<b>${escape(params.actName)}</b>'s ${escape(params.runTitle.toLowerCase())} is over, and ${escape(params.patronName)}'s ${escape(params.lotName.toLowerCase())} has its <b style="color:${BLUE}">record</b>.`,
+          `The record has each deliverable, the documentation ${escape(params.actName)} attached, and where the money went: <a href="${escape(params.recordUrl)}" style="color:${BLUE}">${escape(params.recordUrl)}</a>`,
+          escape(lines[2]),
+        ],
+  );
   return { to: params.to, subject: `The record: ${params.actName}, ${params.runTitle.toLowerCase()}`, text: lines.join("\n\n"), html };
 }
 
@@ -274,7 +292,7 @@ export function closingSoon(params: { to: string; patronName: string; actName: s
   const lines = [
     `Bidding closes ${when(params.closesAt)}.`,
     lead,
-    `Whoever holds the top bid at the close has ${48} hours to put the money up. Door Money holds it and pays ${params.actName} weekly through the fundraiser.`,
+    `Whoever holds the top bid at the close has ${48} hours to put the money up. Door Money holds it and releases it to ${params.actName} under the fundraiser's terms.`,
     `The fundraiser: ${params.boardUrl}`,
   ];
   const html = shell([
@@ -322,7 +340,7 @@ export function spotTaken(params: { to: string; patronName: string; actName: str
   return { to: params.to, subject: `Taken: the ${params.lotName.toLowerCase()}, ${params.actName}`, text: lines.join("\n\n"), html };
 }
 
-/** To the musician when an auction ends with nothing at the reserve. */
+/** To the organizer when an auction ends with nothing at the reserve. */
 export function auctionUnsold(params: { to: string; actName: string; lotName: string; reserveCents: number; dashboardUrl: string }): Mail {
   const lines = [
     `The ${params.lotName.toLowerCase()} closed without a bid at the ${money(params.reserveCents)} reserve, so it comes off the fundraiser.`,
@@ -338,22 +356,22 @@ export function auctionUnsold(params: { to: string; actName: string; lotName: st
 }
 
 /* ---------------------------------------------------------------------------------------------
-   Phase 6: the patron flag. One to Door Money, one back to the patron. The musician is not told here;
+   Phase 6: the patron flag. One to Door Money, one back to the patron. The organizer is not told here;
    Door Money looks first.
    --------------------------------------------------------------------------------------------- */
 
 /** To Door Money, the moment a patron says a fundraiser is not happening. */
 export function flagRaised(params: { to: string; patronName: string; what: string; actName: string; runTitle: string; note: string | null; pausedCount: number; adminUrl: string; recordUrl: string }): Mail {
-  const held = params.pausedCount === 1 ? "one slice is on hold" : `${params.pausedCount} slices are on hold`;
+  const held = params.pausedCount === 1 ? "one payment is on hold" : `${params.pausedCount} payments are on hold`;
   const lines = [
-    `${params.patronName} does not think ${params.actName}'s ${params.runTitle.toLowerCase()} is running, and holds ${params.what}.`,
+    `${params.patronName} does not think ${params.actName}'s ${params.runTitle.toLowerCase()} is happening, and holds ${params.what}.`,
     params.note ? `What they said: ${params.note}` : `They left no note.`,
     `Nothing more moves on it: ${held}. Money already released stays released.`,
     `The record: ${params.recordUrl}`,
     `The queue: ${params.adminUrl}`,
   ];
   const html = shell([
-    `<b>${escape(params.patronName)}</b> does not think ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())} is running, and holds ${escape(params.what)}.`,
+    `<b>${escape(params.patronName)}</b> does not think ${escape(params.actName)}'s ${escape(params.runTitle.toLowerCase())} is happening, and holds ${escape(params.what)}.`,
     params.note ? `What they said: <b>${escape(params.note)}</b>` : escape(lines[1]),
     `<b style="color:${BLUE}">${escape(lines[2])}</b>`,
     `The record: <a href="${escape(params.recordUrl)}" style="color:${BLUE}">${escape(params.recordUrl)}</a>`,
@@ -410,7 +428,7 @@ export function newBoardsEmail(params: { to: string; firstName?: string | null; 
     const from = b.fromCents ? `, from ${money(b.fromCents)}` : "";
     return `${[b.actName, b.city].filter(Boolean).join(", ")}. ${newBoardFacts(b)}. ${open}${from}. ${b.boardUrl}`;
   };
-  const lines = [...(greeting ? [greeting] : []), heading, ...params.boards.map(line), `A sponsorship puts money behind work with an audience that cares about it. Each fundraiser says what the funding enables and what a sponsor receives.`, `To stop these emails: ${params.unsubscribeUrl}`];
+  const lines = [...(greeting ? [greeting] : []), heading, ...params.boards.map(line), `A sponsorship puts money behind work with an audience that cares about it. Each project says what the funding makes possible, who it reaches, what a sponsor receives and how delivery will be documented.`, `To stop these emails: ${params.unsubscribeUrl}`];
   const html = shell([
     ...(greeting ? [escape(greeting)] : []),
     `<b>${escape(heading)}</b>`,
@@ -449,7 +467,7 @@ export function weeklyDigest(params: { to: string; n: DigestNumbers; adminUrl: s
     ["Sponsorships sold", `${n.spotsSold} for ${money(n.soldCents)}`],
     ["Fan backings", `${n.backings} for ${money(n.backedCents)}`],
     ["Sent to organizers", money(n.paidOutCents)],
-    ["Held for later weeks", money(n.heldCents)],
+    ["Held for later release", money(n.heldCents)],
     ["Flags waiting", String(n.openFlags)],
     ["New on the fundraisers email", String(n.newSubscribers)],
     ["Notes through contact", String(n.newNotes)],
@@ -477,7 +495,7 @@ export function newsletterWelcome(params: { to: string; firstName?: string | nul
   const lines = [
     ...(greeting ? [greeting] : []),
     `This address is on the ${SITE.name} new-fundraisers email.`,
-    `New organizers open fundraisers on ${SITE.name} as each category opens to sponsors, starting with music. One short email says who they are, what the funding is for and which sponsorship options are still open. Never more than once a week.`,
+    `New organizers open fundraisers on ${SITE.name} as each category opens to sponsors, starting with music. One short email says who they are, what the funding makes possible and which sponsorship options are still open. Never more than once a week.`,
     `Nothing to do now. The next one arrives the week a fundraiser opens.`,
     `To stop the emails: ${params.unsubscribeUrl}`,
   ];
@@ -493,34 +511,42 @@ export function newsletterWelcome(params: { to: string; firstName?: string | nul
 }
 
 /* ---------------------------------------------------------------------------------------------
-   The logo, both directions. The musician's yes or no decides whether a sponsorship runs at all,
-   so neither side should have to check a dashboard to find out where it stands.
+   The sponsor's materials, both directions: a logo in music, and elsewhere a name as it should
+   read, a credit line or artwork. The organizer's yes or no decides whether a sponsorship runs at
+   all, so neither side should have to check a dashboard to find out where it stands.
    --------------------------------------------------------------------------------------------- */
 
-/** To the musician, the moment a patron sends a logo. */
-export function markWaiting(params: { to: string; actName: string; patronName: string; lotName: string; note: string | null; dashboardUrl: string }): Mail {
+/** To the organizer, the moment a sponsor sends their materials. Music's words are what they were; an absent category is music. */
+export function markWaiting(params: { to: string; actName: string; patronName: string; lotName: string; note: string | null; dashboardUrl: string; categoryKey?: string | null }): Mail {
+  const music = isMusic(params.categoryKey);
+  const lot = params.lotName.toLowerCase();
+  const sent = music ? `sent the logo for the ${lot}` : `sent their materials for the ${lot}`;
+  const rule = music
+    ? `Nothing goes on the ${lot} until ${params.actName} says yes. A no refunds the patron in full and puts the spot back on the fundraiser.`
+    : `Nothing goes up for the ${lot} until ${params.actName} says yes. A no refunds the sponsor in full and puts the option back on the fundraiser. Accepting is not delivery: Door Money releases the money as ${params.actName} documents each deliverable.`;
+  const decide = music ? "Approve or decline it" : "Accept or decline it";
   const lines = [
-    `${params.patronName} sent the logo for the ${params.lotName.toLowerCase()} on ${params.actName}'s fundraiser.`,
+    `${params.patronName} ${sent} on ${params.actName}'s fundraiser.`,
     ...(params.note ? [`Their note: "${params.note}"`] : []),
-    `Nothing goes on the ${params.lotName.toLowerCase()} until ${params.actName} says yes. A no refunds the patron in full and puts the spot back on the fundraiser.`,
-    `Approve or decline it here: ${params.dashboardUrl}`,
+    rule,
+    `${decide} here: ${params.dashboardUrl}`,
   ];
   const html = shell([
-    `<b>${escape(params.patronName)}</b> sent the logo for the ${escape(params.lotName.toLowerCase())} on ${escape(params.actName)}'s fundraiser.`,
+    `<b>${escape(params.patronName)}</b> ${escape(sent)} on ${escape(params.actName)}'s fundraiser.`,
     ...(params.note ? [`Their note: <i>${escape(params.note)}</i>`] : []),
-    escape(`Nothing goes on the ${params.lotName.toLowerCase()} until ${params.actName} says yes. A no refunds the patron in full and puts the spot back on the fundraiser.`),
-    `<a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">Approve or decline it</a>`,
+    escape(rule),
+    `<a href="${escape(params.dashboardUrl)}" style="color:${BLUE}">${decide}</a>`,
   ]);
-  return { to: params.to, subject: `A logo to look at: ${params.patronName} on the ${params.lotName.toLowerCase()}`, text: lines.join("\n\n"), html };
+  return { to: params.to, subject: music ? `A logo to look at: ${params.patronName} on the ${lot}` : `Materials to look at: ${params.patronName} on the ${lot}`, text: lines.join("\n\n"), html };
 }
 
-/** To the patron, when the musician says yes. */
+/** To the sponsor, when the organizer says yes. */
 export function markApproved(params: { to: string; patronName: string; actName: string; lotName: string; recordUrl: string; categoryKey?: string | null }): Mail {
   // Outside music what was accepted may be a line of text or a name to be said, and accepting it is
   // not delivery: the money is still held until the organizer documents what was delivered.
   const music = isMusic(params.categoryKey);
   const verb = music ? "approved the logo" : "accepted your materials";
-  const fills = music ? "the shows, the rooms, the attendance where it is known, and where the money went" : `what was delivered, the documentation ${params.actName} attaches, and where the money went`;
+  const fills = music ? "the shows, the rooms, the attendance where it is known, and where the money went" : `each deliverable as ${params.actName} documents it, the documentation they attach, and where the money went`;
   const lines = [
     `${params.actName} ${verb} for the ${params.lotName.toLowerCase()}.`,
     music
@@ -536,7 +562,7 @@ export function markApproved(params: { to: string; patronName: string; actName: 
   return { to: params.to, subject: `${params.actName} ${verb}`, text: lines.join("\n\n"), html };
 }
 
-/** To the patron, when the musician says no. The sponsorship never runs, so the money goes back. */
+/** To the sponsor, when the organizer says no. The sponsorship never runs, so the money goes back. */
 export function markDeclined(params: { to: string; patronName: string; actName: string; lotName: string; refundedCents: number; boardsUrl: string; categoryKey?: string | null }): Mail {
   const music = isMusic(params.categoryKey);
   const declined = music ? "declined the logo" : "declined your materials";
@@ -557,7 +583,6 @@ export function markDeclined(params: { to: string; patronName: string; actName: 
   return { to: params.to, subject: `${params.actName} ${declined}, and the money went back`, text: lines.join("\n\n"), html };
 }
 
-/** To the patron whose spot is paid for but whose logo has not arrived. Sent once. */
 /**
  * A payment landed for an auction offer that had already moved on. Nothing was sold; the whole
  * amount goes back. The patron did nothing wrong, and the copy says so.
@@ -577,6 +602,7 @@ export function staleOfferRefund(params: { to: string; patronName: string; actNa
   return { to: params.to, subject: `Refunded: the ${lot} had already gone`, text: lines.join("\n\n"), html };
 }
 
+/** To the sponsor whose option is paid for but whose materials (a logo, in music) have not arrived. Sent once. */
 export function markReminder(params: { to: string; patronName: string; actName: string; lotName: string; runTitle: string; markUrl: string; categoryKey?: string | null }): Mail {
   const music = isMusic(params.categoryKey);
   const send = music ? "A logo file, a name, or both" : "A name as it should read, a credit line, artwork, or whatever it needs";
@@ -601,11 +627,11 @@ export function markReminder(params: { to: string; patronName: string; actName: 
    Money moving, or failing to.
    --------------------------------------------------------------------------------------------- */
 
-/** To the musician, when Stripe finishes onboarding and payouts switch on. */
+/** To the organizer, when Stripe finishes onboarding and payouts switch on. One template for every category, so it names no payout day. */
 export function payoutsOn(params: { to: string; actName: string; dashboardUrl: string }): Mail {
   const lines = [
     `Stripe has what it needs. Payouts are on for ${params.actName}.`,
-    `Money from every sponsorship reaches ${params.actName} every Friday through the fundraiser, straight to the bank account Stripe holds. Door Money keeps ${SITE.feePercent}% of what sells and nothing else.`,
+    `Money from every sponsorship reaches ${params.actName} as the fundraiser's terms release it, straight to the bank account Stripe holds. Door Money keeps ${SITE.feePercent}% of what sells and nothing else.`,
     `Nothing to chase and no invoices to send. The dashboard shows what is scheduled: ${params.dashboardUrl}`,
   ];
   const html = shell([
@@ -616,13 +642,13 @@ export function payoutsOn(params: { to: string; actName: string; dashboardUrl: s
   return { to: params.to, subject: `Payouts are on for ${params.actName}`, text: lines.join("\n\n"), html };
 }
 
-/** To the patron, when money goes back outside the cancel and decline paths (a refund made by hand). */
+/** To the sponsor, when money goes back outside the cancel and decline paths (a refund made by hand). */
 export function refundIssued(params: { to: string; patronName: string; actName: string; what: string; refundedCents: number; full: boolean; recordUrl: string }): Mail {
   const lines = [
     `Door Money refunded ${money(params.refundedCents)} on ${params.what} for ${params.actName}.`,
     params.full
       ? `That is the whole amount. It goes back to the card it was paid with, and takes five to ten business days depending on the bank.`
-      : `It goes back to the card it was paid with, and takes five to ten business days depending on the bank. The rest paid for the weeks that did happen.`,
+      : `It goes back to the card it was paid with, and takes five to ten business days depending on the bank. The rest was released for what did happen and stays with ${params.actName}.`,
     `The record: ${params.recordUrl}`,
   ];
   const html = shell([

@@ -1,8 +1,9 @@
 // One place for the strings that appear on every page.
 // Decision 17 made the shared site category-neutral: these lines describe the exchange (an organizer,
-// a sponsor, specified visibility), never one category's work. Decision 1's music tagline stays
-// available for music-specific surfaces as `musicTagline`.
-// Both lines show in the home hero. Footer and email use the first line alone.
+// a sponsor, specified visibility), never one category's work. Decision 21 gave the site its thesis:
+// Door Money turns ambition into a sponsor-ready project. Decision 1's music tagline stays available
+// for music-specific surfaces as `musicTagline`.
+// The tagline is the home headline. Footer and email use it alone; the second line explains both sides.
 
 /**
  * Public site URL. Prefer NEXT_PUBLIC_SITE_URL; fall back to the URL Vercel
@@ -19,15 +20,15 @@ function siteUrl(): string {
 
 export const SITE = {
   name: "Door Money",
-  tagline: "Put money behind work people care about.",
-  taglineSecond: "Organizers fund work with a clear purpose. Sponsors receive the visibility described in the offer.",
-  strap: "Relevant audiences. Meaningful sponsorships.",
-  /** The idea behind the company, for pages that need to say it in one line. */
-  thesis: "Meaningful sponsorships for relevant audiences.",
+  tagline: "Turn ambition into a sponsor-ready project.",
+  taglineSecond: "Organizers explain what they are making, who it reaches and what a sponsor receives. Sponsors see what their money makes possible before they pay.",
+  strap: "Ideas with an audience. Sponsorships with a point.",
+  /** The idea behind the company, for pages that need to say it in one line. Decision 21. */
+  thesis: "Door Money turns ambition into a sponsor-ready project.",
   /** Decision 1's line. For a surface that is about music and nothing else. */
   musicTagline: "Put money behind the music.",
-  /** The three parties, for the foot of the hero and the footer. */
-  signoff: "Organizers. Sponsors. Meaningful work.",
+  /** The sequence the product explains, for the foot of the hero and the footer. */
+  signoff: "Ambition. Project. Sponsorship. Delivery. Record.",
   /** Where the company is. Never where an organizer, a sponsor or an audience has to be. */
   city: "New York",
   /** "Designed for", not "open to": payments run in USD through the countries Stripe supports, and the line must not say otherwise. */

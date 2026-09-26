@@ -17,13 +17,25 @@ import { HOUSE_RULES, SITE } from "@/lib/site";
 import { runPath } from "@/lib/urls";
 
 /*
-  The page runs in this order: what Door Money is, the organizers raising now, the exchange for each
-  side, the starting categories, the house rules, the email, and the two ways in.
+  The page runs in this order: the thesis, what Door Money is, how a project gets from an ambition
+  to a record, the projects raising now, the exchange for each side, the starting categories and
+  the house rules. The footer carries the email ask and the two ways in.
 
   It introduces the product and stops there. The kinds of placement, the glossary and what Door
   Money does not promise live on /how-sponsorship-works, which is the page for somebody who wants
-  all of it. It is a shared page: it names organizers and sponsors, never one category.
+  all of it. It is a shared page: it names organizers and sponsors, never one category. The central
+  idea is the organizer's transformation (decision 21): an ambition becomes a project a sponsor can
+  read, and the sponsor exchange stays visible beside it.
 */
+
+/** The sequence the product explains, in the order it happens. Five words a reader can hold. */
+const SEQUENCE: [string, string][] = [
+  ["Ambition", "Something an organizer wants to make happen: a record, a season, a production, a series."],
+  ["Project", "The ambition written down so a stranger can read it: what the funding enables, and who the work reaches."],
+  ["Sponsorship promise", "What appears, where, and what the sponsor can count on receiving, at the organizer's own price."],
+  ["Delivery", "The organizer delivers the placement and documents that it happened."],
+  ["Record", "The sponsor keeps what was bought, what was delivered and the evidence supplied."],
+];
 export default async function HomePage() {
   const [all, labels] = await Promise.all([listOpenBoards(), getCategoryLabels()]);
   const boards = all.slice(0, 3);
@@ -39,15 +51,15 @@ export default async function HomePage() {
         <div className="hero-in relative mx-auto flex min-h-[min(calc(100svh-82px),860px)] w-full max-w-[1120px] flex-col justify-center px-7 pb-12 pt-20">
           <Eyebrow className="mb-9">{SITE.strap}</Eyebrow>
           <h1 className="display max-w-[13ch] text-[clamp(46px,7.6vw,98px)] leading-[0.96]">
-            Put money behind work people <em className="text-accent-ink">care about.</em>
+            Turn ambition into a <em className="text-accent-ink">sponsor-ready project.</em>
           </h1>
           <p className="mt-9 max-w-[54ch] text-[clamp(17px,2vw,19px)] leading-[1.6]">
-            Sponsors support work that reaches the audiences they care about, and receive the visibility described
-            in the offer.
+            Door Money helps organizers explain what they are making, who it reaches, what sponsorship makes
+            possible, and what a sponsor will receive.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
-            <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
+            <ButtonLink href="/fundraisers" arrow>Explore projects</ButtonLink>
+            <ButtonLink href="/list" variant="ghost">Make a project sponsor-ready</ButtonLink>
           </div>
           <div className="caps mt-auto flex items-end justify-between gap-4 pt-20 text-[14px] text-muted">
             <span>{SITE.signoff}</span>
@@ -60,25 +72,40 @@ export default async function HomePage() {
       <Section>
         <div className="grid gap-12 md:grid-cols-[1.2fr_1fr] md:gap-20">
           <div>
-            <SectionHead eyebrow="What Door Money is">Work that gathers an audience can be sponsored</SectionHead>
+            <SectionHead eyebrow="What Door Money is">Meaningful work, made sponsor-ready</SectionHead>
           </div>
           <div className="grid content-center gap-5 text-[clamp(16px,1.9vw,19px)] leading-[1.6]">
             <p className="max-w-none">
-              A gear company can sponsor the musicians already using its products. A clinic can put its name behind a
-              local team&apos;s season. A camera shop can take a credit on a documentary. A cafe can appear in a
-              theater program.
+              A cultural project with an audience can be sponsored. A gear company can sponsor the musicians already
+              using its products. A clinic can put its name behind a local team&apos;s season. A camera shop can take
+              a credit on a documentary. A cafe can appear in a theater program.
             </p>
             <p className="max-w-none">
-              Door Money turns those relationships into funding, with a clear statement of what the sponsor receives.
+              Door Money helps the organizer turn the idea into a project a sponsor can read: what the funding makes
+              possible, who the work reaches, what the sponsor receives, and how delivery will be documented.
             </p>
           </div>
         </div>
       </Section>
 
-      {/* Open fundraisers */}
+      {/* From an ambition to a record */}
+      <Section className="pool">
+        <SectionHead eyebrow="How a project gets there">From an ambition to a record</SectionHead>
+        <ol className="mt-10 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
+          {SEQUENCE.map(([word, body], i) => (
+            <li key={word} data-reveal style={{ "--i": i } as CSSProperties} className="bg-ground p-6">
+              <span className="heading block text-[24px] leading-none text-accent-ink">{String(i + 1).padStart(2, "0")}</span>
+              <b className="heading mt-4 block text-[20px] leading-[1.2]">{word}</b>
+              <span className="mt-2 block text-[15px] leading-[1.6] text-muted">{body}</span>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      {/* Open projects */}
       {boards.length > 0 && (
-        <Section className="pool">
-          <SectionHead eyebrow="Open fundraisers">Organizers raising now</SectionHead>
+        <Section>
+          <SectionHead eyebrow="Open projects">Projects raising now</SectionHead>
           <div className="mt-10 grid gap-px bg-line md:grid-flow-col md:auto-cols-fr">
             {boards.map((b, i) => {
               return (
@@ -99,19 +126,19 @@ export default async function HomePage() {
                     <Stat value={formatMoney(boardWorth(b))} label="sold and current bids" />
                     <Stat value={String(openSpots(b))} label="sponsorship options open" />
                   </span>
-                  <span className="caps mt-1 text-[14px] text-accent-ink">See the fundraiser &rarr;</span>
+                  <span className="caps mt-1 text-[14px] text-accent-ink">See the project &rarr;</span>
                 </Link>
               );
             })}
           </div>
           <div className="mt-7">
-            <ButtonLink href="/fundraisers" variant="ghost" arrow>Find a sponsorship</ButtonLink>
+            <ButtonLink href="/fundraisers" variant="ghost" arrow>Explore projects</ButtonLink>
           </div>
         </Section>
       )}
 
       {/* What each side gets */}
-      <Section>
+      <Section className="pool">
         <SectionHead eyebrow="The exchange">Funding for the work, visibility for the sponsor</SectionHead>
         <p className="max-w-[62ch] text-muted">
           Sponsors receive specified visibility in the places the work already reaches. Organizers set their own
@@ -121,16 +148,16 @@ export default async function HomePage() {
           <Steps
             audience="For organizers"
             steps={[
-              ["Say what the funding enables", "Travel, equipment, a production, a season."],
-              ["Set the price", "Each option carries the organizer's own price, fixed or open to bids."],
-              ["Approve, deliver, document", "No sponsor's materials appear without the organizer's approval."],
+              ["Name the ambition", "The work, and why it matters. Door Money helps shape it into a project a sponsor can read."],
+              ["Explain what the funding enables, and who it reaches", "Travel, equipment, a production, a season. Every project describes its audience."],
+              ["Define the sponsorship", "What appears, where, and at the organizer's own price. No sponsor's materials appear without the organizer's approval."],
             ]}
           />
           <Steps
             audience="For sponsors"
             steps={[
-              ["Find a relevant audience", "Every fundraiser describes who the work reaches."],
-              ["Read the offer before paying", "It states what the sponsor receives and how delivery will be documented."],
+              ["Find work with an audience that fits", "Every project describes who it reaches."],
+              ["See both sides before paying", "What the money makes possible, and exactly what the sponsor receives."],
               ["Keep the record", "What was bought, what the organizer delivered, and the evidence supplied."],
             ]}
           />
@@ -141,7 +168,7 @@ export default async function HomePage() {
       </Section>
 
       {/* The starting categories */}
-      <StartingCategories labels={labels} className="pool" />
+      <StartingCategories labels={labels} />
 
       {/* The house rules */}
       <Section>

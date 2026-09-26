@@ -18,7 +18,7 @@ function otherPlaceholder(categoryKey: string): string {
 }
 
 /**
- * What patrons get back from this run, as a list of ticks.
+ * How delivery will be documented for sponsors on this fundraiser, as a list of ticks.
  *
  * The rows are real checkboxes with a drawn mark over them, so a keyboard reaches every row, the
  * label click target is the whole row, and nothing depends on color alone. The write-in box only
@@ -119,7 +119,7 @@ function Fields({
       {otherOn && (
         <div className="mt-6 max-w-[62ch]">
           <label className="mb-2 block text-[14px] text-muted" htmlFor="verification-other">
-            Describe the verification method
+            Describe how you will document it
           </label>
           <textarea
             id="verification-other"
@@ -141,7 +141,7 @@ function Fields({
       )}
 
       <div className="mt-7 flex flex-wrap items-center gap-4">
-        <Button register="desk" type="submit" disabled={pending}>{pending ? "Saving" : "Save the verification"}</Button>
+        <Button register="desk" type="submit" disabled={pending}>{pending ? "Saving" : "Save how delivery is documented"}</Button>
         {ok && (
           <span className="text-[14.5px] text-muted">
             Saved. {saved} {saved === 1 ? "method" : "methods"} on the fundraiser.
@@ -149,7 +149,7 @@ function Fields({
         )}
         {errors.form && <span className="text-[14.5px] text-accent-ink">{errors.form}</span>}
         {draft && picked.length === 0 && !ok && !errors.methods && (
-          <span className="text-[14.5px] text-muted">A draft can wait. Publishing needs at least one.</span>
+          <span className="text-[14.5px] text-muted">A draft can wait. Publishing needs at least one, so a sponsor knows what they will be able to see afterward.</span>
         )}
       </div>
     </>

@@ -66,8 +66,8 @@ export default async function AdminPage() {
   const backingRows = backings.data ?? [];
   const runTitle = new Map(runRows.map((r) => [r.id, `${actName.get(r.act_id) ?? ""}, ${r.title}`]));
   const held = [...(purchases.data ?? []), ...backingRows].filter((p) => p.payment_status === "held").reduce((n, p) => n + p.amount_cents, 0);
-  // Money Door Money is holding that cannot move on a Friday yet, because nobody has approved the
-  // logo (migration 0031). A sponsorship sitting here past the end of its fundraiser is the case
+  // Money Door Money is holding that cannot move on a Friday yet, because the organizer has not
+  // accepted the sponsor's materials (migration 0031). A sponsorship sitting here past the end of its fundraiser is the case
   // Door Money looks at by hand: see docs/DECISIONS.md, decision 16.
   type OwedRefund = { id: string; purchase_id: string | null; backing_id: string | null; reason: string; status: string; attempts: number; last_error: string | null; next_attempt_at: string; created_at: string };
   const owed = (owedRefunds.data ?? []) as OwedRefund[];
@@ -84,7 +84,7 @@ export default async function AdminPage() {
     .filter((p) => p.payment_status === "held" && p.mark_status !== "approved")
     .reduce((n, p) => n + p.amount_cents, 0);
 
-  // What each run actually took: every purchase that was charged, refunds off. A spot won at
+  // What each fundraiser actually took: every purchase that was charged, refunds off. A spot won at
   // auction sells above its list price and a refund takes money back, so the lot's price says
   // neither; before 2026-09-24 this column summed list prices.
   const CHARGED = ["held", "released", "partially_refunded", "refunded"];
@@ -119,11 +119,11 @@ export default async function AdminPage() {
         </Card>
 
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          <Stat n={String(actRows.length)} label="acts" />
+          <Stat n={String(actRows.length)} label="organizers" />
           <Stat n={String(runRows.filter((r) => r.status === "open" || r.status === "live").length)} label="fundraisers up" />
-          <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="spots sold" />
+          <Stat n={String(lotRows.filter((l) => l.status === "sold").length)} label="sponsorships sold" />
           <Stat n={formatMoney(held)} label="held" />
-          <Stat n={formatMoney(waitingOnLogo)} label="waiting on a logo" />
+          <Stat n={formatMoney(waitingOnLogo)} label="waiting on sponsor materials" />
           <Stat n={formatMoney(balance("platform_fee"))} label="earned" />
           <Stat n={String(owed.length)} label={owed.length === 1 ? "refund owed" : "refunds owed"} />
           <Stat n={String(events.length)} label={events.length === 1 ? "event unfinished" : "events unfinished"} />
@@ -191,7 +191,7 @@ export default async function AdminPage() {
                 <Link key="r" href={`/record/${o.purchase_id ?? o.backing_id}`} className="text-accent-ink underline decoration-1 underline-offset-4">
                   {o.purchase_id ? "Sponsorship" : "Backing"}
                 </Link>,
-                o.reason === "mark_declined" ? "logo declined" : "fundraiser cancelled",
+                o.reason === "mark_declined" ? "materials declined" : "fundraiser cancelled",
                 o.status,
                 String(o.attempts),
                 o.status === "failed" ? "stopped" : when.format(new Date(o.next_attempt_at)),
@@ -230,7 +230,7 @@ export default async function AdminPage() {
             <CardHead eyebrow="Flagged by a patron">{flags.length} waiting on Door Money</CardHead>
             <p className="mb-5 max-w-none text-[15px] text-muted">
               Every payment still to go out on these is on hold. Releasing the hold puts the paused slices back in the queue for the next Friday. To send
-              the money back instead, cancel the run from the act&apos;s dashboard or refund the purchase in Stripe.
+              the money back instead, cancel the fundraiser from the organizer&apos;s dashboard or refund the purchase in Stripe.
             </p>
             <ul className="divide-y divide-line">
               {flags.map((f) => (
@@ -257,9 +257,9 @@ export default async function AdminPage() {
         )}
 
         <Card>
-          <CardHead eyebrow="Acts">{actRows.length} listed</CardHead>
+          <CardHead eyebrow="Organizers">{actRows.length} listed</CardHead>
           <Table
-            head={["Act", "Owner", "Type", "City", "Stripe", "Runs", "Listed"]}
+            head={["Organizer", "Owner", "Type", "City", "Stripe", "Fundraisers", "Listed"]}
             rows={actRows.map((a) => [
               <Link key="n" href={actPath(a.slug)} className="text-accent-ink underline decoration-1 underline-offset-4">{a.name}</Link>,
               a.profiles?.email ?? "",
@@ -273,9 +273,9 @@ export default async function AdminPage() {
         </Card>
 
         <Card>
-          <CardHead eyebrow="Runs">{runRows.length} described</CardHead>
+          <CardHead eyebrow="Fundraisers">{runRows.length} described</CardHead>
           <Table
-            head={["Act", "Run", "Status", "Dates", "Shows", "Spots", "Sold", "Taken", "Listed at"]}
+            head={["Organizer", "Fundraiser", "Status", "Dates", "Dated events", "Options", "Sold", "Taken", "Listed at"]}
             rows={runRows.map((r) => {
               const ls = lotsByRun.get(r.id) ?? [];
               return [
@@ -309,9 +309,9 @@ export default async function AdminPage() {
         </Card>
 
         <Card>
-          <CardHead eyebrow="Fan backings">{backingRows.length} through the widget</CardHead>
+          <CardHead eyebrow="Backings">{backingRows.length} through the widget</CardHead>
           <Table
-            head={["Run", "Name", "Tier", "Amount", "Fee", "Status", "From", "When"]}
+            head={["Fundraiser", "Name", "Tier", "Amount", "Fee", "Status", "From", "When"]}
             rows={backingRows.map((b) => [
               runTitle.get(b.run_id) ?? "",
               b.display_name,
@@ -351,7 +351,7 @@ export default async function AdminPage() {
         <Card>
           <CardHead eyebrow="Waitlist">{(waitlist.data ?? []).length} names</CardHead>
           <Table
-            head={["When", "Role", "Name", "Email", "City", "Act type"]}
+            head={["When", "Role", "Name", "Email", "City", "Organizer type"]}
             rows={(waitlist.data ?? []).map((w) => [when.format(new Date(w.created_at)), w.role, w.name, w.email, w.city ?? "", w.act_type?.replace("_", " ") ?? ""])}
           />
         </Card>

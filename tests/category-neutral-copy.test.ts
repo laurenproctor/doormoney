@@ -73,9 +73,12 @@ test("the section renders the starting set without counting it, says it is a sta
 // ---------------------------------------------------------------
 
 test("the site-wide strings and the house rules name no category, payout day or city", () => {
-  assert.equal(SITE.tagline, "Put money behind work people care about.");
-  assert.equal(SITE.strap, "Relevant audiences. Meaningful sponsorships.");
-  assert.equal(SITE.taglineSecond, "Organizers fund work with a clear purpose. Sponsors receive the visibility described in the offer.");
+  // Decision 21: the site's thesis is the organizer's transformation, and the second line keeps both sides of the exchange visible.
+  assert.equal(SITE.tagline, "Turn ambition into a sponsor-ready project.");
+  assert.equal(SITE.thesis, "Door Money turns ambition into a sponsor-ready project.");
+  assert.equal(SITE.strap, "Ideas with an audience. Sponsorships with a point.");
+  assert.match(SITE.taglineSecond, /what a sponsor receives/);
+  assert.match(SITE.taglineSecond, /what their money makes possible/);
   for (const line of [SITE.tagline, SITE.taglineSecond, SITE.strap, SITE.thesis, SITE.signoff, ...HOUSE_RULES]) {
     assert.doesNotMatch(line, MUSIC_ONLY, line);
     assert.doesNotMatch(line, /New York|NYC|—/, line);
@@ -160,7 +163,7 @@ test("the dashboard asks for a logo in music and for materials everywhere else",
   assert.deepEqual(materialsLabels("music"), LOGO_LABELS);
   for (const key of [...NON_MUSIC, "community_dance"]) {
     assert.deepEqual(workAction(row, key), { kind: "review", label: "Review materials" }, key);
-    assert.equal(materialsLabels(key).waiting, "Waiting for materials", key);
+    assert.equal(materialsLabels(key).waiting, "Waiting for sponsor materials", key);
     assert.doesNotMatch(Object.values(materialsLabels(key)).join(" "), /logo/i, key);
   }
 });

@@ -32,8 +32,8 @@ export function DeliveryCommitment({
   return (
     <section id="verification" className="border-t border-line py-16">
       <div data-reveal className="mx-auto max-w-[1120px] px-7">
-        <Eyebrow className="mb-5">Placement verification</Eyebrow>
-        <h2 className="heading mb-6 max-w-[22ch] text-[clamp(28px,4vw,46px)] leading-[1.02]">How the placements will be recorded</h2>
+        <Eyebrow className="mb-5">Delivery and documentation</Eyebrow>
+        <h2 className="heading mb-6 max-w-[22ch] text-[clamp(28px,4vw,46px)] leading-[1.02]">How delivery will be documented</h2>
         <p className="mb-9 text-[clamp(16px,1.9vw,17px)] leading-[1.6]">
           {organizerName} will document where the {words.appearances} appeared during {fundraiserTitle}. Sponsors receive a record once it ends.
         </p>

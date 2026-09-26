@@ -46,7 +46,7 @@ test("a category added in SQL alone still draws a form", () => {
   assert.deepEqual(fields.map((f) => f.label), ["Project", "Meeting place"]);
   assert.equal(fields[0].options, undefined, "an unknown key is free text, not a guessed list");
   assert.equal(organizerNoun("community"), "organizer");
-  assert.equal(titleLabel("community"), "Fundraiser name");
+  assert.equal(titleLabel("community"), "Project name");
   assert.deepEqual(detailValueErrors("community", { project: "Public garden" }, ["project"]), []);
 });
 

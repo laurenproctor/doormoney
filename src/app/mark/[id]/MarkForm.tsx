@@ -9,9 +9,9 @@ import { Stamp } from "@/components/Brand";
 const initial: MarkState = { ok: false };
 
 /**
- * The patron sends the logo. A file, a name, or both, and a line to the musician if it needs
- * one. Sending again before the act decides replaces what is there, so a patron who picked the
- * wrong file can just send the right one.
+ * The sponsor sends their materials (a logo, in music). A file, a name or wording, or both, and a
+ * line to the organizer if it needs one. Sending again before the organizer decides replaces what
+ * is there, so a sponsor who picked the wrong file can just send the right one.
  */
 export function MarkForm({
   purchaseId,
@@ -30,7 +30,7 @@ export function MarkForm({
   /** The fundraiser's category, which decides whether this is "the logo" or "your materials". */
   categoryKey?: string | null;
   kind?: string | null;
-  /** True when a logo is already in, so the copy talks about replacing it. */
+  /** True when materials are already in, so the copy talks about replacing them. */
   resend: boolean;
   currentUrl: string | null;
   currentText: string | null;

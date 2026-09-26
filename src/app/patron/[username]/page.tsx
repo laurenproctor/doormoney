@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
   const p = found.profile;
-  const description = p.bio ?? `${p.displayName} supports fundraisers on Door Money.`;
+  const description = p.bio ?? `${p.displayName} supports projects on Door Money.`;
   const image = await signedPhotoUrl(p.photoPath);
   return {
     title: `${p.displayName}, patron`,

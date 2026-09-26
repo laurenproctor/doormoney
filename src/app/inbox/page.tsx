@@ -32,7 +32,7 @@ export default async function InboxPage() {
   return (
     <DashboardShell current="/inbox" nav={dashboardNav({ hasAct: Boolean(act), roles: profile?.roles ?? [] })} actName={act?.name}
       identity={fullName(profile)} eyebrow="Private conversations" title="Your" accent="inbox"
-      intro="Talk with organizers and sponsors about their fundraiser. Purchased promises and refunds stay on the sponsorship record.">
+      intro="Talk with organizers and sponsors about a project. What was purchased, its delivery and any refund stay on the sponsorship record.">
       <p className="mb-5 text-sm text-muted">{active.filter((c) => c.unread).length} unread · {active.length} active</p>
       {active.length === 0 && <p className="rounded-card border border-line bg-panel p-6 text-muted">No active conversations yet. You can ask an organizer a question from a published fundraiser.</p>}
       {active.map((c) => <ThreadCard key={c.thread.id} {...c} />)}

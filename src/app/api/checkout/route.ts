@@ -15,7 +15,7 @@ import { runPath } from "@/lib/urls";
 
 /**
  * Starts a payment. Two kinds:
- * - `lot`: a fixed-price spot on a board. Creates the purchase, holds the lot for the patron for as
+ * - `lot`: a fixed-price sponsorship option on a fundraiser. Creates the purchase, holds the lot for the sponsor for as
  *   long as the Checkout Session lives (src/lib/checkout-hold.ts), and returns the client secret
  *   for an embedded Checkout Session. Anybody can ask, so who may hold what is limited: a honeypot
  *   before anything is read, and the database's own count of attempts and open holds by address
@@ -260,7 +260,7 @@ async function startBacking(sb: Admin, input: Extract<z.infer<typeof Input>, { k
   if (!tier) return fail("Invalid input", 400);
 
   const { data: act } = await sb.from("acts").select("id,slug,name").eq("slug", input.slug).maybeSingle();
-  if (!act) return fail("That musician is not on Door Money.", 404);
+  if (!act) return fail("That organizer is not on Door Money.", 404);
 
   const run = await backingFundraiser(sb, act.id, input.runId ?? null);
   if ("error" in run) return fail(run.error, run.status);

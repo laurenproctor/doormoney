@@ -55,7 +55,7 @@ export const FundraiserDraftInput = z.object({
   discovery_tags: z.array(z.string().trim().min(1, "A discovery tag cannot be blank.").max(40)).max(20).default([]),
 }).strict().superRefine((value, ctx) => {
   for (const [start, end] of [["starts_on", "ends_on"], ["fundraising_starts_on", "fundraising_ends_on"]] as const) {
-    if (value[start] && value[end] && value[end] < value[start]) ctx.addIssue({ code: "custom", path: [end], message: "The end cannot precede the start." });
+    if (value[start] && value[end] && value[end] < value[start]) ctx.addIssue({ code: "custom", path: [end], message: "The end date cannot come before the start date." });
   }
   if (value.bidding_closes_at && value.ends_on && new Date(value.bidding_closes_at).toISOString().slice(0, 10) > value.ends_on) ctx.addIssue({ code: "custom", path: ["bidding_closes_at"], message: "Bidding has to close by the last activity date." });
   if (value.goal_cents !== null && !value.goal_currency) ctx.addIssue({ code: "custom", path: ["goal_currency"], message: "Choose a currency for the goal." });

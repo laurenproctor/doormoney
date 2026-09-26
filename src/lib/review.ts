@@ -44,7 +44,7 @@ export function unfinishedItems(rows: readonly ReadinessRow[], run: ReviewRun, k
 function whereToFix(key: ReadinessRow["key"], run: ReviewRun, kit: string | null): { href: string; where: string } {
   switch (key) {
     case "profile":
-      return { href: "/dashboard/act", where: "the organizer page" };
+      return { href: "/dashboard/act", where: "your organizer profile" };
     case "run": {
       // The funding stage holds what the funding enables, what a sponsor can count on, and music's
       // dates and count; the project stage holds the name and the audience.

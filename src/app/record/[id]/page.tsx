@@ -23,12 +23,15 @@ import { ownedPurchase } from "@/lib/inbox";
 import { materialsPrompt, recordStrap, recordWords, releaseSentence } from "@/lib/record-words";
 
 /*
-  The record: what a patron receives at the end of a fundraiser. Every show the logo was in the room
-  for, the rooms, the attendance where the musician counted it, and where the money went. The URL is
-  the purchase id (or the
-  backing id, for a fan who came in through the widget), which nobody can guess; it is emailed to the
-  patron with the receipt and again when the fundraiser closes.
-  Nothing on this page is private beyond the patron's own name and amount, which they already know.
+  The record: the sponsor's own summary of the purchased offer, its delivery, the documentation the
+  organizer attached, and where the money went. Music's record is what it always was: every show
+  the logo was in the room for, the rooms, the attendance where the musician counted it. Every other
+  category reads the offer from its purchase snapshot, each deliverable as the organizer documents
+  it, and the evidence this visitor may see. The words come from src/lib/record-words.ts, by
+  category. The URL is the purchase id (or the backing id, for a fan who came in through the
+  widget), which nobody can guess; it is emailed to the sponsor with the receipt and again when the
+  fundraiser closes. Nothing on this page is private beyond the sponsor's own name and amount,
+  which they already know.
 */
 
 export const dynamic = "force-dynamic";
@@ -61,7 +64,7 @@ type RecordRow = Money & {
   patronName: string;
   /** "the kick drum head", "a name on the merch table card" */
   what: string;
-  /** Where the logo stands. Backings carry a name, not a logo, so they are always "none". */
+  /** Where the sponsor's materials stand (a logo, in music). Backings carry a name and nothing to accept, so they are always "none". */
   markStatus: MarkStatus;
   runs: RunRow;
 };
@@ -216,7 +219,7 @@ export default async function RecordPage({ params }: Props) {
   const facts: [string, string][] = [
     // Shows are a music idea. No other category is told it played none of a null number of them.
     ...(music ? [[String(played.length), `of ${run.show_count} ${period.units} played`] as [string, string]] : []),
-    ...(!music && delivery ? [[String(delivery.deliverables.filter((d) => d.status === "delivered").length), `of ${delivery.deliverables.length} delivered`] as [string, string]] : []),
+    ...(!music && delivery ? [[String(delivery.deliverables.filter((d) => d.status === "delivered").length), `of ${delivery.deliverables.length} ${delivery.deliverables.length === 1 ? "deliverable" : "deliverables"} documented`] as [string, string]] : []),
     ...(rooms ? [[String(rooms), rooms === 1 ? "room" : "rooms"] as [string, string]] : []),
     ...(counted.length ? [[attendance.toLocaleString("en-US"), `people across ${counted.length} counted ${counted.length === 1 ? "show" : "shows"}`] as [string, string]] : []),
     [formatMoney(paidCents), `of ${formatMoney(netCents)} reached ${act.name}`],
@@ -283,8 +286,8 @@ export default async function RecordPage({ params }: Props) {
               <dl className="grid max-w-[62ch] gap-5">
                 {([
                   ["What was purchased", delivery.bought.opportunity],
-                  ["What the funding supports", delivery.bought.purpose],
-                  [`What ${act.name} promised`, delivery.bought.promise],
+                  ["What the funding makes possible", delivery.bought.purpose],
+                  [`What ${act.name} promised sponsors`, delivery.bought.promise],
                 ] as [string, string | null][]).filter(([, value]) => value?.trim()).map(([label, value]) => (
                   <div key={label}>
                     <dt className="caps text-[14px] text-accent-ink">{label}</dt>
@@ -316,7 +319,8 @@ export default async function RecordPage({ params }: Props) {
                   {d.evidenceCount > 0 && `, ${d.evidenceCount} ${d.evidenceCount === 1 ? "item" : "items"}`}
                 </span>
                 {/* What the offer said would document this one. Absent where it said nothing, which
-                    is not a gap to fill: Door Money checks that evidence exists, never that it is good. */}
+                    is not a gap to fill: Door Money records that documentation exists and passes it
+                    on, and never judges it. */}
                 {d.promised?.method && (
                   <span className="text-[14.5px] text-muted md:col-span-2">
                     {act.name} documents this with {EVIDENCE_WORDS[d.promised.method as keyof typeof EVIDENCE_WORDS] ?? d.promised.method}.{" "}
@@ -377,7 +381,7 @@ export default async function RecordPage({ params }: Props) {
             ))}
           </ol>
         )}
-        <p className="mt-6 max-w-[62ch] text-[14.5px] text-muted">Attendance is the musician&apos;s own count where they kept one. Door Money tracks fundraisers lightly and says so.</p>
+        <p className="mt-6 max-w-[62ch] text-[14.5px] text-muted">Attendance is the {words.organizer}&apos;s own count where they kept one. Door Money tracks fundraisers lightly and says so.</p>
       </Section>}
 
       <Section>
@@ -387,7 +391,7 @@ export default async function RecordPage({ params }: Props) {
             ? `Door Money held ${formatMoney(p.amount_cents)}, kept ${formatMoney(p.fee_cents)}, and moves the rest to ${act.name} in Friday slices through the ${period.noun}.`
             : `Door Money held ${formatMoney(p.amount_cents)} and kept ${formatMoney(p.fee_cents)}. ${releaseSentence(words, act.name)}`}
         </p>
-        {!music && slices.length === 0 && <p className="mt-6 text-[14.5px] text-muted">Nothing has been released yet.</p>}
+        {!music && slices.length === 0 && <p className="mt-6 text-[14.5px] text-muted">Nothing has been released yet. A share is scheduled each time {act.name} documents a deliverable.</p>}
         <ol className="mt-8 grid max-w-[560px] gap-px bg-line">
           {slices.map((s) => (
             <li key={s.due_on} className="flex items-center justify-between gap-4 bg-ground px-5 py-3">
@@ -397,6 +401,14 @@ export default async function RecordPage({ params }: Props) {
             </li>
           ))}
         </ol>
+        {/* What happens if it does not happen. The flag holds only the money not yet released, and only while somebody at Door Money looks. */}
+        {run.status !== "cancelled" && run.status !== "closed" && p.payment_status !== "refunded" && (
+          <p className="mt-6 max-w-[62ch] text-[14.5px] text-muted">
+            {music ? `If the ${period.noun} stops happening` : `If ${p.what} is not delivered, or the ${words.periodNoun} stops happening`},{" "}
+            <a href={`/record/${p.id}/flag`} className="text-accent-ink underline decoration-1 underline-offset-4">say so here</a> and the money not yet released stays
+            held until Door Money looks. If the {words.periodNoun} is cancelled, that part goes back to the card it was paid with.
+          </p>
+        )}
         <div className="mt-8">
           <Eyebrow>Questions go to the {words.organizer} or to Door Money</Eyebrow>
         </div>

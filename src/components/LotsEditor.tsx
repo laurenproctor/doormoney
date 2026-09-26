@@ -172,7 +172,7 @@ export function LotsEditor({
         ) : runStatus === "draft" ? (
           <>
             <p className="mb-4 max-w-[56ch] text-[15px]">
-              The fundraiser is private until it is published. Publishing puts it at its own address and on the fundraisers page. Save the sponsorship options first.
+              The fundraiser is private until it is published. Publishing puts it at its own address and on the fundraisers page. Save the sponsorship options first, and publish when the promise is clear.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Button
@@ -186,7 +186,7 @@ export function LotsEditor({
                   })
                 }
               >
-                {publishing ? "Publishing" : "Publish the fundraiser"}
+                {publishing ? "Publishing" : "Publish fundraiser"}
               </Button>
               {publishError && <span className="text-[14.5px] text-accent-ink">{publishError}</span>}
             </div>

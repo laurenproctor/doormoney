@@ -199,11 +199,11 @@ test("/list is still /list, still titled for every organizer, and leads with the
   assert.ok(existsSync(path.join(ROOT, "src/app/list/page.tsx")));
   assert.ok(NAV.some((n) => n.href === "/list" && n.label === "For organizers"));
   const list = code("src/app/list/page.tsx");
-  assert.match(list, /title: "Create a fundraiser"/);
+  assert.match(list, /title: "Make your work sponsor-ready"/);
   assert.match(list, /current="\/list"/);
   assert.match(list, /<Section id="list">/, "the #list anchor other pages and old emails point at");
   assert.match(list, /<Section id="ideas">/);
-  for (const phrase of ["Find sponsors for", "Start with a sponsorship idea", "Choose a starter kit", "Create a fundraiser"]) assert.ok(list.includes(phrase), phrase);
+  for (const phrase of ["Make your work", "sponsor-ready.", "Start with what you want to make happen", "Start with a sponsorship idea", "Choose a starter kit", "Create a fundraiser"]) assert.ok(list.includes(phrase), phrase);
   assert.match(list, /Change any of them\./, "a starter kit is an example the organizer edits");
   assert.match(list, /sets no price/);
   assert.doesNotMatch(list, /List an act|list your act|\bgigs?\b/i);

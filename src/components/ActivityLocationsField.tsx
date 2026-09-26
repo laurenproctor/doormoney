@@ -26,7 +26,7 @@ export function ActivityLocationsField({ rows, onChange }: { rows: LocationRow[]
     <fieldset className="my-4">
       <legend className={labelClass}>Places (optional)</legend>
       <p className="mb-3 text-[14.5px] text-muted">
-        Where the work happens: a town on a tour, a home ground, a screening city. Leave it empty for online work or until it is settled.
+        Where the work happens: a city on the road, a home ground, a screening city, a dining room. Leave it empty for online work or until it is settled.
       </p>
       {rows.map((row, i) => (
         <div key={i} className="mb-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">

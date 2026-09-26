@@ -159,13 +159,13 @@ export async function runWeeklyPayouts(today = new Date()): Promise<PayoutSummar
   return summary;
 }
 
-type EndedRun = { id: string; title: string; show_count: number; acts: { name: string; slug: string } };
+type EndedRun = { id: string; title: string; show_count: number; category_key: string | null; acts: { name: string; slug: string } };
 type EndedPurchase = { id: string; patrons: { name: string; contact_email: string } | null; lots: { label: string | null; surface_key: string } };
 type EndedBacking = { id: string; display_name: string; tier: string; patrons: { contact_email: string } | null };
 
 /** Closes every run whose last date has passed and sends each patron the record. */
 async function closeFinishedRuns(sb: ReturnType<typeof supabaseAdmin>, ranOn: string) {
-  const { data } = await sb.from("runs").select("id,title,show_count,acts!inner(name,slug)").in("status", ["open", "live"]).lt("ends_on", ranOn);
+  const { data } = await sb.from("runs").select("id,title,show_count,category_key,acts!inner(name,slug)").in("status", ["open", "live"]).lt("ends_on", ranOn);
   const ended = (data ?? []) as unknown as EndedRun[];
   let closed = 0;
   for (const run of ended) {
@@ -176,7 +176,8 @@ async function closeFinishedRuns(sb: ReturnType<typeof supabaseAdmin>, ranOn: st
     await sb.from("lots").update({ status: "unsold" }).eq("run_id", run.id).in("status", ["open", "pending_funding"]);
     const { count: played } = await sb.from("shows").select("id", { count: "exact", head: true }).eq("run_id", run.id).eq("played", true);
     const record = (id: string, to: string, patronName: string, what: string) =>
-      sendEmail(recordReady({ to, patronName, actName: run.acts.name, runTitle: run.title, lotName: what, playedCount: played ?? 0, showCount: run.show_count, recordUrl: `${SITE.url}/record/${id}` }));
+      // The category decides the words: music counts shows, every other category reads its deliverables.
+      sendEmail(recordReady({ to, patronName, actName: run.acts.name, runTitle: run.title, lotName: what, playedCount: played ?? 0, showCount: run.show_count, recordUrl: `${SITE.url}/record/${id}`, categoryKey: run.category_key }));
     const paid = ["held", "released", "partially_refunded"];
 
     const { data: lotRows } = await sb.from("lots").select("id").eq("run_id", run.id);

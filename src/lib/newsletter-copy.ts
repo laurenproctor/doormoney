@@ -10,7 +10,7 @@
  */
 export const NEWSLETTER = {
   eyebrow: "By email",
-  title: "Get new fundraisers by email.",
-  body: "One short email when a new fundraiser opens. Unsubscribe anytime.",
+  title: "Get new projects by email.",
+  body: "One short email when a new project opens to sponsors. Unsubscribe anytime.",
   fine: "Door Money never shares an address.",
 } as const;

@@ -12,9 +12,10 @@ import { materialsOutcome, materialsRules, materialsStrap, materialsWords } from
 import { MarkForm } from "./MarkForm";
 
 /*
-  Where a patron sends the mark for a placement they bought. The URL carries the purchase id, which
-  nobody can guess; it reaches the patron in the receipt. No account, no password: the act still has
-  to approve whatever arrives, so the link cannot do damage on its own.
+  Where a sponsor sends their materials for the sponsorship they bought: a logo in music, and
+  elsewhere a name as it should read, a credit line or artwork. The URL carries the purchase id,
+  which nobody can guess; it reaches the sponsor in the receipt. No account, no password: the
+  organizer still has to accept whatever arrives, so the link cannot do damage on its own.
 */
 
 export const dynamic = "force-dynamic";

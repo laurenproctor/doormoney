@@ -88,16 +88,16 @@ const filled = (v: string | null | undefined) => Boolean(v && v.trim().length > 
 
 /**
  * What a stage still asks for, in words, for the resume rule and the summary card. The project is
- * a name and who will experience it; the funding is what the money enables and what a sponsor can
- * count on. A goal, dates and locations are never on this list: an unknown is allowed to stay one.
+ * a name and who it reaches; the funding is what the money enables and what a sponsor receives.
+ * A goal, dates and locations are never on this list: an unknown is allowed to stay one.
  */
 export function stageMissing(draft: StageDraft, stage: FormStage): string[] {
   if (stage === "project") {
-    return [!filled(draft.title) && "a name", !filled(draft.audience_description) && "who will experience it"].filter(
+    return [!filled(draft.title) && "a name", !filled(draft.audience_description) && "who it reaches"].filter(
       (v): v is string => typeof v === "string",
     );
   }
-  return [!filled(draft.purpose) && "what the funding enables", !filled(draft.sponsor_promise) && "what a sponsor can count on"].filter(
+  return [!filled(draft.purpose) && "what the funding enables", !filled(draft.sponsor_promise) && "what a sponsor receives"].filter(
     (v): v is string => typeof v === "string",
   );
 }
@@ -123,25 +123,25 @@ export const STAGE_HEADING: Record<JourneyStage, { title: string; accent: string
   project: {
     title: "What do you want to",
     accent: "make happen?",
-    intro: "Name the project and say who will experience it. Anything you do not know yet can stay empty.",
+    intro: "Start with the ambition. Name the project, say what you are making possible and why it matters, and who it reaches. Anything you do not know yet can stay empty.",
     continueLabel: "Continue to funding",
   },
   funding: {
     title: "What will the funding",
     accent: "make possible?",
-    intro: "Say what the money enables. A goal is optional, and it is not the total of the sponsorship options: those come next.",
+    intro: "Connect the money to the work: what the funding enables, and what the project needs. A goal is optional, and it is not the total of the sponsorship options: those come next.",
     continueLabel: "Continue to sponsorships",
   },
   sponsorships: {
-    title: "What can a sponsor",
-    accent: "count on?",
-    intro: "Build one sponsorship option at a time: where the sponsor appears, what it costs, what they send, and what you deliver. A partial option can be saved; anything missing is named, never filled in for you.",
+    title: "What does a sponsor",
+    accent: "receive?",
+    intro: "Define each sponsorship option as a clear exchange: what appears, where, how often, and what the sponsor receives for the price you set. A partial option can be saved; anything missing is named, never filled in for you.",
     continueLabel: "Continue to review",
   },
   review: {
-    title: "A promise you can",
-    accent: "stand behind.",
-    intro: "Read the fundraiser the way a sponsor would: what you want to make possible, and what you can credibly deliver in return. Then decide whether it goes up.",
+    title: "Is the project",
+    accent: "sponsor-ready?",
+    intro: "Before a project goes public, it should be clear what the funding enables, who the work reaches, what the sponsor receives, and how delivery will be documented. Read it the way a sponsor would, then publish when the promise is clear.",
     continueLabel: "Publish fundraiser",
   },
 };

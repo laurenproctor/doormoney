@@ -8,7 +8,7 @@ import { SITE } from "@/lib/site";
 export type NewsletterState = { ok: boolean; error?: string };
 
 const Input = z.object({
-  // Required, so the new-boards email can open by name. Addresses collected before this was asked
+  // Required, so the new-fundraisers email can open by name. Addresses collected before this was asked
   // for keep a null in the column and get the unnamed version of the email.
   first_name: z.string().trim().min(1, "Enter a first name.").max(60, "Keep the first name under 60 characters."),
   email: z.string().trim().email("Enter a valid email address."),
@@ -73,7 +73,7 @@ export async function subscribeNewsletter(_prev: NewsletterState, form: FormData
   }
   if (error || !data) {
     console.error("newsletter insert failed:", error?.code, error?.message);
-    return { ok: false, error: "Couldn't save that. Try once more." };
+    return { ok: false, error: "That did not save. Try once more." };
   }
 
   // Welcome new addresses only. A failed send never fails the signup.

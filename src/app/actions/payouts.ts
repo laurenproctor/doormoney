@@ -8,7 +8,7 @@ import { SITE } from "@/lib/site";
 import { actUrl } from "@/lib/urls";
 
 /**
- * Sends the act into Stripe's hosted Express onboarding. Creates the connected
+ * Sends the organizer into Stripe's hosted Express onboarding. Creates the connected
  * account on first use. Without a Stripe key the button explains itself and stops.
  */
 export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: string }> {
@@ -17,7 +17,7 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
   if (!act) redirect("/dashboard/act/new");
   if (!process.env.STRIPE_SECRET_KEY) return { ok: false, error: "Payout setup is unavailable right now. Try again shortly, or contact Door Money." };
 
-  // Stripe will not take a board address it cannot reach, so the URL is left off in development.
+  // Stripe will not take an organizer address it cannot reach, so the URL is left off in development.
   const boardUrl = SITE.url.startsWith("https://") ? actUrl(act.slug) : undefined;
 
   let accountId = act.stripe_account_id;
@@ -28,7 +28,7 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
         type: "express",
         country: "US",
         email: user.email ?? undefined,
-        business_profile: { name: act.name, ...(boardUrl ? { url: boardUrl } : {}), product_description: "Sponsorship for a working musician" },
+        business_profile: { name: act.name, ...(boardUrl ? { url: boardUrl } : {}), product_description: "Sponsorship of a project on Door Money" },
         capabilities: { transfers: { requested: true } },
         metadata: { act_id: act.id, slug: act.slug },
       });
@@ -37,13 +37,13 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
       return { ok: false, error: "Stripe could not open the account. Try once more." };
     }
     accountId = created.id;
-    // stripe_account_id is not writable through the Data API (migration 0022). The act is already
-    // established as this user's by ownedAct above, so the write is scoped by its id.
+    // stripe_account_id is not writable through the Data API (migration 0022). The organizer row is
+    // already established as this user's by ownedAct above, so the write is scoped by its id.
     const { error } = await supabaseAdmin().from("acts").update({ stripe_account_id: accountId }).eq("id", act.id);
     if (error) return { ok: false, error: "That did not save. Try once more." };
   }
 
-  // The link is short-lived and single use, so it is made fresh every time the act presses the button.
+  // The link is short-lived and single use, so it is made fresh every time the organizer presses the button.
   let onboardingUrl: string;
   try {
     const link = await stripe.accountLinks.create({
@@ -61,7 +61,7 @@ export async function startStripeOnboarding(): Promise<{ ok: boolean; error?: st
   redirect(onboardingUrl);
 }
 
-/** After Stripe sends the act back, read the account once so the dashboard is right before the webhook lands. */
+/** After Stripe sends the organizer back, read the account once so the dashboard is right before the webhook lands. */
 export async function syncStripeStatus(): Promise<void> {
   const user = await requireUser("/dashboard/payouts");
   const act = await ownedAct(user.id);

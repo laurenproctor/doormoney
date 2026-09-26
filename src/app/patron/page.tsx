@@ -13,7 +13,7 @@ import { ownProfile } from "@/lib/patronprofile";
 import { profileTheme } from "@/lib/profile";
 import { actPath } from "@/lib/urls";
 
-export const metadata: Metadata = { title: "What you have backed", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Your sponsorships", robots: { index: false, follow: false } };
 
 const OUTCOME: Record<PlacedBid["outcome"], string> = {
   leading: "The one to beat",
@@ -32,7 +32,7 @@ const PAYMENT: Record<string, string> = {
 };
 
 const MARK: Record<string, string> = {
-  none: "No mark sent yet",
+  none: "No materials sent yet",
   submitted: "Waiting on the organizer",
   approved: "Approved",
   declined: "Declined and refunded",
@@ -61,20 +61,20 @@ export default async function PatronPage() {
       actName={act?.name}
       identity={fullName(profile)}
       theme={profileTheme(own?.theme)}
-      eyebrow="Backed by this account"
+      eyebrow="Sponsorships and backings"
       title={name}
       accent=""
       intro={
         <p className="max-w-[52ch] text-[19px] leading-[1.35] text-ink">
-          {nothing ? "Nothing backed yet." : `${formatMoney(backed.totalCents)} behind ${countActs(backed)} so far.`}
+          {nothing ? "No sponsorships yet." : `${formatMoney(backed.totalCents)} behind ${countActs(backed)} so far.`}
         </p>
       }
       search={jumps}
     >
       {nothing ? (
-        <Card title="Pick a fundraiser" subtitle="Nothing here yet" className="max-w-[720px]">
+        <Card title="Find a project to sponsor" subtitle="Nothing here yet" className="max-w-[720px]">
           <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
-            Every sponsorship and backing shows up here: what you paid, what the organizer did with it, and the
+            Every sponsorship and backing shows up here: what you paid, what the organizer delivered, and the
             record at the end of the fundraiser. Bids sit here too, from the moment you place one.
           </p>
           <div className="flex flex-wrap items-center gap-3">

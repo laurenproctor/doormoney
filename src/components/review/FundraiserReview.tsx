@@ -109,9 +109,9 @@ export function FundraiserReview({
 
       {/* ------------------------------------------------------------ what is unfinished */}
       {publishable && (
-        <Card title={unfinished.length === 0 ? "Everything a sponsor needs is here" : `${unfinished.length} ${unfinished.length === 1 ? "thing" : "things"} still to do`} subtitle="Before it goes up">
+        <Card title={unfinished.length === 0 ? "Everything a sponsor needs is here" : `${unfinished.length} ${unfinished.length === 1 ? "thing" : "things"} still to do`} subtitle="Before the project is sponsor-ready">
           {unfinished.length === 0 ? (
-            <p className="text-[15px] text-muted">The organizer, the fundraiser, at least one complete option and how delivery is documented are all in place. Read it through below, then decide.</p>
+            <p className="text-[15px] text-muted">A sponsor can read who is behind the work, what the funding enables, who it reaches, what they receive and how delivery will be documented. Read it through below, then publish when the promise is clear.</p>
           ) : (
             <ul className="divide-y divide-line">
               {unfinished.map((item) => (
@@ -133,7 +133,7 @@ export function FundraiserReview({
       )}
 
       {/* ------------------------------------------------------------ who */}
-      <Card title={organizer.name} subtitle="Who is raising the money">
+      <Card title={organizer.name} subtitle="Who is behind the work?">
         <div className="flex items-start gap-4">
           {organizer.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -143,8 +143,8 @@ export function FundraiserReview({
           )}
           <div className="min-w-0 text-[15px] leading-[1.6]">
             <p className="text-muted">{[organizer.kindLabel ?? capitalize(noun), place].filter(Boolean).join(" · ")}</p>
-            {organizer.bio ? <p className="mt-1">{organizer.bio}</p> : <p className="mt-1 text-muted">No short bio yet. The public page leads with it. <Link href="/dashboard/act" className="text-accent-ink underline decoration-1 underline-offset-4">Add one</Link></p>}
-            <p className="mt-1 text-[14px] text-muted">The photograph and the bio come from the organizer page, and they are what a sponsor sees first.</p>
+            {organizer.bio ? <p className="mt-1">{organizer.bio}</p> : <p className="mt-1 text-muted">No short bio yet. Sponsors want to know who is behind the work. <Link href="/dashboard/act" className="text-accent-ink underline decoration-1 underline-offset-4">Add one</Link></p>}
+            <p className="mt-1 text-[14px] text-muted">The photograph and the bio come from your organizer profile, and they are what a sponsor sees first.</p>
           </div>
         </div>
       </Card>
@@ -152,17 +152,17 @@ export function FundraiserReview({
       {/* ------------------------------------------------------------ the project and the funding */}
       <Card
         title={draft.title || "No name yet"}
-        subtitle={categoryLabel}
+        subtitle={`${categoryLabel} · What is this project?`}
         right={<Link href={stagePath(draft.id, "project", kit)} className="text-accent-ink underline decoration-1 underline-offset-4">Edit the project</Link>}
       >
         <dl className="grid gap-4 text-[15px] leading-[1.6]">
-          <Row label="The story">{draft.description || <Missing>Not yet said. Sponsors read this first.</Missing>}</Row>
-          <Row label="What the funding enables" example={examples.has("purpose")}>{draft.purpose || <Missing>Not yet said.</Missing>}</Row>
-          <Row label="Who will experience it" example={examples.has("audience_description")}>{draft.audience_description || <Missing>Not yet said.</Missing>}</Row>
+          <Row label="What are you making possible?">{draft.description || <Missing>Not yet said. Sponsors read this first.</Missing>}</Row>
+          <Row label="What does the funding enable?" example={examples.has("purpose")}>{draft.purpose || <Missing>Not yet said.</Missing>}</Row>
+          <Row label="Who does it reach?" example={examples.has("audience_description")}>{draft.audience_description || <Missing>Not yet said.</Missing>}</Row>
           {draft.expected_attendance !== null && draft.expected_attendance !== undefined && (
             <Row label="Expected audience size">{draft.expected_attendance.toLocaleString("en-US")}, an estimate as you gave it. It is shown as one and promised to nobody.</Row>
           )}
-          <Row label="Funding goal">{draft.goal_cents !== null && draft.goal_cents !== undefined ? <>{formatMoney(draft.goal_cents)}. What the work needs; separate from what the options can bring in, and never money raised.</> : <Missing>No goal set. A fundraiser can leave it out.</Missing>}</Row>
+          <Row label="Funding goal">{draft.goal_cents !== null && draft.goal_cents !== undefined ? <>{formatMoney(draft.goal_cents)}. What the project needs; separate from what the options can bring in, and never money raised.</> : <Missing>No goal set. A fundraiser can leave it out.</Missing>}</Row>
           {(mode || places.length > 0) && <Row label="Where">{[mode, ...places].filter(Boolean).join(" · ")}</Row>}
           {(draft.fundraising_starts_on || draft.fundraising_ends_on) && <Row label="Raising">{window(draft.fundraising_starts_on, draft.fundraising_ends_on)}</Row>}
           {(draft.starts_on || draft.ends_on) && <Row label={music ? "The dates" : "The work"}>{window(draft.starts_on, draft.ends_on)}</Row>}
@@ -179,12 +179,12 @@ export function FundraiserReview({
       {/* ------------------------------------------------------------ what a sponsor receives */}
       <Card
         title={optionKeys.length === 0 ? "No sponsorship option yet" : optionKeys.length === 1 ? "One sponsorship option" : `${optionKeys.length} sponsorship options`}
-        subtitle="In return"
-        right={<Link href={sponsorshipsHref} className="text-accent-ink underline decoration-1 underline-offset-4">{optionKeys.length === 0 ? "Build the first option" : "Edit the options"}</Link>}
+        subtitle="What does the sponsor receive?"
+        right={<Link href={sponsorshipsHref} className="text-accent-ink underline decoration-1 underline-offset-4">{optionKeys.length === 0 ? "Define the first option" : "Edit the options"}</Link>}
       >
         <Row label="What sponsors can count on" example={examples.has("sponsor_promise")}>{draft.sponsor_promise || <Missing>Not yet said.</Missing>}</Row>
         {optionKeys.length === 0 && templates.length === 0 && (
-          <p className="text-[15px] text-muted">{categoryLabel} has no sponsorship option templates yet, so no priced option can be saved and nothing can be bought. The line above is the whole offer for now.</p>
+          <p className="text-[15px] text-muted">{categoryLabel} has no sponsorship option templates yet, so no option can be defined or bought. The line above is the whole offer for now.</p>
         )}
         {optionKeys.map((key) => {
           const template = templates.find((t) => t.key === key);
@@ -219,7 +219,7 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ how delivery is documented */}
-      <Card id="verification" title={chosenMethods.length === 0 ? "Nothing chosen yet" : chosenMethods.length === 1 ? "One way of documenting delivery" : `${chosenMethods.length} ways of documenting delivery`} subtitle="What you commit to document">
+      <Card id="verification" title={chosenMethods.length === 0 ? "Nothing chosen yet" : chosenMethods.length === 1 ? "One way of documenting delivery" : `${chosenMethods.length} ways of documenting delivery`} subtitle="How will delivery be documented?">
         <p className="max-w-[62ch] text-[15px] text-muted">
           Only what you choose here goes on the public page, and it never claims more than that. Documentation comes from you; Door Money passes it on and inspects nothing.
         </p>
@@ -227,7 +227,7 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ what Door Money's policy decides */}
-      <Card title="What happens to the money" subtitle="Saved policy terms">
+      <Card title="What happens after a sponsorship sells" subtitle="Saved policy terms">
         <dl className="grid gap-2 text-[15px] leading-[1.6]">
           {release && <Row label="Release">{release}</Row>}
           {statements.map((s) => <Row key={s.key} label={s.label}>{s.sentence}</Row>)}
@@ -236,7 +236,7 @@ export function FundraiserReview({
       </Card>
 
       {/* ------------------------------------------------------------ the decision */}
-      <Card title={publishable ? (blockers.length === 0 ? "Ready to publish" : "Not yet") : "A private draft, for now"} subtitle="The decision">
+      <Card title={publishable ? (blockers.length === 0 ? "Sponsor-ready" : "Not sponsor-ready yet") : "A private draft, for now"} subtitle="Publish when the promise is clear">
         <PublishDecision
           runId={draft.id}
           publishable={publishable}
