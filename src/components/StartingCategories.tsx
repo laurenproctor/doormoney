@@ -27,7 +27,7 @@ export function StartingCategories({ labels = {}, heading = "The categories Door
       <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-20">
         <div>
           <p className="caps text-[14px] text-accent-ink">A start, not a limit</p>
-          <p className="mt-3 max-w-[52ch] text-[15px] leading-[1.7] text-muted">A new category fits when its organizers can state four things:</p>
+          <p className="mt-3 max-w-[52ch] text-[15px] leading-[1.7] text-muted">A project is sponsor-ready, and a new category fits, when the organizer can state four things:</p>
           <ul className="mt-3 grid gap-1.5 text-[15px] leading-[1.7]">
             {CATEGORY_TEST.map((line) => (
               <li key={line}>

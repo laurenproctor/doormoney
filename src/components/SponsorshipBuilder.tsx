@@ -37,8 +37,8 @@ import { IN_KIND_NOTE, hasInKind, sponsorshipKindLabels } from "@/lib/sponsorshi
   organizer does it: a template is a name and a drawing, a suggested price is marked as one and
   exists only in music, and a starter idea only points at templates worth a look.
 
-  A category with no templates has nothing to price. Other is that category today, and it gets the
-  truthful path: say what visibility is proposed, saved as a private draft, with no invented
+  A category with no templates has no option to define. Other is that category today, and it gets
+  the truthful path: say what visibility is proposed, saved as a private draft, with no invented
   inventory and no publish button.
 */
 
@@ -170,7 +170,7 @@ export function SponsorshipBuilder({
       )}
       {saved.some((o) => !o.locked && !o.grandfathered && optionMissing(o.row, parseOrEmpty(o.terms)).length > 0) && (
         <p className="mt-5 max-w-[62ch] text-[14.5px] text-accent-ink">
-          An option with something still to say is saved as a private draft and keeps the fundraiser from being published until it is finished. A sponsor has to be able to read every term before they pay.
+          An option with something still to say is saved as a private draft and keeps the fundraiser from being published until it is finished. A sponsor has to be able to read exactly what they receive before they pay.
         </p>
       )}
       <StageFooter publishable={publishable} continueHref={continueHref} backHref={backHref} continueLabel="Continue to review" />
@@ -193,7 +193,7 @@ function PlacementChoice({ templates, offeredKeys, suggestedKeys, kitLabel, firs
     <div className="min-w-0">
       <p className="max-w-[62ch] text-[15px] text-muted">
         {first ? "Start with one placement: where a sponsor would appear. " : "Choose the placement for the next option. "}
-        Each is a name and a drawing, not an offer: nothing is offered, priced or promised until you say so. Your own price is the price.
+        Each is a name and a drawing, not an offer: nothing is offered, priced or promised until you define it. Your own price is the price.
       </p>
       {kitLabel && suggestedKeys.length > 0 && (
         <p className="mt-3 max-w-[62ch] text-[14.5px] text-accent-ink">The starter idea you began with, {kitLabel}, points at the options marked below. Suggestions, nothing more.</p>
@@ -407,7 +407,7 @@ function OptionForm({ runId, template, option, step, policy, materialsWindowDays
               ))}
             </dl>
             <p className="mt-3 max-w-[62ch] text-[14.5px] text-muted">
-              The funding goal{goalCents !== null ? `, ${formatMoney(goalCents)},` : ""} is what the work needs and lives on the funding stage. An option&apos;s price is what one sponsor pays. Neither is money raised.
+              The funding goal{goalCents !== null ? `, ${formatMoney(goalCents)},` : ""} is what the project needs and lives on the funding stage. An option&apos;s price is what one sponsor pays for what this option gives them. Neither is money raised.
             </p>
             <details className="mt-6 border-t border-line pt-4" open={row.reach ? true : undefined}>
               <summary className="caps cursor-pointer text-[14px] text-accent-ink">Expected reach (optional)</summary>
@@ -544,7 +544,7 @@ function OptionForm({ runId, template, option, step, policy, materialsWindowDays
                 </div>
               </details>
             </fieldset>
-            {named.length === 0 && <p className="mt-4 text-[14.5px] text-muted">Name at least one deliverable. It is what a sponsor is buying, and what your share is released against.</p>}
+            {named.length === 0 && <p className="mt-4 text-[14.5px] text-muted">Name at least one deliverable. It is what the sponsor receives, and what your share is released against once you document it.</p>}
           </section>
         </div>
 
@@ -677,7 +677,7 @@ function StageFooter({ publishable, continueHref, backHref, continueLabel }: { p
         </Link>
         <Link href={backHref} className={quietClass}>Back</Link>
       </div>
-      <p className="mt-6 text-[14.5px] text-muted">Next: read the fundraiser the way a sponsor would, and decide whether to publish.</p>
+      <p className="mt-6 text-[14.5px] text-muted">Next: read the project the way a sponsor would, and publish when the promise is clear.</p>
     </div>
   );
 }

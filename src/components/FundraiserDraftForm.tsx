@@ -227,27 +227,27 @@ export function FundraiserDraftForm({
 
           <Controlled label={titleLabel(category)} name="title" value={fields.title} onChange={set("title")} error={errorFor("title")} hint={isExample("title") ? EXAMPLE_HINT : "The name sponsors see. It can change while this is a draft."} />
           {detailInputs.map((field) => <Detail key={`${category}-${field.key}`} field={field} value={fields.category_details[field.key] ?? ""} onChange={(value) => dispatch({ type: "detail", key: field.key, value })} error={errorFor(`detail_${field.key}`)} />)}
-          <TextArea label="The story" name="description" value={facts.description} onChange={setFact("description")} error={errorFor("description")} rows={5}
-            hint="What do you want to make happen, and why does it matter? Sponsors read this first. Your own words, as plain as you like." />
-          <Controlled label="Who will experience it?" name="audience_description" value={fields.audience_description} onChange={set("audience_description")} error={errorFor("audience_description")}
-            hint={isExample("audience_description") ? EXAMPLE_HINT : "The people who will be there, watch, listen or take part. Describe the audience you know today; a number can come later, as an estimate."} />
+          <TextArea label="What are you making possible?" name="description" value={facts.description} onChange={setFact("description")} error={errorFor("description")} rows={5}
+            hint="The ambition, in your own words: what you want to happen, and why it matters. Sponsors read this first, and it is how they understand what their money makes possible." />
+          <Controlled label="Who does it reach?" name="audience_description" value={fields.audience_description} onChange={set("audience_description")} error={errorFor("audience_description")}
+            hint={isExample("audience_description") ? EXAMPLE_HINT : "The people the work reaches: who will be there, watch, listen or take part. Describe the audience you know today; a number can come later, as an estimate."} />
         </section>
 
         {/* ------------------------------------------------------------ Funding */}
         <section hidden={stage !== "funding"} aria-labelledby={`${ids}-funding`}>
           <h2 id={`${ids}-funding`} className="sr-only">Funding</h2>
-          <p className="text-[14.5px] text-muted">A sponsor needs two answers from every fundraiser: what the funding enables, and what they can count on receiving.</p>
+          <p className="text-[14.5px] text-muted">This is where the money meets the work. A sponsor needs two answers: what the funding enables, and what they can count on receiving.</p>
           <Controlled label="What will the funding enable?" name="purpose" value={fields.purpose} onChange={set("purpose")} error={errorFor("purpose")}
-            hint={isExample("purpose") ? EXAMPLE_HINT : "What the money pays for, as concretely as you can say it today."} />
+            hint={isExample("purpose") ? EXAMPLE_HINT : "What the money makes possible: the travel, the equipment, the production, the time. As concrete as you can say it today."} />
           <label className={`${labelClass} my-4 block`}>Funding goal (USD, optional)
             <input name="goal_amount" type="text" inputMode="decimal" value={facts.goal_amount} onChange={(e) => setFact("goal_amount")(e.target.value)} aria-invalid={errorFor("goal_amount") ? true : undefined} placeholder="5000" className={inputClass} />
             {errorFor("goal_amount") && <span className={errorClass}>{errorFor("goal_amount")}</span>}
             <span className={hintClass}>
-              What the work needs, in your own number. A goal is separate from the sponsorship options you price next: their total is not a goal, and neither number is money raised. Leave it empty rather than guess.
+              What the project needs, in your own number. A goal is separate from the sponsorship options you define next: their total is not a goal, and neither number is money raised. Leave it empty rather than guess.
             </span>
           </label>
           <Controlled label="What can sponsors count on receiving?" name="sponsor_promise" value={fields.sponsor_promise} onChange={set("sponsor_promise")} error={errorFor("sponsor_promise")}
-            hint={isExample("sponsor_promise") ? "An example from the starter kit. Promise only what you will deliver, in your own words." : "One line for the whole fundraiser. Each priced option says its own placement in the next stage."} />
+            hint={isExample("sponsor_promise") ? "An example from the starter kit. Promise only what you will deliver, in your own words." : "One line for the whole project. Each sponsorship option defines its own placement in the next stage."} />
 
           <fieldset className="mt-8 border-t border-line pt-6">
             <legend className="caps mb-1 text-[14px] text-muted">When</legend>
@@ -332,7 +332,7 @@ export function FundraiserDraftForm({
         <button type="submit" name="intent" value="save" disabled={pending} className={quietClass}>Save draft</button>
       </div>
       <p className="mt-6 text-[14.5px] text-muted">
-        {stage === "project" ? "Next: what the funding enables, and a goal if you have one." : "Next: the sponsorship options, each with its own placement and price."}
+        {stage === "project" ? "Next: what the funding enables, and what the project needs." : "Next: define the sponsorship options, each with its own placement, price and terms."}
       </p>
     </div>
   </form>;

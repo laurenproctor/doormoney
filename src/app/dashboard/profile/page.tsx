@@ -192,8 +192,8 @@ export default async function ProfilePage() {
               <Details rows={organizerRows(act, host)} />
             ) : (
               <p className="max-w-[62ch] border-y border-line py-4 text-[15px] leading-[1.6] text-muted">
-                Create an organizer profile to publish fundraisers. It carries its own name, so a band, a team or a
-                company is not filed under yours.
+                Create an organizer profile so sponsors know who is behind the work. It carries its own name, so a
+                band, a team or a company is not filed under yours.
               </p>
             )}
 

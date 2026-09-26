@@ -35,7 +35,7 @@ test("a draft with no verification method cannot publish", () => {
   input.run.methods = [];
   const blockers = publishBlockers(input);
   assert.equal(blockers.length, 1);
-  assert.match(blockers[0], /at least one way the placements will be recorded/);
+  assert.match(blockers[0], /at least one way delivery will be documented/);
 });
 
 test("other with no answer cannot publish, and the message names the write-in", () => {
@@ -108,7 +108,7 @@ test("the checklist is the six rows, in order, and agrees with the publish gate"
   assert.deepEqual(rows.map((r) => r.key), ["profile", "run", "lots", "verification", "payouts", "publish"]);
   assert.deepEqual(
     rows.map((r) => r.label),
-    ["Musician profile", "Fundraiser details", "Sponsorships", "Placement verification", "Payout setup", "Ready to publish"],
+    ["Musician profile", "The project and the funding", "Sponsorships", "Delivery documentation", "Payout setup", "Ready to publish"],
   );
   const verification = rows.find((r) => r.key === "verification");
   const publish = rows.find((r) => r.key === "publish");

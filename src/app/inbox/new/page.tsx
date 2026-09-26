@@ -28,7 +28,7 @@ export default async function NewMessage({ searchParams }: { searchParams: Promi
       <input type="hidden" name="run" value={id} />{bought && <input type="hidden" name="purchase" value={purchase} />}
       <label htmlFor="body" className="mb-2 block font-medium">Your message</label>
       <textarea id="body" name="body" required minLength={1} maxLength={2000} rows={6} className="w-full rounded-control border border-field-line bg-ground p-3 text-ink" />
-      {error && <p role="alert" className="mt-2 text-sm text-red-700">{error === "length" ? "Write a message of up to 2,000 characters." : "You have started too many conversations today. Please try later."}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-red-700">{error === "length" ? "Write a message of up to 2,000 characters." : "You have started too many conversations today. Try again tomorrow."}</p>}
       <p className="mt-3 text-sm text-muted">Messages cannot change the purchased offer or start a refund. Use the sponsorship record for those steps.</p>
       <button type="submit" className="mt-5 rounded-control bg-accent px-5 py-3 font-medium text-on-accent">Send message</button>
     </form>

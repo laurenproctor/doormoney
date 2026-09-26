@@ -65,7 +65,7 @@ export async function submitEvidenceAction(_prev: DeliveryState, form: FormData)
   });
   if (!r.ok) return { ok: false, error: r.error };
   revalidatePath("/dashboard");
-  return { ok: true, message: r.released ? "Saved. Your share for this is set for the next Friday, once the sponsor's materials are accepted." : "Saved." };
+  return { ok: true, message: r.released ? "Saved. Your share for this is scheduled for the next release, once the sponsor's materials are accepted." : "Saved." };
 }
 
 const Visibility = z.object({ evidenceId: Id, visibility: z.enum(["private", "public"]) });

@@ -38,7 +38,7 @@ export default async function EditActPage() {
       accent="profile"
       intro={
         <p>
-          The name, address and details sponsors and audiences see. Part of{" "}
+          Who is behind the work, as sponsors and audiences see it: the name, address and details. Part of{" "}
           <Link href="/dashboard/profile" className="text-accent-ink underline decoration-1 underline-offset-4">
             your profile
           </Link>

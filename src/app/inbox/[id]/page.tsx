@@ -46,7 +46,7 @@ export default async function ConversationPage({ params, searchParams }: { param
       <div className="flex flex-wrap gap-3 text-sm"><form action={updateThread}><input type="hidden" name="thread" value={id} /><button name="action" value={(organizer ? thread.organizer_archived_at : thread.sponsor_archived_at) ? "unarchive" : "archive"} className="text-accent-ink underline">{(organizer ? thread.organizer_archived_at : thread.sponsor_archived_at) ? "Unarchive" : "Archive"}</button></form>
         {(!thread.blocked_by || thread.blocked_by === user.id) && <form action={updateThread}><input type="hidden" name="thread" value={id} /><button name="action" value={thread.blocked_by ? "unblock" : "block"} className="text-accent-ink underline">{thread.blocked_by ? "Unblock" : "Block"}</button></form>}</div>
       <form action={updateThread} className="border-t border-line pt-4"><input type="hidden" name="thread" value={id} /><label htmlFor="reason" className="block text-sm font-medium">Report this conversation to Door Money</label>
-        <textarea id="reason" name="reason" required minLength={10} maxLength={1000} rows={2} className="mt-2 w-full rounded-control border border-field-line bg-ground p-3 text-sm" placeholder="Tell us what happened (at least 10 characters)" />
+        <textarea id="reason" name="reason" required minLength={10} maxLength={1000} rows={2} className="mt-2 w-full rounded-control border border-field-line bg-ground p-3 text-sm" placeholder="Say what happened (at least 10 characters)" />
         <button name="action" value="report" className="mt-2 text-sm text-accent-ink underline">Submit report</button></form>
     </div>
   </DashboardShell>;

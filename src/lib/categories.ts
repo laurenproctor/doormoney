@@ -153,7 +153,7 @@ const LANGUAGE: Record<string, CategoryLanguage> = {
   other: {
     organizer: "organizer",
     organizers: "organizers",
-    titleLabel: "Fundraiser name",
+    titleLabel: "Project name",
     details: {},
     formNote: "Other has no suggested sponsorship options and no examples. Say in your own words what the funding enables, who it reaches and what a sponsor receives.",
   },
@@ -182,9 +182,9 @@ export function categoryFormNote(categoryKey: string | null | undefined): string
   return LANGUAGE[categoryKey ?? ""]?.formNote ?? null;
 }
 
-/** What to call the name field. Neutral for a category this file has no words for. */
+/** What to call the name field. "Project name" for a category this file has no words for; music keeps "Fundraiser name". */
 export function titleLabel(categoryKey: string | null | undefined): string {
-  return LANGUAGE[categoryKey ?? ""]?.titleLabel ?? "Fundraiser name";
+  return LANGUAGE[categoryKey ?? ""]?.titleLabel ?? "Project name";
 }
 
 /**

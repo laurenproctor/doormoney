@@ -19,7 +19,7 @@ import { accountPhotoPathFor } from "@/lib/accountPhotoUrl";
   The account holder's own details: the writes.
 
   Each one authenticates first and touches only the row the session owns. Nothing here is public:
-  the name is the person behind the account (a band's name is on the musician page, a business's
+  the name is the person behind the account (an organizer's name is on the organizer page, a business's
   name on the patron row), and the photo is shown to the account holder alone. A patron's public page has its
   own name and its own photo, in src/app/actions/profile.ts.
 */

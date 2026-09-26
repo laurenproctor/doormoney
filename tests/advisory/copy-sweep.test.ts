@@ -37,18 +37,21 @@ test("the homepage and how-sponsorship-works both mount the starting categories"
 test("the homepage does not sell music's catalog as the product", () => {
   const home = code("src/app/page.tsx");
   assert.doesNotMatch(home, /musicSurfaces|@\/lib\/catalog|WIDGET_TIERS|defaultPriceCents/, "no music inventory, and no music price, on the shared homepage");
-  for (const phrase of ["Find a sponsorship", "Create a fundraiser", "Organizers raising now", "Sponsors receive specified visibility in the places the work already reaches."]) {
+  for (const phrase of ["Explore projects", "Make a project sponsor-ready", "Projects raising now", "Sponsors receive specified visibility in the places the work already reaches."]) {
     assert.ok(home.includes(phrase), phrase);
   }
-  assert.match(home, /Put money behind work people/);
+  assert.match(home, /Turn ambition into a/);
+  // The explanatory model, in order, on the page a first visitor meets (decision 21).
+  for (const word of ['"Ambition"', '"Project"', '"Sponsorship promise"', '"Delivery"', '"Record"']) assert.ok(home.includes(word), word);
   assert.match(home, /<CategoryBadge\b/, "every fundraiser card names its own category");
 });
 
-test("how sponsorship works is five neutral steps, and leaves each fundraiser its own release terms", () => {
+test("how sponsorship works is six neutral steps from an ambition to a record, and leaves each fundraiser its own release terms", () => {
   const how = code("src/app/how-sponsorship-works/page.tsx");
-  for (const step of ["An organizer opens a fundraiser", "A sponsor chooses a sponsorship option", "The organizer approves the sponsor's materials", "The organizer delivers the promised placement", "Door Money documents delivery and releases funds"]) {
+  for (const step of ["An organizer brings the ambition", "The project makes the purpose concrete", "The sponsorship offer defines the exchange", "A sponsor chooses an opportunity", "The organizer delivers what was promised", "The record keeps the relationship accountable"]) {
     assert.ok(how.includes(step), step);
   }
+  assert.match(how, /not a donation, an investment or a share of the work/, "the legal distinction stays on the page");
   assert.match(how, /Each fundraiser states its own delivery and release\s+terms/);
   assert.doesNotMatch(how, /How music|every Friday|kick drum|merch table|musicSurfaces|@\/lib\/catalog|VERIFICATION_METHODS/i);
   // Music's options and suggested prices were moved, not deleted.
@@ -181,9 +184,9 @@ test("with no category handed in, the checkout names nobody's terms", () => {
   assert.doesNotMatch(fallback, /the musician|the mark\b|every Friday/);
 });
 
-test("the fundraiser workspace prices sponsorship options, not spots", () => {
+test("the fundraiser workspace defines sponsorship options, not spots", () => {
   const editor = code("src/app/dashboard/runs/[id]/page.tsx");
-  assert.match(editor, /Price the sponsorship options/);
+  assert.match(editor, /Define sponsorship options/);
   assert.doesNotMatch(editor, /Price the spots/);
 });
 

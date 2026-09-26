@@ -72,9 +72,9 @@ function Mark({ text, kind }: { text: string; kind: keyof typeof MARK }) {
 }
 
 /**
- * The board total and the lot list. Fixed-price spots check out here; auction lots take real bids
- * through the bid form. The board watches the bids table over Realtime, so a bid anyone places
- * shows up on every open board within a second.
+ * The fundraiser's total and its sponsorship options. Fixed-price options check out here; bidding
+ * options take real bids through the bid form. The page watches the bids table over Realtime, so a
+ * bid anyone places shows up on every open fundraiser page within a second.
  */
 export function BoardLots({
   lots,

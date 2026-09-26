@@ -28,8 +28,8 @@ export default async function SignUpPage({ searchParams }: Props) {
       eyebrow="Create an account"
       title="Create your"
       accent="account"
-      intro={<p>Create fundraisers, sponsor work, or do both.</p>}
-      support="One account gives you access to both."
+      intro={<p>Make a project sponsor-ready, sponsor a project, or do both.</p>}
+      support="One account does both, and you never have to choose."
     >
       <SignUpForm next={next} intent={intent} />
     </AuthShell>

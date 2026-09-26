@@ -44,8 +44,8 @@ export default async function FundraisersPage() {
     >
       {view.runs.length === 0 ? (
         <DashboardEmptyState
-          heading="No fundraiser yet"
-          body="One named funding effort, with the sponsorship options you choose to offer on it."
+          heading="No project yet"
+          body="Start with what you want to make happen. A fundraiser says what the funding enables, who it reaches and what a sponsor receives, with the sponsorship options you choose to offer."
           action={{ href: "/dashboard/runs/new", label: "Create a fundraiser" }}
         />
       ) : (

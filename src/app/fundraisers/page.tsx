@@ -18,7 +18,7 @@ import { AVAILABILITY_NOTE } from "@/lib/starting-categories";
 export const metadata: Metadata = {
   title: "Find a project to sponsor",
   description:
-    "Every open fundraiser on Door Money: what each one funds, who it reaches, and the sponsorship options still open. Search by name, or filter by category, place, funding purpose, audience and price.",
+    "Every project open to sponsors on Door Money: what each one makes possible, who it reaches, what a sponsor receives, and the sponsorship options still open. Search by name, or filter by category, place, funding purpose, audience and price.",
   // One address for search engines too, now that the old one redirects here.
   alternates: { canonical: "/fundraisers" },
 };
@@ -91,7 +91,10 @@ export default async function FundraisersPage({ searchParams }: Props) {
             <h1 className="display max-w-[16ch] text-[clamp(34px,4.8vw,58px)] leading-[0.98]">
               Find a project to <em className="text-accent-ink">sponsor.</em>
             </h1>
-            <p className="mt-4 text-[17px] text-muted">Explore the work. See what sponsorship includes.</p>
+            <p className="mt-4 text-[17px] text-muted">
+              Find work with an audience that fits. Every project says what the money makes possible and what a
+              sponsor receives.
+            </p>
           </div>
         </section>
 
@@ -198,9 +201,9 @@ export default async function FundraisersPage({ searchParams }: Props) {
           {/* The organizer's way in, one line, below the results so it never sits among the controls. */}
           <aside className="mt-12 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-t border-line pt-8">
             <p className="text-[15px] leading-[1.6] text-muted">
-              Organizers choose what they offer, set the prices and keep the final say.
+              Organizers turn what they want to make happen into a project a sponsor can read, and keep the final say.
             </p>
-            <ButtonLink href="/list" variant="ghost" arrow>Create a fundraiser</ButtonLink>
+            <ButtonLink href="/list" variant="ghost" arrow>Make a project sponsor-ready</ButtonLink>
           </aside>
         </div>
       </main>

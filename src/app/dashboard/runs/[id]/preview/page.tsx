@@ -8,13 +8,13 @@ import { BoardView } from "@/app/[slug]/[run]/BoardView";
 type Props = { params: Promise<{ id: string }> };
 
 /**
- * The board as it will look, before anyone else can see it.
+ * The fundraiser's page as a sponsor will see it, before anyone else can.
  *
- * Private three times over: the route signs the visitor in first, the run is read filtered on the
- * act this account owns, and RLS refuses a draft run to anybody but its owner even if that filter
- * were wrong. Nothing links here from a public page, /fundraisers and the sitemap both list only open
- * runs, and robots.txt has disallowed /dashboard since Phase 2. Publishing is still the only thing
- * that makes a board public.
+ * Private three times over: the route signs the visitor in first, the fundraiser is read filtered
+ * on the organizer this account owns, and RLS refuses a draft to anybody but its owner even if that
+ * filter were wrong. Nothing links here from a public page, /fundraisers and the sitemap both list
+ * only open fundraisers, and robots.txt has disallowed /dashboard since Phase 2. Publishing is still
+ * the only thing that makes the page public.
  */
 export const metadata: Metadata = { title: "Draft preview", robots: { index: false, follow: false } };
 

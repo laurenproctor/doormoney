@@ -19,8 +19,8 @@ export const ROLES = [
   {
     key: "organizer",
     /** The capability, named as the action it is. */
-    label: "Create a fundraiser",
-    blurb: "Say what the funding enables and what a sponsor receives. You set the prices.",
+    label: "Make a project sponsor-ready",
+    blurb: "Say what you want to make happen, who it reaches and what a sponsor receives. You set the prices.",
     /** The first step for an account that has not used this capability yet. */
     start: "/dashboard/act/new",
     /** The intent that leads with this capability. */
@@ -28,7 +28,7 @@ export const ROLES = [
   },
   {
     key: "patron",
-    label: "Support a fundraiser",
+    label: "Sponsor a project",
     blurb: "Sponsor a placement or back the work. Every record stays in one place.",
     start: "/fundraisers",
     intent: "patron",
@@ -82,7 +82,7 @@ export function homeFor(account?: { roles?: string[] | null; hasAct?: boolean })
 
 const MUSICIAN_LINKS = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/act", label: "Organizer" },
+  { href: "/dashboard/act", label: "Organizer profile" },
   { href: "/dashboard/payouts", label: "Payouts" },
   // The widget, named for what it does. Dropped from the site nav (decision 14) and kept here,
   // because it is only worth anything to somebody who already has a fundraiser to embed. The
@@ -104,8 +104,8 @@ export type DashboardLink = { href: string; label: string };
 /**
  * The pages an account can reach, from what it does rather than what it said at sign-up.
  *
- * An account that owns an act, or came here to play, gets the board pages. Backed and Profile are
- * always there: a musician who backs the band down the street should not have to change a setting
+ * An account that owns an organizer record, or came here to organize, gets the organizer pages.
+ * Backed and Profile are always there: an organizer who backs work down the street should not have to change a setting
  * to see it, and for anyone who has backed nothing it reads as an invitation. The profile itself
  * stays private until the patron publishes it.
  */

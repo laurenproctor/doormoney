@@ -10,9 +10,11 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { FlagForm } from "./FlagForm";
 
 /*
-  "I don't think this ran." The patron's side of Phase 6. Reached from the record and from the
+  "I don't think this happened." The sponsor's side of Phase 6. Reached from the record and from the
   receipt email, and it needs no account: the id is the same unguessable one the record uses.
-  Raising the flag holds every payment still to go out on this sponsorship, and nothing else.
+  Raising the flag holds every payment still to go out on this sponsorship, and nothing else. One
+  wording for every category: music's calendar and everybody else's evidence rule both release a
+  share only for what did happen, so that is what the page says.
 */
 
 export const dynamic = "force-dynamic";
@@ -53,8 +55,8 @@ export default async function FlagPage({ params }: Props) {
             </p>
           ) : (
             <p className="mt-5">
-              A sponsorship is paid for before the {period} starts, and the money reaches {target.actName} week by week as it goes on. If the {period} stops
-              happening, saying so here holds the rest of it.
+              A sponsorship is paid for up front, and Door Money releases the money to {target.actName} under the fundraiser&apos;s terms as the {period} goes on.
+              If the {period} stops happening, or the promise is not being kept, saying so here holds what has not been released.
             </p>
           )}
           <p className="mt-4 text-[15px] text-muted">
@@ -71,9 +73,9 @@ export default async function FlagPage({ params }: Props) {
         <Section>
           <SectionHead eyebrow="What this does">The money stops, and a person reads it</SectionHead>
           <p className="text-muted">
-            Slices already sent for weeks the {period} played stay sent. Everything not yet released is held. Door Money reads the note, checks with{" "}
-            {target.actName}, and either releases the hold or sends the unreleased part back to the card it was paid with. The act is not told by this
-            page; Door Money looks first.
+            Money already released for what did happen stays released. Everything not yet released is held. Door Money reads the note, checks with{" "}
+            {target.actName}, and either releases the hold or sends the unreleased part back to the card it was paid with. {target.actName} is not told by
+            this page; Door Money looks first.
           </p>
           <div className="mt-8 max-w-[720px]">
             <FlagForm id={id} what={target.what} />
@@ -85,8 +87,8 @@ export default async function FlagPage({ params }: Props) {
         <Section>
           <SectionHead eyebrow="Next">Nothing else to do</SectionHead>
           <p className="text-muted">
-            The hold stays until Door Money has looked. Anything already sent to {target.actName} for weeks the {period} played is not affected. A note
-            about the outcome comes by email.
+            The hold stays until Door Money has looked. Anything already released to {target.actName} for what did happen is not affected. A note about
+            the outcome comes by email.
           </p>
         </Section>
       )}

@@ -3,19 +3,20 @@ import { recordRefund } from "@/lib/ledger";
 import { stripe } from "@/lib/stripe";
 
 /*
-  Money going back. The rule is the one on /terms: a patron gets back every slice not yet released,
-  and Door Money returns its fee on that part too. Slices already paid for weeks the run played stay
-  paid. Before the first slice, that is everything.
+  Money going back. The rule is the one on /terms: a sponsor gets back every share not yet released,
+  and Door Money returns its fee on that part too. Shares already released for what did happen (weeks
+  played, in music; deliverables documented, everywhere else) stay released. Before the first
+  release, that is everything.
 
-  refund = amount * (unpaid share of the act's net) / (act's net)
+  refund = amount * (unreleased share of the organizer's net) / (organizer's net)
 */
 
 type Admin = SupabaseClient;
 
 /**
  * Why money goes back. Matches the refund_reason enum (migrations 0032, 0034).
- * - run_cancelled: the musician called the fundraiser off.
- * - mark_declined: the musician refused the sponsor's logo.
+ * - run_cancelled: the organizer called the fundraiser off.
+ * - mark_declined: the organizer refused the sponsor's materials (a logo, in music).
  * - stale_offer: the payment landed for an auction offer that had already moved on to another bid.
  */
 export type RefundReason = "run_cancelled" | "mark_declined" | "stale_offer";
@@ -36,7 +37,7 @@ const SOURCES = {
 } as const;
 type SourceTable = keyof typeof SOURCES;
 
-/** How much goes back, given what has already been sent to the act. */
+/** How much goes back, given what has already been sent to the organizer. */
 export function refundDue(p: { amount_cents: number; fee_cents: number }, paidNetCents: number) {
   const net = p.amount_cents - p.fee_cents;
   if (net <= 0) return p.amount_cents;
@@ -61,7 +62,7 @@ async function refundRow(sb: Admin, table: SourceTable, id: string, reason: Refu
   const net = p.amount_cents - p.fee_cents;
   const amount = refundDue(p, paidNet);
 
-  // Nothing left to send to the act either way.
+  // Nothing left to send to the organizer either way.
   await sb.from("payout_schedule").update({ status: "skipped", paused_reason: reason }).eq(column, p.id).in("status", ["scheduled", "paused"]);
 
   if (amount <= 0) return { ok: true as const, refundedCents: 0, already: false };
@@ -128,8 +129,8 @@ type RunRow = {
 };
 
 /**
- * The act pulls the run. Every open spot comes off the board, any checkout in progress is closed,
- * and every patron still holding money has a refund written down for them.
+ * The organizer cancels the fundraiser. Every open sponsorship option comes off it, any checkout in
+ * progress is closed, and every sponsor still holding money has a refund written down for them.
  *
  * It writes the obligations rather than paying them. The money goes back in src/lib/outbox.ts, from
  * the keys returned here and from the daily job, so a refund that Stripe refuses on the day is
@@ -144,11 +145,11 @@ type RunRow = {
 export async function cancelRun(sb: Admin, runId: string) {
   const { data } = await sb.from("runs").select("id,title,kind,status,acts!inner(id,name,slug)").eq("id", runId).maybeSingle();
   const run = data as unknown as RunRow | null;
-  if (!run) return { ok: false as const, error: "That run is not on this account." };
-  if (!["open", "live"].includes(run.status)) return { ok: false as const, error: "Only an open or live run can be cancelled." };
+  if (!run) return { ok: false as const, error: "That fundraiser is not on this account." };
+  if (!["open", "live"].includes(run.status)) return { ok: false as const, error: "Only an open or live fundraiser can be cancelled." };
 
   const { data: marked } = await sb.from("runs").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", run.id).in("status", ["open", "live"]).select("id");
-  if (!marked?.length) return { ok: false as const, error: "That run is already cancelled." };
+  if (!marked?.length) return { ok: false as const, error: "That fundraiser is already cancelled." };
 
   const { data: lots } = await sb.from("lots").select("id").eq("run_id", run.id);
   const lotIds = (lots ?? []).map((l) => l.id);
@@ -170,7 +171,7 @@ export async function cancelRun(sb: Admin, runId: string) {
     }
     owed.push(await queueRefund(sb, "purchases", p.id, "run_cancelled"));
   }
-  // The fans who backed the run through the widget are owed theirs the same way.
+  // The fans who backed a music fundraiser through the widget are owed theirs the same way.
   for (const b of (backings ?? []) as B[]) {
     if (b.payment_status === "requires_payment") {
       // Mid-payment in the widget. Cancelling the intent makes Stripe send payment_intent.canceled, which drops the row.

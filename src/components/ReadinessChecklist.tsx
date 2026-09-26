@@ -4,8 +4,8 @@ import { draftProgress, readiness, type ReadinessInput } from "@/lib/readiness";
 
 /**
  * Where a draft stands, in six lines. The same rules publishRun uses, so a full checklist and a
- * refused publish cannot disagree. Payout setup is on the list and never in the way: a board can
- * open before Stripe is finished, and Door Money holds the money until it is.
+ * refused publish cannot disagree. Payout setup is on the list and never in the way: a fundraiser
+ * can open before Stripe is finished, and Door Money holds the money until it is.
  */
 export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInput; previewHref: string }) {
   const rows = readiness(input);
@@ -19,8 +19,8 @@ export function ReadinessChecklist({ input, previewHref }: { input: ReadinessInp
         {!draft
           ? "The fundraiser is public. Everything below can still change while sponsorship options are open."
           : left === 0
-            ? "Everything is in place. Look it over, then publish it below the sponsorship options."
-            : `${left} ${left === 1 ? "thing is" : "things are"} still missing. The fundraiser stays private until they are done.`}
+            ? "Everything a sponsor needs is here. Read it over, then publish when the promise is clear."
+            : `${left} ${left === 1 ? "thing is" : "things are"} still missing before the project is sponsor-ready. The fundraiser stays private until they are done.`}
       </p>
 
       <ul className="mb-7 divide-y divide-line border-y border-line">

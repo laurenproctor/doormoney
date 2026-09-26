@@ -85,7 +85,7 @@ const SignInInput = z.object({
   next: z.string().optional(),
 });
 
-/** The handle field takes either the email on the account or a musician's board address. */
+/** The handle field takes either the email on the account or the account's username. */
 async function addressFor(handle: string) {
   if (handle.includes("@")) return handle.toLowerCase();
   return emailForUsername(supabaseAdmin(), normalizeUsername(handle));
@@ -134,16 +134,16 @@ export async function signIn(_prev: PasswordState, form: FormData): Promise<Pass
 // ---------------------------------------------------------------
 
 const SignUpInput = z.object({
-  // No board address here. An organizer picks that on the organizer page, where it means
-  // something, and somebody here to support work never needs one at all. See docs/DECISIONS.md,
+  // No organizer address here. An organizer picks that on the organizer page, where it means
+  // something, and somebody here to sponsor work never needs one at all. See docs/DECISIONS.md,
   // decisions 8 and 10.
   //
   // No roles either. Nobody declares a side to get in: every account is opened able to create
   // fundraisers and to support them, and DEFAULT_ROLES below is what that means.
   //
-  // Whoever holds an account is a person, and both names are optional here. A band's name is on
-  // the act, a business's name is on the patron row, and both of those are what a fundraiser page
-  // or a receipt shows. A name that is given still has to fit.
+  // Whoever holds an account is a person, and both names are optional here. An organizer's name is
+  // on the organizer row, a business's name is on the patron row, and both of those are what a
+  // fundraiser page or a receipt shows. A name that is given still has to fit.
   first_name: z.string().trim().max(NAME_MAX, SIGNUP_MESSAGES.first_name_long),
   last_name: z.string().trim().max(NAME_MAX, SIGNUP_MESSAGES.last_name_long),
   email: z.string().trim().email(SIGNUP_MESSAGES.email),

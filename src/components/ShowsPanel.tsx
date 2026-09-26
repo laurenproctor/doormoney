@@ -10,8 +10,8 @@ const initial: ShowState = { ok: false };
 const fmt = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
 /**
- * The show list for a run: add a date, tap "played", type a number, add a photo.
- * Light on purpose. The end-of-run record reads from this.
+ * Music's show list for a tour, season or residency: add a date, tap "played", type a number, add a photo.
+ * Light on purpose. The end-of-tour record reads from this.
  */
 export function ShowsPanel({ runId, shows, defaultCity }: { runId: string; shows: ShowRow[]; defaultCity: string }) {
   const [addState, addAction, adding] = useActionState(addShow, initial);

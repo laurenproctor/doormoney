@@ -65,7 +65,7 @@ export function SponsorshipOptionSummary({ input, className = "" }: { input: Opt
         <span className="caps text-[14px] text-muted">{input.locked ? "Terms settled" : "Private draft"}</span>
       </div>
       <div className="grid gap-5 p-5">
-        <Part heading="What the sponsor gets">{gets ?? <Missing>Not described yet.</Missing>}</Part>
+        <Part heading="What the sponsor receives">{gets ?? <Missing>Not described yet.</Missing>}</Part>
         <Part heading="What the sponsor needs to provide">{provides ?? <Missing>Not said yet. A price is the least an option needs.</Missing>}</Part>
         <Part heading="What you commit to deliver">
           {deliverables.length > 0 && (

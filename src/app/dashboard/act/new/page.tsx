@@ -31,7 +31,7 @@ import { starterKit } from "@/lib/starter-kits";
   organizer raises money *for* is a fundraiser's category, chosen on the fundraiser.
 */
 
-export const metadata: Metadata = { title: "New organizer", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "New organizer profile", robots: { index: false, follow: false } };
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -81,12 +81,12 @@ export default async function NewActPage({ searchParams }: Props) {
           <span aria-hidden="true" className="mx-2.5 text-muted">
             /
           </span>
-          <span className="text-muted">New organizer</span>
+          <span className="text-muted">New organizer profile</span>
         </>
       }
       title={"Who\u2019s behind"}
       accent="your project?"
-      intro={<p>Use your profile or add a business, team, or organization.</p>}
+      intro={<p>Sponsors want to know who is behind the work. Raise money under your own name, or add a business, team, or organization.</p>}
     >
       <OrganizerSetup
         self={{

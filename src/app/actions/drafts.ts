@@ -30,8 +30,8 @@ const inputName = (path: PropertyKey[]) => {
 };
 /** What each input is called in a sentence, so an error names the field the way the form does. */
 const LABEL: Record<string, string> = {
-  category_key: "Category", title: "Name", purpose: "What the funding enables", description: "The story",
-  audience_description: "Who will experience it", sponsor_promise: "What sponsors can count on", goal_amount: "Funding goal",
+  category_key: "Category", title: "Name", purpose: "What the funding enables", description: "What are you making possible?",
+  audience_description: "Who does it reach?", sponsor_promise: "What sponsors can count on", goal_amount: "Funding goal",
   goal_currency: "Goal currency", activity_mode: "Where the activity takes place", activity_locations: "Places", timezone: "Time zone",
   fundraising_starts_on: "Fundraising starts", fundraising_ends_on: "Fundraising ends", starts_on: "Activity starts", ends_on: "Activity ends",
   delivery_due_at: "Delivery deadline", bidding_closes_utc: "Bidding closes", kind: "Performance format", show_count: "Number of performances",

@@ -190,7 +190,7 @@ export function Dashboard(p: Props) {
   );
 }
 
-/** A fundraiser, which for a musician is time on a stage. */
+/** A fundraiser. */
 export function Microphone(p: Props) {
   return (
     <Icon {...p}>
@@ -201,7 +201,7 @@ export function Microphone(p: Props) {
   );
 }
 
-/** Money on its way out to a musician. */
+/** Money on its way out to an organizer. */
 export function Money(p: Props) {
   return (
     <Icon {...p}>
@@ -213,7 +213,7 @@ export function Money(p: Props) {
   );
 }
 
-/** The one line a musician pastes into their own site. */
+/** The one line an organizer pastes into their own site. */
 export function Code(p: Props) {
   return (
     <Icon {...p}>

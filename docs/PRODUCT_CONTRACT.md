@@ -8,6 +8,8 @@ Door Money connects sponsors with relevant audiences, starting with music, sport
 
 **Confirmed product principle:** every sponsorship must make clear both what the funding enables and what the sponsor can count on receiving. This is the test for product fit across categories and places.
 
+**Positioning (decision 21, 2026-09-26):** Door Money turns someone's ambition into a sponsor-ready project. The product is explained as one sequence, Ambition → Project → Sponsorship promise → Delivery → Record, with the organizer's transformation as the central idea and the sponsor exchange visible beside it. "Project" is the work; "fundraiser" is the funding mechanism and the object the product creates. Neither this sentence nor the copy it governs changes a definition, a key or a compatibility rule below.
+
 A fundraiser must answer: what will the money enable, who is the audience, and what visibility does the sponsor receive? Audience fit supports the purchase decision. Expected reach is an estimate with its basis stated; evidence of delivery and measured results are separate facts.
 
 A sponsorship is not an investment, ownership stake, or promise of commercial return. A backing is the existing recognition contribution, a distinct transaction with its own benefits. Do not silently convert backings into sponsorships or advertise charitable tax treatment.

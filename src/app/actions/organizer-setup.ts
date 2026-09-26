@@ -78,7 +78,7 @@ const Input = z.object({
     .toUpperCase()
     .refine((v) => !v || isCountryCode(v), "Pick a country from the list.")
     .transform((v) => v || null),
-  bio: z.string().trim().max(600, "Keep the description under 600 characters.").optional().transform((v) => v || null),
+  bio: z.string().trim().max(600, "Keep the bio under 600 characters.").optional().transform((v) => v || null),
   website: optionalUrl,
   instagram: z
     .string()
@@ -156,7 +156,7 @@ export async function startOrganizer(_prev: SetupState, form: FormData): Promise
       patronDisplayName: own?.displayName ?? null,
       email: profile?.email ?? user.email ?? null,
     });
-    if (!name) return { errors: { form: "Add your name on your profile first, so sponsors know who they are supporting." } };
+    if (!name) return { errors: { form: "Add your name on your profile first, so sponsors know who is behind the work." } };
     // The handle this account already signs in with is its address, so nothing moves. With no
     // handle yet, the name suggests one, and it is claimed for the organizer alone.
     const asked = str(form, "slug").trim().toLowerCase();

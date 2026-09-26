@@ -9,7 +9,7 @@ import { SITE } from "@/lib/site";
 import { STARTING_CATEGORIES_LIST } from "@/lib/starting-categories";
 
 const DESCRIPTION =
-  `How Door Money works: organizers fund work with a clear purpose, and sponsors receive the visibility described in the offer. Starting with ${STARTING_CATEGORIES_LIST}, and growing.`;
+  `How Door Money works: an organizer brings an ambition, the project makes its purpose and audience concrete, the sponsorship offer defines the exchange, and the organizer delivers and documents what was promised. Starting with ${STARTING_CATEGORIES_LIST}, and growing.`;
 
 export const metadata: Metadata = {
   title: { absolute: "How Sponsorship Works | Door Money" },
@@ -32,23 +32,27 @@ export const metadata: Metadata = {
 
 const STEPS: [string, string][] = [
   [
-    "An organizer opens a fundraiser",
-    "The organizer says what the funding enables, describes the audience, and picks which sponsorship options to offer at prices they set themselves.",
+    "An organizer brings the ambition",
+    "A tour, a season, a production, a series, a practice: something the organizer wants to make happen, and an audience it reaches.",
   ],
   [
-    "A sponsor chooses a sponsorship option",
-    "A person or a business picks an option and pays Door Money. Each sponsorship is either fixed-price or open to bids; the organizer decides which.",
+    "The project makes the purpose concrete",
+    "The organizer opens a fundraiser and writes the project down so a stranger can read it: what the funding enables, who the work reaches, and what a sponsor receives.",
   ],
   [
-    "The organizer approves the sponsor's materials",
-    "The sponsor sends what the placement needs: a name, a credit line, artwork. No sponsor's materials appear without the organizer's approval.",
+    "The sponsorship offer defines the exchange",
+    "The organizer picks which sponsorship options to offer, at prices they set themselves, and states what appears, where, and how delivery will be documented.",
   ],
   [
-    "The organizer delivers the promised placement",
+    "A sponsor chooses an opportunity",
+    "A person or a business reads both sides of the exchange, picks an option and pays Door Money. Each sponsorship is either fixed-price or open to bids; the organizer decides which. The sponsor then sends what the placement needs, and nothing appears without the organizer's approval.",
+  ],
+  [
+    "The organizer delivers what was promised",
     "The organizer delivers what the offer described, in the place and the window it named, and documents it.",
   ],
   [
-    "Door Money documents delivery and releases funds",
+    "The record keeps the relationship accountable",
     "Door Money holds the money, passes the organizer's documentation on to the sponsor's record, and releases funds according to the fundraiser's terms.",
   ],
 ];
@@ -103,12 +107,12 @@ export default async function HowSponsorshipWorksPage() {
       intro={
         <>
           <p className="text-[clamp(18px,2.2vw,22px)] leading-[1.5]">
-            Organizers fund work with a clear purpose. Sponsors receive the visibility described in the offer, in the
-            places the work already reaches.
+            {SITE.thesis} Organizers explain what they are making, who it reaches and what a sponsor receives.
+            Sponsors see what their money makes possible, and get the visibility described in the offer.
           </p>
           <div className="mt-9 flex flex-wrap gap-4">
-            <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
-            <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
+            <ButtonLink href="/fundraisers" arrow>Explore projects</ButtonLink>
+            <ButtonLink href="/list" variant="ghost">Make a project sponsor-ready</ButtonLink>
           </div>
         </>
       }
@@ -116,8 +120,8 @@ export default async function HowSponsorshipWorksPage() {
       <Section>
         <SectionHead eyebrow="The exchange">Support the work. Get something specific back.</SectionHead>
         <p className="max-w-[62ch]">
-          A sponsor funds a named piece of work. The organizer features the sponsor in an agreed place and documents
-          that it happened.
+          A sponsor funds a named project and can see what the money makes possible. The organizer features the
+          sponsor in an agreed place and documents that it happened.
         </p>
         <p className="mt-4 max-w-[62ch] text-muted">
           A sponsorship is not a donation, an investment or a share of the work, and it buys no say in it.
@@ -127,8 +131,9 @@ export default async function HowSponsorshipWorksPage() {
       <Section>
         <SectionHead eyebrow="For organizers">The organizer makes the final call</SectionHead>
         <p className="max-w-[62ch]">
-          Every fundraiser answers three questions before anyone pays: what the funding enables, who the audience is,
-          and what the sponsor receives.
+          A project is sponsor-ready when it answers four questions: what the funding enables, who the work reaches,
+          what the sponsor receives, and how delivery will be documented. Door Money asks each of them before
+          anything is published, and the organizer decides the rest.
         </p>
         <ul className="edge glow mt-[30px] max-w-[600px] bg-panel px-7 py-[26px] text-[15px] leading-[2.1]">
           {CONTROL.map((line) => (
@@ -179,7 +184,7 @@ export default async function HowSponsorshipWorksPage() {
       </Section>
 
       <Section>
-        <SectionHead eyebrow="Five steps">From a fundraiser to a delivered sponsorship</SectionHead>
+        <SectionHead eyebrow="Six steps">From an ambition to a record</SectionHead>
         <Steps className="mt-9" steps={STEPS} size="lg" ruleFirst={false} />
         <p className="mt-7 max-w-[62ch] text-[14.5px] leading-[1.7] text-muted">
           Each fundraiser states its own delivery and release terms, and a sponsor sees them before paying.
@@ -205,12 +210,13 @@ export default async function HowSponsorshipWorksPage() {
       <Section className="pb-24">
         <SectionHead eyebrow="Two ways in">{SITE.tagline}</SectionHead>
         <p className="max-w-[62ch]">
-          Sponsors find work with an audience that fits. Organizers give sponsors a clear reason to put money behind
-          the work.
+          Sponsors find work with an audience they care about, and see exactly what their sponsorship makes possible
+          and what they will receive. Organizers turn what they want to make happen into a project a sponsor can
+          read.
         </p>
         <div className="mt-[30px] flex flex-wrap gap-5">
-          <ButtonLink href="/fundraisers" arrow>Find a sponsorship</ButtonLink>
-          <ButtonLink href="/list" variant="ghost">Create a fundraiser</ButtonLink>
+          <ButtonLink href="/fundraisers" arrow>Explore projects</ButtonLink>
+          <ButtonLink href="/list" variant="ghost">Make a project sponsor-ready</ButtonLink>
         </div>
       </Section>
     </Page>

@@ -67,7 +67,7 @@ export function OpportunityEditor({
         Sold as
         <select name={`mode_${t.key}`} value={r.saleMethod} disabled={!r.on} onChange={(e) => onChange({ saleMethod: e.target.value === "auction" ? "auction" : "fixed" })} className="field mt-1 w-full bg-ground px-2 py-1.5 text-[15px]">
           <option value="fixed">Fixed price</option>
-          <option value="auction">Auction, price is the reserve</option>
+          <option value="auction">Bidding, price is the reserve</option>
         </select>
       </label>
       <label className={`caps text-[14px] ${r.saleMethod === "auction" ? "" : "max-md:hidden md:invisible"}`}>

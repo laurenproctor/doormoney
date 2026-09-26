@@ -177,7 +177,7 @@ function dbMessage(code?: string) {
   return "That did not save. Try once more.";
 }
 
-/** What claim_username said, in words a musician can act on. */
+/** What claim_username said, in words the organizer can act on. */
 function claimMessage(code: string) {
   if (code === "too_soon") return "An address can move once every twelve months. The date it next can is on the profile page.";
   if (code === "taken") return "That address is taken. Pick another.";

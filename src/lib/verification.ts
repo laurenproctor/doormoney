@@ -2,7 +2,7 @@
  * Placement verification: what an organizer says sponsors will get back from a fundraiser.
  *
  * One list, read by the dashboard editor, the server action, the readiness checklist and the
- * public board, so the words on the board are the words the musician ticked. The keys are stored
+ * public fundraiser page, so the words there are the words the organizer ticked. The keys are stored
  * in runs.verification_methods and are checked again by a constraint in migration 0020; adding a
  * method means adding it here and in that constraint.
  *
@@ -105,7 +105,7 @@ export const VERIFICATION_METHODS: readonly VerificationMethod[] = [
   { key: "attendance_estimates", label: "Attendance estimates", note: "A rough headcount for the shows." },
   { key: "social_post_links", label: "Links to placement-related posts", note: "Links to the posts the logo appeared in." },
   { key: "short_video", label: "Short performance or backstage video", note: "One clip from a show, or from the hour before it." },
-  { key: "end_of_run_record", label: "End-of-run placement record", note: "The record Door Money sends every patron when the fundraiser ends." },
+  { key: "end_of_run_record", label: "End-of-run placement record", note: "The record Door Money sends every sponsor when the fundraiser ends." },
   { key: OTHER_KEY, label: "Another verification method", note: "Something else, in the musician's own words." },
 ] as const;
 
@@ -206,7 +206,7 @@ export const VerificationInput = z
       return;
     }
     if (picked && v.other.length < OTHER_MIN) {
-      ctx.addIssue({ code: "custom", path: ["other"], message: `Give it at least ${OTHER_MIN} characters so a patron knows what to expect.` });
+      ctx.addIssue({ code: "custom", path: ["other"], message: `Give it at least ${OTHER_MIN} characters so a sponsor knows what to expect.` });
     }
   })
   .transform((v): VerificationChoice => ({

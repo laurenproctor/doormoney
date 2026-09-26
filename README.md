@@ -1,10 +1,10 @@
 # Door Money
 
-Door Money connects sponsors with relevant audiences, starting with music, sports teams, film, theater, and restaurants and hospitality, with Other for a project that fits none of them. Restaurants & hospitality and Other hold private drafts only until their delivery and payment policies are deliberately enabled. The product is city-agnostic and designed to expand to as many categories as can sustain a clear, deliverable sponsorship promise. Every sponsorship explains what the funding enables and what the sponsor can count on receiving.
+Door Money turns someone's ambition into a sponsor-ready project. It connects sponsors with relevant audiences, starting with music, sports teams, film, theater, restaurants and hospitality, and digital workers, with Other for a project that fits none of them. An organizer explains what they are making, who it reaches, what the funding enables and what a sponsor receives; a sponsor sees both sides of that exchange before paying, and the organizer delivers and documents the promise (decision 21 in `docs/DECISIONS.md`). Restaurants & hospitality, Digital workers and Other hold private drafts only until their delivery and payment policies are deliberately enabled. The product is city-agnostic and designed to expand to as many categories as can sustain a clear, deliverable sponsorship promise. Every sponsorship explains what the funding enables and what the sponsor can count on receiving.
 
 NYC may be a source of early testers, not a limit on who the product is for. The technology must support new categories and locations without rebuilding the shared sponsorship workflow. Payment availability remains explicit about the countries and currencies actually supported.
 
-Start with `CLAUDE.md` and `docs/PRODUCT_CONTRACT.md`. Follow `docs/EXPANSION_PLAN.md` for the current five-phase expansion. The application currently implements the music workflow; the broader categories are the implementation target, not a claim of live availability. `docs/ROADMAP.md` records the original music build.
+Start with `CLAUDE.md` and `docs/PRODUCT_CONTRACT.md`. Follow `docs/EXPANSION_PLAN.md` for the current five-phase expansion. Music is the only category proven end to end with real fundraisers and live payments; the other categories save drafts and, where enabled, publish, and none of that is a claim of live availability. `docs/ROADMAP.md` records the original music build.
 
 ## Run it
 
