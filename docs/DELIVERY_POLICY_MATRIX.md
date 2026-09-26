@@ -82,6 +82,10 @@ Templates are grouped by what the sponsor has to hand over, because that, not th
 
 Youth sports: `category_details.level = 'youth'` means no evidence item may be published, whatever the organizer ticks, and the evidence form says so. The contract is explicit that youth participation does not create permission to publish identifying evidence about minors.
 
+### Digital workers: proposed evidence policy
+
+Digital workers has a proposed version 1 evidence policy in migration 20260924171215. Its three controlled placements, evidence expectations and release sequence are in `docs/DIGITAL_WORKERS_RELEASE_PROPOSAL.md`. The category remains draft-only, so even a test-mode purchase needs a separate publication change; the proposed policy cannot accept live money.
+
 ## 5. States
 
 One category-neutral vocabulary, derived from facts already stored plus the new deliverable and evidence records. Music maps onto it without changing what music does.

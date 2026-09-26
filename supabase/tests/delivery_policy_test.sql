@@ -28,7 +28,7 @@ insert into patrons (id,name,contact_email,profile_id) values
 -- Policies
 -- ---------------------------------------------------------------
 select results_eq($$select category_key, version, status, release_rule from delivery_policies order by category_key$$,
-  $$values ('film',1,'proposed','evidence'),('music',1,'active','calendar'),('sports',1,'proposed','evidence'),('theater',1,'proposed','evidence')$$,
+  $$values ('digital_workers',1,'proposed','evidence'),('film',1,'proposed','evidence'),('music',1,'active','calendar'),('sports',1,'proposed','evidence'),('theater',1,'proposed','evidence')$$,
   'music is active on its calendar; every other category is proposed, on evidence, and not switched on');
 select is((select count(*)::int from fundraiser_categories c where c.publish_enabled and not exists (select 1 from delivery_policies p where p.category_key=c.key)),0,
   'every category that can publish has a documented policy');

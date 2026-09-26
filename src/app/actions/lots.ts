@@ -90,12 +90,12 @@ function parseRows(form: FormData, templates: readonly OpportunityTemplate[]): {
 export async function saveLots(_prev: LotsState, form: FormData): Promise<LotsState> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
-  if (!act) return { ok: false, error: "No act on this account." };
+  if (!act) return { ok: false, error: "No organizer profile on this account." };
 
   const runId = String(form.get("run_id") ?? "");
   const sb = await supabaseServer();
   const { data: run } = await sb.from("runs").select("id,slug,status,category_key").eq("id", runId).eq("act_id", act.id).maybeSingle();
-  if (!run) return { ok: false, error: "That run is not on this account." };
+  if (!run) return { ok: false, error: "That fundraiser is not on this account." };
 
   const { data: existing } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis,offer_terms,exclusive,terms_grandfathered").eq("run_id", runId).order("created_at");
   const current = existing ?? [];

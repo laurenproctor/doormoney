@@ -126,12 +126,11 @@ function runMissing(run: ReadinessRun): string {
  */
 export function publishBlockers({ act, run, lotCount, auctionCount, categoryPublishable, incompleteOffers }: ReadinessInput): string[] {
   const out: string[] = [];
-  const noun = organizerNoun(run.category_key ?? "music");
   if (!categoryPublishable) out.push("This category can hold drafts. Publishing is not open for it yet.");
-  if (!filled(act.name) || (isMusic(run) && !filled(act.city))) out.push(`Finish the ${isMusic(run) ? "name and city" : "name"} on the ${noun} page.`);
-  else if (!filled(act.bio)) out.push(`Add a short bio on the ${noun} page. The fundraiser leads with it.`);
+  if (!filled(act.name) || (isMusic(run) && !filled(act.city))) out.push(`Finish the ${isMusic(run) ? "name and city" : "name"} on your organizer profile, so sponsors know who is behind the work.`);
+  else if (!filled(act.bio)) out.push("Add a short bio on your organizer profile, so sponsors know who is behind the work.");
   if (!runComplete(run)) out.push(`Finish the fundraiser: ${runMissing(run).charAt(0).toLowerCase()}${runMissing(run).slice(1)}`);
-  if (lotCount === 0) out.push("Add at least one sponsorship option before publishing.");
+  if (lotCount === 0) out.push("Define at least one sponsorship option before publishing.");
   // A partial option saves as a private draft. It does not publish: a sponsor has to be able to read
   // every term before they pay, and an option whose terms are missing is not yet an offer.
   for (const offer of incompleteOffers) out.push(incompleteOfferSentence(offer));
@@ -144,7 +143,7 @@ export function publishBlockers({ act, run, lotCount, auctionCount, categoryPubl
         ? `Describe the other verification method in at least ${OTHER_MIN} characters.`
         : pickedOther
           ? "Describe the other verification method, or pick one from the list."
-          : "Pick at least one way the placements will be recorded.",
+          : "Pick at least one way delivery will be documented.",
     );
   }
   return out;
@@ -168,7 +167,7 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
       note: profileDone
         ? `${placeName}.`
         : filled(act.name) && (!isMusic(run) || filled(act.city))
-          ? "A short bio is still missing."
+          ? "Add a short bio, so sponsors know who is behind the work."
           : isMusic(run)
             ? "A name and a city are still missing."
             : "A name is still missing.",
@@ -176,12 +175,12 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
     },
     {
       key: "run",
-      label: "Fundraiser details",
+      label: "The project and the funding",
       done: runComplete(run),
       note: runComplete(run)
         ? isMusic(run)
           ? `${run.title}, ${run.show_count} ${run.show_count === 1 ? "date" : "dates"}.`
-          : `${run.title}. The funding, the audience and the sponsor's side are all answered.`
+          : `${run.title}. What the funding enables, who it reaches and what a sponsor receives are all answered.`
         : runMissing(run),
       href: "#run-details",
     },
@@ -191,21 +190,21 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
       done: lotCount > 0 && !auctionsNeedClose && incompleteOffers.length === 0,
       note:
         lotCount === 0
-          ? "Nothing priced yet."
+          ? "No sponsorship option defined yet."
           : incompleteOffers.length > 0
             ? `${incompleteOffers.length === 1 ? `${incompleteOffers[0].name} still needs` : `${incompleteOffers.length} options still need`} the terms a sponsor reads before paying: ${incompleteOffers[0].missing.slice(0, 3).map((m) => m.charAt(0).toLowerCase() + m.slice(1)).join("; ")}${incompleteOffers[0].missing.length > 3 ? "; and more" : ""}.`
             : auctionsNeedClose
-              ? `${lotCount} priced, but the options open to bids need a bidding close time.`
-              : `${lotCount} ${lotCount === 1 ? "sponsorship option" : "sponsorship options"} priced.`,
+              ? `${lotCount} defined, but the options open to bids need a bidding close time.`
+              : `${lotCount} ${lotCount === 1 ? "sponsorship option" : "sponsorship options"} defined.`,
       href: "#placements",
     },
     {
       key: "verification",
-      label: "Placement verification",
+      label: "Delivery documentation",
       done: verificationComplete(run),
       note: verificationComplete(run)
         ? `${(run.methods ?? []).length} ${(run.methods ?? []).length === 1 ? "method" : "methods"} chosen.`
-        : "Nothing chosen yet.",
+        : "No way of documenting delivery chosen yet.",
       href: "#verification",
     },
     {
@@ -224,7 +223,7 @@ export function readiness(input: ReadinessInput): ReadinessRow[] {
       key: "publish",
       label: "Ready to publish",
       done: published || blockers.length === 0,
-      note: published ? "The fundraiser is public." : blockers.length === 0 ? "Nothing left. Publish it below." : blockers[0],
+      note: published ? "The fundraiser is public." : blockers.length === 0 ? "Everything a sponsor needs is here. Publish it from the review." : blockers[0],
     },
   ];
 }

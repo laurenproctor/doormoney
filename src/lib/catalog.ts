@@ -190,14 +190,17 @@ export const CATALOG: Surface[] = [
     seenBy: "the people the program serves, and its local partners", kinds: ["cash", "product"],
     blurb: "Meals the venue cooks and gives away, with the sponsor named in the venue's announcements of the program. A cash sponsorship pays for food and kitchen hours. A supplier may also give ingredients, agreed with the venue. Nobody who receives a meal is photographed or named for a sponsor." },
 
-  // Digital workers can prepare private drafts. Both placements are controlled by the worker;
-  // neither suggests a price or claims an audience size before the worker provides its basis.
+  // Digital workers can prepare private drafts. Each placement must be controlled by the worker;
+  // none suggests a price or claims an audience size before the worker provides its basis.
   { key: "monthly_email_signature", name: "Monthly email signature", group: "online", category: "digital_workers", appliesTo: null, defaultPriceCents: null, period: "month",
     seenBy: "recipients of eligible emails the worker sends during the month",
     blurb: "A sponsor credit in the worker's email signature for one month. The worker specifies which sending accounts and messages carry it, the exact dates, and the approved wording. Delivery can be documented with a dated sample; a sent email does not establish that its recipient viewed the signature." },
   { key: "virtual_meeting_background", name: "Virtual meeting background", group: "online", category: "digital_workers", appliesTo: null, defaultPriceCents: null, period: "month",
     seenBy: "participants in eligible video meetings where the background is used",
     blurb: "A sponsor credit on a virtual background used during an agreed month of eligible video meetings. The worker defines which calls qualify and controls the placement, subject to meeting and client rules. A sample and a count of qualifying calls can document delivery without identifying participants." },
+  { key: "project_page_credit", name: "Project page credit", group: "online", category: "digital_workers", appliesTo: null, defaultPriceCents: null, period: "month",
+    seenBy: "visitors to the worker-controlled public project page during the agreed month",
+    blurb: "A clearly labeled sponsor credit on a public project page the worker controls. The worker specifies the page URL, where the credit appears, the approved wording and link, and the dates it stays up. A dated page capture and the public URL can document placement, not visits or clicks." },
 ];
 
 export const WIDGET_TIERS = [

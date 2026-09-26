@@ -26,8 +26,8 @@ import { normalizeUsername } from "@/lib/username";
   not claim. RESERVED_SLUGS in src/lib/slug.ts and the reserved_handles table keep the two apart:
   no musician holds "login", so no act page can shadow one.
 
-  The page introduces the organizer and lists what they are raising for. A fundraiser has its own
-  page one down from here, at /gutter-hymns/support-europe-tour.
+  The page introduces the organizer and lists what they are making possible. A fundraiser has its
+  own page one down from here, at /gutter-hymns/support-europe-tour.
 
   An organizer has no category of their own. A music act says what it is (acts.type), and keeps the
   words it always had. Anybody else is named by the one category all their fundraisers agree on, and
@@ -77,7 +77,7 @@ function RunRow({ actSlug, run, live, categoryName }: { actSlug: string; run: Ac
         </div>
         {live && (
           <ButtonLink href={runPath(actSlug, run.slug)} className="self-start">
-            {music ? `Back the ${periodOf(run.kind).noun}` : "See the fundraiser"}
+            {music ? `Back the ${periodOf(run.kind).noun}` : "View sponsorships"}
           </ButtonLink>
         )}
       </div>
@@ -148,10 +148,10 @@ export default async function ActPage({ params }: Props) {
         </section>
 
         <Section>
-          <SectionHead eyebrow={running.length ? "Raising now" : "Nothing open"}>
+          <SectionHead eyebrow={running.length ? "Open for sponsorship" : "Nothing open"}>
             {running.length ? (
               <>
-                What {band ? "they are" : act.type === "soloist" ? "the musician is" : `${act.name} is`} raising for
+                What {band ? "they are" : act.type === "soloist" ? "the musician is" : `${act.name} is`} making possible
               </>
             ) : (
               <>No fundraiser is open right now</>

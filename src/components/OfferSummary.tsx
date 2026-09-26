@@ -94,7 +94,7 @@ export function OfferSummary({
     const documented = deliverables.filter((d) => d.evidence_method);
     if (documented.length) {
       rows.push({
-        label: "Evidence",
+        label: "How delivery is documented",
         body: (
           <ul className="grid gap-1">
             {documented.map((d, i) => (

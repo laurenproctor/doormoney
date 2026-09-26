@@ -14,10 +14,10 @@ import { stripeConfigured } from "@/lib/stripe";
 import { actPath } from "@/lib/urls";
 
 /**
- * The act's yes or no on a patron's mark. Nothing publishes without the yes.
- * A no refunds the patron in full (the placement never ran) and puts the spot back on the board.
- * Ownership is checked through RLS on the read; the writes go through the
- * service role so the act never gets a general update policy on purchases.
+ * The organizer's yes or no on a sponsor's materials (a logo, in music). Nothing goes up without
+ * the yes. A no refunds the sponsor in full (the sponsorship never ran) and puts the option back on
+ * the fundraiser. Ownership is checked through RLS on the read; the writes go through the service
+ * role so the organizer never gets a general update policy on purchases.
  */
 export async function decideMark(purchaseId: string, decision: "approved" | "declined"): Promise<{ ok: boolean; error?: string }> {
   const user = await requireUser("/dashboard");
@@ -37,10 +37,10 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
   if (error) return { ok: false, error: "That did not save. Try once more." };
 
   if (decision === "declined") {
-    // The placement never runs, so the patron gets everything back and the spot goes back up.
+    // The sponsorship never runs, so the sponsor gets everything back and the option goes back up.
     // The refund is written down before Stripe is called (migration 0032), so the decline stands
     // whatever Stripe says today and the daily job keeps at anything it refused. Since 0031 no
-    // slice can have gone out on an unapproved logo, so "everything back" is the whole charge.
+    // share can have gone out on unaccepted materials, so "everything back" is the whole charge.
     const key = await queueRefund(admin, "purchases", p.id, "mark_declined");
     await workRefundQueue(admin, [key]);
     await admin.from("lots").update({ status: "open" }).eq("id", p.lot_id).eq("status", "sold");
@@ -68,9 +68,9 @@ export async function decideMark(purchaseId: string, decision: "approved" | "dec
 }
 
 /* ---------------------------------------------------------------------------------------------
-   The patron's side. Whoever holds the link at /mark/<purchase id> can send the mark. No account
-   is involved: the id is unguessable, and the worst a leaked link allows is sending a mark the act
-   still has to approve.
+   The sponsor's side. Whoever holds the link at /mark/<purchase id> can send the materials. No
+   account is involved: the id is unguessable, and the worst a leaked link allows is sending
+   materials the organizer still has to accept.
    --------------------------------------------------------------------------------------------- */
 
 export type MarkState = { ok: boolean; error?: string };
@@ -90,8 +90,9 @@ const str = (form: FormData, key: string) => {
 };
 
 /**
- * The patron sends the mark: a logo file, a name to set, or both, plus an optional line to the act.
- * Sending again before the act decides replaces what is there.
+ * The sponsor sends their materials: a file (a logo, in music), a name or wording to set, or both,
+ * plus an optional line to the organizer. Sending again before the organizer decides replaces what
+ * is there.
  */
 export async function submitMark(_prev: MarkState, form: FormData): Promise<MarkState> {
   const parsed = MarkInput.safeParse({
@@ -142,7 +143,7 @@ export async function submitMark(_prev: MarkState, form: FormData): Promise<Mark
     return { ok: false, error: "That did not save. Try once more." };
   }
 
-  // The act hears that something is waiting. A failed send is logged: the mark is saved either way.
+  // The organizer hears that something is waiting. A failed send is logged: the materials are saved either way.
   const owner = await actOwnerEmail(admin, purchase_id);
   if (owner) {
     const r = await sendEmail(
@@ -153,6 +154,7 @@ export async function submitMark(_prev: MarkState, form: FormData): Promise<Mark
         lotName: markSurface(target),
         note: mark_note || null,
         dashboardUrl: `${SITE.url}/dashboard`,
+        categoryKey: target.lots.runs.category_key,
       }),
     );
     if (!r.sent) console.error("mark waiting notice not sent", purchase_id, r.reason);
@@ -164,7 +166,7 @@ export async function submitMark(_prev: MarkState, form: FormData): Promise<Mark
   return { ok: true };
 }
 
-/** The email of the act that owns the board behind a purchase. */
+/** The email of the organizer who owns the fundraiser behind a purchase. */
 async function actOwnerEmail(admin: ReturnType<typeof supabaseAdmin>, purchaseId: string) {
   const { data } = await admin.from("purchases").select("lots!inner(runs!inner(acts!inner(owner_id)))").eq("id", purchaseId).maybeSingle();
   const ownerId = (data as unknown as { lots: { runs: { acts: { owner_id: string | null } } } } | null)?.lots.runs.acts.owner_id ?? null;

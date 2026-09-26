@@ -22,8 +22,8 @@ const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.");
 
 const Input = z
   .object({
-    kind: z.enum(["tour", "season", "residency"], { error: "Pick what kind of run this is." }),
-    title: z.string().trim().min(2, "Give the fundraiser a name.").max(60, "Keep the name under 60 characters."),
+    kind: z.enum(["tour", "season", "residency"], { error: "Pick a tour, a season or a residency." }),
+    title: z.string().trim().min(2, "Give the tour or season a name.").max(60, "Keep the name under 60 characters."),
     starts_on: dateStr,
     ends_on: dateStr,
     show_count: z.coerce.number().int("Whole shows only.").min(1, "At least one show.").max(400, "That is a lot of shows. Check the number."),
@@ -82,7 +82,7 @@ const str = (form: FormData, key: string) => {
   return typeof v === "string" ? v : "";
 };
 
-/** Creates a draft run, or updates one the act owns. Sends the act on to price the lots. */
+/** Creates a draft fundraiser (music's dates form), or updates one the organizer owns. Sends the organizer on to define the sponsorship options. */
 export async function saveRun(_prev: RunState, form: FormData): Promise<RunState> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
@@ -151,7 +151,7 @@ export async function saveRun(_prev: RunState, form: FormData): Promise<RunState
 export async function publishRun(runId: string): Promise<{ ok: boolean; error?: string }> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
-  if (!act) return { ok: false, error: "No act on this account." };
+  if (!act) return { ok: false, error: "No organizer profile on this account." };
 
   const sb = await supabaseServer();
   const { data: run } = await sb
@@ -160,8 +160,8 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
     .eq("id", runId)
     .eq("act_id", act.id)
     .maybeSingle();
-  if (!run) return { ok: false, error: "That run is not on this account." };
-  if (run.status !== "draft") return { ok: false, error: "That run is already published." };
+  if (!run) return { ok: false, error: "That fundraiser is not on this account." };
+  if (run.status !== "draft") return { ok: false, error: "That fundraiser is already published." };
 
   // Every open option's offer terms, read here and not trusted from any form: an option a sponsor
   // cannot read in full is not published, whatever the page drew (src/lib/offer-readiness.ts). The
@@ -193,7 +193,7 @@ export async function publishRun(runId: string): Promise<{ ok: boolean; error?: 
 export async function unpublishRun(runId: string): Promise<{ ok: boolean; error?: string }> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
-  if (!act) return { ok: false, error: "No act on this account." };
+  if (!act) return { ok: false, error: "No organizer profile on this account." };
 
   const sb = await supabaseServer();
   const { data: sold } = await sb.from("lots").select("id").eq("run_id", runId).in("status", ["sold", "pending_funding"]).limit(1);
@@ -215,12 +215,12 @@ export async function unpublishRun(runId: string): Promise<{ ok: boolean; error?
 export async function cancelRun(runId: string): Promise<{ ok: boolean; error?: string; refundedCents?: number; patrons?: number }> {
   const user = await requireUser("/dashboard");
   const act = await ownedAct(user.id);
-  if (!act) return { ok: false, error: "No act on this account." };
+  if (!act) return { ok: false, error: "No organizer profile on this account." };
 
   const sb = await supabaseServer();
   const { data: run } = await sb.from("runs").select("id,status").eq("id", runId).eq("act_id", act.id).maybeSingle();
-  if (!run) return { ok: false, error: "That run is not on this account." };
-  if (!["open", "live"].includes(run.status)) return { ok: false, error: "Only an open or live run can be cancelled." };
+  if (!run) return { ok: false, error: "That fundraiser is not on this account." };
+  if (!["open", "live"].includes(run.status)) return { ok: false, error: "Only an open or live fundraiser can be cancelled." };
   if (!stripeConfigured()) return { ok: false, error: "Refunds are not switched on yet. Contact Door Money to cancel the fundraiser." };
 
   const admin = supabaseAdmin();

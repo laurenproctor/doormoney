@@ -117,7 +117,7 @@ export async function loadRunDelivery(sb: SupabaseClient, lotIds: string[], admi
 /**
  * What each waiting sponsor sent. The organizer's own session cannot read these columns (migration
  * 0029 took the name, the file and the note off the Data API), so this read uses the service role,
- * the way the workspace dashboard reads its logo queue. It is safe on the same terms: it is asked
+ * the way the workspace dashboard reads its materials queue. It is safe on the same terms: it is asked
  * only for purchases that the organizer's own session just returned under row level security, so
  * it can never reach a sponsorship on somebody else's fundraiser.
  */

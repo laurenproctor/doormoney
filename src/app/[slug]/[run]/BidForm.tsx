@@ -174,8 +174,8 @@ export function BidForm({
 
           <p className="max-w-none text-[14px] leading-[1.6] text-muted col-span-full">
             {stripePromise
-              ? "A bid is what the patron pays if it wins. The card is stored now and charged only if the bid wins at the close. An outbid patron is never charged."
-              : "A bid is what the patron pays if it wins. Nothing is charged now. At the close the top bid has 48 hours to put the money up, and the spot goes to the next bid if it does not."}
+              ? "A bid is what the sponsor pays if it wins. The card is stored now and charged only if the bid wins at the close. An outbid bidder is never charged."
+              : "A bid is what the sponsor pays if it wins. Nothing is charged now. At the close the top bid has 48 hours to put the money up, and the sponsorship goes to the next bid if it does not."}
           </p>
           {error && (
             <p role="alert" className="text-[14.5px] text-accent-ink col-span-full">
@@ -238,7 +238,7 @@ function CardStep({ lotId, details, website, onDone }: { lotId: string; details:
   return (
     <form onSubmit={confirm} className="mt-5 grid gap-4">
       <p className="max-w-[60ch] text-[14.5px] leading-[1.6] text-muted">
-        Bidding {formatMoney(details.amountCents)}. The card is stored now and charged only if this bid wins at the close. An outbid patron is never charged.
+        Bidding {formatMoney(details.amountCents)}. The card is stored now and charged only if this bid wins at the close. An outbid bidder is never charged.
       </p>
       <PaymentElement
         options={{ layout: "tabs", defaultValues: { billingDetails: { name: details.name, email: details.email } }, wallets: { link: "never" } }}

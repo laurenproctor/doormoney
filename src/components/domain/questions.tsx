@@ -22,17 +22,17 @@ function Answer({ label, children, variant = "block", className = "" }: Props & 
   );
 }
 
-/** What the money enables. */
+/** What the funding makes possible. */
 export function FundingPurpose(props: Props) {
-  return <Answer label="What the funding enables" {...props} />;
+  return <Answer label="What this project makes possible" {...props} />;
 }
 
-/** Who the sponsorship reaches. Described, never promised as a number. */
+/** Who the project reaches. Described, never promised as a number. */
 export function AudienceSummary(props: Props) {
-  return <Answer label="Who it reaches" {...props} />;
+  return <Answer label="Who this project reaches" {...props} />;
 }
 
-/** What a sponsor receives. The organizer's own words, and nothing added to them. */
+/** What sponsors receive. The organizer's own words, and nothing added to them. */
 export function SponsorPromise(props: Props) {
-  return <Answer label="What a sponsor receives" {...props} />;
+  return <Answer label="What sponsors receive" {...props} />;
 }

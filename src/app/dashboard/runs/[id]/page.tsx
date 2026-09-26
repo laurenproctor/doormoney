@@ -90,7 +90,7 @@ export default async function RunPage({ params, searchParams }: Props) {
     somebody is on one, and a draft opened with no stage named resumes at the first stage that
     still has something to say. Once the project and the funding are both answered, or when the
     address asks for a later stage or for a tab, the fundraiser's workspace opens: that is where
-    the sponsorship options are priced and where the stepper says what is still owed, so
+    the sponsorship options are defined and where the stepper says what is still owed, so
     continuing past an unfinished stage is allowed and is answered there rather than refused here.
   */
   const music = run.category_key === "music";
@@ -99,7 +99,7 @@ export default async function RunPage({ params, searchParams }: Props) {
   const stageAsked = stageFromParam(stageParam);
   const tabAsked = tabFromParam(sp.tab);
   const categoryKey = run.category_key ?? "music";
-  // The options this fundraiser can price, from the registry in the database, so a category added
+  // The options this fundraiser can define, from the registry in the database, so a category added
   // there has an editor. Music narrows by act type; no other category does. A retired template the
   // fundraiser already has spots on stays editable, so nothing is stranded.
   const { data: lots } = await sb.from("lots").select("id,surface_key,label,price_cents,mode,status,buy_now_cents,reach_estimate,reach_basis,offer_terms,exclusive,terms_grandfathered").eq("run_id", id).order("created_at");
@@ -438,7 +438,7 @@ export default async function RunPage({ params, searchParams }: Props) {
               }
             >
               {allLots.length === 0 ? (
-                <p className="text-[15px] leading-[1.6] text-muted">Nothing is priced on this fundraiser yet.</p>
+                <p className="text-[15px] leading-[1.6] text-muted">No sponsorship option is defined on this fundraiser yet.</p>
               ) : (
                 /* More columns than a phone has room for, so the table scrolls inside its own frame. */
                 <div className="-mx-1 overflow-x-auto px-1">
@@ -468,21 +468,21 @@ export default async function RunPage({ params, searchParams }: Props) {
         draft ? (
           <Card id="placements" title="The sponsorship options" subtitle={`Stage three of four · ${STAGE_LABEL.sponsorships}`}>
             <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
-              Built one at a time on the sponsorships stage, each with its own placement, price and terms. Sold options stay as they are.
+              Defined one at a time on the sponsorships stage, each a clear exchange: where the sponsor appears, what they receive, and the price you set. Sold options stay as they are.
             </p>
             <DraftOptionsSummary lots={allLots} templates={offerable} href={stagePath(run.id, "sponsorships", kitCarried)} />
-            {/* Whether it goes up is the review stage's question, and it is asked in one place. */}
+            {/* Whether it goes public is the review stage's question, and it is asked in one place. */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line pt-4">
               <ButtonLink href={stagePath(run.id, "review", kitCarried)} register="desk" variant="outline">
                 Go to the review
               </ButtonLink>
               <span className="text-[14px] leading-[1.6] text-muted">
-                The review reads the whole fundraiser back, names anything unfinished, and is where you publish it.
+                The review reads the project the way a sponsor would, names anything unfinished, and is where you publish it.
               </span>
             </div>
           </Card>
         ) : (
-          <Card id="placements" title="Price the sponsorship options">
+          <Card id="placements" title="Define sponsorship options">
             <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
               {music
                 ? "The suggested prices for this kind of musician. They are a starting point; your own number always wins. Sold options stay as they are."
@@ -568,9 +568,9 @@ export default async function RunPage({ params, searchParams }: Props) {
             )}
           </Card>
 
-          <Card id="verification" title="How the placements will be recorded">
+          <Card id="verification" title="How delivery will be documented">
             <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
-              Select what sponsors will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
+              Choose what sponsors will receive or be able to review afterward. Only the methods chosen here go on the public page, and it never
               claims more than that.
             </p>
             <VerificationEditor runId={run.id} methods={methods} other={run.verification_other ?? null} runStatus={run.status} categoryKey={categoryKey} />
@@ -607,7 +607,7 @@ function headline(input: {
   bidding: boolean;
 }): string {
   const { run, period, nextOn, nextCity, bidding } = input;
-  if (run.status === "draft") return "Nothing here is public yet. Publish it when the steps below are done.";
+  if (run.status === "draft") return "Nothing here is public yet. Publish when the promise is clear.";
   if (run.status === "cancelled") return "This fundraiser is cancelled. Its sponsorship options are off the page.";
   if (run.status === "closed") return "This fundraiser is over. Sponsors have their records, and the page is down.";
 
@@ -796,8 +796,8 @@ function DeliveryCommitmentCard({
       </p>
       <p className="text-[14px] leading-[1.6] text-muted">
         {methodCount > 0
-          ? `${methodCount} ${plural(methodCount, "way", "ways")} of recording the placements ${plural(methodCount, "is", "are")} on the public page.`
-          : "No way of recording the placements has been chosen yet."}
+          ? `${methodCount} ${plural(methodCount, "way", "ways")} of documenting delivery ${plural(methodCount, "is", "are")} on the public page.`
+          : "No way of documenting delivery has been chosen yet."}
       </p>
     </Card>
   );
@@ -820,7 +820,7 @@ function DraftOverview({ input, runId, reviewHref }: { input: Parameters<typeof 
   const optional = rows.filter((r) => r.optional);
 
   return (
-    <Card title="Before it goes up" subtitle={`${done} of ${total} steps done`} className="max-w-[900px]">
+    <Card title="Making it sponsor-ready" subtitle={`${done} of ${total} steps done`} className="max-w-[900px]">
       <ol className="m-0 flex list-none flex-col gap-0 p-0">
         {steps.map((row, i) => (
           <DraftStep key={row.key} row={row} index={i + 1} current={row.key === next?.key} runId={runId} />
@@ -847,8 +847,8 @@ function DraftOverview({ input, runId, reviewHref }: { input: Parameters<typeof 
         </ButtonLink>
         <span className="text-[14px] leading-[1.6] text-muted">
           {next
-            ? "The review reads the whole fundraiser back and names anything still to do."
-            : "Every step above is done. The review is the last read before it goes up."}
+            ? "The review reads the project the way a sponsor would and names anything still to do."
+            : "Every step above is done. The review is the last read before it goes public: publish when the promise is clear."}
         </span>
       </div>
     </Card>
@@ -897,8 +897,8 @@ function DraftStageSummary({ run, kit }: {
   kit: string | null;
 }) {
   const rows: { stage: FormStage; lines: { label: string; value: string | null }[] }[] = [
-    { stage: "project", lines: [{ label: "Name", value: run.title }, { label: "Who will experience it", value: run.audience_description }] },
-    { stage: "funding", lines: [{ label: "What the funding enables", value: run.purpose }, { label: "What sponsors can count on", value: run.sponsor_promise }] },
+    { stage: "project", lines: [{ label: "Name", value: run.title }, { label: "Who does it reach", value: run.audience_description }] },
+    { stage: "funding", lines: [{ label: "What the funding enables", value: run.purpose }, { label: "What sponsors receive", value: run.sponsor_promise }] },
   ];
   return (
     <ul className="m-0 list-none divide-y divide-line p-0">
@@ -952,7 +952,7 @@ function DraftOptionsSummary({ lots, templates, href }: { lots: BuilderLot[]; te
       )}
       <p className="mt-4">
         <Link href={href} className="inline-flex min-h-[36px] items-center text-[14px] text-accent-ink underline decoration-1 underline-offset-4">
-          {keys.length === 0 ? "Build the first option" : "Edit the options"}
+          {keys.length === 0 ? "Define the first option" : "Edit the options"}
         </Link>
       </p>
     </div>

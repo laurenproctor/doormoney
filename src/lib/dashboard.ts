@@ -219,7 +219,7 @@ export async function loadDashboard(act: OwnedAct, selectedRunId?: string): Prom
   const work: WorkRow[] = purchases.map((p) => ({
     id: p.id,
     lotId: p.lots?.id ?? null,
-    sponsor: p.patron_names?.name ?? "A patron",
+    sponsor: p.patron_names?.name ?? "A sponsor",
     option: p.lots ? lotName(p.lots) : "Sponsorship",
     amountCents: Math.max(0, p.amount_cents - p.refunded_cents),
     logo: logoState(p.mark_status),

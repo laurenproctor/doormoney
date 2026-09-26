@@ -66,6 +66,7 @@ const sqlRows = [
   ...surfaceRows(read("supabase/migrations/0040_category_sponsorship_options.sql")),
   ...surfaceRows(read("supabase/migrations/0047_hospitality_draft_category.sql")),
   ...surfaceRows(read("supabase/migrations/20260924162520_digital_workers_category.sql")),
+  ...surfaceRows(read("supabase/migrations/20260924171208_digital_worker_project_page.sql")),
 ];
 
 test("the parser found both sets of rows, not one of them", () => {
@@ -73,6 +74,9 @@ test("the parser found both sets of rows, not one of them", () => {
   assert.ok(sqlRows.some((r) => r.key === "kick_head"), "the music rows, from the seed");
   assert.ok(sqlRows.some((r) => r.key === "foyer_banner"), "the new rows, from migration 0040");
   assert.equal(sqlRows.filter((r) => r.category_key === "hospitality").length, 6, "hospitality's six, from migration 0047");
+  assert.deepEqual(sqlRows.filter((r) => r.category_key === "digital_workers").map((r) => r.key),
+    ["monthly_email_signature", "virtual_meeting_background", "project_page_credit"],
+    "digital workers has only its approved placements");
   assert.equal(new Set(sqlRows.map((r) => r.key)).size, sqlRows.length, "no key is written twice");
 });
 

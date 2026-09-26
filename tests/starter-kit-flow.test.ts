@@ -151,7 +151,7 @@ test("the picker only ever offers the selected category's kits", () => {
 });
 
 test("what a kit leaves in the form saves through the same validation as typing it", () => {
-  for (const kit of STARTER_KITS.filter((k) => k.categoryKey !== "hospitality")) {
+  for (const kit of STARTER_KITS.filter((k) => REGISTRY.some((c) => c.key === k.categoryKey))) {
     const { fields } = fresh({ kitKey: kit.key });
     const parsed = FundraiserDraftInput.safeParse({ ...fields, kind: fields.kind || null, activity_mode: fields.activity_mode || null });
     assert.ok(parsed.success, `${kit.key}: ${parsed.success ? "" : parsed.error.message}`);

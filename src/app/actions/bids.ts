@@ -11,7 +11,7 @@ import { runPath } from "@/lib/urls";
 /*
   Placing a bid. Straight bidding: the number a patron enters is what they pay if they win.
   Nobody signs in to bid, so a bid carries a name and an email; the same pair is one patron.
-  Called from the board, which is our own page, so this is a server action rather than a route.
+  Called from the fundraiser's page, which is our own page, so this is a server action rather than a route.
 
   The decision is the database's: place_bid (migration 0035) takes the lot's row lock, checks the
   clock and the minimum against what is actually there at that instant, and inserts, all in one

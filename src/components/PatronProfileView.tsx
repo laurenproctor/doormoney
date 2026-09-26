@@ -130,7 +130,7 @@ export function PatronProfileView({ profile, photo, header, activity, labels, de
         </Band>
       )}
 
-      <Band dense={dense} eyebrow="Public support" heading="What this patron has backed">
+      <Band dense={dense} eyebrow="Public support" heading="Sponsored and backed">
         {activity.length === 0 ? (
           <p className="max-w-[56ch] text-[15px] text-muted">
             {profile.displayName} has not put anything on this page yet. What a patron shows here is their own

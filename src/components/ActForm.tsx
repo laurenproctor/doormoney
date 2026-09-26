@@ -54,7 +54,7 @@ export function ActForm({ act, siteUrl, username, starterKitKey }: {
       </fieldset>
       {err.type && <p className="-mt-3 mb-3 text-[14.5px] text-accent-ink">{err.type}</p>}
 
-      <Field label="Organizer name" error={err.name} hint="The name sponsors and audiences know. It is kept apart from the account holder's own name, and changing one never changes the other.">
+      <Field label="Organizer name" error={err.name} hint="The name sponsors and audiences know, so they can see who is behind the work. It is kept apart from the account holder's own name, and changing one never changes the other.">
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="organization" className={inputClass} />
       </Field>
 
@@ -101,7 +101,7 @@ export function ActForm({ act, siteUrl, username, starterKitKey }: {
         <input name="website" type="url" defaultValue={act?.website ?? ""} placeholder="https://" className={inputClass} />
       </Field>
 
-      <Field label="Bio" error={err.bio} hint="Two or three sentences introducing your work.">
+      <Field label="Bio" error={err.bio} hint="Two or three sentences introducing your work. A published fundraiser leads with it, so sponsors know who is behind the work.">
         <textarea name="bio" rows={4} defaultValue={act?.bio ?? ""} className={inputClass} />
       </Field>
 
@@ -122,7 +122,7 @@ export function ActForm({ act, siteUrl, username, starterKitKey }: {
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : act ? "Save changes" : "Create profile"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving…" : act ? "Save changes" : "Create organizer profile"}</Button>
         {state.ok && <span className="text-[14.5px] text-muted">Saved.</span>}
         {err.form && <span className="text-[14.5px] text-accent-ink">{err.form}</span>}
       </div>

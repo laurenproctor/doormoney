@@ -21,6 +21,7 @@ import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { isSettled, lifecycleLabel, netCents, upcomingShow, type ShowRow } from "@/lib/dashboardModel";
 import type { SearchJump } from "@/components/dashboard/WorkspaceSearch";
 import { periodLine } from "@/lib/periods";
+import { categoryWords } from "@/lib/category-words";
 import { readinessHref } from "@/lib/fundraiser-tabs";
 import { draftProgress, readiness, type ReadinessAct } from "@/lib/readiness";
 import { incompleteOffers, type OfferReadinessLot } from "@/lib/offer-readiness";
@@ -29,7 +30,13 @@ import { catalogTemplates } from "@/lib/opportunities";
 /** What a fundraiser's period covers, and the next date on it. Both absent where nothing is set. */
 export type HomeNextDate = { on: string; city: string | null };
 
-/** Where a draft has got to, in the same steps the fundraiser's own checklist counts. */
+/**
+ * Where a draft has got to, in the same steps the fundraiser's own checklist counts.
+ *
+ * `label` is the next step as the thing to do and why it matters to a sponsor ("Explain what the
+ * funding enables and who the project reaches."), not the checklist row's name. `note` is the
+ * checklist's own line about what is missing.
+ */
 export type HomeDraftStep = { done: number; total: number; label: string | null; note: string | null; href: string | null };
 
 export type HomeSponsorship = {
@@ -225,7 +232,7 @@ export async function loadHomeSponsorships(act: HomeAct | null, today: Date = ne
     const option = options.get(run.id);
     const paid = money.get(run.id);
     const categoryKey = run.category_key ?? "music";
-    const title = run.title?.trim() || "Untitled sponsorship";
+    const title = run.title?.trim() || "Untitled fundraiser";
     const next = upcomingShow(dates.get(run.id) ?? [], today);
     return {
       id: run.id,
@@ -295,7 +302,36 @@ export function draftStep(
   // The fundraiser's workspace is in tabs now, so a checklist anchor resolves to the tab that
   // draws it; anything else (the organizer page, payouts) is already an address of its own.
   const href = next ? readinessHref(run.id, next) : null;
-  return { done, total, label: next?.label ?? null, note: next?.note ?? null, href };
+  const label = next ? nextStepLabel(next.key, run, incompleteOffers(lots, templates).length > 0) : null;
+  return { done, total, label, note: next?.note ?? null, href };
+}
+
+/**
+ * The next step, said as what to do and what it gives a sponsor.
+ *
+ * The checklist names its rows ("Sponsorships", "Placement verification"); Today says what the
+ * organizer does next to make the project sponsor-ready. Keyed on the row, so the two cannot point
+ * at different steps. Music's fundraiser row is the older gate (a name, both dates and a show
+ * count), so its sentence is about the dates, in music's own word for the period.
+ */
+function nextStepLabel(key: string, run: Pick<RunRow, "category_key" | "kind">, termsMissing: boolean): string {
+  const categoryKey = run.category_key ?? "music";
+  switch (key) {
+    case "profile":
+      return "Complete your organizer profile so sponsors know who is behind the work.";
+    case "run":
+      return categoryKey === "music"
+        ? `Name the ${categoryWords(categoryKey, run.kind).fundraiser} and set its dates.`
+        : "Explain what the funding enables and who the project reaches.";
+    case "lots":
+      return termsMissing ? "Add the terms that make the offer clear." : "Define what a sponsor receives.";
+    case "verification":
+      return "Say how delivery will be documented.";
+    case "payouts":
+      return "Set up payouts so your share can reach you.";
+    default:
+      return "Review the project as a sponsor will see it.";
+  }
 }
 
 /**
@@ -333,7 +369,7 @@ const JUMP_LIMIT = 50;
 /** One fundraiser, as a destination. Shared so the two ways of building the list say the same thing. */
 export function jumpTo(run: { id: string; title: string | null; status: string; period?: string | null }): SearchJump {
   return {
-    label: run.title?.trim() || "Untitled sponsorship",
+    label: run.title?.trim() || "Untitled fundraiser",
     href: `/dashboard/runs/${run.id}`,
     hint: [lifecycleLabel(run.status), run.period].filter(Boolean).join(" \u00b7 "),
   };

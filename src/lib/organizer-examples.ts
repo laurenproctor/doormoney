@@ -10,7 +10,7 @@
  *   open         the category is one Door Money has, so the example links into the new fundraiser
  *                form with its kit chosen (/dashboard/runs/new?template=<key>)
  *   draft_only   the category exists and its kits are held to private drafts: the link works and
- *                the example says "Private draft". Restaurants & hospitality stands here today.
+ *                the example says "Private draft". Restaurants & hospitality and Digital workers stand here today.
  *   coming_soon  the registry has no such category. The example is shown as an example and links
  *                nowhere near the form, which would refuse it. A database without migration 0047
  *                reads hospitality this way, which is the safe reading.
@@ -84,6 +84,14 @@ export const EXAMPLE_GROUPS: readonly ExampleGroup[] = [
       { kitKey: "dinner_series", title: "A sponsored dinner series", line: "A producer or a winery pays toward a set of dinners, and is named on each menu." },
     ],
   },
+  {
+    categoryKey: "digital_workers",
+    heading: "Digital workers and independent projects",
+    examples: [
+      { kitKey: "start_independent_project", title: "An independent project", line: "A sponsor helps a worker make room for a project, with a credit in the worker's eligible email signature or video meeting background." },
+      { kitKey: "build_digital_product", title: "A digital product", line: "A sponsor supports the build, and appears in the worker's eligible email signature or video meeting background." },
+    ],
+  },
 ];
 
 /**
@@ -97,6 +105,7 @@ export const WHO_ORGANIZES: readonly (readonly [string, string])[] = [
   ["Filmmakers", "A filmmaker or a production organization."],
   ["Theater companies", "A company, or an authorized producer."],
   ["Hospitality venues", "Restaurants, bars, hospitality venues, caterers and community kitchens."],
+  ["Digital workers", "Independent professionals building products, publishing research or starting projects they control."],
   ["Other projects", "A project outside the named categories that can still state its purpose, its audience and what the sponsor receives."],
   ["Organizations", "A group that organizes the work and answers for its delivery."],
   ["What comes next", "Any organizer who can state the funding purpose, the audience, what the sponsor receives and how delivery will be documented."],

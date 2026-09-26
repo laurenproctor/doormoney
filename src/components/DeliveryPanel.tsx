@@ -12,8 +12,8 @@ import { EVIDENCE_KINDS } from "@/lib/delivery-policy";
   Where an organizer documents what they delivered, one deliverable at a time.
 
   Everything typed here is stored private. Publishing an item is its own button, on that item, and
-  publishes nothing else. Door Money checks that documentation exists and never whether it is good,
-  so nothing here asks for approval from anybody.
+  publishes nothing else. Door Money records that documentation exists and passes it to the sponsor,
+  and never judges whether it is good, so nothing here asks for approval from anybody.
 
   Real forms and real buttons, labelled fields, every state said in words, and every message in a
   live region, the way ProfileForms does it.
@@ -52,7 +52,8 @@ function EvidenceForm({ row }: { row: DeliveryRow }) {
         <textarea id={`${uid}-note`} name="note" rows={2} maxLength={2000} className={`${inputClass} leading-[1.6]`} aria-describedby={`${uid}-help`} />
       </label>
       <p id={`${uid}-help`} className="max-w-[62ch] text-[14px] text-muted">
-        A link, a note, or both. Say where and when. It is stored private: only you, the sponsor and Door Money can see it.
+        A link, a note, or both. Say where and when. It is stored private: only you, the sponsor and Door Money can see it. Documenting a deliverable is what
+        releases your share of it, once the sponsor&apos;s materials are accepted.
       </p>
       <label className="flex items-start gap-3 text-[15px]">
         <input type="checkbox" name="shows_minor" value="1" className="mt-1 h-5 w-5 accent-[var(--accent)]" />

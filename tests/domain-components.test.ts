@@ -82,7 +82,7 @@ test("music keeps music's words", () => {
 
 test("the existing verification block renders exactly what it did for music, through the new component", () => {
   const out = text(createElement(PlacementVerification, { actName: "Gutter Hymns", runTitle: "Fall run", categoryKey: "music", verification: { methods: ["end_of_run_record"], other: null } }));
-  assert.match(out, /^Placement verification How the placements will be recorded Gutter Hymns will document where the logos appeared during Fall run\. Sponsors receive a record once it ends\./);
+  assert.match(out, /^Delivery and documentation How delivery will be documented Gutter Hymns will document where the logos appeared during Fall run\. Sponsors receive a record once it ends\./);
   assert.match(out, /Documentation comes from the musician and appears in the Door Money record\.$/);
   const theater = text(createElement(PlacementVerification, { actName: "The Attic Company", runTitle: "A Number", categoryKey: "theater", verification: { methods: ["end_of_run_record"], other: null } }));
   assert.match(theater, /will document where the sponsors appeared during A Number/);

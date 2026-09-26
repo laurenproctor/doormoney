@@ -11,9 +11,10 @@ const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 /**
- * Taking a fixed-price spot. Two steps: who the patron is, then Stripe's embedded checkout on this
- * page. A signed-in visitor pays under the account's email and is not asked for one. The card never touches Door Money's servers; the money lands with Door Money and moves to the
- * act on Fridays. Fulfilment happens in the webhook, not here.
+ * Taking a fixed-price sponsorship option. Two steps: who the sponsor is, then Stripe's embedded
+ * checkout on this page. A signed-in visitor pays under the account's email and is not asked for
+ * one. The card never touches Door Money's servers; the money lands with Door Money and reaches the
+ * organizer under the fundraiser's own release terms. Fulfilment happens in the webhook, not here.
  */
 export function LotCheckout({
   lotId,

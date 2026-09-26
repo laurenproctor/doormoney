@@ -75,7 +75,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         eyebrow={null}
         title={head.title}
         accent={head.accent}
-        intro={<p className="max-w-[52ch] text-[19px] leading-[1.35] text-ink">Nothing is waiting on you. A fundraiser is how sponsors find your work.</p>}
+        intro={<p className="max-w-[52ch] text-[19px] leading-[1.35] text-ink">Nothing is waiting on you yet. Start with what you want to make happen: a fundraiser is how sponsors find it.</p>}
         action={
           <ButtonLink href="/dashboard/runs/new" register="desk" variant="solid">
             Create a fundraiser
@@ -83,9 +83,10 @@ export default async function DashboardPage({ searchParams }: Props) {
         }
       >
         {fromWidget && <WidgetNotice shareHref={null} />}
-        <Card title="Your first fundraiser" subtitle="What the money is for, who it reaches, and what a sponsor receives" className="max-w-[720px]">
+        <Card title="Your first project" subtitle="What the funding enables, who it reaches, and what a sponsor receives" className="max-w-[720px]">
           <p className="max-w-[60ch] text-[15px] leading-[1.6] text-muted">
-            Door Money asks for those three answers, then you price what a sponsor can have. Nothing is public until you publish it.
+            Door Money asks for those answers and how you will document delivery, then you define the sponsorship options and set the prices.
+            Nothing is public until you publish it.
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-4">
             <ButtonLink href="/dashboard/runs/new" register="desk" variant="solid">
@@ -221,7 +222,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <Card
           searchable
           title="Needs you"
-          subtitle={waiting > 0 ? "Ordered by what is due first" : draftStep?.label ? "Before this draft can be published" : undefined}
+          subtitle={waiting > 0 ? "Ordered by what is due first" : draftStep?.label ? "Before this project is sponsor-ready" : undefined}
           right={waiting > 0 ? <Badge kind="attention">{waiting}</Badge> : undefined}
         >
           {waiting === 0 && !draftStep?.label && (
@@ -320,7 +321,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         }
       >
         {sponsorships.rows.length === 0 ? (
-          <p className="text-[15px] leading-[1.6] text-muted">Nothing here yet. The first one can stay a private draft for as long as you like.</p>
+          <p className="text-[15px] leading-[1.6] text-muted">Nothing here yet. Your first project can stay a private draft for as long as you like.</p>
         ) : (
           /* A table has more columns than a phone has room for, so this one scrolls inside its own frame. */
           <div className="-mx-1 overflow-x-auto px-1">
@@ -330,7 +331,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   { key: "name", label: "Name", width: "minmax(0,2fr)" },
                   { key: "status", label: "Status", width: "minmax(0,1fr)" },
                   { key: "raised", label: "Raised", width: "minmax(0,1.5fr)" },
-                  { key: "next", label: "Next date", width: "minmax(0,1.4fr)" },
+                  { key: "next", label: "Next", width: "minmax(0,1.4fr)" },
                   { key: "waiting", label: "Waiting on you", width: "minmax(0,1.1fr)" },
                 ]}
                 rows={sponsorships.rows.map((row) => fundraiserRow(row, act.slug))}
@@ -345,7 +346,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
 /* ------------------------------------------------------------------ the sentence */
 
-/** What a draft still owes, in the words its own checklist uses. */
+/** What a draft still owes: the next step, said as the thing to do (src/lib/dashboard-home.ts). */
 type DraftStep = { done: number; total: number; label: string | null };
 
 /**
@@ -360,10 +361,10 @@ function todayLine(input: { waiting: number; nextDate: { on: string; city: strin
   const where = nextDate ? `${formatWeekdayDay(nextDate.on)}${nextDate.city ? ` in ${nextDate.city}` : ""}` : null;
 
   if (draft) {
-    if (!draft.label) return "This draft has everything it needs. Look it over, then publish it.";
-    return `${draft.done} of ${draft.total} steps are done on this draft. ${draft.label} is next.`;
+    if (!draft.label) return "This draft is sponsor-ready. Review the project as a sponsor will see it, then publish it.";
+    return `${draft.done} of ${draft.total} steps done on this draft. Next: ${draft.label}`;
   }
-  if (!hasFundraiser) return "Nothing is waiting on you. A fundraiser is how sponsors find your work.";
+  if (!hasFundraiser) return "Nothing is waiting on you yet. Start with what you want to make happen: a fundraiser is how sponsors find it.";
   if (waiting === 0) return where ? `Nothing is waiting on you. The next ${unit} is ${where}.` : "Nothing is waiting on you.";
   const things = `${waiting} ${plural(waiting, "thing needs", "things need")} you`;
   return where ? `${things} before the next ${unit}, ${where}.` : `${things}.`;
@@ -403,7 +404,8 @@ function releaseLine(music: boolean, periodNoun: string): string {
 }
 
 /**
- * One fundraiser, as a row. A draft says how far it has come; everything else says what it holds.
+ * One fundraiser, as a row. A draft says what it needs next and how far it has come; everything
+ * else says what it holds.
  *
  * The kebab holds the three things somebody does to a fundraiser from a list: hand it to
  * somebody, look at it the way a sponsor would, and open it to change it. Share is left off a
@@ -444,7 +446,7 @@ function fundraiserRow(run: HomeSponsorship, actSlug: string): DeskRow {
         </span>
       ),
       draft ? (
-        <span className="text-muted">{draft.label ?? "Ready to publish"}</span>
+        <span className="text-muted">{draft.label ?? "Sponsor-ready. Review it, then publish."}</span>
       ) : run.nextDate ? (
         <span>
           {formatWeekdayDay(run.nextDate.on)}

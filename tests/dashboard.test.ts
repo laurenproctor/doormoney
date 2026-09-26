@@ -1,9 +1,9 @@
 /*
-  The musician's dashboard, the part with no database in it.
+  The organizer's dashboard, the part with no database in it.
 
   Everything the overview claims is derived here, so this is where the claims are checked: that a
   refund comes off the total, that an asking price is not money, that a cancelled fundraiser is not
-  a stage, and that nothing offers a musician a button the schema cannot honour.
+  a stage, and that nothing offers an organizer a button the schema cannot honour.
 */
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -40,7 +40,7 @@ import {
 
 /* ------------------------------------------------------------------ lifecycle */
 
-test("the database word becomes the musician's word, and closed reads as finished", () => {
+test("the database word becomes the organizer's word, and closed reads as finished", () => {
   assert.equal(lifecycleLabel("draft"), "Draft");
   assert.equal(lifecycleLabel("open"), "Open");
   assert.equal(lifecycleLabel("live"), "Live");
@@ -204,7 +204,7 @@ const work = (id: string, over: Partial<WorkRow> = {}): WorkRow => ({
   ...over,
 });
 
-test("mark_status becomes the logo state a musician reads", () => {
+test("mark_status becomes the materials state an organizer reads", () => {
   assert.equal(logoState("none"), "waiting");
   assert.equal(logoState("submitted"), "review");
   assert.equal(logoState("approved"), "approved");
@@ -278,7 +278,7 @@ test("a count of one reads as one, not as one of something plural", () => {
     promisedAttendance: false,
     promisedShowPhotos: false,
   });
-  assert.equal(one[0].label, "logo waiting for your review");
+  assert.equal(one[0].label, "sponsorship with materials waiting for your review");
   const two = preparationItems({
     work: [work("1", { logo: "review" }), work("2", { logo: "review" })],
     shows: [],
@@ -286,10 +286,10 @@ test("a count of one reads as one, not as one of something plural", () => {
     promisedAttendance: false,
     promisedShowPhotos: false,
   });
-  assert.equal(two[0].label, "logos waiting for your review");
+  assert.equal(two[0].label, "sponsorships with materials waiting for your review");
 });
 
-test("logos to review and paid sponsorships with no logo are each their own line", () => {
+test("materials to review and paid sponsorships with no materials are each their own line", () => {
   const items = preparationItems({
     work: [work("1", { logo: "review" }), work("2", { logo: "waiting", paymentStatus: "held" })],
     shows: [],
@@ -300,7 +300,7 @@ test("logos to review and paid sponsorships with no logo are each their own line
   assert.deepEqual(items.map((i) => [i.key, i.count]), [["review", 1], ["no-logo", 1]]);
 });
 
-test("a sponsorship that was never charged is not chased for a logo", () => {
+test("a sponsorship that was never charged is not chased for materials", () => {
   const items = preparationItems({
     work: [work("1", { logo: "waiting", paymentStatus: "requires_payment" })],
     shows: [],
@@ -364,7 +364,7 @@ test("the widget's old address goes to the newest fundraiser with a Share panel,
   assert.equal(widgetDestination([]), "/dashboard?from=widget");
 });
 
-test("an organizer gets six destinations, named for where they go", () => {
+test("an organizer gets seven destinations, named for where they go", () => {
   // /dashboard/act left the rail when the profile became one page: the organizer's own record is
   // part of /dashboard/profile now and is reached from there. The widget left it on the Desk
   // register: it is one fundraiser's embed snippet, so it belongs beside that fundraiser under
@@ -375,6 +375,7 @@ test("an organizer gets six destinations, named for where they go", () => {
     { href: "/dashboard/runs", label: "Fundraisers" },
     { href: "/dashboard/payouts", label: "Money" },
     { href: "/patron", label: "Backed by you" },
+    { href: "/inbox", label: "Inbox" },
     { href: "/dashboard/profile", label: "Profile" },
     { href: "/dashboard/account", label: "Settings" },
   ]);
@@ -390,7 +391,7 @@ test("an account made before the organizer role still gets them", () => {
 test("somebody who only backs musicians gets no fundraising pages", () => {
   const nav = dashboardNav({ hasAct: false, roles: ["patron"] });
   const hrefs = nav.flatMap((s) => s.items.map((i) => i.href));
-  assert.deepEqual(hrefs, ["/patron", "/dashboard/profile", "/dashboard/account"]);
+  assert.deepEqual(hrefs, ["/patron", "/inbox", "/dashboard/profile", "/dashboard/account"]);
   assert.ok(!hrefs.includes("/dashboard/act"));
 });
 

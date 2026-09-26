@@ -98,7 +98,7 @@ export function DiscoveryCard({
 
         {card.previews.length > 0 && (
           <div className="border-t border-line pt-3.5">
-            <div className="caps text-[14px] text-accent-ink">Sponsorship options include</div>
+            <div className="caps text-[14px] text-accent-ink">Sponsorship options</div>
             <ul className="mt-2 grid gap-2">
               {card.previews.map((p) => (
                 <Preview key={p.id} preview={p} />
@@ -114,14 +114,14 @@ export function DiscoveryCard({
 
         {card.sponsorPromise && (
           <div className="border-t border-line pt-3.5">
-            <div className="caps text-[14px] text-accent-ink">Sponsor visibility</div>
+            <div className="caps text-[14px] text-accent-ink">What sponsors receive</div>
             <p className="mt-1.5 line-clamp-2 text-[15px] leading-[1.6]">{card.sponsorPromise}</p>
           </div>
         )}
 
         {card.audience && (
           <p className="text-[15px] leading-[1.6] text-muted">
-            <span className="caps text-[14px]">Audience</span>
+            <span className="caps text-[14px]">Who it reaches</span>
             <span className="line-clamp-2 block">{card.audience}</span>
           </p>
         )}

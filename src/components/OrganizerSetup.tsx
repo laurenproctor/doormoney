@@ -99,8 +99,8 @@ export function OrganizerSetup({ self, existing, host, template, live }: {
         <div className="min-w-0 lg:pr-10">
           {existing ? (
             <p className="max-w-[54ch] text-[15px] leading-[1.6] text-muted">
-              Door Money supports one organizer for each account today. Its name, address and details are edited on
-              its own page, and a sponsorship is created under it.
+              Door Money supports one organizer profile for each account today. Its name, address and details are
+              edited on its own page, and every project is created under it, so sponsors know who is behind the work.
             </p>
           ) : choice === "self" ? (
             <SelfFields
@@ -186,7 +186,7 @@ export function OrganizerSetup({ self, existing, host, template, live }: {
         <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
           <input type="hidden" name="choice" value={existing ? "organization" : choice} />
           <Button type="submit" arrow disabled={pending}>
-            {pending ? "Saving…" : "Continue to sponsorship"}
+            {pending ? "Saving…" : "Continue to the project"}
           </Button>
           <Link
             href="/dashboard"
@@ -196,7 +196,7 @@ export function OrganizerSetup({ self, existing, host, template, live }: {
           </Link>
         </div>
 
-        <p className="mt-6 text-[14.5px] text-muted">Next: Describe your project and what sponsors receive.</p>
+        <p className="mt-6 text-[14.5px] text-muted">Next: say what you want to make happen, what the funding enables, and what sponsors receive.</p>
       </div>
     </form>
   );
@@ -287,7 +287,7 @@ function ExistingChoice({ organizer, host }: { organizer: ExistingOrganizer; hos
   return (
     <section aria-labelledby="existing-heading">
       <h2 id="existing-heading" className="caps mb-4 text-[14px] text-muted">
-        Your organizer
+        Your organizer profile
       </h2>
       <div className="edge flex min-w-0 items-center gap-4 border-accent bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] p-5">
         <span className="flex-none text-accent-ink">
@@ -330,8 +330,8 @@ function SelfFields({ self, host, slug, editing, onEdit, onSlugChange, onSlugBlu
     <div className="min-w-0">
       {self.name ? (
         <p className="max-w-[54ch] text-[15px] leading-[1.6] text-muted">
-          Sponsorships are created under <span className="text-ink">{self.name}</span>, the name on this account.
-          Nothing has to be entered again.
+          Your projects are created under <span className="text-ink">{self.name}</span>, the name on this account, so
+          sponsors know who is behind the work. Nothing has to be entered again.
         </p>
       ) : (
         <p className="max-w-[54ch] text-[15px] leading-[1.6] text-muted">
@@ -528,7 +528,7 @@ function MoreDetails({ region, onRegion, onPhoto, errors }: {
           )}
         </Field>
 
-        <Field label="Bio" optional error={errors.bio} hint="Two or three sentences introducing the work.">
+        <Field label="Bio" optional error={errors.bio} hint="Two or three sentences introducing the work, so sponsors know who is behind it.">
           {(id, described) => (
             <textarea
               id={id}
@@ -687,7 +687,7 @@ function Preview({ name, kindLabel, place, photoUrl, organization }: {
 
   return (
     <aside className="min-w-0 border-t border-line pt-8 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-      <h2 className="caps mb-5 text-[14px] text-muted">Profile preview</h2>
+      <h2 className="caps mb-5 text-[14px] text-muted">Organizer profile preview</h2>
 
       <div className="mb-5 flex h-[112px] w-[112px] items-center justify-center overflow-hidden bg-[color-mix(in_srgb,var(--accent)_16%,transparent)]">
         {photoUrl ? (
@@ -711,7 +711,7 @@ function Preview({ name, kindLabel, place, photoUrl, organization }: {
       {line && <p className="mt-2 text-[14.5px] text-muted">{line}</p>}
 
       <p className="mt-6 border-t border-line pt-5 text-[14.5px] leading-[1.5] text-muted">
-        This name appears on your sponsorships.
+        This name appears on every project you publish, so sponsors know who is behind the work.
       </p>
     </aside>
   );

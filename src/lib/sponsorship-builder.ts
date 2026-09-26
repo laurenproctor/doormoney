@@ -135,7 +135,7 @@ export function moneyLines(input: { priceCents: number | null; spots: number; sa
       key: "goal",
       label: "Funding goal",
       value: goalCents === null ? "None set" : formatMoney(goalCents),
-      note: "From the funding stage. What the work needs, and separate from what any option can bring in.",
+      note: "From the funding stage. What the project needs, and separate from what any option can bring in.",
     },
     {
       key: "raised",
@@ -175,7 +175,7 @@ export const BUILDER_STEPS = [
   { key: "price", label: "Price", question: "What does a spot cost, and how many are there?" },
   { key: "materials", label: "Materials", question: "What does the sponsor send, and who accepts it?" },
   { key: "production", label: "Production", question: "Who pays to produce it, and is anything exclusive?" },
-  { key: "deliver", label: "Delivery", question: "What do you deliver, and how will you document it?" },
+  { key: "deliver", label: "Delivery", question: "What do you deliver, and how will delivery be documented?" },
 ] as const;
 
 export type BuilderStepKey = (typeof BUILDER_STEPS)[number]["key"];

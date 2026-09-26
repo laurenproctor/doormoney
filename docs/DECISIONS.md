@@ -1,6 +1,6 @@
 # Product decisions
 
-**Current scope:** decision 17 and `PRODUCT_CONTRACT.md` govern the broader sponsorship product. Decisions 1–16 retain the history and current music mechanics. Where they conflict on product scope, vocabulary, or future discovery routes, decision 17 takes precedence. Historical phase numbers refer to `ROADMAP.md` or `REMEDIATION_PLAN.md`, not `EXPANSION_PLAN.md`.
+**Current scope:** decision 17 and `PRODUCT_CONTRACT.md` govern the broader sponsorship product, and decision 21 gives it its thesis: Door Money turns ambition into a sponsor-ready project. Decisions 1–16 retain the history and current music mechanics. Where they conflict on product scope, vocabulary, or future discovery routes, decision 17 takes precedence. Historical phase numbers refer to `ROADMAP.md` or `REMEDIATION_PLAN.md`, not `EXPANSION_PLAN.md`.
 
 Product questions that came up while building the mockups and don't have an owner's answer yet. Each one blocks or shapes a phase. The codebase picks a default so work can continue; the default is marked, and changing it later is cheap if it's changed before the phase that depends on it.
 
@@ -576,3 +576,75 @@ and it does not change an address: `/dashboard/runs/[id]`, `/dashboard/payouts` 
 where they are and only their labels move. It does not touch a migration, Stripe, the webhook or
 the cron routes. And it does not make the workspace a different product: an organizer should be
 able to see, from the light on the page, which of their fundraisers they are looking at.
+
+---
+
+## 21. Door Money turns ambition into a sponsor-ready project
+
+**Blocks:** all copy from here on. Extends decision 17's shared copy; does not reopen decisions 14
+or 15.
+
+Decision 17 made the site category-neutral and gave it lines that describe the exchange: relevant
+audiences, specified visibility, meaningful support. They were true and they were sponsor-first.
+Read cold, the home page said what a sponsor gets and left the organizer as the party that "funds
+work with a clear purpose", which is a description of a finished fundraiser, not of the thing Door
+Money does for somebody who has not written one yet. The organizer's side of the product, the
+guided four-stage flow and the review that reads a draft back the way a sponsor would, is where
+most of the product's work goes, and the copy did not say so anywhere.
+
+**Decided (2026-09-26):** the site has one thesis, and it is the organizer's transformation.
+
+> Door Money turns someone's ambition into a sponsor-ready project.
+
+The product is explained in one sequence, in this order, everywhere it is explained:
+
+**Ambition → Project → Sponsorship promise → Delivery → Record.**
+
+1. Someone has an ambition or a meaningful piece of work.
+2. Door Money helps them turn it into a clearly described project.
+3. The project explains its purpose, audience, funding need and sponsorship promise.
+4. A sponsor can understand what their money makes possible.
+5. The sponsor can also understand exactly what they will receive.
+6. The organizer delivers and documents the promise.
+
+The sponsor exchange stays visible on every shared surface (decision 17's confirmed principle is
+unchanged: every sponsorship states what the funding enables and what the sponsor can count on
+receiving), but the organizer's transformation is the central idea, and the sponsor's side is
+written as the other half of the same exchange rather than as the product.
+
+**The words, and where each one belongs.**
+
+- **Project** is the work itself: the idea, the production, the season, the experience, the
+  effort. It is the display word wherever a reader is looking at the work rather than at the
+  mechanics of funding it: the home page, `/fundraisers` (which already used it), a sponsor's
+  reading of a fundraiser, the review stage.
+- **Fundraiser** is the funding mechanism and the object the product creates: a draft, "publish
+  the fundraiser", the fundraiser's terms, the tables, every address. Never board, campaign or run
+  as a noun (decision 14).
+- **Sponsorship option** is the priced offer; **placement** is where the sponsor appears;
+  **deliverable** is the promised appearance or action; **evidence** (or documentation) is how
+  delivery is shown. These four are unchanged from the product contract and are the parts of a
+  sponsorship promise, in that order.
+- **Sponsor-ready** is a state, not a badge: a project is sponsor-ready when a stranger can read
+  what the funding enables, who the work reaches, what the sponsor receives and how delivery will
+  be documented. Those are the four questions `readiness` and the review stage already ask, and
+  they are the same test a new category has to pass (`CATEGORY_TEST`). It says nothing about Door
+  Money having checked anything.
+- **Cultural** is a brand word, used selectively where the site speaks about the company and its
+  place (the home page's "What Door Money is", how sponsorship works, a press note). It is never
+  forced into a form, a card, an email, a label or a category: a sports team and a digital worker
+  are organizers with projects, and the everyday product language is "project", "work", "idea"
+  and "ambition".
+
+**What the site does not call itself.** Not a donation platform, not crowdfunding, not a charity
+marketplace, not an investment, not an auction site (bidding is a sale method), not a music tool,
+and never a guarantee of sales, reach, customers, impressions, distribution or results.
+
+**Applied (2026-09-26, `copy/ambition-to-sponsor-ready`):** the site strings (`SITE.tagline`,
+`taglineSecond`, `strap`, `thesis`, `signoff`), home, `/list`, `/how-sponsorship-works`,
+`/fundraisers`, contact, sign-up, the footer and the newsletter ask; the four-stage creation flow
+and the dashboard's task framing; the public organizer and project pages; the transactional
+email and record wording outside music's own branches. Decision 1's music tagline stays on music's
+surfaces. Nothing in this decision changes a schema, a route, a redirect, a payment, a permission
+or the legal pages; wording on the legal pages that now conflicts with this positioning is listed
+for counsel rather than rewritten.

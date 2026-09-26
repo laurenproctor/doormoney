@@ -57,7 +57,7 @@ export function MetricRow({ metrics }: { metrics: DashboardMetrics }) {
   const items = [
     { label: "Raised", value: formatMoney(metrics.raisedCents), hint: "after refunds" },
     { label: "Sponsorships sold", value: String(metrics.sponsorshipsSold) },
-    { label: "Patrons", value: String(metrics.patrons) },
+    { label: "Sponsors and backers", value: String(metrics.patrons) },
     { label: "Shows played", value: `${metrics.showsPlayed} of ${metrics.showsTotal}` },
     { label: "Days left", value: String(metrics.daysLeft) },
   ];
@@ -146,7 +146,7 @@ export function NextShowPanel({ show, runId, preparation }: { show: ShowRow | nu
  * balance would be borrowing a word from Stripe that nothing here can stand behind.
  *
  * Setup comes first while it is unfinished. Door Money holds the money either way and the schedule
- * is built either way, so this never blocks anything, but a musician whose Stripe onboarding is
+ * is built either way, so this never blocks anything, but an organizer whose Stripe onboarding is
  * half done has money that cannot move and should be told so on the page they land on.
  */
 export function PayoutSummary({
@@ -222,7 +222,7 @@ export function DashboardEmptyState({ heading, body, action }: { heading: string
 /* ------------------------------------------------------------------ header */
 
 /*
-  FundraiserSummary used to sit here: the run title, its status chip, the dates and the lifecycle
+  FundraiserSummary used to sit here: the fundraiser title, its status chip, the dates and the lifecycle
   strip, as one header for the old per-fundraiser dashboard. /dashboard/runs/<id> already puts the
   title, the status and the dates in the shell's own header, so all that was left to move was the
   strip, which that page now draws directly. Nothing rendered this.

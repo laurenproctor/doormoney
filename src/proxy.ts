@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin"))) {
+  if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin") || path.startsWith("/inbox"))) {
     // The query string comes back too, so a link to a starter kit survives signing in.
     return NextResponse.redirect(new URL(signInPath(path, request.nextUrl.search), request.nextUrl.origin));
   }
@@ -76,5 +76,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // /patron/signup only: /patron/<username> is a public page and stays out of the session refresh.
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/login/verify", "/signup", "/patron/signup", "/forgot", "/reset", "/auth/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/inbox/:path*", "/login", "/login/verify", "/signup", "/patron/signup", "/forgot", "/reset", "/auth/:path*"],
 };

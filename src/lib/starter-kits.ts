@@ -27,8 +27,9 @@
  *   `delivery_policies` (0045). This file can only be stricter than the database. A kit whose
  *   category has no registry row is unavailable, whatever it says here. Hospitality is in the
  *   registry as a draft-only category (0047) with no delivery policy, so its kits resolve to
- *   draft_only: they can shape a private draft, which cannot be published or paid for. Before
- *   0047 is applied to a database they resolve to unavailable there, which is the safe reading.
+ *   draft_only: they can shape a private draft, which cannot be published or paid for. Digital
+ *   workers follow the same rule (migration 20260924162520). Before a category's migration is
+ *   applied to a database its kits resolve to unavailable there, which is the safe reading.
  *
  * Category keys are the registry's keys and category names are the registry's labels
  * (src/lib/category-words.ts). There is no second list of categories here.
@@ -435,6 +436,59 @@ export const STARTER_KITS: readonly StarterKit[] = [
       sponsor_promise: "Each sponsor's name appears where their sponsorship option says, for the period agreed.",
       activity_mode: "in_person",
     },
+    enabled: true, draftOnly: true,
+  },
+
+  // Digital workers can start private projects using controlled placements. These kits suggest
+  // options; the worker decides what to offer and price. Client accounts, meetings and research
+  // participants are not sponsor inventory.
+  {
+    key: "start_independent_project", version: 1, categoryKey: "digital_workers",
+    label: "Start an independent project",
+    shortDescription: "Make time and space for work outside client assignments.",
+    whatItFunds: "The worker's time, tools and production work on a project they control.",
+    suggestedSponsorTypes: ["Tools used by the project's audience", "Professional services serving that audience", "Businesses connected to the work"],
+    suggestedNeeds: ["Dedicated project time", "Tools and subscriptions", "Design and production", "Publishing the finished work"],
+    suggestedOpportunityKeys: ["monthly_email_signature", "virtual_meeting_background", "project_page_credit"],
+    prefill: {
+      title: "Independent project",
+      purpose: "Time, tools and production for an independent project.",
+      audience_description: "People the project is made for, and the recipients or meeting participants the worker can actually reach through the options they choose.",
+      sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
+    },
+    note: "Offer only accounts, meetings and public project pages you control. Do not include client communications or private meeting details.",
+    enabled: true, draftOnly: true,
+  },
+  {
+    key: "build_digital_product", version: 1, categoryKey: "digital_workers",
+    label: "Build a digital product",
+    shortDescription: "Take a tool from concept to a usable first release.",
+    whatItFunds: "Research, design, development and the work of making a product usable.",
+    suggestedSponsorTypes: ["Software companies serving the intended users", "Professional tools relevant to the product", "Businesses serving the same field"],
+    suggestedNeeds: ["User research", "Design and development", "Accessibility review", "Hosting and launch materials"],
+    suggestedOpportunityKeys: ["monthly_email_signature", "virtual_meeting_background", "project_page_credit"],
+    prefill: {
+      purpose: "Research, design and development to bring the product to a usable first release.",
+      audience_description: "The people the product aims to serve, plus the actual recipients and meeting participants reached through any selected sponsorship option.",
+      sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
+    },
+    note: "The product's users are not automatically the audience for an email signature, meeting background or project page. Describe each placement's actual reach.",
+    enabled: true, draftOnly: true,
+  },
+  {
+    key: "publish_independent_research", version: 1, categoryKey: "digital_workers",
+    label: "Publish independent research",
+    shortDescription: "Turn a question into a finished report or analysis.",
+    whatItFunds: "Research time, access to source material, analysis, editing and presentation.",
+    suggestedSponsorTypes: ["Professional tools used in the field", "Industry groups relevant to the topic", "Businesses serving the report's intended readers"],
+    suggestedNeeds: ["Research time", "Source material and data access", "Editing and visual presentation", "Publication"],
+    suggestedOpportunityKeys: ["monthly_email_signature"],
+    prefill: {
+      purpose: "Research, analysis, editing and publication of an independent report.",
+      audience_description: "The intended readers of the report and recipients of eligible project emails the worker actually sends.",
+      sponsor_promise: "Each sponsor's name appears where their sponsorship option says, during the month agreed.",
+    },
+    note: "A sponsor has no say in the findings. Do not offer visibility in confidential research calls or identify participants.",
     enabled: true, draftOnly: true,
   },
 

@@ -65,7 +65,7 @@ export function PublishDecision({ runId, publishable, blockers, becomesPublic, k
         </>
       ) : (
         <>
-          <p className="mb-2 text-[14px] text-muted">Before it can be published</p>
+          <p className="mb-2 text-[14px] text-muted">Before the promise is clear enough to publish</p>
           <ul className="grid max-w-[62ch] gap-1.5 text-[15px]">
             {blockers.map((b) => (
               <li key={b} className="flex gap-2.5"><span aria-hidden="true" className="mt-[9px] h-1.5 w-1.5 flex-none bg-attention-ink" /><span>{b}</span></li>
@@ -75,7 +75,7 @@ export function PublishDecision({ runId, publishable, blockers, becomesPublic, k
       )}
       <p className="mt-5 flex items-center gap-2.5 text-[14px] text-muted">
         <Locked size={16} aria-hidden="true" className="flex-none" />
-        {ready ? "Private until you choose Publish fundraiser. Nothing goes up on its own." : "Private. The button waits until the list above is empty."}
+        {ready ? "Private until you choose Publish fundraiser. Nothing goes public on its own." : "Private. The button waits until the list above is empty."}
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <Button

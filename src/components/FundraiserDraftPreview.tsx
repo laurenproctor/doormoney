@@ -14,7 +14,7 @@ import { initialsFor } from "@/lib/organizer-setup";
   nothing is saved by looking at it.
 
   The cover is the organizer's photograph when there is one, because that is the image the public
-  fundraiser page draws today (HeroArt, on the board). A fundraiser has no image of its own yet, so
+  fundraiser page draws today (HeroArt). A fundraiser has no image of its own yet, so
   without a photograph the cover is the room and its light: a placeholder that is plainly one.
 */
 
@@ -82,10 +82,10 @@ export function FundraiserDraftPreview({ input, className = "" }: { input: Draft
           {present(input.title) ? input.title : <Missing>Add a name</Missing>}
         </h3>
         <p className="mt-3 text-[15px] leading-[1.6]">
-          {present(input.description) ? input.description : <Missing>Add the story: what you want to make happen, and why it matters.</Missing>}
+          {present(input.description) ? input.description : <Missing>What are you making possible? Say what you want to happen, and why it matters.</Missing>}
         </p>
 
-        <Line heading="Who will experience it">
+        <Line heading="Who does it reach">
           {present(input.audience) ? input.audience : <Missing>Not said yet.</Missing>}
         </Line>
         <Line heading="What the funding enables">
@@ -96,7 +96,7 @@ export function FundraiserDraftPreview({ input, className = "" }: { input: Draft
             <>
               <span className="heading text-[17px]">{formatMoney(goalCents)}</span>
               <span className="mt-1 block text-[14px] text-muted">
-                What the work needs. Not the total of the sponsorship options, and not money raised.
+                What the project needs. Not the total of the sponsorship options, and not money raised.
               </span>
             </>
           ) : (
@@ -104,7 +104,7 @@ export function FundraiserDraftPreview({ input, className = "" }: { input: Draft
           )}
         </Line>
         <Line heading="What sponsors can count on">
-          {present(input.sponsorPromise) ? input.sponsorPromise : <Missing>Not said yet. The priced options come after the funding.</Missing>}
+          {present(input.sponsorPromise) ? input.sponsorPromise : <Missing>Not said yet. The sponsorship options are defined after the funding.</Missing>}
         </Line>
         {(mode || places.length > 0) && (
           <Line heading="Where">

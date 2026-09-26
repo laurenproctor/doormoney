@@ -1,5 +1,5 @@
 /**
- * What the musician's dashboard shows, worked out from rows the database already holds.
+ * What an organizer's dashboard shows, worked out from rows the database already holds.
  *
  * Pure on purpose: no Supabase, no request, nothing server-only, so tests/dashboard.test.ts can
  * run the arithmetic and the mappings without a database. src/lib/dashboard.ts does the reading
@@ -20,7 +20,7 @@ import { runPath } from "@/lib/urls";
 export type RunStatus = "draft" | "open" | "live" | "closed" | "cancelled";
 
 /**
- * The database word on the left, the word a musician reads on the right. "closed" is the only one
+ * The database word on the left, the word an organizer reads on the right. "closed" is the only one
  * that changes meaning in the telling: the fundraiser is over and done, so it reads Complete.
  */
 export const LIFECYCLE_LABELS: Record<RunStatus, string> = {
@@ -145,7 +145,7 @@ export type ShowRow = {
   photo_url: string | null;
 };
 
-/** The next date the musician has to be somewhere: the earliest show still to come. */
+/** The next date the organizer has to be somewhere: the earliest show still to come. Music's dates. */
 export function upcomingShow(shows: ShowRow[], today: Date): ShowRow | null {
   const now = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
   const ahead = shows
@@ -221,10 +221,12 @@ export const LOGO_LABELS: Record<LogoState, string> = {
 /**
  * The same four states for any category. `mark_status` means "the organizer accepted the sponsor's
  * materials", whatever they are, and only music calls them a logo. Music's labels are LOGO_LABELS,
- * unchanged; every other category, and one nobody has named yet, says "materials".
+ * unchanged; every other category, and one nobody has named yet, waits for the sponsor's materials,
+ * named as the sponsor's so the row says whose move it is.
  */
 export function materialsLabels(categoryKey: string | null | undefined): Record<LogoState, string> {
-  return { ...LOGO_LABELS, waiting: `Waiting for ${categoryWords(categoryKey).materials}` };
+  const word = categoryWords(categoryKey).materials;
+  return { ...LOGO_LABELS, waiting: word === "logo" ? LOGO_LABELS.waiting : `Waiting for sponsor ${word}` };
 }
 
 export function logoState(markStatus: string): LogoState {
@@ -234,7 +236,7 @@ export function logoState(markStatus: string): LogoState {
   return "waiting";
 }
 
-/** What happened to the money, in the musician's words. */
+/** What happened to the money, in the organizer's words. */
 export function paymentLabel(paymentStatus: string): string {
   switch (paymentStatus) {
     case "held":
@@ -271,8 +273,8 @@ export type WorkRow = {
 /**
  * The one action worth offering on a row.
  *
- * A submitted logo is the only thing the musician has to decide, so it is the only row that gets a
- * decision. Everything else links to the record, which already exists for every purchase and shows
+ * Submitted materials are the only thing the organizer has to decide, so that is the only row that
+ * gets a decision. Everything else links to the record, which already exists for every purchase and shows
  * the dates, the rooms and the money. There is no proof to upload against a purchase: nothing in
  * the schema stores one, so offering it would be a button that cannot work.
  */
@@ -319,7 +321,7 @@ function earliest(shows: ShowRow[]): string | null {
   return shows.map((s) => s.played_on).sort()[0] ?? null;
 }
 
-/** "1 logo" and "2 logos", so a count of one does not read like a typo. */
+/** "1 sponsorship" and "2 sponsorships", so a count of one does not read like a typo. */
 export function plural(count: number, one: string, many: string): string {
   return count === 1 ? one : many;
 }
@@ -351,11 +353,13 @@ export function preparationItems(input: {
   const runHref = `/dashboard/runs/${runId}`;
   const items: PrepItem[] = [];
 
+  // No category reaches this function, so the words are the neutral ones; a page that knows the
+  // category says "logo" for music itself (the "no-logo" line on Today and the fundraiser page).
   const toReview = work.filter((w) => w.logo === "review").length;
-  if (toReview) items.push({ key: "review", label: `${plural(toReview, "logo", "logos")} waiting for your review`, href: "#sponsorship-work", count: toReview, date: null });
+  if (toReview) items.push({ key: "review", label: `${plural(toReview, "sponsorship", "sponsorships")} with materials waiting for your review`, href: "#sponsorship-work", count: toReview, date: null });
 
   const noLogo = work.filter((w) => w.logo === "waiting" && isSettled(w.paymentStatus)).length;
-  if (noLogo) items.push({ key: "no-logo", label: `paid ${plural(noLogo, "sponsorship", "sponsorships")} with no logo yet`, href: "#sponsorship-work", count: noLogo, date: null });
+  if (noLogo) items.push({ key: "no-logo", label: `paid ${plural(noLogo, "sponsorship", "sponsorships")} with no materials yet`, href: "#sponsorship-work", count: noLogo, date: null });
 
   const missingPlace = shows.filter((s) => !s.venue?.trim() || !s.city?.trim());
   if (missingPlace.length) items.push({ key: "place", label: `${plural(missingPlace.length, "show", "shows")} missing a venue or city`, href: `${runHref}#shows`, count: missingPlace.length, date: earliest(missingPlace) });
@@ -416,7 +420,7 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
 
   // Always there. Somebody who raises money and backs the band down the street should not have to
   // change a setting to see it, and for anyone who has backed nothing it reads as an invitation.
-  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed by you" }] });
+  sections.push({ title: "Supporting", items: [{ href: "/patron", label: "Backed by you" }, { href: "/inbox", label: "Inbox" }] });
 
   // One profile, one account. The profile comes first: it is the identity, and the account page
   // behind it is the email address, the password and what Door Money sends.
@@ -439,7 +443,7 @@ export function dashboardNav({ hasAct, roles }: { hasAct: boolean; roles: readon
  */
 export function adminNav(): NavSection[] {
   return [
-    { title: "Staff", items: [{ href: "/admin", label: "Overview" }] },
+    { title: "Staff", items: [{ href: "/admin", label: "Overview" }, { href: "/admin/inbox", label: "Inbox reports" }] },
     { title: "Account", items: [{ href: "/dashboard/account", label: "Settings" }] },
   ];
 }

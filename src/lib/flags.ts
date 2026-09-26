@@ -5,11 +5,12 @@ import { alertsAddress, flagConfirmation, flagRaised, sendEmail } from "@/lib/em
 import { SITE } from "@/lib/site";
 
 /*
-  The patron flag (docs/ROADMAP.md, Phase 6). A patron who does not think the run happened says so,
-  and the money that has not gone out yet stops moving for that placement alone. Slices already
-  released stay released; Door Money looks and then either releases the hold or refunds.
+  The patron flag (docs/ROADMAP.md, Phase 6). A sponsor who does not think the project happened, or
+  the promise was kept, says so, and the money that has not gone out yet stops moving for that
+  sponsorship alone. Shares already released stay released; Door Money looks and then either
+  releases the hold or refunds.
 
-  This is deliberately not an accusation sent to the act. Door Money reads it first.
+  This is deliberately not an accusation sent to the organizer. Door Money reads it first.
 
   Every step is safe to run twice: the writes are conditional on the state they expect.
 */
@@ -113,7 +114,7 @@ export async function raiseFlag(sb: Admin, target: FlagTarget, note: string | nu
   if (error) throw new Error(`flag ${target.id}: ${error.message}`);
   if (!marked?.length) return { ok: true as const, already: true, paused: 0 };
 
-  // Hold the money that has not moved. Slices already paid stay paid: the run did happen for those weeks.
+  // Hold the money that has not moved. Shares already paid stay paid: what they paid for did happen.
   const { column } = FLAG_SOURCES[target.source];
   const { data: paused } = await sb
     .from("payout_schedule")
@@ -158,8 +159,8 @@ export async function raiseFlag(sb: Admin, target: FlagTarget, note: string | nu
 }
 
 /**
- * Door Money looked and the run is fine: the hold comes off and the paused slices go back in the
- * queue, so the next Friday job sends them. Refunding instead is the existing refund path.
+ * Door Money looked and the fundraiser is fine: the hold comes off and the paused shares go back in
+ * the queue, so the next payout job sends them. Refunding instead is the existing refund path.
  */
 export async function clearFlag(sb: Admin, source: FlagSource, id: string) {
   const { data: marked } = await sb

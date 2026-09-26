@@ -19,8 +19,8 @@ import { ButtonLink } from "@/components/Button";
   equals at the end of every page.
 */
 const WAYS = [
-  { href: "/fundraisers", label: "Find a sponsorship", line: "Browse what organizers are offering." },
-  { href: "/list", label: "Create a fundraiser", line: "Raise money for work of your own." },
+  { href: "/fundraisers", label: "Explore projects", line: "See what each project makes possible, and what a sponsor receives." },
+  { href: "/list", label: "Make a project sponsor-ready", line: "Turn what you want to make happen into a project a sponsor can read." },
 ] as const;
 
 /**
@@ -38,7 +38,7 @@ export async function Footer({ note, ways = true }: { note?: string; ways?: bool
         {ways && (
           <div className="grid gap-8 pb-14 lg:grid-cols-[minmax(0,22ch)_1fr] lg:items-start lg:gap-16">
             <p className="heading text-[clamp(22px,2.8vw,30px)] leading-[1.15]">
-              Find a sponsorship, or create a fundraiser.
+              Sponsor a project, or make one sponsor-ready.
             </p>
             {/* One card each, so the two ways read as two choices rather than two buttons. */}
             <div className="grid gap-4 sm:grid-cols-2">

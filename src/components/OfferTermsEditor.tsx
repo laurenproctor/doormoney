@@ -114,8 +114,8 @@ export function OfferTermsEditor({
       </summary>
 
       <p className="mt-3 max-w-[62ch] text-[14.5px] text-muted">
-        What a sponsor reads before they pay. None of it is required to save, and nothing is filled in for you. Leave blank anything
-        you have not settled: a blank field promises nothing.
+        Exactly what the sponsor receives, as they read it before they pay. None of it is required to save, and nothing is filled in
+        for you. Leave blank anything you have not settled: a blank field promises nothing.
       </p>
 
       {locked && (

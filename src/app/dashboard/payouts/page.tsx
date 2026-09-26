@@ -118,7 +118,7 @@ export default async function MoneyPage({ searchParams }: Props) {
                 ? "The Stripe account exists but is missing something, usually a bank account or an ID check. Pick up where it left off."
                 : configured
                   ? `A few minutes with Stripe: a bank account, a name, and an ID check. You keep ${100 - SITE.feePercent}% of every sponsorship.`
-                  : "Payout setup is unavailable right now. You can still set up fundraisers and prices. Tell Door Money if it stays that way."}
+                  : "Payout setup is unavailable right now. You can still write fundraisers and define sponsorship options. Tell Door Money if it stays that way."}
           </p>
           <div>
             {state !== "on" ? (
@@ -153,7 +153,7 @@ export default async function MoneyPage({ searchParams }: Props) {
       >
         {sponsorships.rows.length === 0 ? (
           <p className="text-[15px] leading-[1.6] text-muted">
-            Nothing has been raised yet. A fundraiser is how a sponsor pays you in the first place.
+            Nothing has been raised yet. A sponsor pays through a published fundraiser, so a sponsor-ready project comes first.
           </p>
         ) : (
           /* More columns than a phone has room for, so the table scrolls inside its own frame. */

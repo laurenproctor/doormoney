@@ -14,8 +14,8 @@ import { runUrl } from "@/lib/urls";
   the remaining refunds were owed. This is the record: one row in financial_operations per refund,
   queued first and worked second, so a crash costs an attempt rather than an obligation.
 
-  Three things reach it. The two places an obligation is born (a cancelled fundraiser, a declined
-  logo) queue and then attempt immediately, so the common case is still instant. The daily job
+  Three things reach it. The two places an obligation is born (a cancelled fundraiser, declined
+  sponsor materials) queue and then attempt immediately, so the common case is still instant. The daily job
   works whatever is still owed, frees anything a dead worker is still holding, and sweeps for
   obligations that were never written down at all, which is what makes a crash between marking a
   fundraiser cancelled and queueing its refunds survivable.
@@ -186,8 +186,8 @@ export async function sweepOwed(sb: Admin) {
     for (const row of (backings ?? []) as Owed[]) found.push({ source: "backings", id: row.id, reason: "run_cancelled" });
   }
 
-  // decideMark writes the decline before it queues, so the same gap exists there: a logo refused
-  // with the patron's money still held is a refund owed, whatever happened to the request.
+  // decideMark writes the decline before it queues, so the same gap exists there: materials refused
+  // with the sponsor's money still held is a refund owed, whatever happened to the request.
   const { data: declined } = await sb.from("purchases").select("id").eq("mark_status", "declined").eq("payment_status", "held").eq("refunded_cents", 0);
   for (const row of (declined ?? []) as Owed[]) found.push({ source: "purchases", id: row.id, reason: "mark_declined" });
 
@@ -313,7 +313,7 @@ async function notifyRefunded(sb: Admin, source: "purchases" | "backings", id: s
     const b = data as unknown as BackingMail | null;
     to = b?.patrons?.contact_email ?? null;
     if (!b || !to) return false;
-    // A backing carries no logo, so a cancelled fundraiser is the only way one is refunded.
+    // A backing carries no sponsor materials, so a cancelled fundraiser is the only way one is refunded.
     mail = cancellationNotice({
       to,
       patronName: b.display_name,

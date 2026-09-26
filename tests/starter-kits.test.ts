@@ -104,7 +104,12 @@ test("the starting kits are the ones asked for, under the registry's category ke
   assert.deepEqual(keysOf(starterKitsForCategory("hospitality")), [
     "sponsored_martini_cart", "sponsored_table_plaque", "chef_residency", "dinner_series", "community_meal_program", "sponsored_restaurant_space",
   ]);
-  assert.equal(STARTER_KITS.length, 19, "and no others");
+  assert.deepEqual(keysOf(starterKitsForCategory("digital_workers")), ["start_independent_project", "build_digital_product", "publish_independent_research"]);
+  for (const key of ["start_independent_project", "build_digital_product"]) {
+    assert.ok(starterKit(key)?.suggestedOpportunityKeys.includes("project_page_credit"), key);
+  }
+  assert.deepEqual(starterKit("publish_independent_research")?.suggestedOpportunityKeys, ["monthly_email_signature"]);
+  assert.equal(STARTER_KITS.length, 22, "and no others");
 });
 
 test("every kit has a stable unique key, a version, a category and words", () => {
@@ -133,14 +138,14 @@ test("a kit is looked up by key, and an unknown key is null and never a default"
 // ---------------------------------------------------------------
 
 test("a category lists its own kits and nobody else's", () => {
-  for (const category of [...LAUNCH, "hospitality"]) {
+  for (const category of [...LAUNCH, "hospitality", "digital_workers"]) {
     const kits = starterKitsForCategory(category);
     assert.ok(kits.length > 0, category);
     assert.ok(kits.every((k) => k.categoryKey === category), category);
   }
   assert.deepEqual(starterKitsForCategory("dance"), [], "a category with no kits has none, and borrows none");
   assert.deepEqual(starterKitsForCategory(""), []);
-  assert.equal(STARTER_KITS.length, [...LAUNCH, "hospitality"].reduce((n, c) => n + starterKitsForCategory(c).length, 0), "no kit sits outside these");
+  assert.equal(STARTER_KITS.length, [...LAUNCH, "hospitality", "digital_workers"].reduce((n, c) => n + starterKitsForCategory(c).length, 0), "no kit sits outside these");
 });
 
 test("a kit fits its own category only", () => {
@@ -159,6 +164,8 @@ test("enabled kits and draft-only kits are separate lists", () => {
   assert.deepEqual(keysOf(enabledStarterKits("film")), ["short_film", "documentary", "screening_series"]);
   assert.deepEqual(enabledStarterKits("hospitality"), []);
   assert.deepEqual(keysOf(draftOnlyStarterKits("hospitality")), keysOf(starterKitsForCategory("hospitality")));
+  assert.deepEqual(enabledStarterKits("digital_workers"), []);
+  assert.deepEqual(keysOf(draftOnlyStarterKits("digital_workers")), keysOf(starterKitsForCategory("digital_workers")));
   assert.deepEqual(draftOnlyStarterKits("music"), []);
 });
 
@@ -208,17 +215,17 @@ test("the registry decides availability, and this file can only be stricter", ()
   assert.equal(starterKitAvailability(season, []), "unavailable");
 });
 
-test("a picker shows the registry's categories, in its order and under its names, with hospitality marked draft only", () => {
+test("a picker shows the registry's categories, with new categories marked draft only", () => {
   const groups = starterKitGroups(REGISTRY);
-  assert.deepEqual(groups.map((g) => g.category.key), [...LAUNCH, "hospitality"]);
-  assert.deepEqual(groups.map((g) => g.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality"]);
+  assert.deepEqual(groups.map((g) => g.category.key), [...LAUNCH, "hospitality", "digital_workers"]);
+  assert.deepEqual(groups.map((g) => g.label), ["Music", "Sports teams", "Film", "Theater", "Restaurants & hospitality", "Digital workers"]);
   assert.equal(groups.some((g) => g.category.key === "other"), false, "Other has no kits, so it draws no group: an example there would be an invented promise");
   assert.deepEqual(starterKitsForCategory("other"), []);
-  for (const g of groups) assert.ok(g.kits.every((k) => k.availability === (g.category.key === "hospitality" ? "draft_only" : "publishable")), g.category.key);
-  assert.equal(groups.flatMap((g) => g.kits).length, 19);
+  for (const g of groups) assert.ok(g.kits.every((k) => k.availability === (LAUNCH.includes(g.category.key) ? "publishable" : "draft_only")), g.category.key);
+  assert.equal(groups.flatMap((g) => g.kits).length, 22);
 
   const withDance = starterKitGroups([...REGISTRY, { key: "dance", label: "Dance", detail_keys: [], draft_enabled: true, publish_enabled: false }]);
-  assert.deepEqual(withDance.map((g) => g.category.key), [...LAUNCH, "hospitality"], "a category with no kits draws no empty group");
+  assert.deepEqual(withDance.map((g) => g.category.key), [...LAUNCH, "hospitality", "digital_workers"], "a category with no kits draws no empty group");
 });
 
 // ---------------------------------------------------------------
