@@ -101,6 +101,8 @@ export async function addVideoEmbed(form: FormData) {
   const { error } = await sb.from("project_update_media").insert({ update_id: id, kind: "embed", provider, video_id: videoId,
     caption: field(form, "caption", 500), position });
   if (error) redirect(`${desk(entry.run_id)}&edit=${id}&error=save`);
+  const project = await projectById(entry.run_id, user.id);
+  if (project) revalidatePath(`${projectUpdatesPath(project.act.slug, project.slug)}/${id}`);
   revalidatePath(`/dashboard/runs/${entry.run_id}`);
   redirect(`${desk(entry.run_id)}&edit=${id}`);
 }
@@ -116,6 +118,8 @@ export async function removeProjectMedia(form: FormData) {
     await sb.from("project_update_media").delete().eq("id", mediaId).eq("update_id", id);
     if (data.object_path) await sb.storage.from("project-updates").remove([data.object_path]);
   }
+  const project = await projectById(entry.run_id, user.id);
+  if (project) revalidatePath(`${projectUpdatesPath(project.act.slug, project.slug)}/${id}`);
   revalidatePath(`/dashboard/runs/${entry.run_id}`);
   redirect(`${desk(entry.run_id)}&edit=${id}`);
 }
