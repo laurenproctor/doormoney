@@ -648,3 +648,20 @@ email and record wording outside music's own branches. Decision 1's music taglin
 surfaces. Nothing in this decision changes a schema, a route, a redirect, a payment, a permission
 or the legal pages; wording on the legal pages that now conflicts with this positioning is listed
 for counsel rather than rewritten.
+
+## Decision 22 — Project Updates and canceled project history (2026-09-28)
+
+An organizer can publish journal updates belonging to a specific fundraiser. The organizer's
+public profile also has a cross-project Project Updates log. Every canceled fundraiser remains
+on that profile as a factual status entry and has a read-only archive, regardless of whether the
+organizer posted or later unpublished an update. The entry states the status and recorded date
+when known; it does not label a person unreliable or claim every sponsor was refunded.
+
+Images, uploaded video and validated video links may accompany an update. An approved placement
+or public buyer name does not grant permission to recognize a sponsor in new journal content:
+the sponsor approves the particular name and optional approved logo and can withdraw approval.
+Journal content cannot amend the purchased promise or serve as verified delivery evidence.
+Following a project for email is a separate opt-in. Comments and likes are out of scope.
+
+The implementation on `feat/project-updates-journal` is not a deployed feature until its
+migration, browser flows, media settings and email delivery are verified.

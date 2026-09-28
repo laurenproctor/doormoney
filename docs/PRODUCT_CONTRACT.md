@@ -115,6 +115,31 @@ Phase 4 captures an immutable purchased-offer snapshot, including the applicable
 - Widgets must identify the intended fundraiser through rendering, payment creation, webhook fulfillment, return handling, and the final record. Never silently switch a new exact-fundraiser widget to another fundraiser. Existing profile-based snippets need a documented compatibility path.
 - Preserve idempotency, amount validation, auction offer-version checks, authorization, private patron data, and read-only public views.
 
+## Project Updates (implementation branch, 2026-09-28)
+
+Each published fundraiser can carry organizer-authored journal entries. Drafts are private;
+published entries appear on the fundraiser, on their own stable pages, and in the organizer's
+cross-project Project Updates log. The editor supports multiple images, uploaded video and
+validated YouTube/Vimeo links. External players load only after the reader chooses to play.
+Journal media uses private storage and short-lived signed reads; a URL issued before an entry is
+unpublished may continue to work briefly. Videos are limited to supported browser formats and
+the configured bucket's 50 MB per-file cap; larger videos use an embed.
+
+Canceled fundraisers remain as factual status entries on the organizer profile, even without a
+published entry, and have read-only archived project pages. `runs.status` and `cancelled_at`
+are authoritative. An organizer can unpublish an editorial entry but cannot edit away the
+cancellation status. Do not label an organizer unreliable or infer individual refund outcomes.
+Never-published drafts stay private. Legal account erasure requires a separately reviewed path.
+
+Sponsor recognition in an update requires a separate approval for that exact proposed name and
+optional previously approved mark. A sponsor can withdraw it. Anonymous bids are ineligible.
+Journal content does not alter purchases, evidence, deliverables, release or refund rights.
+Following one project is a separate signed-in opt-in for update email, with its own unsubscribe;
+there are no comments or likes.
+
+This section describes code on the feature branch, not a deployed capability. Migration,
+browser/media and email delivery verification remain release gates.
+
 ## Release policy boundary
 
 Friday payouts and logo approval describe the existing music implementation. They do not establish a release policy for film, sports, theater, restaurants and hospitality, or Other. Approval of sponsor materials and fulfillment of the purchased visibility are separate events.

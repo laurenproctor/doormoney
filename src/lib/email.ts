@@ -3,7 +3,7 @@
 
 import { SITE } from "@/lib/site";
 
-export type Mail = { to: string; subject: string; text: string; html: string; replyTo?: string };
+export type Mail = { to: string; subject: string; text: string; html: string; replyTo?: string; idempotencyKey?: string };
 
 /**
  * Where the automated financial alarms go: a failed transfer, a patron flag, a ledger event that
@@ -28,7 +28,8 @@ export async function sendEmail(mail: Mail): Promise<{ sent: boolean; reason?: s
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json",
+        ...(mail.idempotencyKey ? { "Idempotency-Key": mail.idempotencyKey } : {}) },
       body: JSON.stringify({
         from: process.env.EMAIL_FROM,
         to: [mail.to],

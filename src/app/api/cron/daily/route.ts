@@ -5,6 +5,7 @@ import { runRefundJob } from "@/lib/outbox";
 import { runEventJob } from "@/lib/stripeEvents";
 import { runWeeklyMail } from "@/lib/weekly";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { runProjectUpdateMail } from "@/lib/project-update-mail";
 
 /**
  * The daily job. Two things live here because this project's plan allows two cron jobs and the
@@ -78,7 +79,10 @@ export async function GET(req: Request) {
     } else {
       attemptsPruned = typeof pruned.data === "number" ? pruned.data : 0;
     }
-    return NextResponse.json({ auctions, mail, marks, refunds, events, attemptsPruned });
+    let projectUpdates;
+    try { projectUpdates = await runProjectUpdateMail(sb); }
+    catch (e) { console.error("project update mail failed", e instanceof Error ? e.message : e); projectUpdates = { error: "project update mail failed" }; }
+    return NextResponse.json({ auctions, mail, marks, refunds, events, attemptsPruned, projectUpdates });
   } catch (e) {
     console.error("daily job failed", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "daily job failed" }, { status: 500 });

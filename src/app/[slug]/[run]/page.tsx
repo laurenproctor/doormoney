@@ -8,6 +8,8 @@ import { normalizeUsername } from "@/lib/username";
 import { lotPaidNotice } from "@/lib/payment-returns";
 import { runPath, runSlugFromSegment } from "@/lib/urls";
 import { BoardView } from "./BoardView";
+import { ProjectArchive } from "@/components/ProjectArchive";
+import { publicProject, publishedUpdates } from "@/lib/project-updates";
 
 /*
   One fundraiser's page: /gutter-hymns/support-europe-tour.
@@ -21,6 +23,8 @@ type Props = { params: Promise<{ slug: string; run: string }>; searchParams: Pro
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, run: segment } = await params;
   const runSlug = runSlugFromSegment(segment);
+  const project = runSlug ? await publicProject(slug, runSlug) : null;
+  if (project?.status === "cancelled") return { title: `${project.title} — Canceled`, description: `${project.title} was canceled. View the archived project and its updates.` };
   const board = runSlug ? await getBoard(slug, runSlug) : null;
   if (!board || !board.run) return { title: "Fundraiser" };
   // Music keeps its line, count and city included, because a music fundraiser always has both.
@@ -44,6 +48,12 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
   const runSlug = runSlugFromSegment(segment);
   if (!runSlug) notFound();
 
+  const project = await publicProject(slug, runSlug);
+  if (project?.status === "cancelled") {
+    const updates = await publishedUpdates(project.id, 1, 3);
+    return <ProjectArchive project={project} updates={updates} />;
+  }
+
   const board = await getBoard(slug, runSlug);
   if (!board || !board.run) {
     // An address that moved keeps its old word pointing here. Retired words are never
@@ -61,5 +71,6 @@ export default async function RunBoardPage({ params, searchParams }: Props) {
   const paid = await lotPaidNotice(typeof sp.paid === "string" ? sp.paid : undefined, board.run.id);
 
   const labels = await getCategoryLabels();
-  return <BoardView board={board} slug={slug} paid={paid} categoryName={labels[board.run.categoryKey]} />;
+  const updates = board.run.id ? await publishedUpdates(board.run.id, 1, 3) : [];
+  return <BoardView board={board} slug={slug} paid={paid} categoryName={labels[board.run.categoryKey]} updates={updates} />;
 }

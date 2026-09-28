@@ -10,7 +10,7 @@
  */
 import type { DeskTab } from "@/components/desk";
 
-export const FUNDRAISER_TABS = ["overview", "options", "delivery", "dates", "details"] as const;
+export const FUNDRAISER_TABS = ["overview", "options", "delivery", "dates", "details", "updates"] as const;
 export type FundraiserTab = (typeof FUNDRAISER_TABS)[number];
 
 export function isFundraiserTab(value: unknown): value is FundraiserTab {
@@ -58,6 +58,7 @@ export function fundraiserTabs(counts: TabCounts, href: (tab: FundraiserTab) => 
     tabs.push({ key: "dates", href: href("dates"), label: counts.datesLabel, count: counts.dates || null });
   }
   tabs.push({ key: "details", href: href("details"), label: "Details" });
+  tabs.push({ key: "updates", href: href("updates"), label: "Updates" });
   return tabs;
 }
 

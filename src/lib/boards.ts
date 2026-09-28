@@ -97,7 +97,7 @@ export async function getBoardByRunId(slug: string, runId: string): Promise<Boar
 }
 
 export type ActRun = { slug: string; title: string; categoryKey: string; kind: string | null; startsOn: string | null; endsOn: string | null; showCount: number | null; status: string };
-export type ActProfile = { act: Board["act"]; running: ActRun[]; past: ActRun[] };
+export type ActProfile = { actId: string | null; act: Board["act"]; running: ActRun[]; past: ActRun[] };
 
 /**
  * An act's own page: who they are, what they are raising for now, and what they have already run.
@@ -108,7 +108,7 @@ export async function getActProfile(slug: string): Promise<ActProfile | null> {
     const sample = SAMPLE_BOARDS[slug];
     if (!sample) return null;
     const r = sample.run;
-    return { act: sample.act, running: r ? [{ slug: r.slug, title: r.title, categoryKey: r.categoryKey, kind: r.kind, startsOn: r.startsOn, endsOn: r.endsOn, showCount: r.showCount, status: "open" }] : [], past: [] };
+    return { actId: null, act: sample.act, running: r ? [{ slug: r.slug, title: r.title, categoryKey: r.categoryKey, kind: r.kind, startsOn: r.startsOn, endsOn: r.endsOn, showCount: r.showCount, status: "open" }] : [], past: [] };
   }
 
   const sb = await supabaseServer();
@@ -119,7 +119,7 @@ export async function getActProfile(slug: string): Promise<ActProfile | null> {
     .from("runs")
     .select("slug,title,category_key,kind,starts_on,ends_on,show_count,status")
     .eq("act_id", (actRow as ActRow).id)
-    .in("status", ["open", "live", "closed"])
+    .in("status", ["open", "live", "closed", "cancelled"])
     .order("starts_on", { ascending: false });
 
   type Row = { slug: string; title: string; category_key: string; kind: string | null; starts_on: string | null; ends_on: string | null; show_count: number | null; status: string };
@@ -137,9 +137,10 @@ export async function getActProfile(slug: string): Promise<ActProfile | null> {
   if (!actRow.type && runs.length === 0) return null;
 
   return {
+    actId: (actRow as ActRow).id,
     act: shapeAct(actRow as ActRow),
-    running: runs.filter((r) => r.status !== "closed"),
-    past: runs.filter((r) => r.status === "closed"),
+    running: runs.filter((r) => r.status === "open" || r.status === "live"),
+    past: runs.filter((r) => r.status === "closed" || r.status === "cancelled"),
   };
 }
 
@@ -328,4 +329,3 @@ export function boardAsking(b: Board) {
 export function openSpots(b: Board) {
   return b.lots.filter((l) => l.status === "open").length;
 }
-
