@@ -9,6 +9,7 @@ import { HeroArt } from "@/components/HeroArt";
 import { NewsletterCTA } from "@/components/Newsletter";
 import { Theme, themeFor } from "@/components/Theme";
 import { CategoryBadge } from "@/components/domain";
+import { ProjectUpdateLog } from "@/components/ProjectUpdateLog";
 import { getActProfile, type ActRun } from "@/lib/boards";
 import { getCategoryLabels } from "@/lib/category-registry";
 import { categoryWords } from "@/lib/category-words";
@@ -18,6 +19,7 @@ import { instagramHandle, instagramUrl, safeWebsite, websiteLabel } from "@/lib/
 import { currentSlugFor } from "@/lib/patronprofile";
 import { actPath, runPath } from "@/lib/urls";
 import { normalizeUsername } from "@/lib/username";
+import { profileUpdateLog } from "@/lib/project-updates";
 
 /*
   An organizer's own page: /gutter-hymns.
@@ -72,6 +74,7 @@ function RunRow({ actSlug, run, live, categoryName }: { actSlug: string; run: Ac
           </h3>
           <p className="caps mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px] text-muted">
             <CategoryBadge category={{ key: run.categoryKey, label: categoryName }} />
+            {run.status === "cancelled" && <span>Canceled · archived project</span>}
             {facts && <span>{facts}</span>}
           </p>
         </div>
@@ -97,6 +100,7 @@ export default async function ActPage({ params }: Props) {
   }
 
   const { act, running, past } = profile;
+  const updates = profile.actId ? await profileUpdateLog(profile.actId, slug, 1, 5) : [];
   const labels = await getCategoryLabels();
   const categoryKeys = [...new Set([...running, ...past].map((r) => r.categoryKey))];
   const eyebrow = (act.type && MUSIC_EYEBROW[act.type]) || (categoryKeys.length === 1 ? categoryWords(categoryKeys[0]).organizerTitle : "Organizer");
@@ -181,6 +185,12 @@ export default async function ActPage({ params }: Props) {
             </ul>
           </Section>
         )}
+
+        <Section className="border-t border-line">
+          <SectionHead eyebrow="From these projects">Project Updates</SectionHead>
+          {updates.length ? <ProjectUpdateLog items={updates} /> : <p className="mt-8 text-[16px] text-muted">No project updates yet.</p>}
+          {updates.length === 5 && <p className="mt-6"><Link className="underline underline-offset-4" href={`/${slug}/updates`}>All project updates →</Link></p>}
+        </Section>
 
         <NewsletterCTA source={`act:${slug}`} eyebrow="The next fundraiser" />
       </main>

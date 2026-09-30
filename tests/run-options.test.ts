@@ -101,14 +101,14 @@ test("the tabs a fundraiser has depend on the fundraiser, and only waiting is co
     { options: 9, deliveryWaiting: 2, hasDelivery: true, dates: 18, datesLabel: "Shows" },
     href,
   );
-  assert.deepEqual(full.map((t) => t.key), ["overview", "options", "delivery", "dates", "details"]);
+  assert.deepEqual(full.map((t) => t.key), ["overview", "options", "delivery", "dates", "details", "updates"]);
   assert.equal(full.find((t) => t.key === "delivery")?.tone, "attention");
   assert.equal(full.find((t) => t.key === "options")?.tone, undefined);
 
   // A category with no dated events has no dates tab, and a fundraiser with no sponsorship has
   // nothing to deliver against.
   const bare = fundraiserTabs({ options: 0, deliveryWaiting: 0, hasDelivery: false, dates: null, datesLabel: "Shows" }, href);
-  assert.deepEqual(bare.map((t) => t.key), ["overview", "options", "details"]);
+  assert.deepEqual(bare.map((t) => t.key), ["overview", "options", "details", "updates"]);
   assert.equal(bare[1].count, null, "and a count of nothing draws no pill");
 
   // A tab that is not there falls back to Overview rather than to an empty page.

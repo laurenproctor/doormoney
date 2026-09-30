@@ -21,6 +21,8 @@ import type { Board } from "@/lib/sample";
 import { offerTermsFingerprint, offerTermsView, storedOfferTerms } from "@/lib/offer-terms";
 import { BoardLots, type LotView } from "./BoardLots";
 import { BACKERS_DISCLAIMER, RosieBackers } from "./backers";
+import { ProjectUpdateLog } from "@/components/ProjectUpdateLog";
+import { projectUpdatePath, projectUpdatesPath, type ProjectUpdate } from "@/lib/project-updates";
 
 /** "an 18-show fall tour", "a 32-gig season". */
 const article = (n: number) => (/^(8|11$|18$|8\d)/.test(String(n)) ? "an" : "a");
@@ -46,11 +48,13 @@ export function BoardView({
   paid = null,
   draft = null,
   categoryName,
+  updates = [],
 }: {
   board: Board;
   slug: string;
   /** The category's public name, from the registry. With none, the badge tidies the key. */
   categoryName?: string;
+  updates?: ProjectUpdate[];
   paid?: PaidNotice | null;
   /** The banner for a private preview: where to go back to, and whether it is already up. */
   draft?: { backHref: string; published: boolean } | null;
@@ -285,6 +289,15 @@ export function BoardView({
             />
           </div>
         </div>
+
+        {!draft && <section className="border-t border-line py-16"><div className="mx-auto max-w-[1120px] px-7">
+          <Eyebrow className="mb-5">From the organizer</Eyebrow>
+          <h2 className="heading text-[clamp(30px,4vw,46px)]">Project Updates</h2>
+          {updates.length ? <ProjectUpdateLog items={updates.map((u) => ({ kind: "update", id: u.id, date: u.publishedAt!, displayDate: u.publishedAt,
+            project: { slug: run.slug, title: run.title }, title: u.title, excerpt: u.excerpt,
+            href: projectUpdatePath(slug, run.slug, u.id) }))} /> : <p className="mt-5 text-[16px] text-muted">No updates have been published yet.</p>}
+          <Link href={projectUpdatesPath(slug, run.slug)} className="mt-6 inline-block text-[16px] underline underline-offset-4">Read the journal →</Link>
+        </div></section>}
 
         <NewsletterCTA source={`board:${board.act.slug}`} eyebrow="The next fundraiser" />
       </main>

@@ -101,6 +101,11 @@ const SECTIONS: LegalSection[] = [
           those. The banner at the bottom of the page is a notice, not a request: it says what the site sets and links here.
           Accepting it sets one more cookie, so the banner stays away for a year.
         </p>
+        <p>
+          Project updates may include YouTube or Vimeo videos. Their players load only when you choose to play one;
+          the provider may then receive your IP address and set its own cookies under its policy. Door Money does not
+          load those players just because you open an update.
+        </p>
       </>
     ),
   },

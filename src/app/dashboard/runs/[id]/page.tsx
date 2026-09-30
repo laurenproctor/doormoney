@@ -11,6 +11,7 @@ import { RunForm, type RunInput } from "@/components/RunForm";
 import { ShowsPanel, type ShowRow } from "@/components/ShowsPanel";
 import { SponsorshipBuilder, type NoTemplatesReason } from "@/components/SponsorshipBuilder";
 import { VerificationEditor } from "@/components/VerificationEditor";
+import { ProjectUpdatesDesk } from "@/components/ProjectUpdatesDesk";
 import { themeFor } from "@/components/Theme";
 import { Copy, Launch, Warning } from "@/components/dashboard/icons";
 import { MaterialsThumb, materialsDetail } from "@/components/dashboard/MaterialsThumb";
@@ -320,6 +321,11 @@ export default async function RunPage({ params, searchParams }: Props) {
       )}
 
       <Tabs label="Fundraiser sections" tabs={tabs} current={tab} className="mb-6" />
+
+      {tab === "updates" && <ProjectUpdatesDesk runId={run.id} slug={act.slug} runSlug={run.slug}
+        mediaAllowed={!(categoryKey === "sports" && (run.category_details as Record<string, string> | null)?.level === "youth")}
+        editId={typeof sp.edit === "string" ? sp.edit : undefined}
+        error={typeof sp.error === "string" ? sp.error : undefined} />}
 
       {view?.failed && (
         <Card className="mb-5">
