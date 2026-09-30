@@ -52,10 +52,22 @@ export async function decideProjectRecognition(form: FormData) {
     .eq("id", id).eq("sponsor_id", user.id).maybeSingle();
   if (!data) redirect("/dashboard");
   const intent = String(form.get("intent") ?? "");
-  const values = intent === "approve" ? { approved_at: new Date().toISOString(), withdrawn_at: null }
-    : { approved_at: null, withdrawn_at: new Date().toISOString() };
-  const { error } = await sb.from("project_update_recognition").update(values).eq("id", id).eq("sponsor_id", user.id);
-  if (error) redirect(`/project-recognition/${id}?error=save`);
+  if (intent === "approve") {
+    const version = String(form.get("version") ?? "");
+    if (!/^\d+$/.test(version) || !Number.isSafeInteger(Number(version)))
+      redirect(`/project-recognition/${id}?error=changed`);
+    // Compare the version the sponsor actually saw under the same database lock
+    // used by editorial/media changes. An old tab must not restore invalid consent.
+    const { data: approved, error } = await sb.rpc("approve_project_recognition", {
+      p_recognition_id: id, p_sponsor_id: user.id, p_expected_version: Number(version),
+    });
+    if (error) redirect(`/project-recognition/${id}?error=save`);
+    if (!approved) redirect(`/project-recognition/${id}?error=changed`);
+  } else {
+    const { error } = await sb.from("project_update_recognition")
+      .update({ approved_at: null, withdrawn_at: new Date().toISOString() }).eq("id", id).eq("sponsor_id", user.id);
+    if (error) redirect(`/project-recognition/${id}?error=save`);
+  }
   const runId = (data.project_updates as unknown as { run_id: string }).run_id;
   const { data: run } = await sb.from("runs").select("slug,acts!inner(slug)").eq("id", runId).maybeSingle();
   if (run) revalidatePath(projectUpdatePath((run.acts as unknown as { slug: string }).slug, run.slug, data.update_id));

@@ -93,4 +93,7 @@ done
 say "Running concurrency_test.sh"
 CONTAINER="$NAME" DB="$DB" bash "$ROOT/supabase/tests/concurrency_test.sh"
 
+say "Running project_updates_concurrency_test.py"
+python3 "$ROOT/supabase/tests/project_updates_concurrency_test.py" --container "$NAME" --database "$DB"
+
 say "All $total_ok assertions passed"

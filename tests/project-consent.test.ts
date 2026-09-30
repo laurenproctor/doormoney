@@ -28,6 +28,11 @@ const sb = { from(table: string) {
   }
   chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: expected.data, error: expected.error }).then(resolve);
   return chain;
+}, async rpc(name: string, args: Record<string, unknown>) {
+  const expected = replies.shift();
+  assert.ok(expected, `Unexpected RPC ${name}`); assert.equal(expected.table, name);
+  calls.push({ table: name, steps: [["rpc", [args]]] });
+  return { data: expected.data, error: expected.error };
 } };
 mock.module("next/cache", { namedExports: { revalidatePath: (path: string) => revalidated.push(path) } });
 mock.module("next/navigation", { namedExports: { redirect: (path: string) => { throw new Error(`redirect:${path}`); } } });
@@ -121,14 +126,33 @@ for (const mark of ["approved", "pending"]) test(`request snapshots consent with
   assert.equal(emails.length, 1); assert.equal(emails[0].to, "sponsor@example.test");
   assert.match(String(emails[0].text), new RegExp(`/project-recognition/${TOKEN}`));
 });
-for (const intent of ["approve", "withdraw"]) test(`${intent} is sponsor-scoped and revalidates the public update`, async () => {
-  reply("project_update_recognition", { id: TOKEN, update_id: UPDATE, project_updates: { run_id: RUN } }); reply("project_update_recognition"); reply("runs", { slug: "project", acts: { slug: "artist" } });
-  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent, sponsor_id: SPONSOR })), `/project-recognition/${TOKEN}`);
-  has(calls[0], "eq", "sponsor_id", USER); has(calls[1], "eq", "sponsor_id", USER);
-  const values = calls[1].steps.find(([m]) => m === "update")![1][0] as Record<string, unknown>;
-  assert.equal(values[intent === "approve" ? "withdrawn_at" : "approved_at"], null);
-  assert.ok(Number.isFinite(Date.parse(String(values[intent === "approve" ? "approved_at" : "withdrawn_at"]))));
+test("approval uses the viewed version and authenticated sponsor in the atomic RPC", async () => {
+  reply("project_update_recognition", { id: TOKEN, update_id: UPDATE, project_updates: { run_id: RUN } });
+  reply("approve_project_recognition", true); reply("runs", { slug: "project", acts: { slug: "artist" } });
+  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "approve", version: "7", sponsor_id: SPONSOR })), `/project-recognition/${TOKEN}`);
+  has(calls[0], "eq", "sponsor_id", USER);
+  has(calls[1], "rpc", { p_recognition_id: TOKEN, p_sponsor_id: USER, p_expected_version: 7 });
   assert.ok(revalidated.includes(`${DEST}/${UPDATE}`));
+});
+test("withdrawal remains sponsor-scoped and does not require a current version", async () => {
+  reply("project_update_recognition", { id: TOKEN, update_id: UPDATE, project_updates: { run_id: RUN } });
+  reply("project_update_recognition"); reply("runs", { slug: "project", acts: { slug: "artist" } });
+  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "withdraw", version: "old" })), `/project-recognition/${TOKEN}`);
+  has(calls[1], "eq", "sponsor_id", USER);
+  const values = calls[1].steps.find(([m]) => m === "update")![1][0] as Record<string, unknown>;
+  assert.equal(values.approved_at, null); assert.ok(Number.isFinite(Date.parse(String(values.withdrawn_at))));
+  assert.ok(revalidated.includes(`${DEST}/${UPDATE}`));
+});
+test("a stale approval reloads the proposal with an explicit changed-context error", async () => {
+  reply("project_update_recognition", { id: TOKEN, update_id: UPDATE, project_updates: { run_id: RUN } });
+  reply("approve_project_recognition", false);
+  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "approve", version: "2" })), `/project-recognition/${TOKEN}?error=changed`);
+  assert.deepEqual(revalidated, []);
+});
+for (const version of ["", "-1", "NaN", "1.5", "9007199254740992"]) test(`invalid approval version ${JSON.stringify(version)} never reaches the RPC`, async () => {
+  reply("project_update_recognition", { id: TOKEN, update_id: UPDATE, project_updates: { run_id: RUN } });
+  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "approve", version })), `/project-recognition/${TOKEN}?error=changed`);
+  assert.equal(calls.length, 1);
 });
 test("a different sponsor cannot approve another person's mention", async () => {
   reply("project_update_recognition"); await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "approve" })), "/dashboard");
@@ -150,7 +174,7 @@ test("invalid unsubscribe tokens cannot query subscriptions", async () => {
 });
 test("failed recognition decision never revalidates as approved", async () => {
   reply("project_update_recognition", { id: TOKEN, update_id: UPDATE, project_updates: { run_id: RUN } });
-  reply("project_update_recognition", null, new Error("save failed"));
-  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "approve" })), `/project-recognition/${TOKEN}?error=save`);
+  reply("approve_project_recognition", null, new Error("save failed"));
+  await redirected(() => decideProjectRecognition(form({ id: TOKEN, intent: "approve", version: "0" })), `/project-recognition/${TOKEN}?error=save`);
   assert.deepEqual(revalidated, []);
 });

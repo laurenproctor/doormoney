@@ -3,7 +3,7 @@
 -- No external storage, email, or hosted database is used; every fixture is rolled back.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(50);
+select plan(88);
 
 insert into auth.users(id,email) values
  ('e1010000-0000-4000-8000-000000000001','journal-owner@example.com'),
@@ -129,6 +129,116 @@ select is((select count(*) from project_update_recognition where id='e1010000-00
 update project_updates set published_at=null where id='e1010000-0000-4000-8000-000000000010';
 select is((select count(*) from project_update_log where id='e1010000-0000-4000-8000-000000000010'),0::bigint,'unpublishing removes entry from public log');
 select is((select count(*) from project_update_log where id='e1010000-0000-4000-8000-000000000005' and kind='cancellation'),1::bigint,'unpublishing editorial content cannot erase cancellation');
+
+-- Consent covers the whole proposed context, including edits made while unpublished.
+-- These assertions fail against the original migration: unpublishing must not become a
+-- way to recycle prior consent after changing the text or attachments.
+update project_updates set published_at=now() where id='e1010000-0000-4000-8000-000000000010';
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_updates set published_at=null where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'unpublishing alone preserves approval for unchanged context');
+update project_updates set title='Draft changed title' where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'editing an unpublished formerly approved entry clears consent');
+update project_updates set published_at=now() where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'republishing changed context does not revive old consent');
+update project_updates set published_at=null where id='e1010000-0000-4000-8000-000000000010';
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_updates set body='Changed approved draft body' where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'approved draft body change clears consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_updates set excerpt='Changed approved draft excerpt' where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'approved draft excerpt change clears consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_updates set title=title,excerpt=excerpt,body=body where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'no-op draft text save preserves consent');
+update project_updates set updated_at=now() where id='e1010000-0000-4000-8000-000000000010';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'bookkeeping-only update preserves consent');
+
+-- Pending uploads are invisible. Completion changes the proposal; completion retries do not.
+insert into project_update_media(id,update_id,kind,object_path,alt_text,caption,position) values ('e1010000-0000-4000-8000-000000000040','e1010000-0000-4000-8000-000000000010','image','22222222-2222-2222-2222-222222222222/e1010000-0000-4000-8000-000000000010/consent.jpg','Image description','Original caption',0);
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'pending upload reservation does not invalidate consent');
+update project_update_media set caption='Pending caption' where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'editing an invisible pending upload does not invalidate consent');
+update project_update_media set uploaded_at=now() where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'upload completion invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_update_media set uploaded_at=uploaded_at + interval '1 second' where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'repeated upload completion timestamp preserves consent');
+update project_update_media set caption=caption,alt_text=alt_text,position=position where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'no-op media save preserves consent');
+update project_update_media set created_at=created_at + interval '1 second' where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'media bookkeeping-only update preserves consent');
+update project_update_media set caption='Changed visible caption' where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'visible caption change invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_update_media set alt_text='Changed image description' where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'visible image description change invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_update_media set position=1 where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'visible media ordering change invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_update_media set uploaded_at=null where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'removing upload availability invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+delete from project_update_media where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is not null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'deleting invisible pending upload preserves consent');
+insert into project_update_media(id,update_id,kind,object_path,alt_text,position,uploaded_at) values ('e1010000-0000-4000-8000-000000000040','e1010000-0000-4000-8000-000000000010','image','22222222-2222-2222-2222-222222222222/e1010000-0000-4000-8000-000000000010/consent.jpg','Image description',0,now());
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'inserting an already uploaded attachment invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+delete from project_update_media where id='e1010000-0000-4000-8000-000000000040';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'deleting an uploaded attachment invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+insert into project_update_media(id,update_id,kind,provider,video_id,position) values ('e1010000-0000-4000-8000-000000000041','e1010000-0000-4000-8000-000000000010','embed','youtube','video-id',0);
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'embed insertion invalidates consent without an upload timestamp');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+update project_update_media set caption='Changed embed context' where id='e1010000-0000-4000-8000-000000000041';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'embed caption modification invalidates consent');
+update project_update_recognition set approved_at=now(),withdrawn_at=null where id='e1010000-0000-4000-8000-000000000030';
+delete from project_update_media where id='e1010000-0000-4000-8000-000000000041';
+select ok((select approved_at is null from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),'embed removal invalidates consent');
+
+-- A stale approval page cannot approve changed context, and only the server may call the RPC.
+set local role anon;
+select throws_ok($$select approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',0)$$,'42501',null,'anonymous cannot call approval RPC');
+reset role;
+set local role authenticated;
+select throws_ok($$select approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',0)$$,'42501',null,'authenticated browser cannot call approval RPC');
+reset role;
+set local role service_role;
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',(select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010')),true,'service approves the current displayed context');
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000003',(select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010')),false,'approval RPC rejects the wrong sponsor');
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',null),false,'approval RPC rejects a missing version');
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000099','e1010000-0000-4000-8000-000000000002',0),false,'approval RPC rejects a missing request');
+reset role;
+create temporary table journal_context_before as select context_version,edited_at,updated_at,
+ (select count(*) from project_update_revisions where update_id='e1010000-0000-4000-8000-000000000010') as revision_count
+ from project_updates where id='e1010000-0000-4000-8000-000000000010';
+update project_updates set body='Versioned changed text' where id='e1010000-0000-4000-8000-000000000010';
+select is((select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010'),(select context_version+1 from journal_context_before),'text change advances context version');
+set local role service_role;
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',(select context_version-1 from project_updates where id='e1010000-0000-4000-8000-000000000010')),false,'stale page cannot approve after text changed');
+select is((select approved_at from project_update_recognition where id='e1010000-0000-4000-8000-000000000030'),null::timestamptz,'rejected stale approval leaves consent cleared');
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',(select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010')),true,'fresh page may approve changed context');
+reset role;
+-- Test media bookkeeping while published, where the old broad trigger would append revisions.
+update project_updates set published_at=now() where id='e1010000-0000-4000-8000-000000000010';
+truncate journal_context_before;
+insert into journal_context_before select context_version,edited_at,updated_at,
+ (select count(*) from project_update_revisions where update_id='e1010000-0000-4000-8000-000000000010') from project_updates where id='e1010000-0000-4000-8000-000000000010';
+insert into project_update_media(id,update_id,kind,provider,video_id,position) values
+ ('e1010000-0000-4000-8000-000000000042','e1010000-0000-4000-8000-000000000010','embed','vimeo','12345',0);
+select is((select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010'),(select context_version+1 from journal_context_before),'visible media change advances context version');
+select results_eq($$select edited_at,updated_at,(select count(*) from project_update_revisions where update_id='e1010000-0000-4000-8000-000000000010') from project_updates where id='e1010000-0000-4000-8000-000000000010'$$,
+ $$select edited_at,updated_at,revision_count from journal_context_before$$,'media version bump preserves editorial timestamps and text revision count');
+set local role service_role;
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',(select context_version-1 from project_updates where id='e1010000-0000-4000-8000-000000000010')),false,'stale page cannot approve after media changed');
+select is(approve_project_recognition('e1010000-0000-4000-8000-000000000030','e1010000-0000-4000-8000-000000000002',(select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010')),true,'fresh page may approve changed media context');
+reset role;
+truncate journal_context_before;
+insert into journal_context_before select context_version,edited_at,updated_at,
+ (select count(*) from project_update_revisions where update_id='e1010000-0000-4000-8000-000000000010') from project_updates where id='e1010000-0000-4000-8000-000000000010';
+update project_update_media set caption=caption where id='e1010000-0000-4000-8000-000000000042';
+select is((select context_version from project_updates where id='e1010000-0000-4000-8000-000000000010'),(select context_version from journal_context_before),'media no-op preserves context version');
 
 -- This is retention, not a complete legal erasure workflow. A separately reviewed path is required.
 select throws_ok($$delete from project_updates where id='e1010000-0000-4000-8000-000000000010'$$,'23503',null,'revision history prevents accidental journal deletion');
