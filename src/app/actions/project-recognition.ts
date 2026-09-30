@@ -26,9 +26,9 @@ export async function requestProjectRecognition(form: FormData) {
   const patron = purchase?.patrons as unknown as { profile_id: string | null } | undefined;
   if (!purchase || !patron?.profile_id || patron.profile_id === user.id) redirect(`${back}&error=recognition`);
   // A bid won anonymously does not become a named journal acknowledgment.
-  const { data: anonymous } = await sb.from("bids").select("id")
+  const { data: anonymous, error: anonymityError } = await sb.from("bids").select("id")
     .eq("lot_id", purchase.lot_id).eq("patron_id", purchase.patron_id).eq("anonymous", true).limit(1);
-  if (anonymous?.length) redirect(`${back}&error=recognition`);
+  if (anonymityError || anonymous?.length) redirect(`${back}&error=recognition`);
   const logoUrl = form.get("logo") === "yes" && purchase.mark_status === "approved" ? purchase.mark_url : null;
   const { data, error } = await sb.from("project_update_recognition").insert({ update_id: updateId,
     purchase_id: purchaseId, sponsor_id: patron.profile_id, display_name: name, logo_url: logoUrl })

@@ -15,35 +15,43 @@ export async function runProjectUpdateMail(sb: SupabaseClient) {
   for (const update of updates ?? []) {
     const run = update.runs as unknown as { slug: string; status: string; acts: { slug: string } };
     if (!["open", "live", "closed", "cancelled"].includes(run.status)) continue;
-    const { data: follows } = await sb.from("project_update_follows")
+    const { data: follows, error: followsError } = await sb.from("project_update_follows")
       .select("profile_id,created_at").eq("run_id", update.run_id).lte("created_at", update.published_at).limit(1000);
+    if (followsError) throw followsError;
     if (!follows?.length) continue;
-    await sb.from("project_update_mail").upsert(follows.map((f) => ({ update_id: update.id, profile_id: f.profile_id })),
+    const { error: enqueueError } = await sb.from("project_update_mail").upsert(follows.map((f) => ({ update_id: update.id, profile_id: f.profile_id })),
       { onConflict: "update_id,profile_id", ignoreDuplicates: true });
+    if (enqueueError) throw enqueueError;
   }
-  const { data: pending } = await sb.from("project_update_mail").select("id,update_id,profile_id")
+  const { data: pending, error: pendingError } = await sb.from("project_update_mail").select("id,update_id,profile_id")
     .is("sent_at", null).order("id").limit(10);
+  if (pendingError) throw pendingError;
   let sent = 0;
   for (const row of pending ?? []) {
     const stale = new Date(Date.now() - 10 * 60000).toISOString();
-    const { data: claimed } = await sb.from("project_update_mail").update({ claimed_at: new Date().toISOString() })
+    const { data: claimed, error: claimError } = await sb.from("project_update_mail").update({ claimed_at: new Date().toISOString() })
       .eq("id", row.id).is("sent_at", null).or(`claimed_at.is.null,claimed_at.lt.${stale}`)
       .select("id").maybeSingle();
+    if (claimError) throw claimError;
     if (!claimed) continue;
-    const { data: update } = await sb.from("project_updates")
+    const { data: update, error: updateError } = await sb.from("project_updates")
       .select("id,run_id,published_at,runs!inner(slug,status,acts!inner(slug))")
       .eq("id", row.update_id).maybeSingle();
-    const [{ data: follow }, { data: person }] = await Promise.all([
+    if (updateError) throw updateError;
+    const [{ data: follow, error: followError }, { data: person, error: personError }] = await Promise.all([
       sb.from("project_update_follows").select("unsubscribe_token,created_at")
         .eq("profile_id", row.profile_id).eq("run_id", update?.run_id ?? ""),
       sb.from("profiles").select("email").eq("id", row.profile_id).maybeSingle(),
     ]);
+    if (followError) throw followError;
+    if (personError) throw personError;
     const run = update?.runs as unknown as { slug: string; status: string; acts: { slug: string } } | undefined;
     const subscription = follow?.find((f) => f.created_at <= (update?.published_at ?? ""));
-    // Keep pending if the update is unpublished; republishing can notify the original followers.
+    // Discard ineligible deliveries; a republished update can enqueue its followers again.
     if (!update?.published_at || !run || !["open", "live", "closed", "cancelled"].includes(run.status)
       || !subscription || !person?.email) {
-      await sb.from("project_update_mail").delete().eq("id", row.id);
+      const { error: deleteError } = await sb.from("project_update_mail").delete().eq("id", row.id);
+      if (deleteError) throw deleteError;
       continue;
     }
     const url = `${SITE.url}${projectUpdatePath(run.acts.slug, run.slug, update.id)}`;
@@ -52,7 +60,11 @@ export async function runProjectUpdateMail(sb: SupabaseClient) {
       text: `A project you follow has a new update. Read it: ${url}\n\nStop emails for this project: ${unsubscribe}`,
       html: `<p>A project you follow has a new update.</p><p><a href="${url}">Read the update</a></p><p><a href="${unsubscribe}">Stop emails for this project</a></p>`,
       idempotencyKey: `project-update-${row.id}` });
-    if (result.sent) { await sb.from("project_update_mail").update({ sent_at: new Date().toISOString() }).eq("id", row.id); sent++; }
+    if (result.sent) {
+      const { error: sentError } = await sb.from("project_update_mail").update({ sent_at: new Date().toISOString() }).eq("id", row.id);
+      if (sentError) throw sentError;
+      sent++;
+    }
   }
   return { sent };
 }

@@ -115,7 +115,8 @@ export async function removeProjectMedia(form: FormData) {
   const sb = supabaseAdmin();
   const { data } = await sb.from("project_update_media").select("object_path").eq("id", mediaId).eq("update_id", id).maybeSingle();
   if (data) {
-    await sb.from("project_update_media").delete().eq("id", mediaId).eq("update_id", id);
+    const { error } = await sb.from("project_update_media").delete().eq("id", mediaId).eq("update_id", id);
+    if (error) redirect(`${desk(entry.run_id)}&edit=${id}&error=save`);
     if (data.object_path) await sb.storage.from("project-updates").remove([data.object_path]);
   }
   const project = await projectById(entry.run_id, user.id);
